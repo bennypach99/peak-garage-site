@@ -593,8 +593,8 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         config_addons:  names.length ? names.join(', ') : 'None',
         config_total:   '$' + total + ' CAD',
         config_summary: summary,
-        notes:          notes || 'None'
-    }).then(() => {
+        notes:          notes || 'None'})
+       .then(() => {
         // 2. Send the Auto-Reply to the CUSTOMER
         return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
             to_email:       email,
