@@ -1,118 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Peak Garage Solutions – Custom Tote Storage</title>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
-  *{box-sizing:border-box;margin:0;padding:0;}
-  :root{
-    --gold:#C9A84C;--gold-light:#E8C96A;--gold-dark:#A07830;--gold-pale:#2a2210;
-    --ch:#1a1a1a;--ch2:#222;--ch3:#2d2d2d;
-    --text:#f0e6cc;--muted:#9a8a6a;--border:rgba(201,168,76,0.2);--bstrong:rgba(201,168,76,0.45);
-    --radius:10px;
-  }
-  body{font-family:'Open Sans',sans-serif;color:var(--text);background:var(--ch);}
-  h1,h2,h3,h4,.brand{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+/* ============================================================
+   PEAK GARAGE SOLUTIONS — peakgaragesolutions.ca
+   ============================================================ */
 
-  nav{background:var(--ch2);border-bottom:1px solid var(--bstrong);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
-  .logo-wrap{display:flex;align-items:center;gap:10px;}
-  .logo-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;line-height:1.1;}
-  .logo-text span{display:block;font-size:.6rem;font-weight:500;color:var(--muted);letter-spacing:.12em;}
-  .nav-cta{background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));color:var(--ch);border:none;padding:.45rem 1.1rem;border-radius:6px;font-weight:700;font-family:'Rajdhani',sans-serif;cursor:pointer;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;}
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;
+  --gold-light:#E8C96A;
+  --gold-dark:#A07830;
+  --gold-pale:#2a2210;
+  --ch:#1a1a1a;
+  --ch2:#222222;
+  --ch3:#2d2d2d;
+  --text:#f0e6cc;
+  --muted:#9a8a6a;
+  --border:rgba(201,168,76,0.2);
+  --bstrong:rgba(201,168,76,0.45);
+  --radius:10px;
+}
+body{font-family:'Open Sans',sans-serif;color:var(--text);background:var(--ch);}
+h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
 
-  .hero{background:linear-gradient(160deg,#111 0%,#1a1a1a 40%,#1f1a0e 100%);padding:3.5rem 1.5rem 3rem;text-align:center;border-bottom:1px solid var(--bstrong);position:relative;overflow:hidden;}
-  .hero-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:600px;height:280px;background:radial-gradient(ellipse,rgba(201,168,76,.1) 0%,transparent 70%);pointer-events:none;}
-  .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.08);border:1px solid var(--bstrong);border-radius:999px;padding:.3rem 1rem;font-size:.72rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.5rem;font-family:'Rajdhani',sans-serif;}
-  .hero h1{font-size:2.6rem;font-weight:700;line-height:1.1;color:#fff;text-transform:uppercase;margin-bottom:.4rem;}
-  .hero h1 .gold{background:linear-gradient(90deg,var(--gold-dark),var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  .gold-rule{width:70px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:.8rem auto 1rem;}
-  .hero p{font-size:.95rem;color:var(--muted);max-width:480px;margin:0 auto 2rem;line-height:1.7;}
-  .hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
-  .btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.75rem 1.8rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;}
-  .btn-gold:hover{opacity:.88;}
-  .btn-outline{background:transparent;color:var(--gold);border:1px solid var(--bstrong);padding:.75rem 1.8rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
-  .btn-outline:hover{background:rgba(201,168,76,.08);}
+/* ── NAV ── */
+nav{
+  background:var(--ch2);
+  border-bottom:1px solid var(--bstrong);
+  padding:0 2rem;
+  display:flex;align-items:center;justify-content:space-between;
+  height:68px;
+  position:sticky;top:0;z-index:100;
+}
+.logo-wrap{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;line-height:1.1;}
+.logo-text span{display:block;font-size:.62rem;font-weight:500;color:var(--muted);letter-spacing:.14em;}
+.nav-links{display:flex;gap:2rem;}
+.nav-links a{text-decoration:none;color:var(--muted);font-size:.85rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;transition:color .2s;}
+.nav-links a:hover{color:var(--gold);}
+.nav-cta{background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));color:var(--ch);border:none;padding:.5rem 1.3rem;border-radius:6px;font-weight:700;font-family:'Rajdhani',sans-serif;cursor:pointer;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;}
+.nav-cta:hover{opacity:.88;}
+@media(max-width:640px){.nav-links{display:none;}}
 
-  .trust-bar{background:var(--ch2);border-bottom:1px solid var(--border);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:center;gap:2rem;flex-wrap:wrap;}
-  .trust-item{display:flex;align-items:center;gap:.45rem;font-size:.75rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;}
-  .trust-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(160deg,#111 0%,#1a1a1a 40%,#1f1a0e 100%);
+  padding:5rem 2rem 4rem;
+  text-align:center;
+  border-bottom:1px solid var(--bstrong);
+  position:relative;overflow:hidden;
+}
+.hero-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:700px;height:320px;background:radial-gradient(ellipse,rgba(201,168,76,.11) 0%,transparent 70%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.08);border:1px solid var(--bstrong);border-radius:999px;padding:.35rem 1.1rem;font-size:.74rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.8rem;font-family:'Rajdhani',sans-serif;}
+.hero h1{font-size:3rem;font-weight:700;line-height:1.1;color:#fff;text-transform:uppercase;margin-bottom:.5rem;}
+.hero h1 .gold{background:linear-gradient(90deg,var(--gold-dark),var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.gold-rule{width:80px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1rem auto 1.2rem;}
+.hero p{font-size:1rem;color:var(--muted);max-width:500px;margin:0 auto 2.5rem;line-height:1.75;}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+.btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.8rem 2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;}
+.btn-gold:hover{opacity:.88;}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--bstrong);padding:.8rem 2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.btn-outline:hover{background:rgba(201,168,76,.08);}
 
-  .section-wrap{max-width:960px;margin:0 auto;padding:3rem 1.5rem;}
-  .section-label{font-size:.68rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem;font-family:'Rajdhani',sans-serif;}
-  .section-title{font-size:1.8rem;font-weight:700;color:#fff;text-transform:uppercase;margin-bottom:.4rem;}
-  .section-sub{color:var(--muted);font-size:.88rem;line-height:1.7;max-width:500px;}
+/* ── TRUST BAR ── */
+.trust-bar{background:var(--ch2);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:center;gap:2.5rem;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:.5rem;font-size:.76rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;}
+.trust-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
 
-  .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem;}
-  .gallery-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--ch3);aspect-ratio:4/3;position:relative;}
-  .gallery-img{width:100%;height:100%;object-fit:cover;display:block;}
-  .gallery-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.78));padding:.75rem .9rem .6rem;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;}
+/* ── SECTIONS ── */
+.section-wrap{max-width:1000px;margin:0 auto;padding:4rem 2rem;}
+.section-label{font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;font-family:'Rajdhani',sans-serif;}
+.section-title{font-size:1.9rem;font-weight:700;color:#fff;text-transform:uppercase;margin-bottom:.5rem;}
+.section-sub{color:var(--muted);font-size:.9rem;line-height:1.7;max-width:520px;}
 
-  .config-outer{background:var(--ch2);border:1px solid var(--bstrong);border-radius:14px;padding:1.75rem;margin-top:1.75rem;}
-  .clabel{font-size:.65rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;font-family:'Rajdhani',sans-serif;margin-top:1.3rem;}
-  .clabel:first-child{margin-top:0;}
-  .opt-row{display:flex;gap:.4rem;flex-wrap:wrap;}
-  .opt-btn{padding:.35rem .85rem;border:1px solid var(--border);border-radius:5px;background:transparent;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
-  .opt-btn.sel{border-color:var(--gold);background:var(--gold-pale);color:var(--gold-light);}
-  .opt-btn:hover:not(.sel){border-color:rgba(201,168,76,.35);color:var(--text);}
+/* ── FEATURES ── */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:2.5rem;}
+.feature-card{background:var(--ch2);padding:1.5rem;transition:background .2s;}
+.feature-card:hover{background:var(--ch3);}
+.f-icon{font-size:1.5rem;margin-bottom:.75rem;}
+.feature-card h4{font-size:1rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;}
+.feature-card p{font-size:.83rem;color:var(--muted);line-height:1.6;}
 
-  .addon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.6rem;margin-top:.5rem;}
-  .addon-card{border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;transition:all .2s;background:transparent;position:relative;}
-  .addon-card.on{border-color:var(--gold);background:var(--gold-pale);}
-  .addon-card:hover:not(.on){border-color:rgba(201,168,76,.35);}
-  .addon-name{font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
-  .addon-price{font-size:.72rem;color:var(--muted);margin-top:.15rem;}
-  .addon-check{position:absolute;top:.5rem;right:.6rem;width:15px;height:15px;border-radius:50%;background:var(--gold);display:none;align-items:center;justify-content:center;}
-  .addon-card.on .addon-check{display:flex;}
-  .addon-check::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--ch);}
+/* ── GALLERY ── */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem;}
+.gallery-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--ch3);aspect-ratio:4/3;position:relative;}
+.gallery-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;}
+.gallery-card:hover .gallery-img{transform:scale(1.03);}
+.gallery-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:.8rem 1rem .65rem;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;}
 
-  .config-body{display:grid;grid-template-columns:1fr 1fr;gap:1.75rem;margin-top:1.5rem;align-items:start;}
-  @media(max-width:580px){.config-body{grid-template-columns:1fr;}.hero h1{font-size:2rem;}}
+/* ── CONFIGURATOR ── */
+.config-outer{background:var(--ch2);border:1px solid var(--bstrong);border-radius:14px;padding:2rem;margin-top:2rem;}
+.clabel{font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;font-family:'Rajdhani',sans-serif;margin-top:1.4rem;}
+.clabel:first-child{margin-top:0;}
+.opt-row{display:flex;gap:.45rem;flex-wrap:wrap;}
+.opt-btn{padding:.38rem .9rem;border:1px solid var(--border);border-radius:5px;background:transparent;font-size:.83rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+.opt-btn.sel{border-color:var(--gold);background:var(--gold-pale);color:var(--gold-light);}
+.opt-btn:hover:not(.sel){border-color:rgba(201,168,76,.4);color:var(--text);}
 
-  .preview-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:flex;flex-direction:column;align-items:center;}
-  .preview-label{font-size:.7rem;color:var(--muted);margin-top:.6rem;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;text-align:center;line-height:1.6;}
+.addon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:.65rem;margin-top:.6rem;}
+.addon-card{border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;cursor:pointer;transition:all .2s;background:transparent;position:relative;}
+.addon-card.on{border-color:var(--gold);background:var(--gold-pale);}
+.addon-card:hover:not(.on){border-color:rgba(201,168,76,.4);}
+.addon-name{font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
+.addon-price{font-size:.73rem;color:var(--muted);margin-top:.18rem;}
+.addon-check{position:absolute;top:.5rem;right:.6rem;width:16px;height:16px;border-radius:50%;background:var(--gold);display:none;align-items:center;justify-content:center;}
+.addon-card.on .addon-check{display:flex;}
+.addon-check::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--ch);}
 
-  .summary-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;}
-  .spec-row{display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.8rem;}
-  .spec-row:last-child{border-bottom:none;}
-  .sk{color:var(--muted);font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
-  .sv{font-weight:600;color:var(--text);font-family:'Rajdhani',sans-serif;}
-  .sv.highlight{color:var(--gold-light);}
+.config-body{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.75rem;align-items:start;}
+@media(max-width:620px){.config-body{grid-template-columns:1fr;}}
 
-  .price-box{margin-top:1.1rem;background:linear-gradient(135deg,rgba(201,168,76,.09),rgba(201,168,76,.04));border:1px solid var(--bstrong);border-radius:var(--radius);padding:1.1rem 1.25rem;}
-  .price-label{font-size:.65rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;margin-bottom:.15rem;}
-  .price-amt{font-size:2.2rem;font-weight:700;color:var(--gold-light);font-family:'Rajdhani',sans-serif;}
-  .price-note{font-size:.7rem;color:var(--muted);margin-top:.15rem;}
-  .price-breakdown{margin-top:.7rem;font-size:.76rem;color:var(--muted);font-family:'Rajdhani',sans-serif;line-height:1.9;border-top:1px solid var(--border);padding-top:.6rem;}
-  .price-breakdown .line{display:flex;justify-content:space-between;}
-  .price-breakdown .line span:first-child{color:var(--muted);}
-  .price-breakdown .line span:last-child{color:var(--text);font-weight:600;}
+.preview-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;}
+.preview-label{font-size:.68rem;color:var(--muted);margin-top:.7rem;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;text-align:center;line-height:1.8;}
 
-  .quote-btn{width:100%;margin-top:1rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.75rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;}
-  .quote-btn:hover{opacity:.88;}
+.summary-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;}
+.spec-row{display:flex;justify-content:space-between;padding:.42rem 0;border-bottom:1px solid var(--border);font-size:.81rem;}
+.spec-row:last-child{border-bottom:none;}
+.sk{color:var(--muted);font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+.sv{font-weight:600;color:var(--text);font-family:'Rajdhani',sans-serif;}
+.sv.hi{color:var(--gold-light);}
 
-  footer{background:#111;border-top:1px solid var(--bstrong);text-align:center;padding:2rem 1.5rem;}
-  .footer-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.2rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem;}
-  footer p{color:var(--muted);font-size:.78rem;}
-  footer a{color:var(--gold);text-decoration:none;}
+.price-box{margin-top:1.1rem;background:linear-gradient(135deg,rgba(201,168,76,.09),rgba(201,168,76,.04));border:1px solid var(--bstrong);border-radius:var(--radius);padding:1.15rem 1.3rem;}
+.price-label{font-size:.66rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;margin-bottom:.2rem;}
+.price-amt{font-size:2.3rem;font-weight:700;color:var(--gold-light);font-family:'Rajdhani',sans-serif;}
+.price-note{font-size:.71rem;color:var(--muted);margin-top:.18rem;}
+.price-breakdown{margin-top:.75rem;font-size:.77rem;font-family:'Rajdhani',sans-serif;line-height:1.9;border-top:1px solid var(--border);padding-top:.65rem;}
+.price-breakdown .line{display:flex;justify-content:space-between;}
+.price-breakdown .line span:first-child{color:var(--muted);}
+.price-breakdown .line span:last-child{color:var(--text);font-weight:600;}
+
+.quote-btn{width:100%;margin-top:1rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.8rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;}
+.quote-btn:hover{opacity:.88;}
+
+/* ── MODAL ── */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:center;justify-content:center;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--ch2);border:1px solid var(--bstrong);border-radius:14px;padding:2rem;width:100%;max-width:500px;margin:1rem;position:relative;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;}
+.modal-sub{font-size:.82rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.65;}
+.modal-config{background:var(--ch);border:1px solid var(--border);border-radius:8px;padding:.95rem 1rem;margin-bottom:1.3rem;font-size:.79rem;color:var(--muted);font-family:'Rajdhani',sans-serif;line-height:1.9;}
+.modal-config strong{color:var(--gold-light);display:block;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.35rem;}
+.field-label{font-size:.68rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;margin-bottom:.38rem;margin-top:1.1rem;display:block;}
+.field-label:first-of-type{margin-top:0;}
+.field-input{width:100%;background:var(--ch);border:1px solid var(--border);border-radius:6px;padding:.62rem .85rem;color:var(--text);font-family:'Open Sans',sans-serif;font-size:.9rem;transition:border-color .2s;outline:none;}
+.field-input:focus{border-color:var(--gold);}
+.field-input::placeholder{color:var(--muted);}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.5rem;}
+.send-btn{flex:1;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.72rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;}
+.send-btn:hover{opacity:.88;}
+.send-btn:disabled{opacity:.45;cursor:not-allowed;}
+.cancel-btn{background:transparent;color:var(--muted);border:1px solid var(--border);padding:.72rem 1.2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .2s;}
+.cancel-btn:hover{border-color:var(--gold);color:var(--text);}
+.close-x{position:absolute;top:1rem;right:1rem;background:transparent;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:.2rem .4rem;}
+.close-x:hover{color:var(--text);}
+.status-msg{margin-top:1rem;padding:.78rem 1rem;border-radius:7px;font-size:.83rem;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.04em;display:none;}
+.status-msg.success{background:rgba(39,180,100,.12);border:1px solid rgba(39,180,100,.35);color:#5fda8a;display:block;}
+.status-msg.error{background:rgba(220,60,60,.12);border:1px solid rgba(220,60,60,.35);color:#f07070;display:block;}
+
+/* ── FOOTER ── */
+footer{background:#111;border-top:1px solid var(--bstrong);text-align:center;padding:2.5rem 2rem;}
+.footer-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;}
+footer p{color:var(--muted);font-size:.8rem;margin-top:.3rem;}
+footer a{color:var(--gold);text-decoration:none;}
+footer a:hover{color:var(--gold-light);}
 </style>
+</head>
+<body>
 
+<!-- ══ NAV ══ -->
 <nav>
   <div class="logo-wrap">
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <polygon points="16,3 26,23 6,23" fill="none" stroke="url(#ng)" stroke-width="1.6" stroke-linejoin="round"/>
-      <polygon points="24,9 31,23 16,23" fill="none" stroke="url(#ng2)" stroke-width="1.2" stroke-linejoin="round" opacity=".65"/>
-      <polygon points="8,11 16,23 1,23" fill="none" stroke="url(#ng2)" stroke-width="1.2" stroke-linejoin="round" opacity=".65"/>
-      <line x1="4" y1="25" x2="28" y2="25" stroke="url(#ng)" stroke-width="1.1"/>
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <polygon points="18,3 29,26 7,26" fill="none" stroke="url(#ng)" stroke-width="1.8" stroke-linejoin="round"/>
+      <polygon points="27,10 35,26 18,26" fill="none" stroke="url(#ng2)" stroke-width="1.3" stroke-linejoin="round" opacity=".65"/>
+      <polygon points="9,12 18,26 1,26" fill="none" stroke="url(#ng2)" stroke-width="1.3" stroke-linejoin="round" opacity=".65"/>
+      <line x1="5" y1="28" x2="31" y2="28" stroke="url(#ng)" stroke-width="1.2"/>
       <defs>
-        <linearGradient id="ng" x1="0" y1="0" x2="32" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#A07830"/><stop offset="50%" stop-color="#E8C96A"/><stop offset="100%" stop-color="#A07830"/></linearGradient>
-        <linearGradient id="ng2" x1="0" y1="0" x2="32" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#C9A84C"/><stop offset="100%" stop-color="#E8C96A"/></linearGradient>
+        <linearGradient id="ng" x1="0" y1="0" x2="36" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#A07830"/>
+          <stop offset="50%" stop-color="#E8C96A"/>
+          <stop offset="100%" stop-color="#A07830"/>
+        </linearGradient>
+        <linearGradient id="ng2" x1="0" y1="0" x2="36" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stop-color="#C9A84C"/>
+          <stop offset="100%" stop-color="#E8C96A"/>
+        </linearGradient>
       </defs>
     </svg>
     <div class="logo-text">Peak Garage Solutions<span>peakgaragesolutions.ca</span></div>
   </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#configurator">Configure</a>
+  </div>
   <button class="nav-cta" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Build Yours</button>
 </nav>
 
+<!-- ══ HERO ══ -->
 <div class="hero">
   <div class="hero-glow"></div>
-  <div class="hero-badge">🇨🇦 Proudly Canadian · Milton, Ontario</div>
+  <div class="hero-badge">🇨🇦 Proudly Canadian &nbsp;·&nbsp; Milton, Ontario</div>
   <h1>Tote Storage<br><span class="gold">Built Your Way</span></h1>
   <div class="gold-rule"></div>
   <p>Custom-built tote rack systems sized to fit your garage and your life. Choose your columns, rows, and add-ons — get an instant price.</p>
@@ -122,45 +221,77 @@
   </div>
 </div>
 
+<!-- ══ TRUST BAR ══ -->
 <div class="trust-bar">
   <div class="trust-item"><div class="trust-dot"></div>Canadian owned</div>
   <div class="trust-item"><div class="trust-dot"></div>Solid wood frame</div>
   <div class="trust-item"><div class="trust-dot"></div>Custom built to order</div>
   <div class="trust-item"><div class="trust-dot"></div>28.5" deep</div>
+  <div class="trust-item"><div class="trust-dot"></div>Optional casters</div>
   <div class="trust-item"><div class="trust-dot"></div>Totes included option</div>
 </div>
 
-<div class="section-wrap" id="gallery">
+<!-- ══ FEATURES ══ -->
+<div class="section-wrap" id="features">
+  <div class="section-label">Why Peak</div>
+  <div class="section-title">Built tough, designed smart</div>
+  <div class="section-sub">From a single unit to a full garage overhaul, our systems are built for real Canadian garages.</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="f-icon">💪</div>
+      <h4>Heavy-duty build</h4>
+      <p>Solid wood frame construction built to hold full totes season after season.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🎨</div>
+      <h4>Stain options</h4>
+      <p>Choose black or brown stain for a clean, finished look in any garage.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🛞</div>
+      <h4>Mobile option</h4>
+      <p>Add heavy-duty locking casters to roll your unit wherever you need it.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">📐</div>
+      <h4>Custom sizing</h4>
+      <p>1–5 wide, 2–5 high. Every unit is built to your exact specification.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GALLERY ══ -->
+<div class="section-wrap" id="gallery" style="padding-top:0;">
   <div class="section-label">Our Work</div>
   <div class="section-title">Built to impress</div>
   <div class="section-sub">Every unit is hand-built to your specs. Here's a look at what we make.</div>
   <div class="gallery-grid">
     <div class="gallery-card">
-      <img class="gallery-img" src="/mnt/user-data/uploads/b3622298-ecb5-4c9f-8b3e-3b6fb1ac6305.jpg" alt="4x4 tote rack" onerror="this.style.display='none'"/>
+      <img class="gallery-img" src="images/gallery1.jpg" alt="4-wide 4-high tote rack with casters" onerror="this.parentElement.style.background='#2d2d2d'"/>
       <div class="gallery-label">4-wide · 4-high · with casters</div>
     </div>
     <div class="gallery-card">
-      <img class="gallery-img" src="/mnt/user-data/uploads/6fe3c5c0-b85d-415c-a3f7-00c067b5adf2.jpg" alt="wide tote rack in garage" onerror="this.style.display='none'"/>
+      <img class="gallery-img" src="images/gallery2.jpg" alt="4-wide 2-high natural wood" onerror="this.parentElement.style.background='#2d2d2d'"/>
       <div class="gallery-label">4-wide · 2-high · natural wood</div>
     </div>
     <div class="gallery-card">
-      <img class="gallery-img" src="/mnt/user-data/uploads/PXL_20260308_201602014.jpg" alt="3-wide 2-high black stain" onerror="this.style.display='none'"/>
+      <img class="gallery-img" src="images/gallery3.jpg" alt="3-wide 2-high black stain with top" onerror="this.parentElement.style.background='#2d2d2d'"/>
       <div class="gallery-label">3-wide · 2-high · black stain + top</div>
     </div>
     <div class="gallery-card">
-      <img class="gallery-img" src="/mnt/user-data/uploads/PXL_20260308_201626785_MP.jpg" alt="3-wide 2-high open" onerror="this.style.display='none'"/>
+      <img class="gallery-img" src="images/gallery4.jpg" alt="3-wide 2-high open top" onerror="this.parentElement.style.background='#2d2d2d'"/>
       <div class="gallery-label">3-wide · 2-high · open top</div>
     </div>
   </div>
 </div>
 
+<!-- ══ CONFIGURATOR ══ -->
 <div class="section-wrap" id="configurator" style="padding-top:0;">
   <div class="section-label">Configurator</div>
   <div class="section-title">Design your unit</div>
   <div class="section-sub">Pick your columns, rows, and add-ons — real dimensions and pricing update instantly.</div>
 
   <div class="config-outer">
-
     <div class="clabel">Columns — totes wide (1–5)</div>
     <div class="opt-row">
       <button class="opt-btn" onclick="setSel(this,'cols',1)">1 wide</button>
@@ -178,7 +309,7 @@
       <button class="opt-btn" onclick="setSel(this,'rows',5)">5 high</button>
     </div>
 
-    <div class="clabel">Add-ons (optional — select any)</div>
+    <div class="clabel">Add-ons (optional)</div>
     <div class="addon-grid">
       <div class="addon-card" onclick="toggleAddon(this,'top')" data-key="top">
         <div class="addon-name">3/4" Plywood Top</div>
@@ -209,14 +340,14 @@
 
     <div class="config-body">
       <div class="preview-box">
-        <canvas id="cvs" width="270" height="230"></canvas>
+        <canvas id="cvs"></canvas>
         <div class="preview-label" id="pvLabel"></div>
       </div>
       <div>
         <div class="summary-box">
           <div class="spec-row"><span class="sk">Columns</span><span class="sv" id="s-cols">—</span></div>
           <div class="spec-row"><span class="sk">Rows</span><span class="sv" id="s-rows">—</span></div>
-          <div class="spec-row"><span class="sk">Total tote slots</span><span class="sv highlight" id="s-slots">—</span></div>
+          <div class="spec-row"><span class="sk">Total tote slots</span><span class="sv hi" id="s-slots">—</span></div>
           <div class="spec-row"><span class="sk">Width</span><span class="sv" id="s-w">—</span></div>
           <div class="spec-row"><span class="sk">Height</span><span class="sv" id="s-h">—</span></div>
           <div class="spec-row"><span class="sk">Height w/ casters</span><span class="sv" id="s-hc">—</span></div>
@@ -226,43 +357,87 @@
         <div class="price-box">
           <div class="price-label">Total Estimated Price (CAD)</div>
           <div class="price-amt" id="p-amt">—</div>
-          <div class="price-note">+ applicable taxes · delivery available</div>
+          <div class="price-note">+ applicable taxes &nbsp;·&nbsp; delivery available</div>
           <div class="price-breakdown" id="p-break"></div>
         </div>
-        <button class="quote-btn" onclick="requestQuote()">Request a Quote ↗</button>
+        <button class="quote-btn" onclick="openModal()">Request a Quote ↗</button>
       </div>
     </div>
-
   </div>
 </div>
 
+<!-- ══ FOOTER ══ -->
 <footer>
   <div class="footer-logo">Peak Garage Solutions</div>
-  <p style="margin-bottom:.3rem;">Custom-built in Ontario, Canada</p>
+  <p>Custom-built in Ontario, Canada</p>
   <p><a href="https://peakgaragesolutions.ca">peakgaragesolutions.ca</a></p>
-  <p style="margin-top:1rem;font-size:.7rem;opacity:.35;">© 2026 Peak Garage Solutions. All rights reserved.</p>
+  <p style="margin-top:.4rem;"><a href="mailto:sales@peakgaragesolutions.ca">sales@peakgaragesolutions.ca</a></p>
+  <p style="margin-top:1.2rem;font-size:.7rem;opacity:.35;">© 2026 Peak Garage Solutions. All rights reserved.</p>
 </footer>
 
+<!-- ══ QUOTE MODAL ══ -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <div class="modal-title">Request a Quote</div>
+    <div class="modal-sub">Fill in your details and we'll get back to you within 1 business day at <strong style="color:var(--gold)">sales@peakgaragesolutions.ca</strong></div>
+
+    <div class="modal-config">
+      <strong>Your Selected Configuration</strong>
+      <span id="modal-config-text">—</span>
+    </div>
+
+    <label class="field-label" for="f-name">Full Name *</label>
+    <input class="field-input" id="f-name" type="text" placeholder="Jane Smith"/>
+
+    <label class="field-label" for="f-phone">Phone Number *</label>
+    <input class="field-input" id="f-phone" type="tel" placeholder="(416) 555-0123"/>
+
+    <label class="field-label" for="f-email">Email Address *</label>
+    <input class="field-input" id="f-email" type="email" placeholder="jane@email.com"/>
+
+    <label class="field-label" for="f-notes">Additional Notes (optional)</label>
+    <input class="field-input" id="f-notes" type="text" placeholder="Any special requests or questions…"/>
+
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+      <button class="send-btn" id="sendBtn" onclick="submitQuote()">Send Quote Request</button>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</div>
+
 <script>
-// ── REAL DIMENSION LOOKUP TABLES ──────────────────────────────
-const WIDTH_IN = { 1:23.5, 2:45.5, 3:67.5, 4:89.5, 5:111.5 };
-const HEIGHT_IN = { 2:36,   3:52,   4:68,   5:84   };
-const CASTER_ADD = 4; // inches added with casters
+// ============================================================
+//  ★★★  PASTE YOUR EMAILJS KEYS BELOW  ★★★
+//  1. Go to emailjs.com and sign in
+//  2. Replace each value below with your real keys
+//  3. Save the file — emails will start working instantly
+// ============================================================
+const EMAILJS_PUBLIC_KEY  = 'oNs9CbcPHf_Nhc4kH';    // e.g. 'abc123XYZ'
+const EMAILJS_SERVICE_ID  = 'service_4qiybvi';    // e.g. 'service_abc123'
+const EMAILJS_TEMPLATE_ID = 'template_ayvgsvb';   // e.g. 'template_abc123'
+// ============================================================
 
-// ── PRICING RULES ─────────────────────────────────────────────
-// Base: $30 per tote slot
-// Stain: $50 if cols<=2, else $100
-// Plywood top: $50 if cols<=2, else $100
-// Casters: $50 (4-pack) standard; $75 (6-pack) if cols>=4 AND rows>=4
-// Totes: $15 each
+// ── REAL DIMENSION LOOKUP TABLES ──
+const WIDTH_IN  = {1:23.5, 2:45.5, 3:67.5, 4:89.5, 5:111.5};
+const HEIGHT_IN = {2:36,   3:52,   4:68,   5:84};
+const CASTER_ADD = 4;
 
-function stainCost(c)      { return c <= 2 ? 50 : 100; }
-function topCost(c)        { return c <= 2 ? 50 : 100; }
-function casterCost(c,r)   { return (c >= 4 && r >= 4) ? 75 : 50; }
-function casterCount(c,r)  { return (c >= 4 && r >= 4) ? 6 : 4; }
+// ── CANVAS SCALE ──
+const MAX_W_IN = 111.5, MAX_H_IN = 84;
+const CVS_W = 260, CVS_H = 210, PAD = 18;
+const SCALE_X = (CVS_W - PAD*2) / MAX_W_IN;
+const SCALE_Y = (CVS_H - PAD*2) / MAX_H_IN;
 
-// ── STATE ─────────────────────────────────────────────────────
-const S = { cols:3, rows:2, addons: new Set() };
+// ── PRICING RULES ──
+function stainCost(c)     { return c<=2 ? 50 : 100; }
+function topCost(c)       { return c<=2 ? 50 : 100; }
+function casterCost(c,r)  { return (c>=4 && r>=4) ? 75 : 50; }
+function casterCount(c,r) { return (c>=4 && r>=4) ? 6 : 4; }
+
+// ── STATE ──
+const S = {cols:3, rows:2, addons:new Set()};
 
 function setSel(btn, key, val) {
   S[key] = val;
@@ -272,214 +447,243 @@ function setSel(btn, key, val) {
 }
 
 function toggleAddon(card, key) {
-  if ((key==='blackstain'||key==='brownstain')) {
-    const other = key==='blackstain'?'brownstain':'blackstain';
+  if (key==='blackstain' || key==='brownstain') {
+    const other = key==='blackstain' ? 'brownstain' : 'blackstain';
     S.addons.delete(other);
-    document.querySelectorAll('.addon-card').forEach(c=>{ if(c.dataset.key===other) c.classList.remove('on'); });
+    document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key===other) c.classList.remove('on'); });
   }
   if (S.addons.has(key)) { S.addons.delete(key); card.classList.remove('on'); }
-  else                   { S.addons.add(key);    card.classList.add('on');  }
+  else                   { S.addons.add(key);    card.classList.add('on'); }
   update();
 }
 
 function calcPrice() {
   const {cols,rows,addons} = S;
-  const slots = cols * rows;
-  const base = slots * 30;
-  const lines = [{ label: slots+' slots × $30', val: base }];
+  const slots = cols*rows, base = slots*30;
+  const lines = [{label:slots+' slots × $30', val:base}];
   let total = base;
+  if(addons.has('top'))        { const p=topCost(cols);         total+=p; lines.push({label:'Plywood top',val:p}); }
+  if(addons.has('blackstain')) { const p=stainCost(cols);       total+=p; lines.push({label:'Black stain',val:p}); }
+  if(addons.has('brownstain')) { const p=stainCost(cols);       total+=p; lines.push({label:'Brown stain',val:p}); }
+  if(addons.has('casters'))    { const p=casterCost(cols,rows); total+=p; lines.push({label:'Casters ('+casterCount(cols,rows)+')',val:p}); }
+  if(addons.has('totes'))      { const p=slots*15;              total+=p; lines.push({label:slots+' totes × $15',val:p}); }
+  return {total, lines};
+}
 
-  if (addons.has('top'))        { const p=topCost(cols);          total+=p; lines.push({label:'Plywood top',val:p}); }
-  if (addons.has('blackstain')) { const p=stainCost(cols);        total+=p; lines.push({label:'Black stain',val:p}); }
-  if (addons.has('brownstain')) { const p=stainCost(cols);        total+=p; lines.push({label:'Brown stain',val:p}); }
-  if (addons.has('casters'))    { const p=casterCost(cols,rows);  total+=p; lines.push({label:'Casters ('+casterCount(cols,rows)+')',val:p}); }
-  if (addons.has('totes'))      { const p=slots*15;               total+=p; lines.push({label:slots+' totes × $15',val:p}); }
-
-  return { total, lines };
+function getAddonNames() {
+  const {addons,cols,rows} = S;
+  const n = [];
+  if(addons.has('top'))        n.push('3/4" Plywood Top');
+  if(addons.has('blackstain')) n.push('Black Stain');
+  if(addons.has('brownstain')) n.push('Brown Stain');
+  if(addons.has('casters'))    n.push('Casters ('+casterCount(cols,rows)+'-pack)');
+  if(addons.has('totes'))      n.push('Storage Totes ('+S.cols*S.rows+')');
+  return n;
 }
 
 function update() {
-  const {cols,rows,addons} = S;
-  const slots  = cols * rows;
-  const wIn    = WIDTH_IN[cols];
-  const hIn    = HEIGHT_IN[rows];
-  const hcIn   = hIn + CASTER_ADD;
-  const wFt    = (wIn/12).toFixed(1);
-  const hFt    = (hIn/12).toFixed(1);
-  const hcFt   = (hcIn/12).toFixed(1);
+  const {cols,rows} = S;
+  const slots = cols*rows;
+  const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows], hcIn = hIn+CASTER_ADD;
 
-  // summary
-  document.getElementById('s-cols').textContent   = cols+' wide';
-  document.getElementById('s-rows').textContent   = rows+' high';
-  document.getElementById('s-slots').textContent  = slots+' tote slots';
-  document.getElementById('s-w').textContent      = wIn+'"  ('+wFt+' ft)';
-  document.getElementById('s-h').textContent      = hIn+'"  ('+hFt+' ft)';
-  document.getElementById('s-hc').textContent     = hcIn+'"  ('+hcFt+' ft)';
+  document.getElementById('s-cols').textContent  = cols+' wide';
+  document.getElementById('s-rows').textContent  = rows+' high';
+  document.getElementById('s-slots').textContent = slots+' tote slots';
+  document.getElementById('s-w').textContent     = wIn+'"  ('+(wIn/12).toFixed(1)+' ft)';
+  document.getElementById('s-h').textContent     = hIn+'"  ('+(hIn/12).toFixed(1)+' ft)';
+  document.getElementById('s-hc').textContent    = hcIn+'"  ('+(hcIn/12).toFixed(1)+' ft)';
 
-  const addonNames=[];
-  if(addons.has('top'))        addonNames.push('Plywood top');
-  if(addons.has('blackstain')) addonNames.push('Black stain');
-  if(addons.has('brownstain')) addonNames.push('Brown stain');
-  if(addons.has('casters'))    addonNames.push('Casters');
-  if(addons.has('totes'))      addonNames.push('Totes');
-  document.getElementById('s-addons').textContent = addonNames.length ? addonNames.join(', ') : 'None';
+  const names = getAddonNames();
+  document.getElementById('s-addons').textContent = names.length ? names.join(', ') : 'None';
 
-  // addon price labels
   document.getElementById('lbl-top').textContent        = '$'+topCost(cols);
   document.getElementById('lbl-blackstain').textContent = '$'+stainCost(cols);
   document.getElementById('lbl-brownstain').textContent = '$'+stainCost(cols);
   document.getElementById('lbl-casters').textContent    = '$'+casterCost(cols,rows)+' · '+casterCount(cols,rows)+'-pack';
   document.getElementById('lbl-totes').textContent      = '$15 × '+slots+' = $'+(slots*15);
 
-  // price
   const {total,lines} = calcPrice();
-  const pEl = document.getElementById('p-amt');
-  pEl.textContent  = '$'+total;
-  pEl.dataset.desc = cols+'W × '+rows+'H ('+slots+' slots) | '+wIn+'" wide × '+hIn+'" tall × 28.5" deep | add-ons: '+(addonNames.join(', ')||'none')+' | $'+total+' CAD';
-
-  document.getElementById('p-break').innerHTML = lines.map(l=>
-    `<div class="line"><span>${l.label}</span><span>$${l.val}</span></div>`
-  ).join('') + `<div class="line" style="border-top:1px solid rgba(201,168,76,.25);margin-top:.4rem;padding-top:.4rem;color:var(--gold-light)"><span>Total</span><span>$${total}</span></div>`;
+  document.getElementById('p-amt').textContent = '$'+total;
+  document.getElementById('p-break').innerHTML =
+    lines.map(l=>`<div class="line"><span>${l.label}</span><span>$${l.val}</span></div>`).join('')+
+    `<div class="line" style="border-top:1px solid rgba(201,168,76,.25);margin-top:.4rem;padding-top:.4rem;color:var(--gold-light)"><span>Total</span><span>$${total}</span></div>`;
 
   document.getElementById('pvLabel').innerHTML =
-    cols+' wide × '+rows+' high &nbsp;·&nbsp; '+slots+' tote slots<br>'+
-    wIn+'" W × '+hIn+'" H × 28.5" D';
+    cols+' wide × '+rows+' high &nbsp;·&nbsp; '+slots+' slots<br>'+
+    wIn+'" W &nbsp;×&nbsp; '+hIn+'" H &nbsp;×&nbsp; 28.5" D';
 
   drawPreview();
 }
 
+// ── MODAL ──
+function openModal() {
+  const {cols,rows} = S;
+  const slots = cols*rows;
+  const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
+  const names = getAddonNames();
+  const {total} = calcPrice();
+  const summary = cols+'W × '+rows+'H · '+slots+' tote slots · '+wIn+'" wide × '+hIn+'" tall × 28.5" deep'
+    +(names.length?' · Add-ons: '+names.join(', '):'')
+    +' · Total: $'+total+' CAD';
+  document.getElementById('modal-config-text').textContent = summary;
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.getElementById('statusMsg').className = 'status-msg';
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').textContent = 'Send Quote Request';
+}
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+}
+function handleBackdropClick(e) {
+  if (e.target === document.getElementById('modalBackdrop')) closeModal();
+}
+
+function submitQuote() {
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const notes = document.getElementById('f-notes').value.trim();
+  const status = document.getElementById('statusMsg');
+
+  if (!name || !phone || !email) {
+    status.className = 'status-msg error';
+    status.textContent = 'Please fill in your name, phone, and email address.';
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    status.className = 'status-msg error';
+    status.textContent = 'Please enter a valid email address.';
+    return;
+  }
+  if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+    status.className = 'status-msg error';
+    status.textContent = 'EmailJS not configured yet. Open this file in Notepad and replace the 3 keys at the top of the script.';
+    return;
+  }
+
+  const {cols,rows} = S;
+  const slots = cols*rows;
+  const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
+  const names = getAddonNames();
+  const {total} = calcPrice();
+  const summary = cols+'W × '+rows+'H · '+slots+' tote slots · '+wIn+'" wide × '+hIn+'" tall × 28.5" deep'
+    +(names.length?' · Add-ons: '+names.join(', '):'')
+    +' · Total: $'+total+' CAD';
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  status.className = 'status-msg';
+
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email:        'sales@peakgaragesolutions.ca',
+    from_name:       name,
+    from_email:      email,
+    phone:           phone,
+    config_cols:     cols+' wide',
+    config_rows:     rows+' high',
+    config_slots:    slots+' tote slots',
+    config_width:    wIn+'"',
+    config_height:   hIn+'"',
+    config_depth:    '28.5"',
+    config_addons:   names.length ? names.join(', ') : 'None',
+    config_total:    '$'+total+' CAD',
+    config_summary:  summary,
+    notes:           notes || 'None'
+  }).then(() => {
+    status.className = 'status-msg success';
+    status.textContent = '✓ Quote sent! We\'ll be in touch within 1 business day.';
+    btn.textContent = 'Sent!';
+    document.getElementById('f-name').value  = '';
+    document.getElementById('f-phone').value = '';
+    document.getElementById('f-email').value = '';
+    document.getElementById('f-notes').value = '';
+  }).catch(err => {
+    status.className = 'status-msg error';
+    status.textContent = 'Something went wrong. Please email us directly at sales@peakgaragesolutions.ca';
+    btn.disabled = false;
+    btn.textContent = 'Send Quote Request';
+    console.error('EmailJS error:', err);
+  });
+}
+
+// ── CANVAS PREVIEW ──
 function drawPreview() {
   const canvas = document.getElementById('cvs');
-  const ctx    = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d');
   const {cols,rows,addons} = S;
-  const CW = canvas.width, CH = canvas.height;
-  ctx.clearRect(0,0,CW,CH);
+  const hasTop = addons.has('top'), hasCasters = addons.has('casters');
+  const isBlack = addons.has('blackstain'), isBrown = addons.has('brownstain');
+  const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
+  const unitPxW = wIn*SCALE_X, unitPxH = hIn*SCALE_Y;
+  const topPx = hasTop ? 14 : 0, castPx = hasCasters ? 14 : 0;
 
-  const hasTop     = addons.has('top');
-  const hasCasters = addons.has('casters');
-  const isBlack    = addons.has('blackstain');
-  const isBrown    = addons.has('brownstain');
+  canvas.width  = Math.round(unitPxW + PAD*2);
+  canvas.height = Math.round(unitPxH + topPx + castPx + PAD*2);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  const frameColor = isBlack ? '#252525' : isBrown ? '#5c3318' : '#c8b08a';
-  const frameAccent= '#C9A84C';
-
-  const padX = 20;
-  const padTop  = hasTop ? 30 : 14;
-  const padBot  = hasCasters ? 22 : 10;
-  const availW  = CW - padX*2;
-  const availH  = CH - padTop - padBot;
-
-  const cellW = availW / cols;
-  const cellH = availH / rows;
-  const ft = 4; // frame thickness px
+  const ox = PAD, oy = PAD + topPx;
+  const frameColor  = isBlack ? '#252525' : isBrown ? '#5c3318' : '#c8b08a';
+  const frameAccent = '#C9A84C';
+  const ft = Math.max(3, Math.round(unitPxW/(cols*7)));
 
   // vertical posts
   for (let c=0; c<=cols; c++) {
-    const x = padX + c*cellW;
-    ctx.fillStyle = frameColor;
-    ctx.fillRect(x-ft/2, padTop, ft, availH);
-    ctx.strokeStyle = frameAccent;
-    ctx.lineWidth = 0.6;
-    ctx.strokeRect(x-ft/2, padTop, ft, availH);
+    const x = ox + (unitPxW/cols)*c;
+    ctx.fillStyle = frameColor; ctx.fillRect(x-ft/2, oy, ft, unitPxH);
+    ctx.strokeStyle = frameAccent; ctx.lineWidth = 0.7; ctx.strokeRect(x-ft/2, oy, ft, unitPxH);
   }
   // horizontal rails
   for (let r=0; r<=rows; r++) {
-    const y = padTop + r*cellH;
-    ctx.fillStyle = frameColor;
-    ctx.fillRect(padX, y-ft/2, availW, ft);
-    ctx.strokeStyle = frameAccent;
-    ctx.lineWidth = 0.6;
-    ctx.strokeRect(padX, y-ft/2, availW, ft);
+    const y = oy + (unitPxH/rows)*r;
+    ctx.fillStyle = frameColor; ctx.fillRect(ox, y-ft/2, unitPxW, ft);
+    ctx.strokeStyle = frameAccent; ctx.lineWidth = 0.7; ctx.strokeRect(ox, y-ft/2, unitPxW, ft);
   }
-
-  // tote bins
+  // totes
+  const cellW = unitPxW/cols, cellH = unitPxH/rows;
   for (let r=0; r<rows; r++) {
     for (let c=0; c<cols; c++) {
-      const bx = padX + c*cellW + ft/2 + 3;
-      const by = padTop + r*cellH + ft/2 + 3;
-      const bw = cellW - ft - 6;
-      const bh = cellH - ft - 6;
-      if (bw < 4 || bh < 4) continue;
-
-      // tote body
-      ctx.fillStyle = '#252525';
-      ctx.beginPath();
-      ctx.roundRect(bx, by + bh*0.22, bw, bh*0.78, 2);
-      ctx.fill();
-      ctx.strokeStyle = '#3a3a3a';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-
-      // tote lid
-      const lidH = Math.max(3, bh*0.16);
-      ctx.fillStyle = '#D4A017';
-      ctx.beginPath();
-      ctx.roundRect(bx + bw*0.04, by + bh*0.12, bw*0.92, lidH, 2);
-      ctx.fill();
-      ctx.strokeStyle = '#A87C10';
-      ctx.lineWidth = 0.4;
-      ctx.stroke();
-
-      // lid nubs
-      if (bw > 20) {
-        ctx.fillStyle = '#A87C10';
-        ctx.fillRect(bx + bw*0.14, by + bh*0.10, bw*0.09, bh*0.05);
-        ctx.fillRect(bx + bw*0.77, by + bh*0.10, bw*0.09, bh*0.05);
+      const bx = ox+c*cellW+ft/2+2, by = oy+r*cellH+ft/2+2;
+      const bw = cellW-ft-4, bh = cellH-ft-4;
+      if (bw<4||bh<4) continue;
+      ctx.fillStyle='#222'; ctx.beginPath(); ctx.roundRect(bx,by+bh*0.24,bw,bh*0.76,2); ctx.fill();
+      ctx.strokeStyle='#3a3a3a'; ctx.lineWidth=0.5; ctx.stroke();
+      const lidH = Math.max(3,bh*0.17);
+      ctx.fillStyle='#D4A017'; ctx.beginPath(); ctx.roundRect(bx+bw*0.04,by+bh*0.13,bw*0.92,lidH,2); ctx.fill();
+      ctx.strokeStyle='#A87C10'; ctx.lineWidth=0.4; ctx.stroke();
+      if (bw>18) {
+        ctx.fillStyle='#A87C10';
+        ctx.fillRect(bx+bw*0.13,by+bh*0.10,bw*0.1,bh*0.06);
+        ctx.fillRect(bx+bw*0.77,by+bh*0.10,bw*0.1,bh*0.06);
       }
     }
   }
-
   // plywood top
   if (hasTop) {
-    ctx.fillStyle = isBlack ? '#1e1e1e' : isBrown ? '#4a2810' : '#b89c72';
-    ctx.strokeStyle = frameAccent;
-    ctx.lineWidth = 0.8;
-    ctx.fillRect(padX-5, padTop-20, availW+10, 18);
-    ctx.strokeRect(padX-5, padTop-20, availW+10, 18);
-    // wood grain lines
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 0.5;
-    for (let i=0; i<4; i++) {
-      ctx.beginPath();
-      ctx.moveTo(padX-5, padTop-20+(i+1)*3.5);
-      ctx.lineTo(padX+availW+5, padTop-20+(i+1)*3.5);
-      ctx.stroke();
-    }
+    const tc = isBlack?'#1e1e1e':isBrown?'#4a2810':'#b89c72';
+    ctx.fillStyle=tc; ctx.strokeStyle=frameAccent; ctx.lineWidth=0.8;
+    ctx.fillRect(ox-4, oy-topPx, unitPxW+8, topPx-1);
+    ctx.strokeRect(ox-4, oy-topPx, unitPxW+8, topPx-1);
+    ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=0.5;
+    for(let i=1;i<4;i++){const gy=oy-topPx+i*(topPx/4);ctx.beginPath();ctx.moveTo(ox-4,gy);ctx.lineTo(ox+unitPxW+4,gy);ctx.stroke();}
   }
-
   // casters
   if (hasCasters) {
-    const botY = padTop + availH + 2;
-    const count = casterCount(cols, rows);
-    const positions = [];
-    if (count === 4) {
-      positions.push(padX+8, padX+availW-8);
-      if (cols >= 3) positions.splice(1,0,padX+availW/2);
-      else positions.push(padX+availW/2);
-      positions.length = 4; // cap
+    const count = casterCount(cols,rows), botY = oy+unitPxH;
+    for(let i=0;i<count;i++){
+      const cx = ox+(unitPxW/(count-1))*i;
+      ctx.fillStyle='#555'; ctx.beginPath(); ctx.arc(cx,botY+castPx*0.6,castPx*0.4,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#888'; ctx.lineWidth=0.5; ctx.stroke();
+      ctx.fillStyle='#777'; ctx.fillRect(cx-castPx*0.25,botY+1,castPx*0.5,castPx*0.3);
     }
-    // simpler: evenly space
-    const cPos = [];
-    for (let i=0; i<count; i++) cPos.push(padX + (availW/(count-1))*i);
-    cPos.forEach(cx => {
-      ctx.fillStyle = '#666';
-      ctx.beginPath();
-      ctx.arc(cx, botY+6, 5, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = '#999';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
-      // axle
-      ctx.fillStyle = '#888';
-      ctx.fillRect(cx-3, botY+1, 6, 3);
-    });
   }
 }
 
-function requestQuote() {
-  const desc = document.getElementById('p-amt').dataset.desc;
-  sendPrompt('I configured a Peak Garage Solutions tote rack: ' + desc + '. Can you help me submit a quote request?');
-}
-
+// init
+document.getElementById('cvs').width  = CVS_W;
+document.getElementById('cvs').height = CVS_H;
 update();
 </script>
+</body>
+</html>
