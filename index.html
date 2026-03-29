@@ -579,12 +579,21 @@ function submitQuote() {
 emailjs.init(EMAILJS_PUBLIC_KEY);
 // 1. Send the Detailed Order to BENNY (using your second template ID)
     emailjs.send(EMAILJS_SERVICE_ID, 'template_w5deyiz', {
-        to_email:       'benny@peakgaragesolutions.ca',
-        from_name:      name,
-        from_email:     email,
-        phone:          phone,
-        config_summary: summary,
-        notes:          notes || 'None'
+       to_email:       'benny@peakgaragesolutions.ca',
+       from_name:      name,
+       from_email:     email,
+       phone:          phone,
+       config_cols:     cols+' wide',
+       config_rows:     rows+' high',
+       config_slots:    slots+' tote slots',
+       config_width:    wIn+'"',
+       config_height:   hIn+'"',
+       config_depth:    '28.5"',
+       config_addons:   names.length ? names.join(', ') : 'None',
+       config_total:    '$'+total+' CAD',
+       config_summary:  summary,
+       notes:           notes || 'None'
+
     });
 
     // 2. Send the Auto-Reply to the CUSTOMER (using your first template ID)
