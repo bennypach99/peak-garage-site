@@ -601,7 +601,7 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
       to_email:       email,
       from_name:      name,
       config_summary: summary
-   });then(() => {
+   }).then(() => {
         status.className = 'status-msg success';
         status.textContent = '✓ Quote sent! We\'ll be in touch within 1 business day.';
         btn.textContent = 'Sent!';
