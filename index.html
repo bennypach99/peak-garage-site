@@ -594,14 +594,15 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         config_total:   '$' + total + ' CAD',
         config_summary: summary,
         notes:          notes || 'None'
-    });
-
-   // 2. Send the Auto-Reply to the CUSTOMER
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email:       email,
-        from_name:      name,
-        config_summary: summary
     }).then(() => {
+        // 2. Send the Auto-Reply to the CUSTOMER
+        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email:       email,
+            from_name:      name,
+            config_summary: summary
+        });
+    }).then(() => {
+        // SUCCESS: Both emails sent
         status.className = 'status-msg success';
         status.textContent = '✓ Quote sent! We\'ll be in touch within 1 business day.';
         btn.textContent = 'Sent!';
@@ -609,6 +610,7 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         // Clear the form
         document.getElementById('f-name').value = '';
         document.getElementById('f-phone').value = '';
+        document.getElementById('f-email').value = '';
         document.getElementById('f-notes').value = '';
     }).catch(err => {
         status.className = 'status-msg error';
