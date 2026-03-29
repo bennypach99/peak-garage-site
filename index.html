@@ -597,11 +597,11 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
     });
 
     // 2. Send the Auto-Reply to the CUSTOMER
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email:       email,
-        from_name:      name,
-        config_summary: summary
-    }).then(() => {
+   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:       email,
+      from_name:      name,
+      config_summary: summary
+   }).then(() => {
         status.className = 'status-msg success';
         status.textContent = '✓ Quote sent! We\'ll be in touch within 1 business day.';
         btn.textContent = 'Sent!';
