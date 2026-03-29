@@ -579,7 +579,7 @@ function submitQuote() {
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
     // 1. Send the Detailed Order to BENNY
-    emailjs.send(EMAILJS_SERVICE_ID, 'template_w5deyiz', {
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID2, {
         to_email:       'benny@peakgaragesolutions.ca',
         from_name:      name,
         from_email:     email,
