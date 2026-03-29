@@ -577,32 +577,23 @@ function submitQuote() {
   status.className = 'status-msg';
 
 emailjs.init(EMAILJS_PUBLIC_KEY);
-
-    // 1. Send the Detailed Order to BENNY
-    emailjs.send(EMAILJS_SERVICE_ID2, 'template_w5deyiz', {
+// 1. Send the Detailed Order to BENNY (using your second template ID)
+    emailjs.send(EMAILJS_SERVICE_ID, 'template_w5deyiz', {
         to_email:       'benny@peakgaragesolutions.ca',
         from_name:      name,
         from_email:     email,
         phone:          phone,
-        config_cols:    cols + ' wide',
-        config_rows:    rows + ' high',
-        config_slots:   slots + ' tote slots',
-        config_width:   wIn + '"',
-        config_height:  hIn + '"',
-        config_depth:   '28.5"',
-        config_addons:  names.length ? names.join(', ') : 'None',
-        config_total:   '$' + total + ' CAD',
         config_summary: summary,
         notes:          notes || 'None'
     });
 
-    // 2. Send the Auto-Reply to the CUSTOMER
-    emailjs.send(EMAILJS_SERVICE_ID, 'template_ayvgsvb', {
+    // 2. Send the Auto-Reply to the CUSTOMER (using your first template ID)
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
         to_email:       email,
         from_name:      name,
         config_summary: summary
     }).then(() => {
-        // Only show success message after the customer's email triggers
+        // This part only runs if the emails successfully trigger
         status.className = 'status-msg success';
         status.textContent = '✓ Quote sent! We\'ll be in touch within 1 business day.';
         btn.textContent = 'Sent!';
@@ -619,9 +610,6 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         btn.textContent = 'Send Quote Request';
         console.error('EmailJS error:', err);
     });
-  });
-}
-
 // ── CANVAS PREVIEW ──
 function drawPreview() {
   const canvas = document.getElementById('cvs');
