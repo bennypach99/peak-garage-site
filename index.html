@@ -417,6 +417,7 @@ footer a:hover{color:var(--gold-light);}
 const EMAILJS_PUBLIC_KEY  = 'oNs9CbcPHf_Nhc4kH';    // e.g. 'abc123XYZ'
 const EMAILJS_SERVICE_ID  = 'service_4qiybvi';    // e.g. 'service_abc123'
 const EMAILJS_TEMPLATE_ID = 'template_ayvgsvb';   // e.g. 'template_abc123'
+const EMAILJS_TEMPLATE_ID2 = 'template_w5deyiz';   // e.g. 'template_abc123'
 // ============================================================
 
 // ── REAL DIMENSION LOOKUP TABLES ──
@@ -576,7 +577,7 @@ function submitQuote() {
   status.className = 'status-msg';
 
   emailjs.init(EMAILJS_PUBLIC_KEY);
-  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_TEMPLATE_ID2 {
     to_email:        'benny@peakgaragesolutions.ca',
     from_name:       name,
     from_email:      email,
