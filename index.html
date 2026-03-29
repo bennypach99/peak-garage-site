@@ -123,10 +123,11 @@ nav{
 .stain-select-wrap select:focus{border-color:var(--gold);}
 .stain-select-wrap select option{background:var(--ch2);color:var(--text);}
 
-.config-body{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.75rem;align-items:start;}
-@media(max-width:620px){.config-body{grid-template-columns:1fr;}}
+.config-body{display:flex;flex-direction:column;gap:1.5rem;margin-top:1.75rem;}
+.config-bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
+@media(max-width:620px){.config-bottom-row{grid-template-columns:1fr;}}
 
-.preview-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;}
+.preview-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;}
 .preview-label{font-size:.68rem;color:var(--muted);margin-top:.7rem;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;text-align:center;line-height:1.8;}
 
 .summary-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;}
@@ -283,12 +284,12 @@ footer a:hover{color:var(--gold-light);}
       <div class="gallery-label">double 2-wide · 4-high · with maple shelves · $750</div>
     </div>
     <div class="gallery-card">
-      <img class="gallery-img" src="images/gallery5.jpg" alt="2-wide 3 high with casters" onerror="this.parentElement.style.background='#2d2d2d'"/>
-      <div class="gallery-label">2-wide · 3-high · casters · stain · $280</div>
+      <img class="gallery-img" src="images/gallery5.jpg" alt="Gallery photo 5" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">Coming soon</div>
     </div>
     <div class="gallery-card">
-      <img class="gallery-img" src="images/gallery6.jpg" alt="2-wide 4 high with casters" onerror="this.parentElement.style.background='#2d2d2d'"/>
-      <div class="gallery-label">2-wide · 4-high · casters · stain · $340</div>
+      <img class="gallery-img" src="images/gallery6.jpg" alt="Gallery photo 6" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">Coming soon</div>
     </div>
   </div>
 </div>
@@ -365,7 +366,7 @@ footer a:hover{color:var(--gold-light);}
         <canvas id="cvs"></canvas>
         <div class="preview-label" id="pvLabel"></div>
       </div>
-      <div>
+      <div class="config-bottom-row">
         <div class="summary-box">
           <div class="spec-row"><span class="sk">Columns</span><span class="sv" id="s-cols">—</span></div>
           <div class="spec-row"><span class="sk">Rows</span><span class="sv" id="s-rows">—</span></div>
@@ -382,8 +383,8 @@ footer a:hover{color:var(--gold-light);}
           <div class="price-note">+ taxes included &nbsp;·&nbsp; delivery and setup available</div>
           <div class="price-breakdown" id="p-break"></div>
         </div>
-        <button class="quote-btn" onclick="openModal()">Request a Quote ↗</button>
       </div>
+      <button class="quote-btn" onclick="openModal()">Request a Quote ↗</button>
     </div>
   </div>
 </div>
