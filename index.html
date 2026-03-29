@@ -578,7 +578,7 @@ function submitQuote() {
 
 emailjs.init(EMAILJS_PUBLIC_KEY);
 
-    // 1. Send the Detailed Order to BENNY
+   // 1. Send the Detailed Order to BENNY
     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID2, {
         to_email:       'benny@peakgaragesolutions.ca',
         from_name:      name,
@@ -618,12 +618,6 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         btn.textContent = 'Send Quote Request';
         console.error('EmailJS error:', err);
     });
-        // Clear the form
-        document.getElementById('f-name').value = '';
-        document.getElementById('f-phone').value = '';
-        document.getElementById('f-email').value = '';
-        document.getElementById('f-notes').value = '';
-    }).catch(err => {
         status.className = 'status-msg error';
         status.textContent = 'Something went wrong. Please email us directly.';
         btn.disabled = false;
