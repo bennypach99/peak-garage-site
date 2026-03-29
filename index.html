@@ -609,8 +609,7 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         // Clear the form
         document.getElementById('f-name').value = '';
         document.getElementById('f-phone').value = '';
-        document.getElementById('f-email').value = '';
-        document.getElementById('f-notes').value = '';
+document.getElementById('f-notes').value = '';
     }).catch(err => {
         status.className = 'status-msg error';
         status.textContent = 'Something went wrong. Please email us directly.';
@@ -618,12 +617,7 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         btn.textContent = 'Send Quote Request';
         console.error('EmailJS error:', err);
     });
-        status.className = 'status-msg error';
-        status.textContent = 'Something went wrong. Please email us directly.';
-        btn.disabled = false;
-        btn.textContent = 'Send Quote Request';
-        console.error('EmailJS error:', err);
-    });
+} // This is the final bracket for the whole function
 // ── CANVAS PREVIEW ──
 function drawPreview() {
   const canvas = document.getElementById('cvs');
