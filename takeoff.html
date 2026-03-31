@@ -1,1 +1,916 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Drywall Tally – Benny</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #1a1d23;
+    --surface: #23272f;
+    --surface2: #2d3340;
+    --border: #3a4052;
+    --accent: #f5a623;
+    --accent2: #e8912a;
+    --half: #4a9eff;
+    --half-dim: #1d3a5f;
+    --fiveeight: #ff6b6b;
+    --fiveeight-dim: #5f1d1d;
+    --green: #4caf50;
+    --text: #edf0f7;
+    --text-dim: #8a95aa;
+    --red: #ff4444;
+    --tab-h: 58px;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 16px;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ─── TABS ─── */
+  #tab-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: var(--tab-h);
+    background: #111317;
+    display: flex;
+    border-top: 1px solid var(--border);
+    z-index: 100;
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px;
+    background: none; border: none; color: var(--text-dim);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: .5px;
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .tab-btn .ico { font-size: 20px; }
+  .tab-btn.active { color: var(--accent); }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; padding: 16px 16px calc(var(--tab-h) + 16px); min-height: 100dvh; }
+  .screen.active { display: block; }
+
+  /* ─── WELCOME ─── */
+  .logo-bar {
+    text-align: center;
+    padding: 20px 0 10px;
+  }
+  .logo-bar h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px; font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .logo-bar p { color: var(--text-dim); font-size: 13px; margin-top: 2px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px; font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 4px; }
+  input[type=text], input[type=number], select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 16px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    outline: none;
+    appearance: none;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+
+  .floor-row {
+    display: flex; gap: 8px; align-items: flex-end;
+    margin-bottom: 8px;
+  }
+  .floor-row .fn { flex: 1.5; }
+  .floor-row .fh { flex: 1; }
+  .floor-row .del {
+    background: var(--fiveeight-dim);
+    border: none; border-radius: 8px;
+    color: var(--fiveeight);
+    font-size: 20px; font-weight: bold;
+    width: 40px; height: 40px;
+    cursor: pointer; flex-shrink: 0;
+    margin-bottom: 10px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    margin-bottom: 8px;
+  }
+  .btn:active { opacity: .8; transform: scale(.98); }
+  .btn-accent { background: var(--accent); color: #111; }
+  .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-dim); }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-sm {
+    width: auto; padding: 8px 16px;
+    font-size: 13px;
+    margin-bottom: 0;
+  }
+
+  /* extras grid */
+  .extras-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .extra-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .extra-item label { font-size: 12px; margin-bottom: 4px; }
+  .extra-item input { margin-bottom: 0; padding: 8px 10px; font-size: 15px; }
+
+  /* ─── FLOOR SELECTOR ─── */
+  #floor-list { display: flex; flex-direction: column; gap: 10px; }
+  .floor-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .floor-card:active { background: var(--surface2); border-color: var(--accent); }
+  .floor-card .fc-name { font-family: 'Oswald', sans-serif; font-size: 20px; font-weight: 600; }
+  .floor-card .fc-sub { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+  .floor-card .fc-arr { font-size: 24px; color: var(--accent); }
+  .section-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 18px 0 8px;
+  }
+
+  /* ─── TALLY ─── */
+  #tally-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 14px;
+  }
+  #back-btn {
+    background: var(--surface2); border: none; border-radius: 8px;
+    color: var(--text); font-size: 22px;
+    width: 40px; height: 40px; cursor: pointer; flex-shrink: 0;
+  }
+  #tally-title { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); flex: 1; }
+
+  /* type tabs inside tally */
+  .type-tabs {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .type-tab {
+    flex: 1; padding: 12px 8px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    font-family: 'Oswald', sans-serif;
+    font-size: 15px; font-weight: 600;
+    color: var(--text-dim);
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+  }
+  .type-tab.active-half { border-color: var(--half); color: var(--half); background: var(--half-dim); }
+  .type-tab.active-five { border-color: var(--fiveeight); color: var(--fiveeight); background: var(--fiveeight-dim); }
+
+  /* sheet rows */
+  .sheet-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex; align-items: center;
+    padding: 0 12px;
+    margin-bottom: 10px;
+    height: 70px;
+  }
+  .sheet-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px; font-weight: 600;
+    flex: 1;
+  }
+  .sheet-label span { font-size: 13px; color: var(--text-dim); font-family: 'Source Sans 3', sans-serif; font-weight: 400; display: block; }
+  .counter-btn {
+    width: 54px; height: 54px;
+    border-radius: 10px;
+    border: none;
+    font-size: 30px; font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform .1s, opacity .1s;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+  }
+  .counter-btn:active { transform: scale(.9); opacity: .7; }
+  .btn-minus { background: var(--surface2); color: var(--text-dim); }
+  .btn-plus-half { background: var(--half); color: #fff; }
+  .btn-plus-five { background: var(--fiveeight); color: #fff; }
+  .count-display {
+    width: 52px; text-align: center;
+    font-family: 'Oswald', sans-serif;
+    font-size: 26px; font-weight: 700;
+  }
+
+  /* ─── SUMMARY ─── */
+  .summary-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .summary-block .sb-head {
+    background: var(--surface2);
+    padding: 10px 14px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+  }
+  .sum-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .sum-row:last-child { border-bottom: none; }
+  .sum-row .sv { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 600; }
+  .sum-row .sv.half { color: var(--half); }
+  .sum-row .sv.five { color: var(--fiveeight); }
+
+  .export-note { font-size: 12px; color: var(--text-dim); text-align: center; margin-top: 4px; margin-bottom: 12px; }
+
+  .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #111;
+    font-size: 11px; font-weight: 700;
+    border-radius: 20px;
+    padding: 2px 7px;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: .5px;
+    min-width: 22px;
+    text-align: center;
+    margin-left: 6px;
+  }
+
+  .toast {
+    position: fixed; bottom: calc(var(--tab-h) + 12px); left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--green); color: #fff;
+    padding: 10px 22px; border-radius: 40px;
+    font-weight: 600; font-size: 15px;
+    opacity: 0;
+    transition: opacity .3s, transform .3s;
+    pointer-events: none;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* width cap for tablets */
+  .screen > * { max-width: 540px; margin-left: auto; margin-right: auto; }
+  .screen > .btn, .screen > .export-note { max-width: 540px; margin-left: auto; margin-right: auto; }
+  #tab-bar { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ WELCOME ═══════════════ -->
+<div id="screen-welcome" class="screen active">
+  <div class="logo-bar">
+    <h1>🏗️ Drywall Tally</h1>
+    <p>Benny's Job Sheet Tool</p>
+  </div>
+
+  <div class="card">
+    <h2>Job Info</h2>
+    <label>Job Name</label>
+    <input type="text" id="job-name" placeholder="e.g. Marel – Block C" />
+    <label>Job Type</label>
+    <select id="job-type">
+      <option value="Highrise">Highrise</option>
+      <option value="Lowrise">Lowrise</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>Floors / Areas <span id="floor-count-badge" class="badge">0</span></h2>
+    <div id="floors-input"></div>
+    <button class="btn btn-outline" onclick="addFloor()">+ Add Floor / Area</button>
+  </div>
+
+  <div class="card">
+    <h2>Extras</h2>
+    <div class="extras-grid" id="extras-grid"></div>
+  </div>
+
+  <button class="btn btn-accent" onclick="goToFloors()">Start Tally →</button>
+</div>
+
+<!-- ═══════════════ FLOORS ═══════════════ -->
+<div id="screen-floors" class="screen">
+  <div class="logo-bar">
+    <h1>Select Area</h1>
+    <p id="floors-job-subtitle"></p>
+  </div>
+  <div id="floor-list"></div>
+  <div class="section-title">Actions</div>
+  <button class="btn btn-green" onclick="goToSummary()">View Summary &amp; Export</button>
+  <button class="btn btn-outline" onclick="showScreen('welcome')">← Back to Job Setup</button>
+</div>
+
+<!-- ═══════════════ TALLY ═══════════════ -->
+<div id="screen-tally" class="screen">
+  <div id="tally-header">
+    <button id="back-btn" onclick="showScreen('floors')">←</button>
+    <div id="tally-title">Floor</div>
+  </div>
+  <div class="type-tabs">
+    <div class="type-tab active-half" onclick="setType('half')">½" Regular<br><small>4×8 / 4×54</small></div>
+    <div class="type-tab" onclick="setType('five')">⅝" Type X<br><small>4×8 / 4×54</small></div>
+  </div>
+  <div id="tally-rows"></div>
+</div>
+
+<!-- ═══════════════ SUMMARY ═══════════════ -->
+<div id="screen-summary" class="screen">
+  <div class="logo-bar">
+    <h1>Summary</h1>
+    <p id="sum-job-name"></p>
+  </div>
+  <div id="summary-content"></div>
+  <p class="export-note">Downloads a filled copy of Benny's spreadsheet</p>
+  <button class="btn btn-green" onclick="exportXLSX()">⬇ Export to Excel</button>
+  <button class="btn btn-outline" onclick="showScreen('floors')" style="margin-top:4px">← Back</button>
+</div>
+
+<!-- ─── TAB BAR ─── -->
+<div id="tab-bar">
+  <button class="tab-btn active" onclick="showScreen('welcome')"><span class="ico">📋</span>Setup</button>
+  <button class="tab-btn" onclick="showScreen('floors')"><span class="ico">🏢</span>Areas</button>
+  <button class="tab-btn" onclick="showScreen('summary')"><span class="ico">📊</span>Summary</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ──────────────────────────────────────────────────────
+//  STATE
+// ──────────────────────────────────────────────────────
+const EXTRAS_DEF = [
+  { key:'potLights',   label:'Pot Lights',    unit:'qty' },
+  { key:'steel8',      label:"Steel @ 8'",    unit:'lin ft' },
+  { key:'steel9',      label:"Steel @ 9'",    unit:'lin ft' },
+  { key:'steel10',     label:"Steel @ 10'",   unit:'lin ft' },
+  { key:'cornerBead',  label:'Corner Bead',   unit:'lin ft' },
+  { key:'ota',         label:'OTA > 64',      unit:'qty' },
+  { key:'durock',      label:'Durock',        unit:'sq ft' },
+  { key:'bullnose',    label:'Bullnose',      unit:'lin ft' },
+  { key:'waffle',      label:'Waffle',        unit:'qty' },
+  { key:'roundStairs', label:'Round Stairs',  unit:'qty' },
+  { key:'skylight24',  label:'Skylight 2×4',  unit:'qty' },
+  { key:'skylight44',  label:'Skylight 4×4',  unit:'qty' },
+];
+
+// Sheet sizes for each type
+const HALF_SIZES  = [
+  { w:'48', lengths:[7,8,9,10,12] },
+  { w:'54', lengths:[8,10,12] },
+];
+const FIVE_SIZES  = [
+  { w:'48', lengths:[8,9,10,12] },
+  { w:'54', lengths:[12] },
+];
+
+let state = {
+  jobName: '',
+  jobType: 'Highrise',
+  floors: [],           // [{name, height}]
+  tallies: {},          // { floorIdx: { half: {key:qty}, five: {key:qty} } }
+  extras: {},           // { key: value }
+};
+
+let currentFloor = 0;
+let currentType  = 'half'; // 'half' | 'five'
+
+// ──────────────────────────────────────────────────────
+//  INIT
+// ──────────────────────────────────────────────────────
+function init() {
+  renderExtrasGrid();
+  addFloor();
+  addFloor();
+  loadFromStorage();
+}
+
+function saveToStorage() {
+  state.jobName = document.getElementById('job-name').value;
+  state.jobType  = document.getElementById('job-type').value;
+  // extras
+  EXTRAS_DEF.forEach(e => {
+    const el = document.getElementById('extra-' + e.key);
+    state.extras[e.key] = el ? (parseFloat(el.value)||0) : 0;
+  });
+  localStorage.setItem('drywallTally', JSON.stringify(state));
+}
+
+function loadFromStorage() {
+  const raw = localStorage.getItem('drywallTally');
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    state = saved;
+    document.getElementById('job-name').value = state.jobName||'';
+    document.getElementById('job-type').value = state.jobType||'Highrise';
+    // reload floors UI
+    document.getElementById('floors-input').innerHTML = '';
+    state.floors.forEach((f,i) => addFloorRow(f.name, f.height));
+    // reload extras
+    EXTRAS_DEF.forEach(e => {
+      const el = document.getElementById('extra-' + e.key);
+      if (el) el.value = state.extras[e.key]||'';
+    });
+  } catch(e){}
+}
+
+// ──────────────────────────────────────────────────────
+//  FLOORS INPUT
+// ──────────────────────────────────────────────────────
+function addFloor(name='', height='9') {
+  addFloorRow(name, height);
+  state.floors.push({name, height});
+  updateFloorBadge();
+}
+
+function addFloorRow(name='', height='9') {
+  const container = document.getElementById('floors-input');
+  const idx = container.children.length;
+  const row = document.createElement('div');
+  row.className = 'floor-row';
+  row.dataset.idx = idx;
+  row.innerHTML = `
+    <div class="fn">
+      <label>Area / Floor ${idx+1}</label>
+      <input type="text" placeholder="e.g. Main Floor" value="${name}" oninput="updateFloorName(${idx},this.value)">
+    </div>
+    <div class="fh">
+      <label>Ceil. Ht</label>
+      <input type="number" placeholder="9" value="${height}" oninput="updateFloorHeight(${idx},this.value)">
+    </div>
+    <button class="del" onclick="removeFloor(this)">×</button>
+  `;
+  container.appendChild(row);
+}
+
+function removeFloor(btn) {
+  const row = btn.closest('.floor-row');
+  const idx = [...document.getElementById('floors-input').children].indexOf(row);
+  state.floors.splice(idx, 1);
+  row.remove();
+  renumberFloors();
+  updateFloorBadge();
+}
+
+function renumberFloors() {
+  document.querySelectorAll('.floor-row').forEach((row, i) => {
+    row.dataset.idx = i;
+    row.querySelector('label').textContent = `Area / Floor ${i+1}`;
+    row.querySelectorAll('input')[0].setAttribute('oninput', `updateFloorName(${i},this.value)`);
+    row.querySelectorAll('input')[1].setAttribute('oninput', `updateFloorHeight(${i},this.value)`);
+  });
+}
+
+function updateFloorName(idx, val)   { if (state.floors[idx]) state.floors[idx].name   = val; }
+function updateFloorHeight(idx, val) { if (state.floors[idx]) state.floors[idx].height = val; }
+
+function updateFloorBadge() {
+  document.getElementById('floor-count-badge').textContent = state.floors.length;
+}
+
+// ──────────────────────────────────────────────────────
+//  EXTRAS GRID
+// ──────────────────────────────────────────────────────
+function renderExtrasGrid() {
+  const grid = document.getElementById('extras-grid');
+  grid.innerHTML = EXTRAS_DEF.map(e => `
+    <div class="extra-item">
+      <label>${e.label}<br><span style="color:var(--text-dim);font-size:11px">${e.unit}</span></label>
+      <input type="number" id="extra-${e.key}" placeholder="0" min="0" value="">
+    </div>
+  `).join('');
+}
+
+// ──────────────────────────────────────────────────────
+//  NAVIGATION
+// ──────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['welcome','floors','summary'][i]===name);
+  });
+  if (name==='floors') renderFloorList();
+  if (name==='summary') renderSummary();
+}
+
+function goToFloors() {
+  // snapshot job info
+  state.jobName = document.getElementById('job-name').value || 'Untitled Job';
+  state.jobType  = document.getElementById('job-type').value;
+  EXTRAS_DEF.forEach(e => {
+    const el = document.getElementById('extra-' + e.key);
+    state.extras[e.key] = el ? (parseFloat(el.value)||0) : 0;
+  });
+  // sync floor names/heights from inputs
+  document.querySelectorAll('.floor-row').forEach((row,i) => {
+    const inputs = row.querySelectorAll('input');
+    if (!state.floors[i]) state.floors[i] = {};
+    state.floors[i].name   = inputs[0].value || `Floor ${i+1}`;
+    state.floors[i].height = inputs[1].value || '9';
+  });
+  saveToStorage();
+  showScreen('floors');
+}
+
+function goToSummary() {
+  saveToStorage();
+  showScreen('summary');
+}
+
+// ──────────────────────────────────────────────────────
+//  FLOOR LIST
+// ──────────────────────────────────────────────────────
+function renderFloorList() {
+  document.getElementById('floors-job-subtitle').textContent = state.jobName || '';
+  const list = document.getElementById('floor-list');
+  list.innerHTML = '';
+  if (!state.floors.length) {
+    list.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:20px">No floors added yet. Go to Setup.</p>';
+    return;
+  }
+  state.floors.forEach((f, i) => {
+    const totalSheets = countSheets(i, 'half') + countSheets(i, 'five');
+    const div = document.createElement('div');
+    div.className = 'floor-card';
+    div.onclick = () => openTally(i);
+    div.innerHTML = `
+      <div>
+        <div class="fc-name">${f.name || `Floor ${i+1}`}</div>
+        <div class="fc-sub">Ceiling: ${f.height||'?'} ft &nbsp;·&nbsp; ${totalSheets} sheet${totalSheets!==1?'s':''} tallied</div>
+      </div>
+      <div class="fc-arr">›</div>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function countSheets(floorIdx, type) {
+  const t = state.tallies[floorIdx]?.[type];
+  if (!t) return 0;
+  return Object.values(t).reduce((a,b) => a+(b||0), 0);
+}
+
+// ──────────────────────────────────────────────────────
+//  TALLY SCREEN
+// ──────────────────────────────────────────────────────
+function openTally(idx) {
+  currentFloor = idx;
+  currentType  = 'half';
+  const f = state.floors[idx];
+  document.getElementById('tally-title').textContent = f.name || `Floor ${idx+1}`;
+  renderTallyRows();
+  showScreen('tally');
+}
+
+function setType(t) {
+  currentType = t;
+  document.querySelectorAll('.type-tab').forEach(el => {
+    el.classList.remove('active-half','active-five');
+  });
+  event.currentTarget.classList.add(t==='half' ? 'active-half' : 'active-five');
+  renderTallyRows();
+}
+
+function renderTallyRows() {
+  const sizes = currentType === 'half' ? HALF_SIZES : FIVE_SIZES;
+  const container = document.getElementById('tally-rows');
+  container.innerHTML = '';
+
+  const plusClass = currentType==='half' ? 'btn-plus-half' : 'btn-plus-five';
+
+  sizes.forEach(group => {
+    group.lengths.forEach(len => {
+      const key = `${group.w}x${len}`;
+      const qty = getTally(currentFloor, currentType, key);
+      const row = document.createElement('div');
+      row.className = 'sheet-row';
+      row.innerHTML = `
+        <div class="sheet-label">
+          ${len}'
+          <span>4×${group.w}" · ${group.w==='48'?'48"':'54"'} wide</span>
+        </div>
+        <button class="counter-btn btn-minus" onclick="adjustTally('${key}',-1,this)">−</button>
+        <div class="count-display" id="cnt-${currentType}-${key}">${qty}</div>
+        <button class="counter-btn ${plusClass}" onclick="adjustTally('${key}',1,this)">+</button>
+      `;
+      container.appendChild(row);
+    });
+  });
+}
+
+function getTally(floorIdx, type, key) {
+  return state.tallies[floorIdx]?.[type]?.[key] || 0;
+}
+
+function adjustTally(key, delta, btn) {
+  if (!state.tallies[currentFloor]) state.tallies[currentFloor] = {};
+  if (!state.tallies[currentFloor][currentType]) state.tallies[currentFloor][currentType] = {};
+  const cur = state.tallies[currentFloor][currentType][key] || 0;
+  const newVal = Math.max(0, cur + delta);
+  state.tallies[currentFloor][currentType][key] = newVal;
+  document.getElementById(`cnt-${currentType}-${key}`).textContent = newVal;
+  saveToStorage();
+  // pulse animation
+  btn.style.transform = 'scale(0.85)';
+  setTimeout(() => btn.style.transform = '', 100);
+}
+
+// ──────────────────────────────────────────────────────
+//  SUMMARY
+// ──────────────────────────────────────────────────────
+function renderSummary() {
+  document.getElementById('sum-job-name').textContent = state.jobName || '';
+  const el = document.getElementById('summary-content');
+  let html = '';
+
+  state.floors.forEach((f, i) => {
+    const halfData = buildSheetData(i, 'half');
+    const fiveData = buildSheetData(i, 'five');
+    const halfTotal = halfData.reduce((a,r)=>a+r.totalFt, 0);
+    const fiveTotal = fiveData.reduce((a,r)=>a+r.totalFt, 0);
+
+    html += `<div class="summary-block">
+      <div class="sb-head">${f.name || `Floor ${i+1}`} &nbsp;·&nbsp; ${f.height||'?'}ft ceiling</div>`;
+
+    if (halfData.some(r=>r.qty>0)) {
+      html += `<div class="sum-row"><span>½" Regular – total sq ft</span><span class="sv half">${halfTotal.toFixed(0)}</span></div>`;
+      halfData.filter(r=>r.qty>0).forEach(r => {
+        html += `<div class="sum-row" style="padding-left:24px;font-size:13px;color:var(--text-dim)"><span>${r.label}</span><span>${r.qty} sheet${r.qty!==1?'s':''}</span></div>`;
+      });
+    }
+    if (fiveData.some(r=>r.qty>0)) {
+      html += `<div class="sum-row"><span>⅝" Type X – total sq ft</span><span class="sv five">${fiveTotal.toFixed(0)}</span></div>`;
+      fiveData.filter(r=>r.qty>0).forEach(r => {
+        html += `<div class="sum-row" style="padding-left:24px;font-size:13px;color:var(--text-dim)"><span>${r.label}</span><span>${r.qty} sheet${r.qty!==1?'s':''}</span></div>`;
+      });
+    }
+    if (!halfData.some(r=>r.qty>0) && !fiveData.some(r=>r.qty>0)) {
+      html += `<div class="sum-row" style="color:var(--text-dim)"><span>No sheets tallied yet</span></div>`;
+    }
+    html += `</div>`;
+  });
+
+  // Extras
+  const extrasHtml = EXTRAS_DEF
+    .filter(e => (state.extras[e.key]||0) > 0)
+    .map(e => `<div class="sum-row"><span>${e.label}</span><span class="sv">${state.extras[e.key]} ${e.unit}</span></div>`)
+    .join('');
+  if (extrasHtml) {
+    html += `<div class="summary-block"><div class="sb-head">Extras</div>${extrasHtml}</div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+function buildSheetData(floorIdx, type) {
+  const sizes = type==='half' ? HALF_SIZES : FIVE_SIZES;
+  const rows = [];
+  sizes.forEach(group => {
+    group.lengths.forEach(len => {
+      const key = `${group.w}x${len}`;
+      const qty = getTally(floorIdx, type, key);
+      const sqFt = qty * (parseFloat(group.w)/12) * len;
+      rows.push({ key, label:`${len}' × 4"×${group.w}" wide`, qty, totalFt: sqFt });
+    });
+  });
+  return rows;
+}
+
+// ──────────────────────────────────────────────────────
+//  EXPORT  (builds on original template structure)
+// ──────────────────────────────────────────────────────
+async function exportXLSX() {
+  try {
+    // Fetch the template
+    const resp = await fetch('Drywall_Take-off_-_Benny.xlsx');
+    let wb;
+    if (resp.ok) {
+      const arrayBuffer = await resp.arrayBuffer();
+      wb = XLSX.read(arrayBuffer, {type:'array', cellStyles:true});
+    } else {
+      wb = buildFreshWorkbook();
+    }
+
+    // Fill in Lot 1 (first lot sheet) with floor data
+    // We'll use the first lot sheet
+    const lotSheet = wb.Sheets[wb.SheetNames[0]];
+
+    // job name
+    setCell(lotSheet, 'F3', state.jobName);
+
+    // For up to 2 floors (left/right columns per lot sheet)
+    state.floors.slice(0,2).forEach((f, fi) => {
+      const col = fi===0 ? 'B' : 'F';   // left or right block
+      const rowOff = fi===0 ? 0 : 0;
+
+      // ceiling height
+      setCell(lotSheet, `${col==='B'?'C':'G'}5`, parseFloat(f.height)||9);
+
+      // ½" 4×8 lengths: rows 6-10
+      const halfLens48 = [7,8,9,10,12];
+      halfLens48.forEach((len, ri) => {
+        const key = `48x${len}`;
+        const qty = getTally(fi, 'half', key);
+        const qtyCol = col==='B' ? 'D' : 'H';
+        setCell(lotSheet, `${qtyCol}${6+ri}`, qty||null);
+      });
+      // ½" 4×54 lengths: rows 11-13
+      const halfLens54 = [8,10,12];
+      halfLens54.forEach((len, ri) => {
+        const key = `54x${len}`;
+        const qty = getTally(fi, 'half', key);
+        const qtyCol = col==='B' ? 'D' : 'H';
+        setCell(lotSheet, `${qtyCol}${11+ri}`, qty||null);
+      });
+      // 5/8" 4×8 lengths: rows 14-17
+      const fiveLens48 = [8,9,10,12];
+      fiveLens48.forEach((len, ri) => {
+        const key = `48x${len}`;
+        const qty = getTally(fi, 'five', key);
+        const qtyCol = col==='B' ? 'D' : 'H';
+        setCell(lotSheet, `${qtyCol}${14+ri}`, qty||null);
+      });
+      // 5/8" 4×54: row 18
+      const key54 = '54x12';
+      const qty54 = getTally(fi, 'five', key54);
+      const qtyCol = col==='B' ? 'D' : 'H';
+      setCell(lotSheet, `${qtyCol}18`, qty54||null);
+
+      // Extras (left col only for now)
+      if (fi===0) {
+        setCell(lotSheet, 'D23', state.extras.potLights||null);
+        setCell(lotSheet, 'D24', state.extras.steel8||null);
+        setCell(lotSheet, 'D25', state.extras.steel9||null);
+        setCell(lotSheet, 'D26', state.extras.steel10||null);
+        setCell(lotSheet, 'D27', state.extras.cornerBead||null);
+        setCell(lotSheet, 'D28', state.extras.ota||null);
+        setCell(lotSheet, 'H23', state.extras.durock||null);
+        setCell(lotSheet, 'H24', state.extras.bullnose||null);
+        setCell(lotSheet, 'H25', state.extras.waffle||null);
+        setCell(lotSheet, 'H26', state.extras.roundStairs||null);
+        setCell(lotSheet, 'H27', state.extras.skylight24||null);
+        setCell(lotSheet, 'H28', state.extras.skylight44||null);
+      }
+    });
+
+    const fname = (state.jobName||'Drywall-Tally').replace(/[^a-zA-Z0-9-_ ]/g,'_') + '.xlsx';
+    XLSX.writeFile(wb, fname);
+    showToast('✅ Exported: ' + fname);
+  } catch(e) {
+    console.error(e);
+    exportFallback();
+  }
+}
+
+function setCell(sheet, addr, value) {
+  if (value === null || value === undefined || value === 0 || value === '') return;
+  if (!sheet[addr]) sheet[addr] = {};
+  sheet[addr].v = value;
+  sheet[addr].t = typeof value === 'number' ? 'n' : 's';
+}
+
+function exportFallback() {
+  // Build a clean summary workbook if template not found
+  const wb = buildFreshWorkbook();
+  const fname = (state.jobName||'Drywall-Tally').replace(/[^a-zA-Z0-9-_ ]/g,'_') + '.xlsx';
+  XLSX.writeFile(wb, fname);
+  showToast('✅ Exported summary spreadsheet');
+}
+
+function buildFreshWorkbook() {
+  const wb = XLSX.utils.book_new();
+
+  // Summary sheet
+  const rows = [
+    ['Drywall Take-off – ' + (state.jobName||'Job')],
+    ['Job Type:', state.jobType],
+    [],
+    ['Floor/Area', 'Ceiling Ht', 'Type', 'Size', 'Length', 'Qty', 'Sq Ft'],
+  ];
+
+  state.floors.forEach((f, fi) => {
+    ['half','five'].forEach(type => {
+      const sizes = type==='half' ? HALF_SIZES : FIVE_SIZES;
+      const label = type==='half' ? '1/2" x 48"' : '5/8" x 48"';
+      sizes.forEach(group => {
+        group.lengths.forEach(len => {
+          const key = `${group.w}x${len}`;
+          const qty = getTally(fi, type, key);
+          if (qty > 0) {
+            const sqFt = qty * (parseFloat(group.w)/12) * len;
+            rows.push([
+              f.name||`Floor ${fi+1}`,
+              f.height||9,
+              type==='half'?'1/2" Regular':'5/8" Type X',
+              `4×${group.w}"`,
+              `${len}'`,
+              qty,
+              Math.round(sqFt)
+            ]);
+          }
+        });
+      });
+    });
+  });
+
+  rows.push([]);
+  rows.push(['Extras']);
+  EXTRAS_DEF.forEach(e => {
+    const v = state.extras[e.key]||0;
+    if (v>0) rows.push([e.label, v, e.unit]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:20},{wch:12},{wch:16},{wch:10},{wch:10},{wch:8},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Take-off');
+  return wb;
+}
+
+// ──────────────────────────────────────────────────────
+//  TOAST
+// ──────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ──────────────────────────────────────────────────────
+//  BOOT
+// ──────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
