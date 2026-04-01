@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Peak Garage Solutions – Custom Tote Storage</title>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+
+<style>
+/* ============================================================
+   PEAK GARAGE SOLUTIONS — peakgaragesolutions.ca
+   ============================================================ */
+
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;
+  --gold-light:#E8C96A;
+  --gold-dark:#A07830;
+  --gold-pale:#2a2210;
+  --ch:#1a1a1a;
+  --ch2:#222222;
+  --ch3:#2d2d2d;
+  --text:#f0e6cc;
+  --muted:#9a8a6a;
+  --border:rgba(201,168,76,0.2);
+  --bstrong:rgba(201,168,76,0.45);
+  --radius:10px;
+}
+body{font-family:'Open Sans',sans-serif;color:var(--text);background:var(--ch);}
+h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+
+/* ── NAV ── */
+nav{
+  background:var(--ch2);
+  border-bottom:1px solid var(--bstrong);
+  padding:.7rem 2rem .5rem;
+  display:flex;flex-direction:column;gap:.5rem;
+  position:sticky;top:0;z-index:100;
+}
+.nav-top{display:flex;align-items:center;justify-content:center;position:relative;}
+.logo-wrap{display:flex;align-items:center;gap:14px;text-decoration:none;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.55rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;line-height:1.1;}
+.logo-text span{display:block;font-size:.72rem;font-weight:500;color:var(--muted);letter-spacing:.14em;text-align:center;}
+.nav-cta-wrap{position:absolute;right:0;}
+.nav-links{display:flex;gap:2rem;justify-content:center;border-top:1px solid var(--border);padding-top:.45rem;}
+.nav-links a{text-decoration:none;color:var(--muted);font-size:.85rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;transition:color .2s;}
+.nav-links a:hover{color:var(--gold);}
+.nav-cta{background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));color:var(--ch);border:none;padding:.5rem 1.3rem;border-radius:6px;font-weight:700;font-family:'Rajdhani',sans-serif;cursor:pointer;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;}
+.nav-cta:hover{opacity:.88;}
+@media(max-width:500px){.nav-cta-wrap{display:none;}}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(160deg,#111 0%,#1a1a1a 40%,#1f1a0e 100%);
+  padding:5rem 2rem 4rem;
+  text-align:center;
+  border-bottom:1px solid var(--bstrong);
+  position:relative;overflow:hidden;
+}
+.hero-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:700px;height:320px;background:radial-gradient(ellipse,rgba(201,168,76,.11) 0%,transparent 70%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.08);border:1px solid var(--bstrong);border-radius:999px;padding:.35rem 1.1rem;font-size:.74rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.8rem;font-family:'Rajdhani',sans-serif;}
+.hero h1{font-size:3rem;font-weight:700;line-height:1.1;color:#fff;text-transform:uppercase;margin-bottom:.5rem;}
+.hero h1 .gold{background:linear-gradient(90deg,var(--gold-dark),var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.gold-rule{width:80px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1rem auto 1.2rem;}
+.hero p{font-size:1rem;color:var(--muted);max-width:500px;margin:0 auto 2.5rem;line-height:1.75;}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+.btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.8rem 2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;}
+.btn-gold:hover{opacity:.88;}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--bstrong);padding:.8rem 2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.btn-outline:hover{background:rgba(201,168,76,.08);}
+
+/* ── TRUST BAR ── */
+.trust-bar{background:var(--ch2);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:center;gap:2.5rem;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:.5rem;font-size:.76rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;}
+.trust-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+
+/* ── SECTIONS ── */
+.section-wrap{max-width:1000px;margin:0 auto;padding:4rem 2rem;}
+.section-label{font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;font-family:'Rajdhani',sans-serif;}
+.section-title{font-size:1.9rem;font-weight:700;color:#fff;text-transform:uppercase;margin-bottom:.5rem;}
+.section-sub{color:var(--muted);font-size:.9rem;line-height:1.7;max-width:520px;}
+
+/* ── SCROLL OFFSET for sticky nav ── */
+#features, #gallery, #about, #configurator { scroll-margin-top: 110px; }
+
+/* ── FEATURES ── */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:2.5rem;}
+.feature-card{background:var(--ch2);padding:1.5rem;transition:background .2s;}
+.feature-card:hover{background:var(--ch3);}
+.f-icon{font-size:1.5rem;margin-bottom:.75rem;}
+.feature-card h4{font-size:1rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;}
+.feature-card p{font-size:.83rem;color:var(--muted);line-height:1.6;}
+
+/* ── GALLERY ── */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem;}
+.gallery-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--ch3);aspect-ratio:4/3;position:relative;cursor:pointer;}
+.gallery-card:hover{border-color:var(--bstrong);}
+.gallery-card .gallery-tap-hint{position:absolute;top:.55rem;right:.6rem;background:rgba(201,168,76,.18);border:1px solid var(--bstrong);border-radius:999px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;padding:.18rem .6rem;opacity:0;transition:opacity .2s;pointer-events:none;}
+.gallery-card:hover .gallery-tap-hint{opacity:1;}
+.gallery-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;}
+.gallery-card:hover .gallery-img{transform:scale(1.03);}
+.gallery-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:.8rem 1rem .65rem;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;}
+
+/* ── CONFIGURATOR ── */
+.config-outer{background:var(--ch2);border:1px solid var(--bstrong);border-radius:14px;padding:2rem;margin-top:2rem;}
+.clabel{font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;font-family:'Rajdhani',sans-serif;margin-top:1.4rem;}
+.clabel:first-child{margin-top:0;}
+.opt-row{display:flex;gap:.45rem;flex-wrap:wrap;}
+.opt-btn{padding:.38rem .9rem;border:1px solid var(--border);border-radius:5px;background:transparent;font-size:.83rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+.opt-btn.sel{border-color:var(--gold);background:var(--gold-pale);color:var(--gold-light);}
+.opt-btn:hover:not(.sel){border-color:rgba(201,168,76,.4);color:var(--text);}
+
+.addon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:.65rem;margin-top:.6rem;}
+.addon-card{border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;cursor:pointer;transition:all .2s;background:transparent;position:relative;}
+.addon-card.on{border-color:var(--gold);background:var(--gold-pale);}
+.addon-card:hover:not(.on){border-color:rgba(201,168,76,.4);}
+.addon-name{font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
+.addon-price{font-size:.73rem;color:var(--muted);margin-top:.18rem;}
+.addon-check{position:absolute;top:.5rem;right:.6rem;width:16px;height:16px;border-radius:50%;background:var(--gold);display:none;align-items:center;justify-content:center;}
+.addon-card.on .addon-check{display:flex;}
+.addon-check::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--ch);}
+.addon-card.disabled{opacity:.38;cursor:not-allowed;pointer-events:none;}
+.addon-note{font-size:.73rem;color:var(--muted);font-style:italic;margin-bottom:.6rem;font-family:'Open Sans',sans-serif;}
+.stain-select-wrap select{background:var(--ch);border:1px solid var(--bstrong);border-radius:6px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.92rem;font-weight:600;letter-spacing:.04em;padding:.45rem 2rem .45rem .9rem;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .65rem center;}
+.stain-select-wrap select:focus{border-color:var(--gold);}
+.stain-select-wrap select option{background:var(--ch2);color:var(--text);}
+
+.config-body{display:flex;flex-direction:column;gap:1.5rem;margin-top:1.75rem;}
+.config-bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
+@media(max-width:620px){.config-bottom-row{grid-template-columns:1fr;}}
+
+.preview-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;}
+.preview-label{font-size:.68rem;color:var(--muted);margin-top:.7rem;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;text-align:center;line-height:1.8;}
+
+.summary-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;}
+.spec-row{display:flex;justify-content:space-between;padding:.42rem 0;border-bottom:1px solid var(--border);font-size:.81rem;}
+.spec-row:last-child{border-bottom:none;}
+.sk{color:var(--muted);font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+.sv{font-weight:600;color:var(--text);font-family:'Rajdhani',sans-serif;}
+.sv.hi{color:var(--gold-light);}
+
+.price-box{margin-top:1.1rem;background:linear-gradient(135deg,rgba(201,168,76,.09),rgba(201,168,76,.04));border:1px solid var(--bstrong);border-radius:var(--radius);padding:1.15rem 1.3rem;}
+.price-label{font-size:.66rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;margin-bottom:.2rem;}
+.price-amt{font-size:2.3rem;font-weight:700;color:var(--gold-light);font-family:'Rajdhani',sans-serif;}
+.price-note{font-size:.71rem;color:var(--muted);margin-top:.18rem;}
+.price-breakdown{margin-top:.75rem;font-size:.77rem;font-family:'Rajdhani',sans-serif;line-height:1.9;border-top:1px solid var(--border);padding-top:.65rem;}
+.price-breakdown .line{display:flex;justify-content:space-between;}
+.price-breakdown .line span:first-child{color:var(--muted);}
+.price-breakdown .line span:last-child{color:var(--text);font-weight:600;}
+
+.quote-btn{width:100%;margin-top:1rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.8rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;}
+.quote-btn:hover{opacity:.88;}
+
+/* ── MODAL ── */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:center;justify-content:center;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--ch2);border:1px solid var(--bstrong);border-radius:14px;padding:2rem;width:100%;max-width:500px;margin:1rem;position:relative;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;}
+.modal-sub{font-size:.82rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.65;}
+.modal-config{background:var(--ch);border:1px solid var(--border);border-radius:8px;padding:.95rem 1rem;margin-bottom:1.3rem;font-size:.79rem;color:var(--muted);font-family:'Rajdhani',sans-serif;line-height:1.9;}
+.modal-config strong{color:var(--gold-light);display:block;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.35rem;}
+.field-label{font-size:.68rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;margin-bottom:.38rem;margin-top:1.1rem;display:block;}
+.field-label:first-of-type{margin-top:0;}
+.field-input{width:100%;background:var(--ch);border:1px solid var(--border);border-radius:6px;padding:.62rem .85rem;color:var(--text);font-family:'Open Sans',sans-serif;font-size:.9rem;transition:border-color .2s;outline:none;}
+.field-input:focus{border-color:var(--gold);}
+.field-input::placeholder{color:var(--muted);}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.5rem;}
+.send-btn{flex:1;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.72rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;}
+.send-btn:hover{opacity:.88;}
+.send-btn:disabled{opacity:.45;cursor:not-allowed;}
+.cancel-btn{background:transparent;color:var(--muted);border:1px solid var(--border);padding:.72rem 1.2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .2s;}
+.cancel-btn:hover{border-color:var(--gold);color:var(--text);}
+.close-x{position:absolute;top:1rem;right:1rem;background:transparent;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:.2rem .4rem;}
+.close-x:hover{color:var(--text);}
+.status-msg{margin-top:1rem;padding:.78rem 1rem;border-radius:7px;font-size:.83rem;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.04em;display:none;}
+.status-msg.success{background:rgba(39,180,100,.12);border:1px solid rgba(39,180,100,.35);color:#5fda8a;display:block;}
+.status-msg.error{background:rgba(220,60,60,.12);border:1px solid rgba(220,60,60,.35);color:#f07070;display:block;}
+
+
+/* ── DOUBLE UNIT BUTTON ── */
+.opt-btn-du{border-color:rgba(201,168,76,.35);color:var(--gold);}
+.opt-btn-du.sel{border-color:var(--gold);background:var(--gold-pale);color:var(--gold-light);}
+.opt-btn-du:hover:not(.sel){border-color:var(--gold);background:rgba(201,168,76,.06);color:var(--gold-light);}
+
+/* ── DOUBLE UNIT ROW — wraps like other opt-rows on mobile ── */
+.opt-row .opt-btn-du{white-space:normal;}
+
+/* ── ABOUT ── */
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:2rem;align-items:start;}
+@media(max-width:640px){.about-grid{grid-template-columns:1fr;}}
+.about-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;}
+.about-card h4{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem;}
+.about-card p{font-size:.85rem;color:var(--muted);line-height:1.75;}
+.pickup-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(201,168,76,.1);border:1px solid var(--bstrong);border-radius:8px;padding:.75rem 1.1rem;margin-top:1.5rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:600;color:var(--gold);letter-spacing:.05em;}
+.pickup-badge .badge-icon{font-size:1.1rem;}
+
+/* ── FOOTER ── */
+footer{background:#111;border-top:1px solid var(--bstrong);text-align:center;padding:2.5rem 2rem;}
+.footer-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;}
+footer p{color:var(--muted);font-size:.8rem;margin-top:.3rem;}
+footer a{color:var(--gold);text-decoration:none;}
+footer a:hover{color:var(--gold-light);}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="nav-top">
+    <a class="logo-wrap" href="#">
+      <img src="data:image/png;base64,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" alt="Peak Garage Solutions Logo" style="height:62px;width:auto;" />
+      <div class="logo-text">Peak Garage Solutions<span>peakgaragesolutions.ca</span></div>
+    </a>
+    <div class="nav-cta-wrap">
+      <button class="nav-cta" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Build Yours</button>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="#features" onclick="event.preventDefault();document.getElementById('features').scrollIntoView({behavior:'smooth'})">Features</a>
+    <a href="#gallery" onclick="event.preventDefault();document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">Gallery</a>
+    <a href="#configurator" onclick="event.preventDefault();document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure</a>
+    <a href="#about" onclick="event.preventDefault();document.getElementById('about').scrollIntoView({behavior:'smooth'})">About</a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">🇨🇦 Proudly Canadian &nbsp;·&nbsp; Burlington, Ontario</div>
+  <h1>Tote Storage<br><span class="gold">Built Your Way</span></h1>
+  <div class="gold-rule"></div>
+  <p>Custom-built tote rack systems sized to fit your garage and your life. Choose your columns, rows, and add-ons — get an instant price.</p>
+  <div class="hero-btns">
+    <button class="btn-gold" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure Yours</button>
+    <button class="btn-outline" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">See the Work</button>
+  </div>
+</div>
+
+<!-- ══ TRUST BAR ══ -->
+<div class="trust-bar">
+  <div class="trust-item"><div class="trust-dot"></div>Canadian owned</div>
+  <div class="trust-item"><div class="trust-dot"></div>Solid wood glued frame</div>
+  <div class="trust-item"><div class="trust-dot"></div>Custom built to order</div>
+  <div class="trust-item"><div class="trust-dot"></div>28.5" deep</div>
+  <div class="trust-item"><div class="trust-dot"></div>Optional casters</div>
+  <div class="trust-item"><div class="trust-dot"></div>Totes included option</div>
+  <div class="trust-item"><div class="trust-dot"></div>Hand picked</div>
+  <div class="trust-item"><div class="trust-dot"></div>Local delivery included</div>
+  <div class="trust-item"><div class="trust-dot"></div>Set-up included</div>
+</div>
+
+<!-- ══ FEATURES ══ -->
+<div class="section-wrap" id="features">
+  <div class="section-label">Why Peak</div>
+  <div class="section-title">Built tough, designed smart</div>
+  <div class="section-sub">From a single unit to a full garage overhaul, our systems are built for real Canadian garages.</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="f-icon">💪</div>
+      <h4>Heavy-duty build</h4>
+      <p>Solid wood glued frame construction built to hold full totes season after season.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🎨</div>
+      <h4>Stain options</h4>
+      <p>Choose black or brown stain for a clean, finished look in any garage.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🛞</div>
+      <h4>Mobile option</h4>
+      <p>Add heavy-duty locking casters to roll your unit wherever you need it.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">📐</div>
+      <h4>Custom sizing</h4>
+      <p>1–6 wide, 2–6 high. Every unit is built to your exact specification.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GALLERY ══ -->
+<div class="section-wrap" id="gallery" style="padding-top:0;">
+  <div class="section-label">Our Work</div>
+  <div class="section-title">Built to impress</div>
+  <div class="section-sub">Every unit is hand-built to your specs. Here's a look at what we make.</div>
+  <div class="gallery-grid">
+    <div class="gallery-card" onclick="configureFromGallery({cols:2,rows:3,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery1.jpg" alt="2-wide 3-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">2-wide · 3-high · casters · stain · $232</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:2,rows:4,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery2.jpg" alt="2-wide 4-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">2-wide · 4-high · casters · stain · $276</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({doubleUnit:'4high',addons:['top']})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery3.jpg" alt="double 2-wide 4-high with shelves" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">double · 2-wide · 4-high · with maple shelves · $600</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:3,rows:2,addons:['casters','stain','top'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery4.jpg" alt="3-wide 2-high with casters + stain + top" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">3-wide · 2-high · casters · stain · maple top · $307</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:4,rows:2,addons:['casters','stain','top'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery5.jpg" alt="4-wide 2-high with casters + stain + top" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">4-wide · 2-high · casters · stain · maple Top · $376</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({doubleUnit:'2high',addons:['top']})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery6.jpg" alt="double 2-wide 2-high with shelves" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">double · 2-wide · 2-high · with maple shelves · $400</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:4,rows:4,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery7.jpg" alt="4-wide 4-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">4-wide · 4-high · casters · stain · $527</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:4,rows:5,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery8.jpg" alt="4-wide 5-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">4-wide · 5-high · casters · stain · $640</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:5,rows:5,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery9.jpg" alt="5-wide 5-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">5-wide · 5-high · casters · stain · $800</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIGURATOR ══ -->
+<div class="section-wrap" id="configurator" style="padding-top:0;">
+  <div class="section-label">Configurator</div>
+  <div class="section-title">Design your unit</div>
+  <div class="section-sub">Pick your columns, rows, and add-ons — real dimensions and pricing update instantly.</div>
+
+  <div class="config-outer">
+        <div class="clabel" style="margin-top:0;">Columns — totes wide (1–6)</div>
+        <div class="opt-row" id="cols-row">
+          <button class="opt-btn" onclick="setSel(this,'cols',1)">1 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',2)">2 wide</button>
+          <button class="opt-btn sel" onclick="setSel(this,'cols',3)">3 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',4)">4 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',5)">5 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',6)">6 wide</button>
+        </div>
+
+        <div class="clabel">Rows — totes high (2–6)</div>
+        <div class="opt-row" id="rows-row">
+          <button class="opt-btn sel" onclick="setSel(this,'rows',2)">2 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',3)">3 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',4)">4 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',5)">5 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',6)">6 high</button>
+        </div>
+
+        <div class="clabel">Double Units with Shelves</div>
+        <div class="opt-row">
+          <button class="opt-btn opt-btn-du" id="double-unit-btn" onclick="toggleDoubleUnit(this,'4high')">4 High Double Unit w/Shelves</button>
+          <button class="opt-btn opt-btn-du" id="double-unit-3h-btn" onclick="toggleDoubleUnit(this,'3high')">3 High Double Unit w/Shelves</button>
+          <button class="opt-btn opt-btn-du" id="double-unit-2h-btn" onclick="toggleDoubleUnit(this,'2high')">2 High Double Unit w/Shelves</button>
+        </div>
+
+    <div class="clabel">Add-ons (optional)</div>
+    <div class="addon-note">* 1/2" Basic Plywood Top option does not allow for stain option.</div>
+    <div class="addon-grid">
+      <div class="addon-card" onclick="toggleAddon(this,'basictop')" data-key="basictop">
+        <div class="addon-name">1/2" Basic Plywood Top</div>
+        <div class="addon-price" id="lbl-basictop">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" onclick="toggleAddon(this,'top')" data-key="top">
+        <div class="addon-name">3/4" Sanded Maple Top</div>
+        <div class="addon-price" id="lbl-top">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" id="card-stain" onclick="toggleAddon(this,'stain')" data-key="stain">
+        <div class="addon-name">Stain</div>
+        <div class="addon-price" id="lbl-stain">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" onclick="toggleAddon(this,'casters')" data-key="casters">
+        <div class="addon-name">Wheel Casters</div>
+        <div class="addon-price" id="lbl-casters">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" onclick="toggleAddon(this,'totes')" data-key="totes">
+        <div class="addon-name">27 Gal Storage Totes</div>
+        <div class="addon-price" id="lbl-totes">—</div>
+        <div class="addon-check"></div>
+      </div>
+    </div>
+
+    <!-- Stain colour picker — shown only when Stain is selected -->
+    <div id="stain-color-wrap" style="display:none;margin-top:.9rem;">
+      <div class="clabel" style="margin-top:0;">Stain Colour</div>
+      <div class="stain-select-wrap">
+        <select id="stain-color-select" onchange="setStainColor(this.value)">
+          <option value="black">Black</option>
+          <option value="brown">Brown</option>
+          <option value="green">Green</option>
+          <option value="grey">Grey</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="config-body">
+      <div class="preview-box">
+        <canvas id="cvs"></canvas>
+        <div class="preview-label" id="pvLabel"></div>
+      </div>
+      <div class="config-bottom-row">
+        <div class="summary-box">
+          <div class="spec-row"><span class="sk">Columns</span><span class="sv" id="s-cols">—</span></div>
+          <div class="spec-row"><span class="sk">Rows</span><span class="sv" id="s-rows">—</span></div>
+          <div class="spec-row"><span class="sk">Total tote slots</span><span class="sv hi" id="s-slots">—</span></div>
+          <div class="spec-row"><span class="sk">Width</span><span class="sv" id="s-w">—</span></div>
+          <div class="spec-row"><span class="sk">Height</span><span class="sv" id="s-h">—</span></div>
+          <div class="spec-row"><span class="sk">Depth</span><span class="sv">28.5"</span></div>
+          <div class="spec-row"><span class="sk">Add-ons</span><span class="sv" id="s-addons">None</span></div>
+        </div>
+        <div class="price-box">
+          <div class="price-label">Total Estimated Price (CAD)</div>
+          <div class="price-amt" id="p-amt">—</div>
+          <div class="price-note">+ taxes included &nbsp;·&nbsp; delivery and setup available</div>
+          <div class="price-breakdown" id="p-break"></div>
+        </div>
+      </div>
+      <button class="quote-btn" onclick="openModal()">Request a Quote ↗</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══ ABOUT ══ -->
+<div class="section-wrap" id="about" style="padding-top:0;">
+  <div class="section-label">About Us</div>
+  <div class="section-title">Who We Are</div>
+  <div class="section-sub">Peak Garage Solutions is a Burlington, Ontario-based business dedicated to helping Canadian homeowners take back their garage space with custom-built tote storage systems.</div>
+  <div class="about-grid">
+    <div class="about-card">
+      <h4>What We Build</h4>
+      <p>We design and hand-build solid wood tote rack systems sized exactly to your garage and your needs. Choose anywhere from 1 to 5 columns wide and 2 to 5 rows high — every unit is cut, glued, and assembled to order. Add a plywood top, a stain finish, heavy-duty casters, or a full set of 27-gallon storage totes, and we'll build it all in.</p>
+    </div>
+    <div class="about-card">
+      <h4>Our Commitment</h4>
+      <p>We believe garage storage should be tough, good-looking, and built to last. That's why every frame is glued solid wood construction — no particle board, no wobble. Our units are designed for real Canadian garages: they handle the cold, the weight, and the chaos of every season. We're proud to build locally and deliver throughout the Burlington and Hamilton area.</p>
+    </div>
+  </div>
+  <div class="pickup-badge">
+    <span class="badge-icon">🏷️</span>
+    <span>Local Pickup Discount Available — Save on delivery by picking up at our Burlington location. Ask us when you request a quote!</span>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-logo">Peak Garage Solutions</div>
+  <p>Custom-built in Ontario, Canada</p>
+  <p><a href="https://peakgaragesolutions.ca">peakgaragesolutions.ca</a></p>
+  <p style="margin-top:.4rem;"><a href="/cdn-cgi/l/email-protection#344755585147744451555f535546555351475b5841405d5b5a471a5755"><span class="__cf_email__" data-cfemail="d1a2b0bdb4a291a1b4b0bab6b0a3b0b6b4a2bebda4a5b8bebfa2ffb2b0">[email&#160;protected]</span></a></p>
+  <p style="margin-top:1.2rem;font-size:.7rem;opacity:.35;">© 2026 Peak Garage Solutions. All rights reserved.</p>
+</footer>
+
+<!-- ══ QUOTE MODAL ══ -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <div class="modal-title">Request a Quote</div>
+    <div class="modal-sub">Fill in your details and we'll get back to you within 1 business day at <strong style="color:var(--gold)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="156674797066556570747e727467747270667a7960617c7a7b663b7674">[email&#160;protected]</a></strong></div>
+
+    <div class="modal-config">
+      <strong>Your Selected Configuration</strong>
+      <span id="modal-config-text">—</span>
+    </div>
+
+    <label class="field-label" for="f-name">Full Name *</label>
+    <input class="field-input" id="f-name" type="text" placeholder="Jane Smith"/>
+
+    <label class="field-label" for="f-phone">Phone Number (optional)</label>
+    <input class="field-input" id="f-phone" type="tel" placeholder="(416) 555-0123"/>
+
+    <label class="field-label" for="f-email">Email Address *</label>
+    <input class="field-input" id="f-email" type="email" placeholder="jane@email.com"/>
+
+    <label class="field-label" for="f-notes">Additional Notes (optional)</label>
+    <input class="field-input" id="f-notes" type="text" placeholder="Any special requests or questions…"/>
+
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+      <button class="send-btn" id="sendBtn" onclick="submitQuote()">Send Quote Request</button>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ============================================================
+//  ★★★  PASTE YOUR EMAILJS KEYS BELOW  ★★★
+//  1. Go to emailjs.com and sign in
+//  2. Replace each value below with your real keys
+//  3. Save the file — emails will start working instantly
+// ============================================================
+const EMAILJS_PUBLIC_KEY  = 'oNs9CbcPHf_Nhc4kH';    // e.g. 'abc123XYZ'
+const EMAILJS_SERVICE_ID  = 'service_4qiybvi';    // e.g. 'service_abc123'
+const EMAILJS_TEMPLATE_ID = 'template_ayvgsvb';   // e.g. 'template_abc123'
+const EMAILJS_TEMPLATE_ID2 = 'template_w5deyiz';   // e.g. 'template_abc123'
+// ============================================================
+
+// ── REAL DIMENSION LOOKUP TABLES ──
+const WIDTH_IN  = {1:23.5, 2:45.5, 3:67.5, 4:89.5, 5:111.5, 6:133.5};
+const HEIGHT_IN = {2:36,   3:52,   4:68,   5:84,   6:100};
+const CASTER_ADD = 4;
+
+// ── CANVAS SCALE ──
+const MAX_W_IN = 133.5, MAX_H_IN = 100;
+const CVS_W = 260, CVS_H = 210, PAD = 18;
+const SCALE_X = (CVS_W - PAD*2) / MAX_W_IN;
+const SCALE_Y = (CVS_H - PAD*2) / MAX_H_IN;
+
+// ── PRICING RULES ──
+function stainCost(c,r)     { const s=c*r; return s<=8 ? 50 : s<=16 ? 75 : s<=24 ? 100 : 150; }
+function topCost(c)         { return c*25; }
+function basicTopCost(c)    { return c*10; }
+function casterCost(c,r)    { const s=c*r; return s<12 ? 50 : s<16 ? 75 : 100; }
+function casterCount(c,r)   { const s=c*r; return s<12 ? 4 : s<16 ? 6 : 8; }
+
+// ── STATE ──
+const S = {cols:3, rows:2, addons:new Set(), stainColor:'black', doubleUnit:false};
+
+function setSel(btn, key, val) {
+  if (S.doubleUnit) return; // blocked when double unit is active
+  S[key] = val;
+  btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  update();
+}
+
+function toggleDoubleUnit(btn, type) {
+  // If clicking the already-active DU type, turn it off
+  const turningOff = (S.doubleUnit === type);
+  S.doubleUnit = turningOff ? false : type;
+
+  // Sync all DU button sel states
+  document.getElementById('double-unit-btn').classList.toggle('sel', S.doubleUnit === '4high');
+  document.getElementById('double-unit-3h-btn').classList.toggle('sel', S.doubleUnit === '3high');
+  document.getElementById('double-unit-2h-btn').classList.toggle('sel', S.doubleUnit === '2high');
+
+  const isDU = !!S.doubleUnit;
+
+  // Deselect/dim col buttons (not DU buttons)
+  const colRow = document.getElementById('cols-row');
+  colRow.querySelectorAll('.opt-btn:not(.opt-btn-du)').forEach(b => {
+    if (isDU) b.classList.remove('sel');
+    b.style.opacity = isDU ? '.35' : '';
+    b.style.pointerEvents = isDU ? 'none' : '';
+  });
+  // Dim/enable row buttons
+  const rowRow = document.getElementById('rows-row');
+  rowRow.querySelectorAll('.opt-btn').forEach(b => {
+    b.style.opacity = isDU ? '.35' : '';
+    b.style.pointerEvents = isDU ? 'none' : '';
+  });
+
+  const basictopCard = document.querySelector('.addon-card[data-key="basictop"]');
+  const topCard      = document.querySelector('.addon-card[data-key="top"]');
+
+  if (isDU) {
+    basictopCard.classList.remove('disabled');
+    topCard.classList.remove('disabled');
+    // Default: 3/4" Maple selected
+    S.addons.delete('basictop');
+    basictopCard.classList.remove('on');
+    S.addons.add('top');
+    topCard.classList.add('on');
+  } else {
+    S.addons.delete('top');
+    S.addons.delete('basictop');
+    topCard.classList.remove('on');
+    basictopCard.classList.remove('on');
+    // Re-select the previously active col button
+    colRow.querySelectorAll('.opt-btn:not(.opt-btn-du)').forEach(b => {
+      if (parseInt(b.textContent) === S.cols) b.classList.add('sel');
+    });
+  }
+  update();
+}
+
+function setStainColor(val) {
+  S.stainColor = val;
+  update();
+}
+
+function toggleAddon(card, key) {
+  // When Double Unit is on, top options act as a radio — can switch but not deselect
+  if (!!S.doubleUnit && (key === 'top' || key === 'basictop')) {
+    if (S.addons.has(key)) return; // already selected, do nothing
+    // Switch to the clicked top
+    const other = key === 'top' ? 'basictop' : 'top';
+    S.addons.delete(other);
+    document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key===other) c.classList.remove('on'); });
+    S.addons.add(key);
+    card.classList.add('on');
+    update();
+    return;
+  }
+  // Mutual exclusion: top options
+  if (key==='top' || key==='basictop') {
+    const other = key==='top' ? 'basictop' : 'top';
+    S.addons.delete(other);
+    document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key===other) c.classList.remove('on'); });
+  }
+  // If basictop selected, remove stain
+  if (key==='basictop' && !S.addons.has('basictop')) {
+    S.addons.delete('stain');
+    document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key==='stain') c.classList.remove('on'); });
+  }
+  // Toggle the clicked addon
+  if (S.addons.has(key)) { S.addons.delete(key); card.classList.remove('on'); }
+  else                   { S.addons.add(key);    card.classList.add('on'); }
+  update();
+}
+
+function calcPrice() {
+  const {cols,rows,addons,stainColor} = S;
+  const slots = cols*rows, base = slots*22;
+  const lines = [{label:slots+' slots × $22', val:base}];
+  let total = base;
+  if(addons.has('basictop'))   { const p=basicTopCost(cols);    total+=p; lines.push({label:'1/2" Basic plywood top',val:p}); }
+  if(addons.has('top'))        { const p=topCost(cols);         total+=p; lines.push({label:'3/4" Maple plywood top',val:p}); }
+  if(addons.has('stain'))      { const p=stainCost(cols,rows);  total+=p; lines.push({label:'Stain ('+stainColor.charAt(0).toUpperCase()+stainColor.slice(1)+')',val:p}); }
+  if(addons.has('casters'))    { const p=casterCost(cols,rows); total+=p; lines.push({label:'Casters ('+casterCount(cols,rows)+' wheels)',val:p}); }
+  if(addons.has('totes'))      { const p=slots*15;              total+=p; lines.push({label:slots+' totes × $15',val:p}); }
+  return {total, lines};
+}
+
+function getAddonNames() {
+  const {addons,cols,rows,stainColor} = S;
+  const n = [];
+  if(addons.has('basictop'))   n.push('1/2" Basic Plywood Top');
+  if(addons.has('top'))        n.push('3/4" Sanded Maple Top');
+  if(addons.has('stain'))      n.push('Stain ('+stainColor.charAt(0).toUpperCase()+stainColor.slice(1)+')');
+  if(addons.has('casters'))    n.push('Casters ('+casterCount(cols,rows)+' wheels)');
+  if(addons.has('totes'))      n.push('Storage Totes ('+cols*rows+')');
+  return n;
+}
+
+function update() {
+  if (S.doubleUnit) {
+    const is4h     = S.doubleUnit === '4high';
+    const is3h     = S.doubleUnit === '3high';
+    const is2h     = S.doubleUnit === '2high';
+    const duLabel  = is4h ? '4' : is3h ? '3' : '2';
+    const wIn        = 133.5;
+    const hasBasic   = S.addons.has('basictop');
+    const hInBase    = is4h ? 68.75 : is3h ? 52.75 : 36.75;
+    const hIn        = hasBasic ? hInBase - 0.25 : hInBase;
+    const duSlots    = is4h ? 16 : is3h ? 12 : 8;
+    const duRows     = is4h ? 4 : is3h ? 3 : 2;
+    const hasCasters = S.addons.has('casters');
+    const hasTotes   = S.addons.has('totes');
+    const hasStain   = S.addons.has('stain');
+    const hasMaple   = S.addons.has('top');
+    // Base prices: 4high maple/basic, 3high maple/basic, 2high maple/basic
+    const duBase     = is4h ? (hasBasic ? 530 : 600) : is3h ? (hasBasic ? 435 : 500) : (hasBasic ? 340 : 400);
+    const basicSave  = is4h ? 70 : is3h ? 65 : 60;
+    const topLabel   = hasBasic ? '1/2" Basic Plywood Top (included)' : '3/4" Sanded Maple Top (included)';
+    const duCasterCount = is4h ? casterCount(4, 4) : is3h ? 6 : 6;
+    const duCasterCost  = is4h ? casterCost(4, 4)  : is3h ? 75 : 75;
+    const duStainCost   = is4h ? 100 : is3h ? 85 : 75;
+
+    document.getElementById('s-cols').textContent  = '2+Shelf+2 ('+duLabel+' High Double Unit)';
+    document.getElementById('s-rows').textContent  = duRows+' high';
+    document.getElementById('s-slots').textContent = duSlots+' tote slots';
+    document.getElementById('s-w').textContent     = wIn+'"  ('+(wIn/12).toFixed(1)+' ft)';
+    document.getElementById('s-h').textContent     = (hasCasters ? hIn+CASTER_ADD : hIn)+'"  ('+((hasCasters ? hIn+CASTER_ADD : hIn)/12).toFixed(2)+' ft)'+(hasCasters?' (incl. casters)':'');
+
+    document.getElementById('lbl-basictop').textContent = hasBasic ? 'Included in base price ($'+(is4h?530:is3h?435:340)+')' : 'Switch — saves $'+basicSave;
+    document.getElementById('lbl-top').textContent      = hasMaple  ? 'Included in base price ($'+(is4h?600:is3h?500:400)+')' : 'Switch — adds $'+basicSave;
+    document.getElementById('lbl-stain').textContent    = '$'+duStainCost;
+    document.getElementById('lbl-casters').textContent  = '$'+duCasterCost+' · '+duCasterCount+' wheels';
+    document.getElementById('lbl-totes').textContent    = '$15 × '+duSlots+' = $'+(duSlots*15);
+
+    const stainCard = document.getElementById('card-stain');
+    if (hasBasic) {
+      stainCard.classList.add('disabled');
+      S.addons.delete('stain');
+      stainCard.classList.remove('on');
+    } else {
+      stainCard.classList.remove('disabled');
+    }
+    document.getElementById('stain-color-wrap').style.display = (hasStain && !hasBasic) ? 'block' : 'none';
+
+    let total = duBase;
+    const lines = [{ label: duLabel+' High Double Unit ('+topLabel+')', val: duBase }];
+    const names = [hasBasic ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top'];
+    if(hasStain && !hasBasic) { total+=duStainCost; lines.push({label:'Stain ('+S.stainColor.charAt(0).toUpperCase()+S.stainColor.slice(1)+')',val:duStainCost}); names.push('Stain'); }
+    if(hasCasters)            { total+=duCasterCost; lines.push({label:'Casters ('+duCasterCount+' wheels)',val:duCasterCost}); names.push('Casters'); }
+    if(hasTotes)              { total+=duSlots*15;   lines.push({label:duSlots+' totes × $15',val:duSlots*15}); names.push('Storage Totes ('+duSlots+')'); }
+
+    document.getElementById('s-addons').textContent = names.join(', ');
+    document.getElementById('p-amt').textContent = '$'+total;
+    document.getElementById('p-break').innerHTML =
+      lines.map(l=>`<div class="line"><span>${l.label}</span><span>$${l.val}</span></div>`).join('')+
+      `<div class="line" style="border-top:1px solid rgba(201,168,76,.25);margin-top:.4rem;padding-top:.4rem;color:var(--gold-light)"><span>Total</span><span>$${total}</span></div>`;
+    document.getElementById('pvLabel').innerHTML =
+      duLabel+' High Double Unit: 2+Shelf+2 &nbsp;·&nbsp; '+duSlots+' slots<br>133.5" W &nbsp;×&nbsp; '+hIn+'" H &nbsp;×&nbsp; 28.5" D';
+
+    drawPreviewDU();
+    return;
+  }
+
+  const {cols,rows} = S;
+  const slots = cols*rows;
+  const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
+
+  // Top thickness adds to total height; casters add 4"
+  const topThick  = S.addons.has('basictop') ? 0.5 : S.addons.has('top') ? 0.75 : 0;
+  const hasCasters = S.addons.has('casters');
+  const hInTotal  = hIn + topThick + (hasCasters ? CASTER_ADD : 0);
+
+  document.getElementById('s-cols').textContent  = cols+' wide';
+  document.getElementById('s-rows').textContent  = rows+' high';
+  document.getElementById('s-slots').textContent = slots+' tote slots';
+  document.getElementById('s-w').textContent     = wIn+'"  ('+(wIn/12).toFixed(1)+' ft)';
+  document.getElementById('s-h').textContent     = hInTotal+'"  ('+(hInTotal/12).toFixed(2)+' ft)'+(hasCasters?' (incl. casters)':'');
+
+  const names = getAddonNames();
+  document.getElementById('s-addons').textContent = names.length ? names.join(', ') : 'None';
+
+  document.getElementById('lbl-basictop').textContent   = '$'+basicTopCost(cols)+' ($10 × '+cols+' wide)';
+  document.getElementById('lbl-top').textContent        = '$'+topCost(cols)+' ($25 × '+cols+' wide)';
+  document.getElementById('lbl-stain').textContent      = '$'+stainCost(cols,rows);
+  document.getElementById('lbl-casters').textContent    = '$'+casterCost(cols,rows)+' · '+casterCount(cols,rows)+' wheels';
+  document.getElementById('lbl-totes').textContent      = '$15 × '+slots+' = $'+(slots*15);
+
+  // Stain disabled when basictop is selected
+  const basicOn = S.addons.has('basictop');
+  const stainCard = document.getElementById('card-stain');
+  if (basicOn) {
+    stainCard.classList.add('disabled');
+  } else {
+    stainCard.classList.remove('disabled');
+  }
+
+  // Show/hide stain colour picker
+  const stainOn = S.addons.has('stain') && !basicOn;
+  document.getElementById('stain-color-wrap').style.display = stainOn ? 'block' : 'none';
+
+  // Keep canvas stain colour in sync — drawPreview reads S.stainColor directly
+
+  const {total,lines} = calcPrice();
+  document.getElementById('p-amt').textContent = '$'+total;
+  document.getElementById('p-break').innerHTML =
+    lines.map(l=>`<div class="line"><span>${l.label}</span><span>$${l.val}</span></div>`).join('')+
+    `<div class="line" style="border-top:1px solid rgba(201,168,76,.25);margin-top:.4rem;padding-top:.4rem;color:var(--gold-light)"><span>Total</span><span>$${total}</span></div>`;
+
+  document.getElementById('pvLabel').innerHTML =
+    cols+' wide × '+rows+' high &nbsp;·&nbsp; '+slots+' slots<br>'+
+    wIn+'" W &nbsp;×&nbsp; '+hInTotal+'" H &nbsp;×&nbsp; 28.5" D';
+
+  drawPreview();
+}
+
+// ── MODAL ──
+function openModal() {
+  let summary;
+  if (S.doubleUnit) {
+    const is4h    = S.doubleUnit === '4high';
+    const is3h    = S.doubleUnit === '3high';
+    const duLabel = is4h ? '4' : is3h ? '3' : '2';
+    const duSlots = is4h ? 16 : is3h ? 12 : 8;
+    const hInBase  = is4h ? 68.75 : is3h ? 52.75 : 36.75;
+    const hIn      = S.addons.has('basictop') ? hInBase - 0.25 : hInBase;
+    const duRows  = is4h ? 4 : is3h ? 3 : 2;
+    const duBase  = is4h ? (S.addons.has('basictop') ? 530 : 600) : is3h ? (S.addons.has('basictop') ? 435 : 500) : (S.addons.has('basictop') ? 340 : 400);
+    const topName = S.addons.has('basictop') ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
+    const mCasterCount = is4h ? casterCount(4,4) : 6;
+    const mCasterCost  = is4h ? casterCost(4,4)  : 75;
+    const duStainCost  = is4h ? 100 : is3h ? 85 : 75;
+    const names   = [topName+' (included)'];
+    if(S.addons.has('stain') && !S.addons.has('basictop')) names.push('Stain ('+S.stainColor.charAt(0).toUpperCase()+S.stainColor.slice(1)+')');
+    if(S.addons.has('casters')) names.push('Casters ('+mCasterCount+' wheels)');
+    if(S.addons.has('totes'))   names.push('Storage Totes ('+duSlots+')');
+    let total = duBase;
+    if(S.addons.has('stain') && !S.addons.has('basictop')) total += duStainCost;
+    if(S.addons.has('casters')) total += mCasterCost;
+    if(S.addons.has('totes'))   total += duSlots*15;
+    summary = duLabel+' High Double Unit (2+Shelf+2) · '+duSlots+' tote slots · 133.5" wide × '+hIn+'" tall × 28.5" deep'
+      +(names.length?' · Add-ons: '+names.join(', '):'')
+      +' · Total: $'+total+' CAD';
+  } else {
+    const {cols,rows} = S;
+    const slots = cols*rows;
+    const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
+    const names = getAddonNames();
+    const {total} = calcPrice();
+    summary = cols+'W × '+rows+'H · '+slots+' tote slots · '+wIn+'" wide × '+hIn+'" tall × 28.5" deep'
+      +(names.length?' · Add-ons: '+names.join(', '):'')
+      +' · Total: $'+total+' CAD';
+  }
+  document.getElementById('modal-config-text').textContent = summary;
+  document.getElementById('modalBackdrop').classList.add('open');
+  document.getElementById('statusMsg').className = 'status-msg';
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').textContent = 'Send Quote Request';
+}
+function closeModal() {
+  document.getElementById('modalBackdrop').classList.remove('open');
+}
+function handleBackdropClick(e) {
+  if (e.target === document.getElementById('modalBackdrop')) closeModal();
+}
+
+function submitQuote() {
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const notes = document.getElementById('f-notes').value.trim();
+  const status = document.getElementById('statusMsg');
+
+  if (!name || !email) {
+    status.className = 'status-msg error';
+    status.textContent = 'Please fill in your name and email address.';
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    status.className = 'status-msg error';
+    status.textContent = 'Please enter a valid email address.';
+    return;
+  }
+  if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
+    status.className = 'status-msg error';
+    status.textContent = 'EmailJS not configured yet. Open this file in Notepad and replace the 3 keys at the top of the script.';
+    return;
+  }
+
+  let summary, cols, rows, slots, wIn, hIn, names_arr, total_val;
+  if (S.doubleUnit) {
+    const is4h    = S.doubleUnit === '4high';
+    const is3h    = S.doubleUnit === '3high';
+    const duLabel = is4h ? '4' : is3h ? '3' : '2';
+    const duSlots = is4h ? 16 : is3h ? 12 : 8;
+    const duHBase  = is4h ? 68.75 : is3h ? 52.75 : 36.75;
+    const duH      = S.addons.has('basictop') ? duHBase - 0.25 : duHBase;
+    const duRows  = is4h ? 4 : is3h ? 3 : 2;
+    const duBase  = is4h ? (S.addons.has('basictop') ? 530 : 600) : is3h ? (S.addons.has('basictop') ? 435 : 500) : (S.addons.has('basictop') ? 340 : 400);
+    const topName = S.addons.has('basictop') ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
+    const duNames = [topName+' (included)'];
+    if(S.addons.has('stain') && !S.addons.has('basictop')) duNames.push('Stain ('+S.stainColor.charAt(0).toUpperCase()+S.stainColor.slice(1)+')');
+    const sqCasterCount = is4h ? casterCount(4,4) : 6;
+    const sqCasterCost  = is4h ? casterCost(4,4)  : 75;
+    if(S.addons.has('casters')) duNames.push('Casters ('+sqCasterCount+' wheels)');
+    if(S.addons.has('totes'))   duNames.push('Storage Totes ('+duSlots+')');
+    let duTotal = duBase;
+    const duStainCost2 = is4h ? stainCost(4,duRows) : is3h ? 85 : 75;
+    if(S.addons.has('stain') && !S.addons.has('basictop')) duTotal += duStainCost2;
+    if(S.addons.has('casters')) duTotal += sqCasterCost;
+    if(S.addons.has('totes'))   duTotal += duSlots*15;
+    summary = duLabel+' High Double Unit (2+Shelf+2) · '+duSlots+' tote slots · 133.5" wide × '+duH+'" tall × 28.5" deep'
+      +' · Add-ons: '+duNames.join(', ')
+      +' · Total: $'+duTotal+' CAD';
+    cols='Double(2+S+2,'+duLabel+'H)'; rows=duRows+' high'; slots=duSlots; wIn='133.5"'; hIn=duH+'"';
+    names_arr = duNames; total_val = '$'+duTotal;
+  } else {
+    cols = S.cols; rows = S.rows;
+    slots = cols*rows;
+    wIn = WIDTH_IN[cols]+'"'; hIn = HEIGHT_IN[rows]+'"';
+    names_arr = getAddonNames();
+    const {total} = calcPrice();
+    total_val = '$'+total;
+    summary = cols+'W × '+rows+'H · '+slots+' tote slots · '+wIn+' wide × '+hIn+' tall × 28.5" deep'
+      +(names_arr.length?' · Add-ons: '+names_arr.join(', '):'')
+      +' · Total: '+total_val+' CAD';
+  }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  status.className = 'status-msg';
+
+emailjs.init(EMAILJS_PUBLIC_KEY);
+
+   // 1. Send the Detailed Order to BENNY
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID2, {
+        to_email:       'benny@peakgaragesolutions.ca',
+        from_name:      name,
+        from_email:     email,
+        phone:          phone,
+        config_cols:    cols + ' wide',
+        config_rows:    rows + ' high',
+        config_slots:   slots + ' tote slots',
+        config_width:   wIn,
+        config_height:  hIn,
+        config_depth:   '28.5"',
+        config_addons:  names_arr.length ? names_arr.join(', ') : 'None',
+        config_total:   total_val + ' CAD',
+        config_summary: summary,
+        notes:          notes || 'None'})
+       .then(() => {
+        // 2. Send the Auto-Reply to the CUSTOMER
+        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email:       email,
+            from_name:      name,
+            config_summary: summary
+        });
+    }).then(() => {
+        // SUCCESS: Both emails sent
+        status.className = 'status-msg success';
+        status.textContent = '✓ Quote sent! We\'ll be in touch within 1 business day.';
+        btn.textContent = 'Sent!';
+        
+        // Clear the form
+        document.getElementById('f-name').value = '';
+        document.getElementById('f-phone').value = '';
+        document.getElementById('f-email').value = '';
+        document.getElementById('f-notes').value = '';
+    }).catch(err => {
+        status.className = 'status-msg error';
+        status.textContent = 'Something went wrong. Please email us directly.';
+        btn.disabled = false;
+        btn.textContent = 'Send Quote Request';
+        console.error('EmailJS error:', err);
+    });
+} // This is the final bracket for the whole function
+// ── DOUBLE UNIT CANVAS PREVIEW ──
+function drawPreviewDU() {
+  const canvas = document.getElementById('cvs');
+  const ctx = canvas.getContext('2d');
+  const stainOn = S.addons.has('stain');
+  const isBlack = stainOn && S.stainColor==='black';
+  const isBrown = stainOn && S.stainColor==='brown';
+  const isGreen = stainOn && S.stainColor==='green';
+  const isGrey  = stainOn && S.stainColor==='grey';
+  const hasCasters = S.addons.has('casters');
+  const frameColor  = isBlack?'#252525':isBrown?'#5c3318':isGreen?'#2a4a2a':isGrey?'#444448':'#c8b08a';
+  const frameAccent = '#C9A84C';
+  const topPx  = 14;
+  const castPx = hasCasters ? 14 : 0;
+  const is4h   = S.doubleUnit === '4high';
+  const is3h   = S.doubleUnit === '3high';
+  const duRows = is4h ? 4 : is3h ? 3 : 2;
+
+  const toteUnitPxW = WIDTH_IN[2] * SCALE_X;
+  const toteUnitPxH = HEIGHT_IN[duRows] * SCALE_Y;
+  const midRealW    = 133.5 - 2 * WIDTH_IN[2];
+  const midPxW      = midRealW * SCALE_X;
+  const totalPxW    = toteUnitPxW * 2 + midPxW;
+
+  canvas.width  = Math.round(totalPxW + PAD*2);
+  canvas.height = Math.round(toteUnitPxH + topPx + castPx + PAD*2);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const ox = PAD, oy = PAD + topPx;
+  const cols = 2;
+  const cellW = toteUnitPxW / cols;
+  const cellH = toteUnitPxH / duRows;
+  const ft = Math.max(3, Math.round(toteUnitPxW / (cols * 7)));
+
+  const drawToteUnit = (startX) => {
+    for(let c=0;c<=cols;c++){
+      const x=startX+cellW*c;
+      ctx.fillStyle=frameColor; ctx.fillRect(x-ft/2,oy,ft,toteUnitPxH);
+      ctx.strokeStyle=frameAccent; ctx.lineWidth=0.7; ctx.strokeRect(x-ft/2,oy,ft,toteUnitPxH);
+    }
+    for(let r=0;r<=duRows;r++){
+      const y=oy+cellH*r;
+      ctx.fillStyle=frameColor; ctx.fillRect(startX,y-ft/2,toteUnitPxW,ft);
+      ctx.strokeStyle=frameAccent; ctx.lineWidth=0.7; ctx.strokeRect(startX,y-ft/2,toteUnitPxW,ft);
+    }
+    for(let r=0;r<duRows;r++) for(let c=0;c<cols;c++){
+      const bx=startX+c*cellW+ft/2+2, by=oy+r*cellH+ft/2+2;
+      const bw=cellW-ft-4, bh=cellH-ft-4;
+      if(bw<4||bh<4) continue;
+      ctx.fillStyle='#222'; ctx.beginPath(); ctx.roundRect(bx,by+bh*0.24,bw,bh*0.76,2); ctx.fill();
+      ctx.strokeStyle='#3a3a3a'; ctx.lineWidth=0.5; ctx.stroke();
+      const lidH=Math.max(3,bh*0.17);
+      ctx.fillStyle='#D4A017'; ctx.beginPath(); ctx.roundRect(bx+bw*0.04,by+bh*0.13,bw*0.92,lidH,2); ctx.fill();
+      ctx.strokeStyle='#A87C10'; ctx.lineWidth=0.4; ctx.stroke();
+      if(bw>18){
+        ctx.fillStyle='#A87C10';
+        ctx.fillRect(bx+bw*0.13,by+bh*0.10,bw*0.1,bh*0.06);
+        ctx.fillRect(bx+bw*0.77,by+bh*0.10,bw*0.1,bh*0.06);
+      }
+    }
+  };
+
+  const rightX = ox + toteUnitPxW + midPxW;
+  drawToteUnit(ox);
+  drawToteUnit(rightX);
+
+  // ── Middle shelf section ──
+  const mx = ox + toteUnitPxW;
+  const shelfColor = isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';
+
+  ctx.fillStyle=frameColor; ctx.fillRect(mx-ft/2,oy,ft,toteUnitPxH);
+  ctx.strokeStyle=frameAccent; ctx.lineWidth=0.7; ctx.strokeRect(mx-ft/2,oy,ft,toteUnitPxH);
+  ctx.fillStyle=frameColor; ctx.fillRect(mx+midPxW-ft/2,oy,ft,toteUnitPxH);
+  ctx.strokeStyle=frameAccent; ctx.lineWidth=0.7; ctx.strokeRect(mx+midPxW-ft/2,oy,ft,toteUnitPxH);
+  ctx.fillStyle=frameColor; ctx.fillRect(mx,oy-ft/2,midPxW,ft);
+  ctx.strokeStyle=frameAccent; ctx.lineWidth=0.7; ctx.strokeRect(mx,oy-ft/2,midPxW,ft);
+  ctx.fillStyle=frameColor; ctx.fillRect(mx,oy+toteUnitPxH-ft/2,midPxW,ft);
+  ctx.strokeStyle=frameAccent; ctx.lineWidth=0.7; ctx.strokeRect(mx,oy+toteUnitPxH-ft/2,midPxW,ft);
+
+  // 4-high: 1 shelf at mid-height; 3-high: 2 shelves at 1/3 and 2/3; 2-high: no middle shelf
+  if (is4h) {
+    const sy = oy + toteUnitPxH * 0.5;
+    ctx.fillStyle=shelfColor; ctx.fillRect(mx,sy-3,midPxW,6);
+    ctx.strokeStyle=frameAccent; ctx.lineWidth=0.6; ctx.strokeRect(mx,sy-3,midPxW,6);
+    ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=0.5;
+    for(let gi=1;gi<4;gi++){ctx.beginPath();ctx.moveTo(mx,sy-3+gi*1.5);ctx.lineTo(mx+midPxW,sy-3+gi*1.5);ctx.stroke();}
+  } else if (is3h) {
+    [1/3, 2/3].forEach(frac => {
+      const sy = oy + toteUnitPxH * frac;
+      ctx.fillStyle=shelfColor; ctx.fillRect(mx,sy-3,midPxW,6);
+      ctx.strokeStyle=frameAccent; ctx.lineWidth=0.6; ctx.strokeRect(mx,sy-3,midPxW,6);
+      ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=0.5;
+      for(let gi=1;gi<4;gi++){ctx.beginPath();ctx.moveTo(mx,sy-3+gi*1.5);ctx.lineTo(mx+midPxW,sy-3+gi*1.5);ctx.stroke();}
+    });
+  }
+
+  // ── Plywood top (full width) ──
+  const tc = isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';
+  ctx.fillStyle=tc; ctx.strokeStyle=frameAccent; ctx.lineWidth=0.8;
+  ctx.fillRect(ox-4,oy-topPx,totalPxW+8,topPx-1);
+  ctx.strokeRect(ox-4,oy-topPx,totalPxW+8,topPx-1);
+  ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=0.5;
+  for(let i=1;i<4;i++){const gy=oy-topPx+i*(topPx/4);ctx.beginPath();ctx.moveTo(ox-4,gy);ctx.lineTo(ox+totalPxW+4,gy);ctx.stroke();}
+
+  // ── Casters: 4H = 4 front wheels at corners; 2H = 3 front wheels (left, centre, right) ──
+  if (hasCasters) {
+    const botY = oy+toteUnitPxH;
+    const pts = is4h
+      ? [ox, ox+toteUnitPxW, rightX, rightX+toteUnitPxW]
+      : [ox, ox+totalPxW/2, ox+totalPxW];
+    pts.forEach(cx => {
+      ctx.fillStyle='#555'; ctx.strokeStyle='#333'; ctx.lineWidth=0.6;
+      ctx.beginPath(); ctx.ellipse(cx,botY+5,5,5,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle=frameAccent; ctx.lineWidth=0.5;
+      ctx.beginPath(); ctx.ellipse(cx,botY+5,3,3,0,0,Math.PI*2); ctx.stroke();
+    });
+  }
+}
+
+function drawPreviewDUCard() { /* no-op */ }
+
+// ── CANVAS PREVIEW ──
+function drawPreview() {
+  const canvas = document.getElementById('cvs');
+  const ctx = canvas.getContext('2d');
+  const {cols,rows,addons,stainColor} = S;
+  const hasTop = addons.has('top') || addons.has('basictop'), hasCasters = addons.has('casters');
+  const stainOn = addons.has('stain');
+  const isBlack = stainOn && stainColor==='black';
+  const isBrown = stainOn && stainColor==='brown';
+  const isGreen = stainOn && stainColor==='green';
+  const isGrey  = stainOn && stainColor==='grey';
+  const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
+  // Add real top thickness to the rendered height so the frame grows visually
+  const topThickIn = addons.has('basictop') ? 0.5 : addons.has('top') ? 0.75 : 0;
+  const unitPxW = wIn*SCALE_X, unitPxH = (hIn + topThickIn)*SCALE_Y;
+  const topPx = hasTop ? 14 : 0, castPx = hasCasters ? 14 : 0;
+
+  canvas.width  = Math.round(unitPxW + PAD*2);
+  canvas.height = Math.round(unitPxH + topPx + castPx + PAD*2);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  const ox = PAD, oy = PAD + topPx;
+  const frameColor  = isBlack ? '#252525' : isBrown ? '#5c3318' : isGreen ? '#2a4a2a' : isGrey ? '#444448' : '#c8b08a';
+  const frameAccent = '#C9A84C';
+  const ft = Math.max(3, Math.round(unitPxW/(cols*7)));
+
+  // vertical posts
+  for (let c=0; c<=cols; c++) {
+    const x = ox + (unitPxW/cols)*c;
+    ctx.fillStyle = frameColor; ctx.fillRect(x-ft/2, oy, ft, unitPxH);
+    ctx.strokeStyle = frameAccent; ctx.lineWidth = 0.7; ctx.strokeRect(x-ft/2, oy, ft, unitPxH);
+  }
+  // horizontal rails
+  for (let r=0; r<=rows; r++) {
+    const y = oy + (unitPxH/rows)*r;
+    ctx.fillStyle = frameColor; ctx.fillRect(ox, y-ft/2, unitPxW, ft);
+    ctx.strokeStyle = frameAccent; ctx.lineWidth = 0.7; ctx.strokeRect(ox, y-ft/2, unitPxW, ft);
+  }
+  // totes
+  const cellW = unitPxW/cols, cellH = unitPxH/rows;
+  for (let r=0; r<rows; r++) {
+    for (let c=0; c<cols; c++) {
+      const bx = ox+c*cellW+ft/2+2, by = oy+r*cellH+ft/2+2;
+      const bw = cellW-ft-4, bh = cellH-ft-4;
+      if (bw<4||bh<4) continue;
+      ctx.fillStyle='#222'; ctx.beginPath(); ctx.roundRect(bx,by+bh*0.24,bw,bh*0.76,2); ctx.fill();
+      ctx.strokeStyle='#3a3a3a'; ctx.lineWidth=0.5; ctx.stroke();
+      const lidH = Math.max(3,bh*0.17);
+      ctx.fillStyle='#D4A017'; ctx.beginPath(); ctx.roundRect(bx+bw*0.04,by+bh*0.13,bw*0.92,lidH,2); ctx.fill();
+      ctx.strokeStyle='#A87C10'; ctx.lineWidth=0.4; ctx.stroke();
+      if (bw>18) {
+        ctx.fillStyle='#A87C10';
+        ctx.fillRect(bx+bw*0.13,by+bh*0.10,bw*0.1,bh*0.06);
+        ctx.fillRect(bx+bw*0.77,by+bh*0.10,bw*0.1,bh*0.06);
+      }
+    }
+  }
+  // plywood top
+  if (hasTop) {
+    const tc = isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';
+    ctx.fillStyle=tc; ctx.strokeStyle=frameAccent; ctx.lineWidth=0.8;
+    ctx.fillRect(ox-4, oy-topPx, unitPxW+8, topPx-1);
+    ctx.strokeRect(ox-4, oy-topPx, unitPxW+8, topPx-1);
+    ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=0.5;
+    for(let i=1;i<4;i++){const gy=oy-topPx+i*(topPx/4);ctx.beginPath();ctx.moveTo(ox-4,gy);ctx.lineTo(ox+unitPxW+4,gy);ctx.stroke();}
+  }
+  // casters — draw front wheels only (back wheels hidden behind unit)
+  if (hasCasters) {
+    const totalCount = casterCount(cols,rows);
+    const frontCount = Math.ceil(totalCount / 2); // front row only; odd totals show extra front wheel
+    const botY = oy+unitPxH;
+    for(let i=0;i<frontCount;i++){
+      const cx = ox+(unitPxW/(frontCount-1))*i;
+      ctx.fillStyle='#555';
+      ctx.strokeStyle='#333'; ctx.lineWidth=0.6;
+      ctx.beginPath(); ctx.ellipse(cx, botY+5, 5, 5, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle=frameAccent; ctx.lineWidth=0.5;
+      ctx.beginPath(); ctx.ellipse(cx, botY+5, 3, 3, 0, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+}
+
+// ── CONFIGURE FROM GALLERY ──
+function configureFromGallery(cfg) {
+  // cfg: { cols, rows, addons:[], doubleUnit: false|'4high'|'2high' }
+
+  // 1. Reset double-unit state
+  if (S.doubleUnit) toggleDoubleUnit(
+    document.getElementById(S.doubleUnit==='4high'?'double-unit-btn':S.doubleUnit==='3high'?'double-unit-3h-btn':'double-unit-2h-btn'),
+    S.doubleUnit
+  );
+
+  // 2. Set double unit if needed
+  if (cfg.doubleUnit) {
+    const duBtn = document.getElementById(cfg.doubleUnit==='4high'?'double-unit-btn':cfg.doubleUnit==='3high'?'double-unit-3h-btn':'double-unit-2h-btn');
+    toggleDoubleUnit(duBtn, cfg.doubleUnit);
+  } else {
+    // Set cols
+    const colBtns = document.querySelectorAll('#cols-row .opt-btn:not(.opt-btn-du)');
+    colBtns.forEach(b => {
+      const v = parseInt(b.textContent);
+      b.classList.toggle('sel', v === cfg.cols);
+      if (v === cfg.cols) S.cols = cfg.cols;
+    });
+    // Set rows
+    const rowBtns = document.querySelectorAll('#rows-row .opt-btn');
+    rowBtns.forEach(b => {
+      const v = parseInt(b.textContent);
+      b.classList.toggle('sel', v === cfg.rows);
+      if (v === cfg.rows) S.rows = cfg.rows;
+    });
+  }
+
+  // 3. Clear all addons
+  S.addons.clear();
+  document.querySelectorAll('.addon-card').forEach(c => c.classList.remove('on'));
+
+  // 4. Apply desired addons
+  cfg.addons.forEach(key => {
+    S.addons.add(key);
+    const card = document.querySelector('.addon-card[data-key="'+key+'"]');
+    if (card) card.classList.add('on');
+  });
+
+  // 5. Update & scroll
+  update();
+  document.getElementById('configurator').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+update();
+drawPreviewDUCard();
+</script>
+</body>
+</html>
