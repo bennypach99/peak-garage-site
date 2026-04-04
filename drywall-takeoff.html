@@ -158,6 +158,46 @@
     .modal-grand { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
     .modal-grand span:first-child { font-size: 14px; font-weight: 500; }
     .modal-grand span:last-child { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+
+    /* ── Insulation grid ── */
+    .ins-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -14px; padding: 0 14px 8px; }
+    .ins-table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 12px; }
+    .ins-table th, .ins-table td { border: 1px solid var(--border-md); text-align: center; padding: 0; height: 42px; }
+    .ins-table thead th { background: #1a1f2e; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; height: auto; }
+    .ins-table thead th.size-head { background: #2d3450; letter-spacing: 0.06em; font-size: 12px; }
+    .ins-th-rval { width: 48px; }
+    .ins-td-rval { background: #1a1f2e; color: #fff; font-size: 12px; font-weight: 600; padding: 0 8px; white-space: nowrap; }
+    .ins-td-grey { background: #b0b0b0; }
+    .ins-td-white { background: #fff; cursor: pointer; }
+    .ins-td-pink  { background: #ffb6d9; cursor: pointer; }
+    .ins-td-white:active { background: #e8f0fe; }
+    .ins-td-pink:active  { background: #ff80c0; }
+    .ins-cell-val { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--text); display: block; line-height: 42px; }
+    .ins-cell-sub { font-size: 9px; color: var(--muted); display: block; line-height: 1; margin-top: -6px; padding-bottom: 4px; }
+    .ins-cell-input { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--accent); width: 100%; height: 42px; border: none; border-bottom: 2px solid var(--accent); background: transparent; text-align: center; outline: none; padding: 0; -moz-appearance: textfield; display: block; }
+    .ins-cell-input::-webkit-inner-spin-button, .ins-cell-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .ins-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .ins-sum-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; white-space: nowrap; }
+    .ins-sum-chip strong { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
+
+    /* ── Blown-In / Foam measurement UI ── */
+    .meas-rval-section { margin-bottom: 20px; }
+    .meas-rval-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .meas-rval-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; }
+    .meas-total-chip { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; }
+    .meas-density-head { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
+    .meas-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+    .meas-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .meas-dims { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; flex: 1; }
+    .meas-sqft { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); }
+    .meas-del { width: 26px; height: 26px; border-radius: 50%; border: none; background: #fee2e2; color: #dc2626; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; }
+    .meas-add-row { display: flex; gap: 8px; align-items: center; }
+    .meas-input { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; width: 80px; height: 44px; border: 1.5px solid var(--border-md); border-radius: 10px; background: var(--surface); text-align: center; outline: none; padding: 0 8px; -moz-appearance: textfield; }
+    .meas-input::-webkit-inner-spin-button, .meas-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .meas-input:focus { border-color: var(--accent); }
+    .meas-x { font-size: 16px; color: var(--muted); font-weight: 500; flex-shrink: 0; }
+    .meas-add-btn { height: 44px; padding: 0 16px; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; font-weight: 600; color: #fff; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .meas-section-divider { height: 1px; background: var(--border); margin: 14px 0; }
   </style>
 </head>
 <body>
@@ -335,6 +375,51 @@ function getItemsForKey(key) {
   return [];
 }
 
+/* ── Insulation data ── */
+// Sizes indexed: 0=15", 1=16", 2=23", 3=24"
+// null = not available
+const INSULATION_SIZES = ['15"', '16"', '23"', '24"'];
+const INSULATION_RVALS = [
+  { r: 'R8',  sqft: [null,   149.33, null,   224.00], pcs: [null, 28, null, 28] },
+  { r: 'R12', sqft: [97.92,  106.67, 150.14, 160.00], pcs: [20,   20, 20,   20] },
+  { r: 'R14', sqft: [78.33,  null,   120.11, null  ], pcs: [16,   null, 16, null] },
+  { r: 'R20', sqft: [78.33,  85.33,  120.11, 128.00], pcs: [16,   16, 16,   16] },
+  { r: 'R22', sqft: [48.96,  null,   75.07,  null  ], pcs: [10,   null, 10, null] },
+  { r: 'R24', sqft: [38.51,  null,   51.98,  null  ], pcs: [8,    null, 7,  null] },
+  { r: 'R28', sqft: [null,   42.67,  null,   64.00 ], pcs: [null, 8,  null,  8]  },
+  { r: 'R31', sqft: [null,   42.67,  null,   64.00 ], pcs: [null, 8,  null,  8]  },
+  { r: 'R40', sqft: [null,   32.00,  null,   48.00 ], pcs: [null, 6,  null,  6]  },
+];
+
+/* ── Roxul-specific R-values (from Drywall Takeoff Sheet Master) ── */
+// Sizes indexed: 0=15", 1=16", 2=23", 3=24"
+// sqft per bag; null = size not available for this product
+const ROXUL_RVALS = [
+  // sqft/bag from Insulation sheet C13:M17; pcs/bag from Data Sheet A35:J39
+  // Sizes indexed: 0=15", 1=16", 2=23", 3=24"
+  { r: '1½" QZ', sqft: [190.0, null, null, null], pcs: [38,   null, null, null] },
+  { r: '3" QZ',  sqft: [59.7,  64.0, 60.1, 64.0], pcs: [12,   12,   8,    8   ] },
+  { r: 'R14',    sqft: [59.7,  null, 60.1, null ], pcs: [12,   null, 8,    null] },
+  { r: 'R22.5',  sqft: [null,  43.3, null, 40.4 ], pcs: [null, 8,    null, 5   ] },
+  { r: 'R24',    sqft: [29.4,  null, 29.7, null ], pcs: [6,    null, 4,    null] },
+];
+
+// Blown-In R-values (sqft only — no bags)
+const BLOWN_RVALS = ['R20', 'R32', 'R40', 'R60'];
+
+// Foam R-values: two densities (half-lb and 2-lb), sqft only
+const FOAM_RVALS = ['R12', 'R20', 'R22', 'R31'];
+
+// Insulation product types
+const INSULATION_TYPES = [
+  { label: 'Pink',     fullName: 'Pink Insulation', key: 'pink',  color: '#db2777', rvals: null,        kind: 'batt'  },
+  { label: 'Roxul',   fullName: 'Roxul',            key: 'roxul', color: '#b45309', rvals: ROXUL_RVALS, kind: 'batt'  },
+  { label: 'Blown-In',fullName: 'Blown-In',         key: 'blown', color: '#0369a1', rvals: null,        kind: 'blown' },
+  { label: 'Foam',    fullName: 'Foam',             key: 'foam',  color: '#059669', rvals: null,        kind: 'foam'  },
+];
+
+let curInsType = 0; // active insulation type index
+
 /* ── Blank counts ── */
 function blankCounts() {
   const c = {};
@@ -346,8 +431,28 @@ function blankCounts() {
       t.lengths.forEach(l => c[t.key][l] = 0);
     }
   });
-  // Insulation, Mud (future — blank for now)
+  // Insulation counts
   c['insulation'] = {};
+  INSULATION_TYPES.forEach(t => {
+    if (t.kind === 'blown') {
+      c['insulation'][t.key] = {};
+      BLOWN_RVALS.forEach(r => { c['insulation'][t.key][r] = []; });
+    } else if (t.kind === 'foam') {
+      c['insulation'][t.key] = {};
+      FOAM_RVALS.forEach(r => { c['insulation'][t.key][r] = { half: [], two: [] }; });
+    } else {
+      const rvals = t.rvals || INSULATION_RVALS;
+      c['insulation'][t.key] = {};
+      rvals.forEach(rv => {
+        c['insulation'][t.key][rv.r] = {};
+        INSULATION_SIZES.forEach((sz, si) => {
+          if (rv.sqft[si] !== null) {
+            c['insulation'][t.key][rv.r][si] = { sqft: 0, pcs: 0 };
+          }
+        });
+      });
+    }
+  });
   c['mud'] = {};
   return c;
 }
@@ -481,17 +586,30 @@ function renderAreaInfoBar() {
   bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
 }
 
-/* ── Type tabs (drywall only) ── */
+/* ── Type tabs (drywall + insulation) ── */
 function renderTypeTabs() {
   const wrap = document.getElementById('type-bar-wrap');
-  if (curCat !== 'drywall') { wrap.style.display='none'; return; }
-  wrap.style.display = '';
-  document.getElementById('type-tabs').innerHTML = DRYWALL_TYPES.map((t,i) => {
-    const active = i===curType;
-    return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchType(${i})">${t.label}</button>`;
+  if (curCat === 'drywall') {
+    wrap.style.display = '';
+    document.getElementById('type-tabs').innerHTML = DRYWALL_TYPES.map((t,i) => {
+      const active = i===curType;
+      return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchType(${i})">${t.label}</button>`;
+    }).join('');
+  } else if (curCat === 'insulation') {
+    wrap.style.display = '';
+    renderInsTypeTabs();
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+function renderInsTypeTabs() {
+  document.getElementById('type-tabs').innerHTML = INSULATION_TYPES.map((t,i) => {
+    const active = i===curInsType;
+    return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchInsType(${i})">${t.label}</button>`;
   }).join('');
 }
 function switchType(n) { curType=n; renderTypeTabs(); renderTally(); }
+function switchInsType(n) { curInsType=n; renderInsTypeTabs(); renderInsulation(); }
 
 /* ── Counts ── */
 function encodeKey(str) { return String(str).replace(/[^a-zA-Z0-9]/g,'_'); }
@@ -610,9 +728,17 @@ function renderTally() {
     return;
   }
 
-  // Insulation / Steel / Mud — coming soon
+  // Insulation
+  if (curCat === 'insulation') {
+    document.getElementById('type-bar-wrap').style.display='';
+    renderInsTypeTabs();
+    renderInsulation();
+    return;
+  }
+
+  // Steel / Mud — coming soon
   document.getElementById('type-bar-wrap').style.display='none';
-  const labels = { insulation:'Insulation', steel:'Steel', mud:'Mud' };
+  const labels = { steel:'Steel', mud:'Mud' };
   area.innerHTML=`
     <div class="coming-soon">
       <div class="coming-soon-icon">🔧</div>
@@ -621,8 +747,298 @@ function renderTally() {
     </div>`;
 }
 
+/* ── Insulation: card-based renderer ── */
+function insBagsForType(typeKey) {
+  if(!A()) return 0;
+  const t = INSULATION_TYPES.find(x=>x.key===typeKey);
+  const rvals = (t && t.rvals) ? t.rvals : INSULATION_RVALS;
+  let total=0;
+  rvals.forEach(rv=>{
+    INSULATION_SIZES.forEach((_,si)=>{
+      if(rv.sqft[si]===null) return;
+      const cell=A().counts['insulation'][typeKey]?.[rv.r]?.[si];
+      if(!cell) return;
+      total += (rv.sqft[si]?cell.sqft/rv.sqft[si]:0)+(rv.pcs[si]?cell.pcs/rv.pcs[si]:0);
+    });
+  });
+  return total;
+}
+
+function renderInsulation() {
+  const area = document.getElementById('tally-area');
+  if(!A()){
+    area.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/></svg></div><h3>No areas yet</h3><p>Add an area to start tallying.</p><button class="empty-cta" onclick="openAreaForm(null)">+ Add Area</button></div>`;
+    return;
+  }
+
+  const t = INSULATION_TYPES[curInsType];
+  if (t.kind === 'blown') { renderBlown(); return; }
+  if (t.kind === 'foam')  { renderFoam();  return; }
+  const col = t.color;
+  const counts = A().counts['insulation'][t.key];
+  const rvals = t.rvals || INSULATION_RVALS;
+
+  // Compute total bags for this type
+  let totalBags = insBagsForType(t.key);
+  const totalBagsStr = totalBags > 0 ? Math.ceil(totalBags) + ' bags' : '';
+
+  let html = `
+    <div class="tally-header">
+      <div class="tally-type-label" style="color:${col}">${t.fullName}</div>
+      ${totalBagsStr ? `<div class="tally-subtotal">Total: <strong>${totalBagsStr}</strong></div>` : ''}
+    </div>`;
+
+  const ti = curInsType;
+  // One section per R-value that has available sizes
+  rvals.forEach((rv, ri) => {
+    const availableSizes = INSULATION_SIZES.map((sz,si)=>({sz,si})).filter(({si})=>rv.sqft[si]!==null);
+    if(!availableSizes.length) return;
+
+    html += `<div style="margin-bottom:18px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin-bottom:10px">${rv.r}</div>
+      <div class="sheet-grid">`;
+
+    availableSizes.forEach(({sz, si}) => {
+      const cell = counts[rv.r][si];
+      const sqftBags = rv.sqft[si] && cell.sqft > 0 ? (cell.sqft/rv.sqft[si]).toFixed(1) : null;
+      const pcsBags  = rv.pcs[si]  && cell.pcs  > 0 ? (cell.pcs /rv.pcs[si] ).toFixed(1) : null;
+      // Use indices in onclick to avoid special-char issues with r-value strings
+      const sfId = `ins-sf-${ri}-${si}`;
+      const pcId = `ins-pc-${ri}-${si}`;
+
+      const cardTotalBags = (() => {
+        let b = 0;
+        if (rv.sqft[si] && cell.sqft > 0) b += cell.sqft / rv.sqft[si];
+        if (rv.pcs[si]  && cell.pcs  > 0) b += cell.pcs  / rv.pcs[si];
+        return b;
+      })();
+
+      html += `<div class="sheet-card" style="border-color:${col}22">
+        <div class="sheet-card-top" style="background:${col}08;padding:12px 8px 8px">
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:6px">
+            <div class="sheet-ft" style="color:${col}99">${sz}</div>
+            ${cardTotalBags > 0 ? `<div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${col}">${Math.ceil(cardTotalBags)} bags</div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+
+            <div style="background:${col}10;border-radius:8px;padding:6px 4px;text-align:center;cursor:pointer" onclick="insEditSqft(${ri},${si},${ti})">
+              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:${col}88;margin-bottom:2px">SQ FT</div>
+              <div class="sheet-count" style="color:${col};font-size:38px" id="${sfId}">${cell.sqft||0}</div>
+              ${sqftBags?`<div style="font-size:9px;color:${col}77;margin-top:1px">${sqftBags} bags</div>`:'<div style="font-size:9px;color:transparent">·</div>'}
+            </div>
+
+            <div style="background:#ffb6d955;border-radius:8px;padding:6px 4px;text-align:center">
+              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:${col}88;margin-bottom:2px">PCS</div>
+              <div class="sheet-count" style="color:${col};font-size:38px" id="${pcId}" onclick="insEditPcs(${ri},${si},${ti})">${cell.pcs||0}</div>
+              ${pcsBags?`<div style="font-size:9px;color:${col}77;margin-top:1px">${pcsBags} bags</div>`:'<div style="font-size:9px;color:transparent">·</div>'}
+            </div>
+
+          </div>
+        </div>
+        <div class="sheet-card-controls" style="border-top-color:${col}22">
+          <button class="ctrl" style="--add-color:${col}" onclick="insSubPcs(${ri},${si},${ti})">−</button>
+          <div class="ctrl-divider" style="background:${col}22"></div>
+          <button class="ctrl" style="--add-color:${col}" onclick="insAddPcs(${ri},${si},${ti})">+</button>
+        </div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  area.innerHTML = html;
+}
+
+/* ── Insulation +/− actions (ri=rval index, si=size index, ti=type index) ── */
+function insCell(ri,si,ti){
+  const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
+  return A().counts['insulation'][t.key][rvals[ri].r][si];
+}
+function insAddPcs(ri,si,ti) { insCell(ri,si,ti).pcs++;  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip(); }
+function insSubPcs(ri,si,ti) { const c=insCell(ri,si,ti); if(c.pcs>0)c.pcs--;  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip(); }
+
+function insEditSqft(ri,si,ti){
+  const id=`ins-sf-${ri}-${si}`, el=document.getElementById(id);
+  if(!el||el.tagName==='INPUT') return;
+  const cur=insCell(ri,si,ti).sqft;
+  el.outerHTML=`<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" value="${cur}" min="0" style="font-size:38px"
+    onblur="insCommitSqft(${ri},${si},${ti},this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const inp=document.getElementById(id); inp.focus(); inp.select();
+}
+function insCommitSqft(ri,si,ti,val){
+  insCell(ri,si,ti).sqft=Math.max(0,parseInt(val)||0);
+  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip();
+}
+function insEditPcs(ri,si,ti){
+  const id=`ins-pc-${ri}-${si}`, el=document.getElementById(id);
+  if(!el||el.tagName==='INPUT') return;
+  const cur=insCell(ri,si,ti).pcs;
+  el.outerHTML=`<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" value="${cur}" min="0" style="font-size:38px"
+    onblur="insCommitPcs(${ri},${si},${ti},this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const inp=document.getElementById(id); inp.focus(); inp.select();
+}
+function insCommitPcs(ri,si,ti,val){
+  insCell(ri,si,ti).pcs=Math.max(0,parseInt(val)||0);
+  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip();
+}
+
+/* ── Blown-In renderer ── */
+function blownSqftForRval(r) {
+  if(!A()) return 0;
+  return (A().counts['insulation']['blown'][r]||[]).reduce((s,m)=>s+m.l*m.w, 0);
+}
+function blownTotalSqft() {
+  return BLOWN_RVALS.reduce((s,r)=>s+blownSqftForRval(r), 0);
+}
+
+function renderBlown() {
+  const area = document.getElementById('tally-area');
+  const col = '#0369a1';
+  const total = blownTotalSqft();
+
+  let html = `<div class="tally-header">
+    <div class="tally-type-label" style="color:${col}">Blown-In</div>
+    ${total>0?`<div class="tally-subtotal">Total: <strong>${Math.round(total)} ft²</strong></div>`:''}
+  </div>`;
+
+  BLOWN_RVALS.forEach(r => {
+    const entries = A().counts['insulation']['blown'][r]||[];
+    const rTotal = entries.reduce((s,m)=>s+m.l*m.w, 0);
+    html += `<div class="meas-rval-section">
+      <div class="meas-rval-header">
+        <div class="meas-rval-label" style="color:${col}">${r}${rTotal>0?` <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${Math.round(rTotal)} ft²</span>`:''}</div>
+      </div>
+      <div class="meas-add-row">
+        <input class="meas-input" id="blown-l-${r}" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+          onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('blown-w-${r}').focus();}"/>
+        <span class="meas-x">×</span>
+        <input class="meas-input" id="blown-w-${r}" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+          onkeydown="if(event.key==='Enter'){blownAdd('${r}');}"/>
+        <button class="meas-add-btn" style="background:${col}" onclick="blownAdd('${r}')">Add</button>
+      </div>
+    </div>`;
+  });
+
+  area.innerHTML = html;
+}
+
+function blownAdd(r) {
+  const lEl=document.getElementById(`blown-l-${r}`), wEl=document.getElementById(`blown-w-${r}`);
+  const l=parseFloat(lEl.value), w=parseFloat(wEl.value);
+  if(!l||!w||l<=0||w<=0) { lEl.focus(); return; }
+  A().counts['insulation']['blown'][r].push({l,w});
+  J().modifiedAt=new Date().toISOString();
+  lEl.value=''; wEl.value='';
+  renderBlown(); renderStrip();
+  // refocus length input for fast repeated entry
+  setTimeout(()=>{ const el=document.getElementById(`blown-l-${r}`); if(el)el.focus(); },30);
+}
+function blownDel(r,idx) {
+  A().counts['insulation']['blown'][r].splice(idx,1);
+  J().modifiedAt=new Date().toISOString();
+  renderBlown(); renderStrip();
+}
+
+/* ── Foam renderer ── */
+function foamSqft(r, density) {
+  if(!A()) return 0;
+  const entries = (A().counts['insulation']['foam'][r]||{})[density]||[];
+  return entries.reduce((s,m)=>s+m.l*m.w, 0);
+}
+function foamTotalSqft() {
+  return FOAM_RVALS.reduce((s,r)=>s+foamSqft(r,'half')+foamSqft(r,'two'), 0);
+}
+
+function renderFoam() {
+  const area = document.getElementById('tally-area');
+  const col = '#059669';
+  const total = foamTotalSqft();
+
+  let html = `<div class="tally-header">
+    <div class="tally-type-label" style="color:${col}">Foam</div>
+    ${total>0?`<div class="tally-subtotal">Total: <strong>${Math.round(total)} ft²</strong></div>`:''}
+  </div>`;
+
+  FOAM_RVALS.forEach(r => {
+    const halfEntries = (A().counts['insulation']['foam'][r]||{}).half||[];
+    const twoEntries  = (A().counts['insulation']['foam'][r]||{}).two||[];
+    const halfTotal = halfEntries.reduce((s,m)=>s+m.l*m.w,0);
+    const twoTotal  = twoEntries.reduce((s,m)=>s+m.l*m.w,0);
+    const rTotal = halfTotal+twoTotal;
+
+    html += `<div class="meas-rval-section">
+      <div class="meas-rval-header">
+        <div class="meas-rval-label" style="color:${col}">${r}${rTotal>0?` <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${Math.round(rTotal)} ft²</span>`:''}</div>
+      </div>`;
+
+    // ½ lb density
+    html += `<div class="meas-density-head">½ lb${halfTotal>0?` — <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text)">${Math.round(halfTotal)} ft²</span>`:''}</div>
+      <div class="meas-add-row" style="margin-bottom:12px">
+        <input class="meas-input" id="foam-l-${r}-half" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+          onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-half').focus();}"/>
+        <span class="meas-x">×</span>
+        <input class="meas-input" id="foam-w-${r}-half" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+          onkeydown="if(event.key==='Enter'){foamAdd('${r}','half');}"/>
+        <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','half')">Add</button>
+      </div>`;
+
+    // 2 lb density
+    html += `<div class="meas-density-head">2 lb${twoTotal>0?` — <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text)">${Math.round(twoTotal)} ft²</span>`:''}</div>
+      <div class="meas-add-row">
+        <input class="meas-input" id="foam-l-${r}-two" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+          onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-two').focus();}"/>
+        <span class="meas-x">×</span>
+        <input class="meas-input" id="foam-w-${r}-two" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+          onkeydown="if(event.key==='Enter'){foamAdd('${r}','two');}"/>
+        <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','two')">Add</button>
+      </div>`;
+
+    if (r !== FOAM_RVALS[FOAM_RVALS.length-1]) html += `<div class="meas-section-divider"></div>`;
+    html += `</div>`;
+  });
+
+  area.innerHTML = html;
+}
+
+function foamAdd(r, density) {
+  const lEl=document.getElementById(`foam-l-${r}-${density}`), wEl=document.getElementById(`foam-w-${r}-${density}`);
+  const l=parseFloat(lEl.value), w=parseFloat(wEl.value);
+  if(!l||!w||l<=0||w<=0) { lEl.focus(); return; }
+  A().counts['insulation']['foam'][r][density].push({l,w});
+  J().modifiedAt=new Date().toISOString();
+  lEl.value=''; wEl.value='';
+  renderFoam(); renderStrip();
+  setTimeout(()=>{ const el=document.getElementById(`foam-l-${r}-${density}`); if(el)el.focus(); },30);
+}
+function foamDel(r, density, idx) {
+  A().counts['insulation']['foam'][r][density].splice(idx,1);
+  J().modifiedAt=new Date().toISOString();
+  renderFoam(); renderStrip();
+}
+
 function renderStrip() {
   if (!A()) { document.getElementById('totals-strip').innerHTML=''; return; }
+  if (curCat === 'insulation') {
+    let totalBags=0;
+    const chips = INSULATION_TYPES.map(t=>{
+      if (t.kind === 'blown') {
+        const sf=blownTotalSqft();
+        return sf>0?`<div class="strip-chip">${t.label} <strong>${Math.round(sf)} ft²</strong></div>`:'';
+      }
+      if (t.kind === 'foam') {
+        const sf=foamTotalSqft();
+        return sf>0?`<div class="strip-chip">${t.label} <strong>${Math.round(sf)} ft²</strong></div>`:'';
+      }
+      const b=insBagsForType(t.key); totalBags+=b;
+      return b>0?`<div class="strip-chip">${t.label} <strong>${Math.ceil(b)} bags</strong></div>`:'';
+    }).join('');
+    const blownSf=blownTotalSqft(), foamSf=foamTotalSqft();
+    const primaryLabel = totalBags>0 ? `Bags <span>${Math.ceil(totalBags)}</span>` :
+                         (blownSf+foamSf)>0 ? `ft² <span>${Math.round(blownSf+foamSf)}</span>` : `Insulation <span>—</span>`;
+    document.getElementById('totals-strip').innerHTML=
+      `<div class="strip-total">${primaryLabel}</div>${chips}`;
+    return;
+  }
   const chips = DRYWALL_TYPES.filter(t=>!t.isItems).map(t=>{
     const v=drywallSubtotal(t.key);
     return v>0?`<div class="strip-chip">${t.label} <strong>${v}</strong></div>`:'';
