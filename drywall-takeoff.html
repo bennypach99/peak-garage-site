@@ -472,6 +472,8 @@ function renderAreaInfoBar() {
   const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
   const ceilingSqft = Object.entries(A().counts['cd48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
   if (ceilingSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${ceilingSqft} ft²</span></div>`);
+  const doubleSqft = Object.entries(A().counts['dl48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
+  if (doubleSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Double</span><span class="area-info-chip-val">${doubleSqft} ft²</span></div>`);
   const potLights = A().counts['extras']['Pot Lights'];
   if (potLights>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Pot Lights</span><span class="area-info-chip-val">${potLights}</span></div>`);
   const greenGlue = A().counts['extras']['Green Glue'];
@@ -749,7 +751,11 @@ function showReport() {
     const meta=[a.height,a.texture].filter(Boolean).join(' · ');
     const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
     const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
-    const sqftStr=ceilingSqft>0?` <span style="font-weight:400;font-size:12px;color:var(--muted);margin-left:4px">${ceilingSqft} ft² ceiling</span>`:'';
+    const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
+    const sqftStr=[
+      ceilingSqft>0?`${ceilingSqft} ft² ceiling`:'',
+      doubleSqft>0?`${doubleSqft} ft² double`:'',
+    ].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted);margin-left:4px">${s}</span>`).join('');
     html+=`<div class="modal-area-head">${a.name}${meta?` <span style="font-weight:400;font-size:12px;color:var(--muted)">${meta}</span>`:''} <span style="font-weight:400;font-size:12px;color:var(--muted);margin-left:4px">${areaTotal(a)} sheets</span>${sqftStr}</div>${aHtml}`;
   });
   if(!hasAny) html=`<div class="empty-msg">No sheets tallied yet.</div>`;
