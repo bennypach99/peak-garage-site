@@ -469,12 +469,53 @@ function makeJob(name, id) {
   };
 }
 
-let jobs = [makeJob('Job 1', 1)];
-let jobCounter = 1;
-let curJobId  = 1;
+/* ── Persistence ── */
+function saveState() {
+  try {
+    localStorage.setItem('drywall-tally', JSON.stringify({ jobs, jobCounter, curJobId }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('drywall-tally');
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s.jobs || !s.jobs.length) return false;
+    // Migrate each area's counts to ensure new insulation types are present
+    s.jobs.forEach(j => j.areas.forEach(a => {
+      const fresh = blankCounts();
+      // Deep merge: fresh is the template, s data overrides where it exists
+      a.counts = deepMerge(fresh, a.counts);
+    }));
+    jobs = s.jobs;
+    jobCounter = s.jobCounter || jobs.length;
+    curJobId = s.curJobId || jobs[0].id;
+    return true;
+  } catch(e) { return false; }
+}
+
+function deepMerge(target, source) {
+  if (typeof target !== 'object' || target === null) return source ?? target;
+  if (Array.isArray(target)) return Array.isArray(source) ? source : target;
+  const out = { ...target };
+  Object.keys(target).forEach(k => {
+    out[k] = (source && k in source) ? deepMerge(target[k], source[k]) : target[k];
+  });
+  return out;
+}
+
+// Load or init
+let jobs, jobCounter, curJobId;
+if (!loadState()) {
+  jobs = [makeJob('Job 1', 1)];
+  jobCounter = 1;
+  curJobId = 1;
+}
+
 let curAreaId = null;
-let curCat    = 'drywall';   // active category
-let curType   = 0;           // active drywall sub-type index
+let curCat    = 'drywall';
+let curType   = 0;
 let areaFormEditId = null;
 
 const J = () => jobs.find(j => j.id === curJobId);
@@ -614,11 +655,11 @@ function switchInsType(n) { curInsType=n; renderInsTypeTabs(); renderInsulation(
 /* ── Counts ── */
 function encodeKey(str) { return String(str).replace(/[^a-zA-Z0-9]/g,'_'); }
 
-function add(key,len) { A().counts[key][len]++; J().modifiedAt=new Date().toISOString(); renderTally(); renderStrip(); renderAreaInfoBar(); }
-function sub(key,len) { if(A().counts[key][len]>0){A().counts[key][len]--; J().modifiedAt=new Date().toISOString();} renderTally(); renderStrip(); renderAreaInfoBar(); }
+function add(key,len) { A().counts[key][len]++; J().modifiedAt=new Date().toISOString(); saveState(); renderTally(); renderStrip(); renderAreaInfoBar(); }
+function sub(key,len) { if(A().counts[key][len]>0){A().counts[key][len]--; J().modifiedAt=new Date().toISOString(); saveState();} renderTally(); renderStrip(); renderAreaInfoBar(); }
 
-function addItem(typeKey,idx) { const item=getItemsForKey(typeKey)[idx]; A().counts[typeKey][item]++; J().modifiedAt=new Date().toISOString(); renderTally(); renderStrip(); renderAreaInfoBar(); }
-function subItem(typeKey,idx) { const item=getItemsForKey(typeKey)[idx]; if(A().counts[typeKey][item]>0){A().counts[typeKey][item]--; J().modifiedAt=new Date().toISOString();} renderTally(); renderStrip(); renderAreaInfoBar(); }
+function addItem(typeKey,idx) { const item=getItemsForKey(typeKey)[idx]; A().counts[typeKey][item]++; J().modifiedAt=new Date().toISOString(); saveState(); renderTally(); renderStrip(); renderAreaInfoBar(); }
+function subItem(typeKey,idx) { const item=getItemsForKey(typeKey)[idx]; if(A().counts[typeKey][item]>0){A().counts[typeKey][item]--; J().modifiedAt=new Date().toISOString(); saveState();} renderTally(); renderStrip(); renderAreaInfoBar(); }
 
 function editCount(key,len) {
   const domId = `cnt-${key}-${encodeKey(String(len))}`;
@@ -633,7 +674,7 @@ function commitCount(key,domSuffix,len) {
   if(!inp)return;
   const parsedLen = isNaN(len) ? len : Number(len);
   A().counts[key][parsedLen]=Math.max(0,parseInt(inp.value)||0);
-  J().modifiedAt=new Date().toISOString();
+  J().modifiedAt=new Date().toISOString(); saveState();
   renderTally(); renderStrip(); renderAreaInfoBar();
 }
 function editItem(typeKey,idx) {
@@ -651,7 +692,7 @@ function commitItem(typeKey,idx) {
   const inp=document.getElementById(domId);
   if(!inp)return;
   A().counts[typeKey][item]=Math.max(0,parseInt(inp.value)||0);
-  J().modifiedAt=new Date().toISOString();
+  J().modifiedAt=new Date().toISOString(); saveState();
   renderTally(); renderStrip(); renderAreaInfoBar();
 }
 
@@ -854,8 +895,8 @@ function insCell(ri,si,ti){
   const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
   return A().counts['insulation'][t.key][rvals[ri].r][si];
 }
-function insAddPcs(ri,si,ti) { insCell(ri,si,ti).pcs++;  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip(); }
-function insSubPcs(ri,si,ti) { const c=insCell(ri,si,ti); if(c.pcs>0)c.pcs--;  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip(); }
+function insAddPcs(ri,si,ti) { insCell(ri,si,ti).pcs++;  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip(); }
+function insSubPcs(ri,si,ti) { const c=insCell(ri,si,ti); if(c.pcs>0)c.pcs--;  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip(); }
 
 function insEditSqft(ri,si,ti){
   const id=`ins-sf-${ri}-${si}`, el=document.getElementById(id);
@@ -867,7 +908,7 @@ function insEditSqft(ri,si,ti){
 }
 function insCommitSqft(ri,si,ti,val){
   insCell(ri,si,ti).sqft=Math.max(0,parseInt(val)||0);
-  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip();
+  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip();
 }
 function insEditPcs(ri,si,ti){
   const id=`ins-pc-${ri}-${si}`, el=document.getElementById(id);
@@ -879,7 +920,7 @@ function insEditPcs(ri,si,ti){
 }
 function insCommitPcs(ri,si,ti,val){
   insCell(ri,si,ti).pcs=Math.max(0,parseInt(val)||0);
-  J().modifiedAt=new Date().toISOString(); renderInsulation(); renderStrip();
+  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip();
 }
 
 /* ── Blown-In renderer ── */
@@ -927,7 +968,7 @@ function blownAdd(r) {
   const l=parseFloat(lEl.value), w=parseFloat(wEl.value);
   if(!l||!w||l<=0||w<=0) { lEl.focus(); return; }
   A().counts['insulation']['blown'][r].push({l,w});
-  J().modifiedAt=new Date().toISOString();
+  J().modifiedAt=new Date().toISOString(); saveState();
   lEl.value=''; wEl.value='';
   renderBlown(); renderStrip();
   // refocus length input for fast repeated entry
@@ -935,7 +976,7 @@ function blownAdd(r) {
 }
 function blownDel(r,idx) {
   A().counts['insulation']['blown'][r].splice(idx,1);
-  J().modifiedAt=new Date().toISOString();
+  J().modifiedAt=new Date().toISOString(); saveState();
   renderBlown(); renderStrip();
 }
 
@@ -1005,14 +1046,14 @@ function foamAdd(r, density) {
   const l=parseFloat(lEl.value), w=parseFloat(wEl.value);
   if(!l||!w||l<=0||w<=0) { lEl.focus(); return; }
   A().counts['insulation']['foam'][r][density].push({l,w});
-  J().modifiedAt=new Date().toISOString();
+  J().modifiedAt=new Date().toISOString(); saveState();
   lEl.value=''; wEl.value='';
   renderFoam(); renderStrip();
   setTimeout(()=>{ const el=document.getElementById(`foam-l-${r}-${density}`); if(el)el.focus(); },30);
 }
 function foamDel(r, density, idx) {
   A().counts['insulation']['foam'][r][density].splice(idx,1);
-  J().modifiedAt=new Date().toISOString();
+  J().modifiedAt=new Date().toISOString(); saveState();
   renderFoam(); renderStrip();
 }
 
@@ -1073,6 +1114,7 @@ function commitDrawerRename(id) {
   const val=inp.value.trim()||('Job '+id);
   jobs.find(j=>j.id===id).name=val;
   if(id===curJobId) document.getElementById('job-name-display').textContent=val;
+  saveState();
   renderDrawerList(null);
 }
 function openDrawer()  { renderDrawerList(null); document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
@@ -1080,12 +1122,13 @@ function closeDrawer() { const i=document.getElementById('drawer-rename'); if(i)
 function selectJob(id) {
   curJobId=id; curAreaId=J().areas[0]?.id||null; curType=0; curCat='drywall';
   document.getElementById('job-name-display').textContent=J().name;
-  closeDrawer(); renderAll();
+  saveState(); closeDrawer(); renderAll();
 }
 function newJob() {
   jobCounter++;
   jobs.push(makeJob('Job '+jobCounter,jobCounter));
   curJobId=jobCounter; curAreaId=null; curType=0; curCat='drywall';
+  saveState();
   document.getElementById('job-name-display').textContent=J().name;
   renderAll();
   document.getElementById('drawer').classList.add('open');
@@ -1343,6 +1386,9 @@ function exportToSheets() {
 }
 
 /* ── Init ── */
+// Set curAreaId to first area of current job if any
+curAreaId = J()?.areas[0]?.id || null;
+saveState();
 renderAll();
 </script>
 </body>
