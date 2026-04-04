@@ -727,7 +727,34 @@ function handleDetailsTap(e) { if(e.target===document.getElementById('details-ov
 function showReport() {
   const j=J();
   document.getElementById('modal-title').textContent=j.name+' — Report';
-  let html=''; let hasAny=false;
+  const d=j.details;
+
+  // Build job details header
+  const detailRows = [
+    d.customer    ? ['Customer',      d.customer]    : null,
+    d.site        ? ['Site',          d.site]        : null,
+    d.contactName ? ['Site Contact',  d.contactName] : null,
+    d.contactPhone? ['Phone',         d.contactPhone]: null,
+    d.contactEmail? ['Email',         d.contactEmail]: null,
+    d.lockbox     ? ['Lockbox',       d.lockbox]     : null,
+    ['Energy Star', d.energyStar ? 'Yes' : 'No'],
+    d.notes       ? ['Notes',         d.notes]       : null,
+    ['Created',     fmtDate(j.createdAt)],
+    ['Modified',    fmtDate(j.modifiedAt)],
+  ].filter(Boolean);
+
+  let html = '';
+
+  if (detailRows.length) {
+    html += `<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1.5px solid var(--border-md)">`;
+    html += detailRows.map(([label,val])=>`
+      <div class="modal-row">
+        <span style="color:var(--muted)">${label}</span>
+        <span style="font-family:inherit;font-weight:400;color:var(--text);text-align:right;max-width:60%;word-break:break-word">${val}</span>
+      </div>`).join('');
+    html += `</div>`;
+  }
+  let hasAny=false;
   j.areas.forEach(a=>{
     let aHtml=''; let aHas=false;
     DRYWALL_TYPES.forEach(t=>{
