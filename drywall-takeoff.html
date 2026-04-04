@@ -1,183 +1,830 @@
-
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Drywall Tally 1.7</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Drywall Tally</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Segoe UI', system-ui, sans-serif; }
-    .card { transition: all 0.2s; }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg: #f0ede8;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.09);
+      --border-md: rgba(0,0,0,0.15);
+      --text: #111111;
+      --muted: #777777;
+      --accent: #1d4ed8;
+      --accent-light: #eff4ff;
+      --green: #15803d;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg);
+      position: relative;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: calc(12px + var(--safe-top)) 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 10px;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .menu-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .job-name-display {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .job-name-input {
+      font-size: 16px;
+      font-weight: 600;
+      font-family: inherit;
+      color: var(--text);
+      border: none;
+      border-bottom: 2px solid var(--accent);
+      background: transparent;
+      outline: none;
+      min-width: 0;
+      width: 140px;
+      padding: 0;
+    }
+
+    .pencil-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .report-btn {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Type Tabs ── */
+    .type-scroll-wrap {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .type-scroll {
+      display: flex;
+      overflow-x: auto;
+      padding: 0 12px;
+      gap: 2px;
+      scrollbar-width: none;
+    }
+    .type-scroll::-webkit-scrollbar { display: none; }
+
+    .type-tab {
+      padding: 12px 13px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2.5px solid transparent;
+      color: var(--muted);
+      white-space: nowrap;
+      transition: color 0.12s;
+    }
+    .type-tab.active {
+      border-bottom-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── Tally Area ── */
+    .tally-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tally-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .tally-type-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .tally-subtotal {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .tally-subtotal strong {
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .sheet-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .sheet-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sheet-card-top {
+      padding: 20px 12px 14px;
+      text-align: center;
+      cursor: pointer;
+      flex: 1;
+      transition: background 0.1s;
+    }
+    .sheet-card-top:active { background: var(--accent-light); }
+
+    .sheet-ft {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .sheet-count {
+      font-family: 'DM Mono', monospace;
+      font-size: 54px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+      cursor: text;
+    }
+
+    .sheet-count-input {
+      font-family: 'DM Mono', monospace;
+      font-size: 54px;
+      font-weight: 500;
+      color: var(--accent);
+      line-height: 1;
+      width: 100%;
+      border: none;
+      border-bottom: 2px solid var(--accent);
+      background: transparent;
+      text-align: center;
+      outline: none;
+      padding: 0;
+      -moz-appearance: textfield;
+    }
+    .sheet-count-input::-webkit-inner-spin-button,
+    .sheet-count-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    .sheet-unit {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .sheet-card-controls {
+      display: flex;
+      border-top: 1px solid var(--border);
+    }
+
+    .ctrl {
+      flex: 1;
+      height: 50px;
+      border: none;
+      background: none;
+      font-size: 24px;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.1s, color 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ctrl:active { background: var(--bg); color: var(--text); }
+    .ctrl.add:active { background: var(--accent-light); color: var(--accent); }
+    .ctrl-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+
+    /* ── Bottom Strip ── */
+    .bottom-strip {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px calc(10px + var(--safe-bottom));
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .bottom-strip::-webkit-scrollbar { display: none; }
+
+    .strip-total {
+      background: var(--text);
+      color: #fff;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .strip-total span {
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+    }
+
+    .strip-chip {
+      border-radius: 20px;
+      padding: 8px 12px;
+      font-size: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--bg);
+    }
+    .strip-chip strong {
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ── Jobs Drawer ── */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 78vw;
+      max-width: 300px;
+      background: #1a1f2e;
+      z-index: 51;
+      display: flex;
+      flex-direction: column;
+      padding: calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
+      gap: 14px;
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    .drawer.open { transform: translateX(0); }
+
+    .drawer-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .drawer-new-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .drawer-section-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .drawer-job-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .drawer-job-item {
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+      transition: background 0.12s, color 0.12s;
+    }
+    .drawer-job-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 500; }
+
+    /* ── Report Bottom Sheet ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 60;
+      display: flex;
+      align-items: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+    .modal-sheet {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      padding-bottom: var(--safe-bottom);
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border-md);
+      border-radius: 2px;
+      margin: 12px auto 0;
+      flex-shrink: 0;
+    }
+
+    .modal-header {
+      padding: 14px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 600; }
+
+    .modal-close-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: none;
+      font-size: 15px;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-body {
+      overflow-y: auto;
+      padding: 16px 20px 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-section {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin: 16px 0 6px;
+    }
+    .modal-section:first-child { margin-top: 0; }
+
+    .modal-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .modal-row:last-of-type { border-bottom: none; }
+    .modal-row span:last-child {
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .modal-grand-total {
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .modal-grand-total span:first-child { font-size: 14px; font-weight: 500; }
+    .modal-grand-total span:last-child {
+      font-family: 'DM Mono', monospace;
+      font-size: 24px;
+      font-weight: 500;
+    }
+
+    .empty-msg {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      padding: 40px 0;
+    }
   </style>
 </head>
-<body class="h-full bg-gray-100">
+<body>
+<div class="app">
 
-<div class="flex h-screen">
-
-  <!-- Sidebar -->
-  <div class="w-64 bg-gray-800 text-white p-4">
-    <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">
-      <i class="fas fa-ruler-combined"></i> Drywall Tally
-    </h1>
-    <div class="mb-4">
-      <button onclick="newJob()" class="w-full bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg flex items-center justify-center gap-2">
-        <i class="fas fa-plus"></i> New Job
-      </button>
-    </div>
-    <div class="text-sm text-gray-400 mb-2">JOBS</div>
-    <div id="job-list" class="space-y-1 text-sm"></div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="flex-1 flex flex-col">
-    <!-- Top Bar -->
-    <div class="bg-white shadow-sm p-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <h2 id="current-job" class="text-xl font-semibold">Job 1 - Main Floor</h2>
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="menu-btn" onclick="openDrawer()">
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+          <rect width="18" height="2" rx="1" fill="#111"/>
+          <rect y="6" width="14" height="2" rx="1" fill="#111"/>
+          <rect y="12" width="10" height="2" rx="1" fill="#111"/>
+        </svg>
       </div>
-      <button onclick="showReport()" class="bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700">
-        <i class="fas fa-file-alt"></i> Job Report
-      </button>
-    </div>
-
-    <!-- Tabs -->
-    <div class="bg-white border-b px-6">
-      <div class="flex gap-6 text-sm" id="tabs">
-        <button onclick="switchTab(0)" class="tab-button py-4 border-b-2 border-blue-600 text-blue-600 font-medium">Regular 1/2"</button>
-        <button onclick="switchTab(1)" class="tab-button py-4 text-gray-500 hover:text-gray-700">5/8"</button>
-        <button onclick="switchTab(2)" class="tab-button py-4 text-gray-500 hover:text-gray-700">Ceilings</button>
-        <button onclick="switchTab(3)" class="tab-button py-4 text-gray-500 hover:text-gray-700">Fire Rated</button>
-        <button onclick="switchTab(4)" class="tab-button py-4 text-gray-500 hover:text-gray-700">Extras</button>
+      <div class="job-name-display" id="job-name-display">Job 1</div>
+      <div class="pencil-btn" onclick="startTopbarRename()" id="pencil-btn">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="#777" stroke-width="1.4" stroke-linejoin="round"/>
+          <path d="M8 3L11 6" stroke="#777" stroke-width="1.4"/>
+        </svg>
       </div>
     </div>
-
-    <!-- Tally Area -->
-    <div class="flex-1 p-6 overflow-auto" id="tally-content">
-      <!-- Content loaded by JS -->
-    </div>
+    <button class="report-btn" onclick="showReport()">Report</button>
   </div>
 
-  <!-- Right Sidebar - Totals -->
-  <div class="w-80 bg-white border-l shadow-sm p-6 overflow-auto">
-    <h3 class="font-semibold text-lg mb-4">Job Totals</h3>
-    <div id="totals" class="space-y-4"></div>
+  <div class="type-scroll-wrap">
+    <div class="type-scroll" id="type-tabs"></div>
+  </div>
+
+  <div class="tally-area" id="tally-area"></div>
+
+  <div class="bottom-strip" id="bottom-strip"></div>
+
+</div>
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-title">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="1" width="6" height="9" rx="1" fill="white" fill-opacity="0.7"/>
+      <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity="0.7"/>
+      <rect x="9" y="9" width="6" height="6" rx="1" fill="white" fill-opacity="0.4"/>
+    </svg>
+    Drywall Tally
+  </div>
+  <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
+  <div class="drawer-section-label">Jobs</div>
+  <div class="drawer-job-list" id="drawer-job-list"></div>
+</div>
+
+<!-- Report Sheet -->
+<div class="modal-overlay" id="modal-overlay" onclick="handleModalTap(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 id="modal-title">Report</h3>
+      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
 <script>
-// Sample Data
-let currentJob = {
-  name: "Job 1 - Main Floor",
-  regular: { sheets48: 0, sheets412: 0 },
-  fiveEighth: { sheets48: 0, sheets412: 0 },
-  ceilings: { sheets48: 0, sheets412: 0 },
-  fire: { sheets48: 0, sheets412: 0 },
-  upcharges: []
-};
+const TYPES = [
+  { label: '48" × ½" PL',     key: 'pl48',     lengths: [7,8,9,10,12] },
+  { label: '54" × ½" PL',     key: 'pl54',     lengths: [8,9,10,12] },
+  { label: '48" × ½" CD',     key: 'cd48',     lengths: [8,9,10,12] },
+  { label: '48" × ½" Dens',   key: 'dens48',   lengths: [5,8,9,10,12] },
+  { label: '48" × ½" W/R',    key: 'wr48',     lengths: [5,8,9,10,12] },
+  { label: '48" × ⅝" FG',    key: 'fg48',     lengths: [8,9,10,12] },
+  { label: '54" × ⅝" FG',    key: 'fg54',     lengths: [8,9,10,12] },
+  { label: '48" × ½" Durock', key: 'durock48', lengths: [5,8,10,12] },
+  { label: '48" × ¼" Flex',   key: 'flex48',   lengths: [8,10,12] },
+];
 
-function renderTotals() {
-  const totalSheets = 
-    currentJob.regular.sheets48 + currentJob.regular.sheets412 +
-    currentJob.fiveEighth.sheets48 + currentJob.fiveEighth.sheets412 +
-    currentJob.ceilings.sheets48 + currentJob.ceilings.sheets412 +
-    currentJob.fire.sheets48 + currentJob.fire.sheets412;
+function blankCounts(lengths) {
+  const o = {};
+  lengths.forEach(l => o[l] = 0);
+  return o;
+}
+function newJobData(name, id) {
+  const counts = {};
+  TYPES.forEach(t => { counts[t.key] = blankCounts(t.lengths); });
+  return { id, name, counts };
+}
 
-  document.getElementById('totals').innerHTML = `
-    <div class="bg-gray-50 p-4 rounded-xl">
-      <div class="flex justify-between"><span class="text-gray-600">Total Sheets</span><span class="font-bold text-xl">${totalSheets}</span></div>
+let jobs = [ newJobData('Job 1', 1) ];
+let currentJobId = 1;
+let currentTab = 0;
+let jobCounter = 1;
+
+function job() { return jobs.find(j => j.id === currentJobId); }
+function typeTotal(key) { return Object.values(job().counts[key]).reduce((a, v) => a + v, 0); }
+function grandTotal() { return TYPES.reduce((a, t) => a + typeTotal(t.key), 0); }
+
+function startTopbarRename() {
+  const display = document.getElementById('job-name-display');
+  const pencil = document.getElementById('pencil-btn');
+  if (!display || display.tagName === 'INPUT') return;
+  const current = job().name;
+  display.outerHTML = `<input class="job-name-input" id="job-name-display" type="text" value="${current}"
+    onblur="commitTopbarRename()"
+    onkeydown="if(event.key==='Enter')this.blur()"
+  />`;
+  pencil.style.display = 'none';
+  const inp = document.getElementById('job-name-display');
+  inp.focus();
+  inp.select();
+}
+
+function commitTopbarRename() {
+  const inp = document.getElementById('job-name-display');
+  if (!inp || inp.tagName !== 'INPUT') return;
+  const val = inp.value.trim() || job().name;
+  job().name = val;
+  inp.outerHTML = `<div class="job-name-display" id="job-name-display">${val}</div>`;
+  const pencil = document.getElementById('pencil-btn');
+  if (pencil) pencil.style.display = '';
+  renderDrawerList(null);
+}
+
+function renderDrawerList(editId) {
+  document.getElementById('drawer-job-list').innerHTML = jobs.map(j => {
+    const isActive = j.id === currentJobId;
+    if (editId && j.id === editId) {
+      return `<div class="drawer-job-item active">
+        <input id="rename-input" type="text" value="${j.name}"
+          style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);color:#fff;font-size:14px;font-family:inherit;width:100%;outline:none;padding:0;"
+          onblur="commitRename(${j.id})"
+          onkeydown="if(event.key==='Enter')this.blur();event.stopPropagation();"
+          onclick="event.stopPropagation()"
+        />
+      </div>`;
+    }
+    return `<div class="drawer-job-item ${isActive ? 'active' : ''}" onclick="selectJob(${j.id})">${j.name}</div>`;
+  }).join('');
+
+  if (editId) {
+    setTimeout(() => {
+      const inp = document.getElementById('rename-input');
+      if (inp) { inp.focus(); inp.select(); }
+    }, 30);
+  }
+}
+
+function commitRename(id) {
+  const inp = document.getElementById('rename-input');
+  if (!inp) return;
+  const val = inp.value.trim() || ('Job ' + id);
+  jobs.find(j => j.id === id).name = val;
+  if (id === currentJobId) document.getElementById('job-name-display').textContent = val;
+  renderDrawerList(null);
+}
+
+function openDrawer() {
+  renderDrawerList(null);
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  // commit any in-progress rename before closing
+  const inp = document.getElementById('rename-input');
+  if (inp) inp.blur();
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
+function selectJob(id) {
+  currentJobId = id;
+  document.getElementById('job-name-display').textContent = job().name;
+  closeDrawer();
+  renderTabs();
+  renderTab();
+  renderBottomStrip();
+}
+function newJob() {
+  jobCounter++;
+  const name = 'Job ' + jobCounter;
+  jobs.push(newJobData(name, jobCounter));
+  currentJobId = jobCounter;
+  document.getElementById('job-name-display').textContent = name;
+  renderTabs();
+  renderTab();
+  renderBottomStrip();
+  // Open drawer and put the new job into rename mode
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  renderDrawerList(jobCounter);
+}
+
+function renderTabs() {
+  document.getElementById('type-tabs').innerHTML = TYPES.map((t, i) =>
+    `<button class="type-tab ${i === currentTab ? 'active' : ''}" onclick="switchTab(${i})">${t.label}</button>`
+  ).join('');
+}
+function switchTab(n) {
+  currentTab = n;
+  renderTabs();
+  renderTab();
+}
+
+function add(key, len) {
+  job().counts[key][len]++;
+  renderTab();
+  renderBottomStrip();
+}
+function sub(key, len) {
+  if (job().counts[key][len] > 0) job().counts[key][len]--;
+  renderTab();
+  renderBottomStrip();
+}
+
+function editCount(key, len) {
+  const id = `cnt-${key}-${len}`;
+  const el = document.getElementById(id);
+  if (!el || el.tagName === 'INPUT') return;
+  const current = job().counts[key][len];
+  el.outerHTML = `<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" value="${current}" min="0"
+    onblur="commitCount('${key}',${len})"
+    onkeydown="if(event.key==='Enter'){this.blur()}"
+  />`;
+  const input = document.getElementById(id);
+  input.focus();
+  input.select();
+}
+
+function commitCount(key, len) {
+  const id = `cnt-${key}-${len}`;
+  const input = document.getElementById(id);
+  if (!input) return;
+  const val = Math.max(0, parseInt(input.value) || 0);
+  job().counts[key][len] = val;
+  renderTab();
+  renderBottomStrip();
+}
+
+function renderTab() {
+  const t = TYPES[currentTab];
+  const counts = job().counts[t.key];
+  document.getElementById('tally-area').innerHTML = `
+    <div class="tally-header">
+      <div class="tally-type-label">${t.label}</div>
+      <div class="tally-subtotal">Subtotal: <strong>${typeTotal(t.key)}</strong></div>
     </div>
-    <div class="grid grid-cols-2 gap-3 text-sm">
-      <div class="bg-white border rounded-xl p-3">
-        <div class="text-green-600">½" Regular</div>
-        <div class="text-2xl font-bold">${currentJob.regular.sheets48 + currentJob.regular.sheets412}</div>
-      </div>
-      <div class="bg-white border rounded-xl p-3">
-        <div class="text-amber-600">⅝"</div>
-        <div class="text-2xl font-bold">${currentJob.fiveEighth.sheets48 + currentJob.fiveEighth.sheets412}</div>
-      </div>
-      <div class="bg-white border rounded-xl p-3">
-        <div class="text-blue-600">Ceilings</div>
-        <div class="text-2xl font-bold">${currentJob.ceilings.sheets48 + currentJob.ceilings.sheets412}</div>
-      </div>
-      <div class="bg-white border rounded-xl p-3">
-        <div class="text-red-600">Fire Rated</div>
-        <div class="text-2xl font-bold">${currentJob.fire.sheets48 + currentJob.fire.sheets412}</div>
-      </div>
+    <div class="sheet-grid">
+      ${t.lengths.map(l => `
+        <div class="sheet-card">
+          <div class="sheet-card-top" onclick="add('${t.key}',${l})">
+            <div class="sheet-ft">${l}'</div>
+            <div class="sheet-count" id="cnt-${t.key}-${l}" onclick="event.stopPropagation(); editCount('${t.key}',${l})">${counts[l]}</div>
+            <div class="sheet-unit">tap to add</div>
+          </div>
+          <div class="sheet-card-controls">
+            <button class="ctrl" onclick="sub('${t.key}',${l})">−</button>
+            <div class="ctrl-divider"></div>
+            <button class="ctrl add" onclick="add('${t.key}',${l})">+</button>
+          </div>
+        </div>
+      `).join('')}
     </div>
   `;
 }
 
-function addSheet(type, size) {
-  if (type === 'regular') {
-    if (size === 8) currentJob.regular.sheets48++;
-    else currentJob.regular.sheets412++;
-  } else if (type === 'five') {
-    if (size === 8) currentJob.fiveEighth.sheets48++;
-    else currentJob.fiveEighth.sheets412++;
-  } else if (type === 'ceiling') {
-    if (size === 8) currentJob.ceilings.sheets48++;
-    else currentJob.ceilings.sheets412++;
-  } else if (type === 'fire') {
-    if (size === 8) currentJob.fire.sheets48++;
-    else currentJob.fire.sheets412++;
-  }
-  renderCurrentTab();
-  renderTotals();
-}
-
-function switchTab(n) {
-  document.querySelectorAll('.tab-button').forEach((el,i) => {
-    el.classList.toggle('border-blue-600', i===n);
-    el.classList.toggle('text-blue-600', i===n);
-    el.classList.toggle('text-gray-500', i!==n);
-  });
-
-  const content = document.getElementById('tally-content');
-  
-  if (n === 0) {
-    content.innerHTML = `
-      <h3 class="text-lg font-semibold mb-4">Regular ½" Drywall</h3>
-      <div class="grid grid-cols-2 gap-4">
-        <div class="card bg-white p-6 rounded-2xl shadow text-center cursor-pointer" onclick="addSheet('regular',8)">
-          <div class="text-5xl mb-2">4×8</div>
-          <div class="text-3xl font-bold">${currentJob.regular.sheets48}</div>
-          <div class="text-sm text-gray-500">sheets</div>
-        </div>
-        <div class="card bg-white p-6 rounded-2xl shadow text-center cursor-pointer" onclick="addSheet('regular',12)">
-          <div class="text-5xl mb-2">4×12</div>
-          <div class="text-3xl font-bold">${currentJob.regular.sheets412}</div>
-          <div class="text-sm text-gray-500">sheets</div>
-        </div>
-      </div>`;
-  } else if (n === 1) {
-    content.innerHTML = `5/8" content... (same pattern)`;
-    // You can expand similarly
-  } else {
-    content.innerHTML = `<p class="text-gray-500">Tab ${n} coming soon...</p>`;
-  }
-}
-
-function renderCurrentTab() {
-  switchTab(0); // default to first tab
-}
-
-function newJob() {
-  alert("New job created! (Demo)");
-  currentJob = { name: "New Job", ...currentJob };
-  document.getElementById('current-job').textContent = currentJob.name;
+function renderBottomStrip() {
+  const chips = TYPES.map(t => {
+    const v = typeTotal(t.key);
+    return v > 0 ? `<div class="strip-chip">${t.label} <strong>${v}</strong></div>` : '';
+  }).join('');
+  document.getElementById('bottom-strip').innerHTML = `
+    <div class="strip-total">Total <span>${grandTotal()}</span></div>
+    ${chips || '<div class="strip-chip">No sheets yet</div>'}
+  `;
 }
 
 function showReport() {
-  alert(`Job Report\n\nTotal Sheets: ${document.querySelector('#totals .text-xl').textContent}\n\nThank you for using Drywall Tally!`);
+  const j = job();
+  document.getElementById('modal-title').textContent = j.name + ' — Report';
+  let html = '';
+  let hasAny = false;
+  TYPES.forEach(t => {
+    const counts = j.counts[t.key];
+    const tot = Object.values(counts).reduce((a, v) => a + v, 0);
+    if (!tot) return;
+    hasAny = true;
+    html += `<div class="modal-section">${t.label}</div>`;
+    t.lengths.forEach(l => {
+      if (counts[l] > 0) html += `<div class="modal-row"><span>${l}' sheets</span><span>${counts[l]}</span></div>`;
+    });
+  });
+  if (!hasAny) {
+    html = `<div class="empty-msg">No sheets tallied yet.</div>`;
+  } else {
+    html += `<div class="modal-grand-total"><span>Total Sheets</span><span>${grandTotal()}</span></div>`;
+  }
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function handleModalTap(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
 }
 
-// Initialize
-renderTotals();
-renderCurrentTab();
+renderTabs();
+renderTab();
+renderBottomStrip();
 </script>
-
 </body>
 </html>
