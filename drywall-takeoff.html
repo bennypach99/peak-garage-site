@@ -728,8 +728,9 @@ function showReport() {
   const j=J();
   document.getElementById('modal-title').textContent=j.name+' — Report';
   const d=j.details;
+  const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
 
-  // Build job details header
+  // Job details block
   const detailRows = [
     d.customer    ? ['Customer',      d.customer]    : null,
     d.site        ? ['Site',          d.site]        : null,
@@ -744,7 +745,6 @@ function showReport() {
   ].filter(Boolean);
 
   let html = '';
-
   if (detailRows.length) {
     html += `<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1.5px solid var(--border-md)">`;
     html += detailRows.map(([label,val])=>`
@@ -754,37 +754,87 @@ function showReport() {
       </div>`).join('');
     html += `</div>`;
   }
+
   let hasAny=false;
   j.areas.forEach(a=>{
-    let aHtml=''; let aHas=false;
+    let aHas=false;
+    // Check if area has anything
     DRYWALL_TYPES.forEach(t=>{
-      if(t.isItems){
-        const items=getItemsForKey(t.key);
-        const rows=items.filter(item=>a.counts[t.key][item]>0)
-          .map(item=>`<div class="modal-row"><span>${item}</span><span>${a.counts[t.key][item]}</span></div>`).join('');
-        if(!rows)return;
-        aHas=true;
-        aHtml+=`<div class="modal-type-head" style="color:${t.color}">${t.fullName}</div>${rows}`;
-      } else {
-        const rows=t.lengths.filter(l=>a.counts[t.key][l]>0)
-          .map(l=>`<div class="modal-row"><span>${l}' sheets</span><span>${a.counts[t.key][l]}</span></div>`).join('');
-        if(!rows)return;
-        aHas=true;
-        aHtml+=`<div class="modal-type-head" style="color:${t.color}">${t.fullName}</div>${rows}`;
-      }
+      if(t.isItems){ if(getItemsForKey(t.key).some(item=>a.counts[t.key][item]>0))aHas=true; }
+      else { if(t.lengths.some(l=>a.counts[t.key][l]>0))aHas=true; }
     });
     if(!aHas)return;
     hasAny=true;
-    const meta=[a.height,a.texture].filter(Boolean).join(' · ');
-    const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
-    const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
-    const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
-    const sqftStr=[
-      ceilingSqft>0?`${ceilingSqft} ft² ceiling`:'',
-      doubleSqft>0?`${doubleSqft} ft² double`:'',
-    ].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted);margin-left:4px">${s}</span>`).join('');
-    html+=`<div class="modal-area-head">${a.name}${meta?` <span style="font-weight:400;font-size:12px;color:var(--muted)">${meta}</span>`:''} <span style="font-weight:400;font-size:12px;color:var(--muted);margin-left:4px">${areaTotal(a)} sheets</span>${sqftStr}</div>${aHtml}`;
+
+    // Area header
+    const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
+    const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
+    const metaParts=[a.height,a.texture].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${s}</span>`);
+    const sqftParts=[
+      ceilingSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${ceilingSqft} ft² ceiling</span>`:'',
+      doubleSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${doubleSqft} ft² double</span>`:'',
+    ].filter(Boolean);
+    html+=`<div class="modal-area-head">Area - ${a.name} ${metaParts.join(' · ')} <span style="font-weight:400;font-size:12px;color:var(--muted)">${areaTotal(a)} sheets</span> ${sqftParts.join(' ')}</div>`;
+
+    // Drywall types (non-item) — each gets Sheets/Sq Ft header + rows + Totals
+    DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
+      const entries=t.lengths.filter(l=>a.counts[t.key][l]>0);
+      if(!entries.length)return;
+
+      // Type header row with column labels
+      html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
+        <span>${t.fullName}</span>
+        <span style="display:flex;gap:32px">
+          <span style="min-width:32px;text-align:right">Sheets</span>
+          <span style="min-width:48px;text-align:right">Sq Ft</span>
+        </span>
+      </div>`;
+
+      let typeSheets=0,typeSqft=0;
+      entries.forEach(l=>{
+        const qty=a.counts[t.key][l];
+        const sf=(SQFT[l]||0)*qty;
+        typeSheets+=qty; typeSqft+=sf;
+        html+=`<div class="modal-row">
+          <span>${l}' sheets</span>
+          <span style="display:flex;gap:32px">
+            <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${qty}</span>
+            <span style="min-width:48px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${sf>0?sf:''}</span>
+          </span>
+        </div>`;
+      });
+      // Totals row
+      html+=`<div class="modal-row" style="font-weight:500;color:var(--text);border-bottom:1.5px solid var(--border-md)">
+        <span>Totals</span>
+        <span style="display:flex;gap:32px">
+          <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSheets}</span>
+          <span style="min-width:48px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSqft>0?typeSqft:''}</span>
+        </span>
+      </div>`;
+      html+=`<div style="height:8px"></div>`;
+    });
+
+    // Steel items
+    const steelEntries=STEEL_ITEMS.filter(item=>a.counts['drywallSteel'][item]>0);
+    if(steelEntries.length){
+      html+=`<div class="modal-type-head" style="color:#475569">Steel</div>`;
+      steelEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['drywallSteel'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
+
+    // Extras items
+    const extrasEntries=EXTRAS_ITEMS.filter(item=>a.counts['extras'][item]>0);
+    if(extrasEntries.length){
+      html+=`<div class="modal-type-head" style="color:#0891b2">Extras</div>`;
+      extrasEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['extras'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
   });
+
   if(!hasAny) html=`<div class="empty-msg">No sheets tallied yet.</div>`;
   else html+=`<div class="modal-grand"><span>Total Sheets</span><span>${jobTotal()}</span></div>`;
   document.getElementById('modal-body').innerHTML=html;
