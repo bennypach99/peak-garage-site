@@ -9,515 +9,155 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
     :root {
-      --bg: #f0ede8;
-      --surface: #ffffff;
-      --border: rgba(0,0,0,0.09);
-      --border-md: rgba(0,0,0,0.15);
-      --text: #111111;
-      --muted: #777777;
-      --accent: #1d4ed8;
-      --accent-light: #eff4ff;
-      --green: #15803d;
-      --radius: 14px;
-      --radius-sm: 10px;
+      --bg: #f0ede8; --surface: #ffffff;
+      --border: rgba(0,0,0,0.09); --border-md: rgba(0,0,0,0.15);
+      --text: #111111; --muted: #777777;
+      --accent: #1d4ed8; --accent-light: #eff4ff;
+      --purple: #7c3aed; --green: #15803d;
+      --radius: 14px; --radius-sm: 10px;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-top: env(safe-area-inset-top, 0px);
     }
+    html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+    .app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; background: var(--bg); }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+    /* ── Topbar ── */
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: calc(12px + var(--safe-top)) 16px 12px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 10px; }
+    .topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; overflow: hidden; }
+    .menu-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+    .job-name-display { font-size: 16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .job-name-input { font-size: 16px; font-weight: 600; font-family: inherit; color: var(--text); border: none; border-bottom: 2px solid var(--accent); background: transparent; outline: none; width: 130px; padding: 0; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .info-btn { width: 36px; height: 36px; border-radius: 9px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .add-area-btn { background: var(--purple); color: #fff; border: none; border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; white-space: nowrap; }
 
-    .app {
-      display: flex;
-      flex-direction: column;
-      height: 100dvh;
-      max-width: 480px;
-      margin: 0 auto;
-      background: var(--bg);
-      position: relative;
-    }
+    /* ── Category tabs (Drywall / Insulation / Steel / Mud) ── */
+    .cat-bar { background: #1a1f2e; flex-shrink: 0; }
+    .cat-scroll { display: flex; overflow-x: auto; padding: 0 12px; gap: 2px; scrollbar-width: none; }
+    .cat-scroll::-webkit-scrollbar { display: none; }
+    .cat-tab { padding: 11px 16px; font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: rgba(255,255,255,0.45); white-space: nowrap; transition: color 0.12s; letter-spacing: 0.02em; }
+    .cat-tab.active { color: #fff; border-bottom-color: #fff; }
 
-    /* ── Top Bar ── */
-    .topbar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: calc(12px + var(--safe-top)) 16px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      gap: 10px;
-    }
+    /* ── Area tabs ── */
+    .area-bar { background: #f7f5f2; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .area-scroll { display: flex; overflow-x: auto; padding: 0 12px; gap: 2px; scrollbar-width: none; align-items: stretch; }
+    .area-scroll::-webkit-scrollbar { display: none; }
+    .area-tab { padding: 9px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: var(--muted); white-space: nowrap; transition: color 0.12s; }
+    .area-tab.active { border-bottom-color: var(--purple); color: var(--purple); }
+    .area-tab-inner { display: flex; align-items: center; gap: 5px; }
+    .area-pencil { display: flex; align-items: center; color: var(--purple); opacity: 0.6; }
+    .area-pencil:hover { opacity: 1; }
+    .area-rename-input { font-size: 13px; font-weight: 500; font-family: inherit; border: none; border-bottom: 1.5px solid var(--purple); background: transparent; outline: none; color: var(--purple); width: 90px; padding: 2px 0; }
 
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
+    /* ── Area info strip ── */
+    .area-info-bar { background: #f0ede8; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow: hidden; }
+    .area-info-scroll { display: flex; overflow-x: auto; padding: 7px 14px; gap: 8px; scrollbar-width: none; align-items: center; }
+    .area-info-scroll::-webkit-scrollbar { display: none; }
+    .area-info-chip { display: flex; align-items: center; gap: 5px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; white-space: nowrap; flex-shrink: 0; }
+    .area-info-chip-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .area-info-chip-val { font-size: 12px; font-weight: 500; color: var(--text); }
 
-    .menu-btn {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .job-name-display {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .job-name-input {
-      font-size: 16px;
-      font-weight: 600;
-      font-family: inherit;
-      color: var(--text);
-      border: none;
-      border-bottom: 2px solid var(--accent);
-      background: transparent;
-      outline: none;
-      min-width: 0;
-      width: 140px;
-      padding: 0;
-    }
-
-    .pencil-btn {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .report-btn {
-      background: var(--green);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 10px 16px;
-      font-size: 13px;
-      font-family: inherit;
-      font-weight: 500;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    /* ── Type Tabs ── */
-    .type-scroll-wrap {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .type-scroll {
-      display: flex;
-      overflow-x: auto;
-      padding: 0 12px;
-      gap: 2px;
-      scrollbar-width: none;
-    }
+    /* ── Type tabs (second sub-row, only for Drywall) ── */
+    .type-bar { background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .type-scroll { display: flex; overflow-x: auto; padding: 0 12px; gap: 2px; scrollbar-width: none; }
     .type-scroll::-webkit-scrollbar { display: none; }
+    .type-tab { padding: 11px 13px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: var(--muted); white-space: nowrap; transition: color 0.12s; }
 
-    .type-tab {
-      padding: 12px 13px;
-      font-size: 13px;
-      font-family: inherit;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      background: none;
-      border-bottom: 2.5px solid transparent;
-      color: var(--muted);
-      white-space: nowrap;
-      transition: color 0.12s;
-    }
-    .type-tab.active {
-      border-bottom-color: var(--accent);
-      color: var(--accent);
-    }
-
-    /* ── Tally Area ── */
-    .tally-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 14px 10px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .tally-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-
-    .tally-type-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-    }
-
-    .tally-subtotal {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .tally-subtotal strong {
-      font-family: 'DM Mono', monospace;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .sheet-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .sheet-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sheet-card-top {
-      padding: 20px 12px 14px;
-      text-align: center;
-      cursor: pointer;
-      flex: 1;
-      transition: background 0.1s;
-    }
-    .sheet-card-top:active { background: var(--accent-light); }
-
-    .sheet-ft {
-      font-family: 'DM Mono', monospace;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .sheet-count {
-      font-family: 'DM Mono', monospace;
-      font-size: 54px;
-      font-weight: 500;
-      color: var(--text);
-      line-height: 1;
-      cursor: text;
-    }
-
-    .sheet-count-input {
-      font-family: 'DM Mono', monospace;
-      font-size: 54px;
-      font-weight: 500;
-      color: var(--accent);
-      line-height: 1;
-      width: 100%;
-      border: none;
-      border-bottom: 2px solid var(--accent);
-      background: transparent;
-      text-align: center;
-      outline: none;
-      padding: 0;
-      -moz-appearance: textfield;
-    }
-    .sheet-count-input::-webkit-inner-spin-button,
-    .sheet-count-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-
-    .sheet-unit {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    .sheet-card-controls {
-      display: flex;
-      border-top: 1px solid var(--border);
-    }
-
-    .ctrl {
-      flex: 1;
-      height: 50px;
-      border: none;
-      background: none;
-      font-size: 24px;
-      color: var(--muted);
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.1s, color 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .ctrl:active { background: var(--bg); color: var(--text); }
-    .ctrl.add:active { background: var(--accent-light); color: var(--accent); }
+    /* ── Tally area ── */
+    .tally-area { flex: 1; overflow-y: auto; padding: 16px 14px 10px; -webkit-overflow-scrolling: touch; }
+    .tally-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .tally-type-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; }
+    .tally-subtotal { font-size: 12px; color: var(--muted); }
+    .tally-subtotal strong { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
+    .sheet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .sheet-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+    .sheet-card-top { padding: 20px 12px 14px; text-align: center; flex: 1; }
+    .sheet-ft { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .sheet-count { font-family: 'DM Mono', monospace; font-size: 54px; font-weight: 500; line-height: 1; cursor: text; }
+    .sheet-count-input { font-family: 'DM Mono', monospace; font-size: 54px; font-weight: 500; color: var(--accent); line-height: 1; width: 100%; border: none; border-bottom: 2px solid var(--accent); background: transparent; text-align: center; outline: none; padding: 0; -moz-appearance: textfield; }
+    .sheet-count-input::-webkit-inner-spin-button, .sheet-count-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .sheet-card-controls { display: flex; border-top: 1px solid var(--border); }
+    .ctrl { flex: 1; height: 50px; border: none; background: none; font-size: 24px; color: var(--muted); cursor: pointer; font-family: inherit; transition: background 0.1s, color 0.1s; display: flex; align-items: center; justify-content: center; }
+    .ctrl:active { background: color-mix(in srgb, var(--add-color, var(--accent)) 10%, white); color: var(--add-color, var(--accent)); }
     .ctrl-divider { width: 1px; background: var(--border); flex-shrink: 0; }
 
-    /* ── Bottom Strip ── */
-    .bottom-strip {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 10px 14px calc(10px + var(--safe-bottom));
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .bottom-strip::-webkit-scrollbar { display: none; }
+    /* ── Coming soon placeholder ── */
+    .coming-soon { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
+    .coming-soon-icon { font-size: 40px; opacity: 0.3; }
+    .coming-soon h3 { font-size: 16px; font-weight: 500; color: var(--muted); }
+    .coming-soon p  { font-size: 13px; color: var(--muted); opacity: 0.7; }
 
-    .strip-total {
-      background: var(--text);
-      color: #fff;
-      border-radius: 20px;
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 500;
-      white-space: nowrap;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .strip-total span {
-      font-family: 'DM Mono', monospace;
-      font-size: 16px;
-    }
+    /* ── Empty state ── */
+    .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 40px 24px; text-align: center; }
+    .empty-state-icon { width: 64px; height: 64px; border-radius: 20px; background: var(--purple); display: flex; align-items: center; justify-content: center; }
+    .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text); }
+    .empty-state p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .empty-cta { background: var(--purple); color: #fff; border: none; border-radius: var(--radius-sm); padding: 13px 24px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
 
-    .strip-chip {
-      border-radius: 20px;
-      padding: 8px 12px;
-      font-size: 12px;
-      white-space: nowrap;
-      flex-shrink: 0;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      background: var(--bg);
-    }
-    .strip-chip strong {
-      font-family: 'DM Mono', monospace;
-      color: var(--text);
-      font-weight: 500;
-    }
+    /* ── Bottom Bar ── */
+    .bottom-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 12px calc(10px + var(--safe-bottom)); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+    .totals-strip { flex: 1; display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+    .totals-strip::-webkit-scrollbar { display: none; }
+    .strip-total { background: var(--text); color: #fff; border-radius: 20px; padding: 7px 13px; font-size: 13px; font-weight: 500; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+    .strip-total span { font-family: 'DM Mono', monospace; font-size: 15px; }
+    .strip-chip { border-radius: 20px; padding: 6px 11px; font-size: 12px; white-space: nowrap; flex-shrink: 0; border: 1px solid var(--border); color: var(--muted); background: var(--bg); }
+    .strip-chip strong { font-family: 'DM Mono', monospace; color: var(--text); font-weight: 500; }
+    .report-btn { background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; flex-shrink: 0; }
 
-    /* ── Jobs Drawer ── */
-    .drawer-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 50;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.22s;
-    }
+    /* ── Drawer ── */
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
     .drawer-overlay.open { opacity: 1; pointer-events: all; }
-
-    .drawer {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 78vw;
-      max-width: 300px;
-      background: #1a1f2e;
-      z-index: 51;
-      display: flex;
-      flex-direction: column;
-      padding: calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom));
-      gap: 14px;
-      transform: translateX(-100%);
-      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-    }
+    .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 78vw; max-width: 300px; background: #1a1f2e; z-index: 51; display: flex; flex-direction: column; padding: calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)); gap: 14px; transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
     .drawer.open { transform: translateX(0); }
-
-    .drawer-title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .drawer-new-btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 12px 14px;
-      font-size: 14px;
-      font-family: inherit;
-      font-weight: 500;
-      cursor: pointer;
-      text-align: center;
-    }
-
-    .drawer-section-label {
-      font-size: 10px;
-      color: rgba(255,255,255,0.35);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .drawer-job-list {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .drawer-job-item {
-      padding: 12px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 14px;
-      color: rgba(255,255,255,0.6);
-      transition: background 0.12s, color 0.12s;
-    }
+    .drawer-title { font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .drawer-new-btn { background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; font-family: inherit; font-weight: 500; cursor: pointer; }
+    .drawer-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; }
+    .drawer-job-list { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1; }
+    .drawer-job-item { padding: 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.6); transition: background 0.12s, color 0.12s; }
     .drawer-job-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 500; }
 
-    /* ── Report Bottom Sheet ── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 60;
-      display: flex;
-      align-items: flex-end;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.22s;
-    }
-    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    /* ── Shared bottom-sheet ── */
+    .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 60; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
+    .sheet-overlay.open { opacity: 1; pointer-events: all; }
+    .bottom-sheet { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-height: 92vh; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); padding-bottom: var(--safe-bottom); }
+    .sheet-overlay.open .bottom-sheet { transform: translateY(0); }
+    .sheet-handle { width: 36px; height: 4px; background: var(--border-md); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
+    .sheet-header { padding: 14px 20px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .sheet-header h3 { font-size: 16px; font-weight: 600; }
+    .sheet-close { width: 30px; height: 30px; border-radius: 50%; background: var(--bg); border: none; font-size: 15px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .sheet-body { overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 16px; }
+    .sheet-footer { padding: 0 20px 20px; flex-shrink: 0; }
+    .sheet-save-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; }
 
-    .modal-sheet {
-      background: var(--surface);
-      border-radius: 20px 20px 0 0;
-      width: 100%;
-      max-height: 88vh;
-      display: flex;
-      flex-direction: column;
-      transform: translateY(100%);
-      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-      padding-bottom: var(--safe-bottom);
-    }
-    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    /* ── Form fields ── */
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .field-input { font-size: 15px; font-family: inherit; color: var(--text); border: none; border-bottom: 1px solid var(--border-md); background: transparent; outline: none; padding: 6px 0; width: 100%; }
+    .field-input:focus { border-bottom-color: var(--accent); }
+    .field-select { font-size: 15px; font-family: inherit; color: var(--text); border: none; border-bottom: 1px solid var(--border-md); background: transparent; outline: none; padding: 6px 0; width: 100%; appearance: none; -webkit-appearance: none; }
+    .field-select:focus { border-bottom-color: var(--accent); }
+    .field-readonly { font-size: 14px; color: var(--muted); padding: 6px 0; font-family: 'DM Mono', monospace; }
+    .field-divider { height: 1px; background: var(--border); }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+    .toggle-label { font-size: 15px; color: var(--text); }
+    .toggle { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track { position: absolute; inset: 0; background: #d1d5db; border-radius: 13px; cursor: pointer; transition: background 0.2s; }
+    .toggle input:checked + .toggle-track { background: var(--accent); }
+    .toggle-track::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .toggle input:checked + .toggle-track::after { transform: translateX(20px); }
 
-    .modal-handle {
-      width: 36px;
-      height: 4px;
-      background: var(--border-md);
-      border-radius: 2px;
-      margin: 12px auto 0;
-      flex-shrink: 0;
-    }
-
-    .modal-header {
-      padding: 14px 20px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-    .modal-header h3 { font-size: 16px; font-weight: 600; }
-
-    .modal-close-btn {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: var(--bg);
-      border: none;
-      font-size: 15px;
-      color: var(--muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-body {
-      overflow-y: auto;
-      padding: 16px 20px 24px;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .modal-section {
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin: 16px 0 6px;
-    }
-    .modal-section:first-child { margin-top: 0; }
-
-    .modal-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 9px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 14px;
-      color: var(--muted);
-    }
+    .empty-msg { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0; }
+    .modal-area-head { font-size: 14px; font-weight: 600; color: var(--purple); margin: 18px 0 6px; padding-bottom: 6px; border-bottom: 1.5px solid #ede9fe; }
+    .modal-area-head:first-child { margin-top: 0; }
+    .modal-type-head { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin: 10px 0 4px; }
+    .modal-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--muted); }
     .modal-row:last-of-type { border-bottom: none; }
-    .modal-row span:last-child {
-      font-family: 'DM Mono', monospace;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .modal-grand-total {
-      background: var(--bg);
-      border-radius: var(--radius-sm);
-      padding: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 16px;
-    }
-    .modal-grand-total span:first-child { font-size: 14px; font-weight: 500; }
-    .modal-grand-total span:last-child {
-      font-family: 'DM Mono', monospace;
-      font-size: 24px;
-      font-weight: 500;
-    }
-
-    .empty-msg {
-      text-align: center;
-      color: var(--muted);
-      font-size: 14px;
-      padding: 40px 0;
-    }
+    .modal-row span:last-child { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
+    .modal-grand { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+    .modal-grand span:first-child { font-size: 14px; font-weight: 500; }
+    .modal-grand span:last-child { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -533,23 +173,43 @@
         </svg>
       </div>
       <div class="job-name-display" id="job-name-display">Job 1</div>
-      <div class="pencil-btn" onclick="startTopbarRename()" id="pencil-btn">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="#777" stroke-width="1.4" stroke-linejoin="round"/>
-          <path d="M8 3L11 6" stroke="#777" stroke-width="1.4"/>
+    </div>
+    <div class="topbar-right">
+      <div class="info-btn" onclick="openDetails()">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="7" stroke="#777" stroke-width="1.4"/>
+          <path d="M8 7v5" stroke="#777" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="8" cy="4.5" r="0.8" fill="#777"/>
         </svg>
       </div>
+      <button class="add-area-btn" onclick="openAreaForm(null)">+ Add Area</button>
     </div>
-    <button class="report-btn" onclick="showReport()">Report</button>
   </div>
 
-  <div class="type-scroll-wrap">
+  <!-- Category tabs -->
+  <div class="cat-bar">
+    <div class="cat-scroll" id="cat-tabs"></div>
+  </div>
+
+  <!-- Area tabs -->
+  <div class="area-bar">
+    <div class="area-scroll" id="area-tabs"></div>
+  </div>
+
+  <!-- Area info strip -->
+  <div class="area-info-bar" id="area-info-bar"></div>
+
+  <!-- Type tabs (drywall sub-types, hidden for other cats) -->
+  <div class="type-bar" id="type-bar-wrap">
     <div class="type-scroll" id="type-tabs"></div>
   </div>
 
   <div class="tally-area" id="tally-area"></div>
 
-  <div class="bottom-strip" id="bottom-strip"></div>
+  <div class="bottom-bar">
+    <div class="totals-strip" id="totals-strip"></div>
+    <button class="report-btn" onclick="showReport()">Report</button>
+  </div>
 
 </div>
 
@@ -565,266 +225,566 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div class="drawer-section-label">Jobs</div>
+  <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
 </div>
 
-<!-- Report Sheet -->
-<div class="modal-overlay" id="modal-overlay" onclick="handleModalTap(event)">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 id="modal-title">Report</h3>
-      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+<!-- Area Form -->
+<div class="sheet-overlay" id="area-form-overlay" onclick="handleAreaFormTap(event)">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3 id="area-form-title">Add Area</h3>
+      <button class="sheet-close" onclick="closeAreaForm()">✕</button>
     </div>
-    <div class="modal-body" id="modal-body"></div>
+    <div class="sheet-body">
+      <div class="field-group">
+        <div class="field-label">Area Name</div>
+        <input class="field-input" id="af-name" type="text" placeholder="e.g. Main Floor, Basement…"/>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Ceiling Height <span style="color:#dc2626">*</span></div>
+        <select class="field-select" id="af-height">
+          <option value="">Select height…</option>
+          <option>8'</option><option>9'</option><option>10'</option><option>11'</option><option>12'+</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Ceiling Texture</div>
+        <select class="field-select" id="af-texture">
+          <option value="">Select texture…</option>
+          <option>Smooth</option><option>Orange Peel</option><option>Knockdown</option>
+          <option>Popcorn</option><option>Skip Trowel</option><option>Rosebud</option>
+          <option>Sand Finish</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="sheet-footer">
+      <button class="sheet-save-btn" onclick="saveAreaForm()">Add Area</button>
+    </div>
+  </div>
+</div>
+
+<!-- Job Details -->
+<div class="sheet-overlay" id="details-overlay" onclick="handleDetailsTap(event)">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Job Details</h3>
+      <button class="sheet-close" onclick="closeDetails()">✕</button>
+    </div>
+    <div class="sheet-body" id="details-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveDetails()">Save</button></div>
+  </div>
+</div>
+
+<!-- Report -->
+<div class="sheet-overlay" id="modal-overlay" onclick="handleModalTap(event)">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3 id="modal-title">Report</h3>
+      <button class="sheet-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="sheet-body" id="modal-body" style="gap:0"></div>
+    <div class="sheet-footer">
+      <button class="sheet-save-btn" style="background:#15803d;display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportToSheets()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="2" fill="white" fill-opacity="0.2"/>
+          <path d="M8 8h8M8 12h8M8 16h5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <rect x="14" y="13" width="7" height="7" rx="1.5" fill="white"/>
+          <path d="M17.5 15v4M15.5 17h4" stroke="#15803d" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        Export to Google Sheets
+      </button>
+    </div>
   </div>
 </div>
 
 <script>
-const TYPES = [
-  { label: '48" × ½" PL',     key: 'pl48',     lengths: [7,8,9,10,12] },
-  { label: '54" × ½" PL',     key: 'pl54',     lengths: [8,9,10,12] },
-  { label: '48" × ½" CD',     key: 'cd48',     lengths: [8,9,10,12] },
-  { label: '48" × ½" Dens',   key: 'dens48',   lengths: [5,8,9,10,12] },
-  { label: '48" × ½" W/R',    key: 'wr48',     lengths: [5,8,9,10,12] },
-  { label: '48" × ⅝" FG',    key: 'fg48',     lengths: [8,9,10,12] },
-  { label: '54" × ⅝" FG',    key: 'fg54',     lengths: [8,9,10,12] },
-  { label: '48" × ½" Durock', key: 'durock48', lengths: [5,8,10,12] },
-  { label: '48" × ¼" Flex',   key: 'flex48',   lengths: [8,10,12] },
+/* ── Category definitions ── */
+const CATS = [
+  { label: 'Drywall',    key: 'drywall' },
+  { label: 'Insulation', key: 'insulation' },
+  { label: 'Steel',      key: 'steel' },
+  { label: 'Mud',        key: 'mud' },
 ];
 
-function blankCounts(lengths) {
-  const o = {};
-  lengths.forEach(l => o[l] = 0);
-  return o;
-}
-function newJobData(name, id) {
-  const counts = {};
-  TYPES.forEach(t => { counts[t.key] = blankCounts(t.lengths); });
-  return { id, name, counts };
-}
+/* ── Drywall sub-types ── */
+const DRYWALL_TYPES = [
+  { label: '48" × ½" PL',     fullName: '48" × ½" Plain',           key: 'pl48',     lengths: [7,8,9,10,12], color: '#2563eb' },
+  { label: '54" × ½" PL',     fullName: '54" × ½" Plain',           key: 'pl54',     lengths: [8,9,10,12],   color: '#2563eb' },
+  { label: '48" × ½" CD',     fullName: '48" × ½" Ceiling Drywall', key: 'cd48',     lengths: [8,9,10,12],   color: '#7c3aed' },
+  { label: '48" × ½" Dens',   fullName: '48" × ½" Denshield',       key: 'dens48',   lengths: [5,8,9,10,12], color: '#6b7280' },
+  { label: '48" × ½" W/R',    fullName: '48" × ½" Water Resistant', key: 'wr48',     lengths: [5,8,9,10,12], color: '#ca8a04' },
+  { label: '48" × ⅝" FG',    fullName: '48" × ⅝" Fire Guard',     key: 'fg48',     lengths: [8,9,10,12],   color: '#dc2626' },
+  { label: '48" × ⅝" DL',    fullName: '48" × ⅝" Double Layer',   key: 'dl48',     lengths: [8,9,10,12],   color: '#dc2626' },
+  { label: '54" × ⅝" FG',    fullName: '54" × ⅝" Fire Guard',     key: 'fg54',     lengths: [8,9,10,12],   color: '#dc2626' },
+  { label: '48" × ½" Durock', fullName: '48" × ½" Durock',         key: 'durock48', lengths: [5,8,10,12],   color: '#111111' },
+  { label: '48" × ¼" Flex',   fullName: '48" × ¼" Flex',           key: 'flex48',   lengths: [8,10,12],     color: '#ea580c' },
+  { label: 'Steel',            fullName: 'Steel',                    key: 'drywallSteel', lengths: [], color: '#475569', isItems: true },
+  { label: 'Extras',           fullName: 'Extras',                   key: 'extras',   lengths: [], color: '#0891b2', isItems: true },
+];
 
-let jobs = [ newJobData('Job 1', 1) ];
-let currentJobId = 1;
-let currentTab = 0;
-let jobCounter = 1;
+const STEEL_ITEMS  = ['Res Channel', 'U-Bar', 'L-Edge', '1 5/8" Track'];
+const EXTRAS_ITEMS = ['Pot Lights', 'Green Glue', "2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'"];
 
-function job() { return jobs.find(j => j.id === currentJobId); }
-function typeTotal(key) { return Object.values(job().counts[key]).reduce((a, v) => a + v, 0); }
-function grandTotal() { return TYPES.reduce((a, t) => a + typeTotal(t.key), 0); }
-
-function startTopbarRename() {
-  const display = document.getElementById('job-name-display');
-  const pencil = document.getElementById('pencil-btn');
-  if (!display || display.tagName === 'INPUT') return;
-  const current = job().name;
-  display.outerHTML = `<input class="job-name-input" id="job-name-display" type="text" value="${current}"
-    onblur="commitTopbarRename()"
-    onkeydown="if(event.key==='Enter')this.blur()"
-  />`;
-  pencil.style.display = 'none';
-  const inp = document.getElementById('job-name-display');
-  inp.focus();
-  inp.select();
+function getItemsForKey(key) {
+  if (key === 'drywallSteel') return STEEL_ITEMS;
+  if (key === 'extras') return EXTRAS_ITEMS;
+  return [];
 }
 
-function commitTopbarRename() {
-  const inp = document.getElementById('job-name-display');
-  if (!inp || inp.tagName !== 'INPUT') return;
-  const val = inp.value.trim() || job().name;
-  job().name = val;
-  inp.outerHTML = `<div class="job-name-display" id="job-name-display">${val}</div>`;
-  const pencil = document.getElementById('pencil-btn');
-  if (pencil) pencil.style.display = '';
-  renderDrawerList(null);
-}
-
-function renderDrawerList(editId) {
-  document.getElementById('drawer-job-list').innerHTML = jobs.map(j => {
-    const isActive = j.id === currentJobId;
-    if (editId && j.id === editId) {
-      return `<div class="drawer-job-item active">
-        <input id="rename-input" type="text" value="${j.name}"
-          style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);color:#fff;font-size:14px;font-family:inherit;width:100%;outline:none;padding:0;"
-          onblur="commitRename(${j.id})"
-          onkeydown="if(event.key==='Enter')this.blur();event.stopPropagation();"
-          onclick="event.stopPropagation()"
-        />
-      </div>`;
+/* ── Blank counts ── */
+function blankCounts() {
+  const c = {};
+  DRYWALL_TYPES.forEach(t => {
+    c[t.key] = {};
+    if (t.isItems) {
+      getItemsForKey(t.key).forEach(item => c[t.key][item] = 0);
+    } else {
+      t.lengths.forEach(l => c[t.key][l] = 0);
     }
-    return `<div class="drawer-job-item ${isActive ? 'active' : ''}" onclick="selectJob(${j.id})">${j.name}</div>`;
-  }).join('');
+  });
+  // Insulation, Mud (future — blank for now)
+  c['insulation'] = {};
+  c['mud'] = {};
+  return c;
+}
 
+function makeArea(name, id, height, texture) {
+  return { id, name, height: height||'', texture: texture||'', counts: blankCounts() };
+}
+function makeJob(name, id) {
+  const now = new Date().toISOString();
+  return {
+    id, name, areas: [], areaCounter: 0,
+    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, notes:'' },
+    createdAt: now, modifiedAt: now
+  };
+}
+
+let jobs = [makeJob('Job 1', 1)];
+let jobCounter = 1;
+let curJobId  = 1;
+let curAreaId = null;
+let curCat    = 'drywall';   // active category
+let curType   = 0;           // active drywall sub-type index
+let areaFormEditId = null;
+
+const J = () => jobs.find(j => j.id === curJobId);
+const A = () => J().areas.find(a => a.id === curAreaId);
+
+function drywallSubtotal(key) { return A() ? Object.values(A().counts[key]).reduce((s,v)=>s+v,0) : 0; }
+function areaTotal(a) {
+  return DRYWALL_TYPES.filter(t=>!t.isItems).reduce((s,t)=>s+Object.values(a.counts[t.key]).reduce((x,v)=>x+v,0),0);
+}
+function jobTotal() { return J().areas.reduce((s,a)=>s+areaTotal(a),0); }
+
+/* ── Category tabs ── */
+function renderCatTabs() {
+  document.getElementById('cat-tabs').innerHTML = CATS.map(c =>
+    `<button class="cat-tab ${c.key===curCat?'active':''}" onclick="switchCat('${c.key}')">${c.label}</button>`
+  ).join('');
+}
+function switchCat(key) {
+  curCat = key;
+  renderCatTabs();
+  renderTypeTabs();
+  renderTally();
+}
+
+/* ── Area form ── */
+function openAreaForm(editId) {
+  areaFormEditId = editId;
+  const title = document.getElementById('area-form-title');
+  const saveBtn = document.querySelector('#area-form-overlay .sheet-save-btn');
   if (editId) {
-    setTimeout(() => {
-      const inp = document.getElementById('rename-input');
-      if (inp) { inp.focus(); inp.select(); }
-    }, 30);
+    const a = J().areas.find(x => x.id === editId);
+    title.textContent = 'Edit Area'; saveBtn.textContent = 'Save Changes';
+    document.getElementById('af-name').value = a.name;
+    document.getElementById('af-height').value = a.height;
+    document.getElementById('af-texture').value = a.texture;
+  } else {
+    title.textContent = 'Add Area'; saveBtn.textContent = 'Add Area';
+    document.getElementById('af-name').value = '';
+    document.getElementById('af-height').value = '';
+    document.getElementById('af-texture').value = '';
   }
+  document.getElementById('area-form-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('af-name').focus(), 300);
+}
+function closeAreaForm() { document.getElementById('area-form-overlay').classList.remove('open'); }
+function handleAreaFormTap(e) { if (e.target===document.getElementById('area-form-overlay')) closeAreaForm(); }
+function saveAreaForm() {
+  const name    = document.getElementById('af-name').value.trim();
+  const height  = document.getElementById('af-height').value;
+  const texture = document.getElementById('af-texture').value;
+  if (!name)   { document.getElementById('af-name').focus(); return; }
+  if (!height) { document.getElementById('af-height').focus(); return; }
+  const j = J();
+  if (areaFormEditId) {
+    const a = j.areas.find(x=>x.id===areaFormEditId);
+    a.name=name; a.height=height; a.texture=texture;
+  } else {
+    j.areaCounter++;
+    j.areas.push(makeArea(name, j.areaCounter, height, texture));
+    curAreaId = j.areaCounter;
+    curType = 0;
+  }
+  j.modifiedAt = new Date().toISOString();
+  closeAreaForm();
+  renderAll();
 }
 
-function commitRename(id) {
-  const inp = document.getElementById('rename-input');
-  if (!inp) return;
-  const val = inp.value.trim() || ('Job ' + id);
-  jobs.find(j => j.id === id).name = val;
-  if (id === currentJobId) document.getElementById('job-name-display').textContent = val;
-  renderDrawerList(null);
+/* ── Area tabs ── */
+function renderAreaTabs() {
+  const j = J();
+  if (j.areas.length === 0) {
+    document.getElementById('area-tabs').innerHTML =
+      `<div style="padding:10px 14px;font-size:13px;color:var(--muted);font-style:italic">No areas yet — tap + Add Area</div>`;
+    return;
+  }
+  document.getElementById('area-tabs').innerHTML = j.areas.map(a => {
+    const isActive = a.id === curAreaId;
+    return `<button class="area-tab ${isActive?'active':''}" onclick="switchArea(${a.id})">
+      <span class="area-tab-inner">
+        ${a.name}
+        ${isActive?`<span class="area-pencil" onclick="event.stopPropagation();openAreaForm(${a.id})">
+          <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+            <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M8 3L11 6" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </span>`:''}
+      </span>
+    </button>`;
+  }).join('');
+}
+function switchArea(id) { curAreaId=id; renderAll(); }
+
+/* ── Area info bar ── */
+function renderAreaInfoBar() {
+  const bar = document.getElementById('area-info-bar');
+  if (!A()) { bar.innerHTML=''; return; }
+  const chips = [];
+  if (A().height)  chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${A().height}</span></div>`);
+  if (A().texture) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Texture</span><span class="area-info-chip-val">${A().texture}</span></div>`);
+  const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
+  const ceilingSqft = Object.entries(A().counts['cd48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
+  if (ceilingSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${ceilingSqft} ft²</span></div>`);
+  const potLights = A().counts['extras']['Pot Lights'];
+  if (potLights>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Pot Lights</span><span class="area-info-chip-val">${potLights}</span></div>`);
+  const greenGlue = A().counts['extras']['Green Glue'];
+  if (greenGlue>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Green Glue</span><span class="area-info-chip-val">${greenGlue}</span></div>`);
+  bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
 }
 
-function openDrawer() {
+/* ── Type tabs (drywall only) ── */
+function renderTypeTabs() {
+  const wrap = document.getElementById('type-bar-wrap');
+  if (curCat !== 'drywall') { wrap.style.display='none'; return; }
+  wrap.style.display = '';
+  document.getElementById('type-tabs').innerHTML = DRYWALL_TYPES.map((t,i) => {
+    const active = i===curType;
+    return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchType(${i})">${t.label}</button>`;
+  }).join('');
+}
+function switchType(n) { curType=n; renderTypeTabs(); renderTally(); }
+
+/* ── Counts ── */
+function encodeKey(str) { return String(str).replace(/[^a-zA-Z0-9]/g,'_'); }
+
+function add(key,len) { A().counts[key][len]++; J().modifiedAt=new Date().toISOString(); renderTally(); renderStrip(); renderAreaInfoBar(); }
+function sub(key,len) { if(A().counts[key][len]>0){A().counts[key][len]--; J().modifiedAt=new Date().toISOString();} renderTally(); renderStrip(); renderAreaInfoBar(); }
+
+function addItem(typeKey,idx) { const item=getItemsForKey(typeKey)[idx]; A().counts[typeKey][item]++; J().modifiedAt=new Date().toISOString(); renderTally(); renderStrip(); renderAreaInfoBar(); }
+function subItem(typeKey,idx) { const item=getItemsForKey(typeKey)[idx]; if(A().counts[typeKey][item]>0){A().counts[typeKey][item]--; J().modifiedAt=new Date().toISOString();} renderTally(); renderStrip(); renderAreaInfoBar(); }
+
+function editCount(key,len) {
+  const domId = `cnt-${key}-${encodeKey(String(len))}`;
+  const el = document.getElementById(domId);
+  if (!el||el.tagName==='INPUT') return;
+  el.outerHTML=`<input class="sheet-count-input" id="${domId}" type="number" inputmode="numeric" pattern="[0-9]*" value="${A().counts[key][len]}" min="0"
+    onblur="commitCount('${key}','${encodeKey(String(len))}','${len}')" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const i=document.getElementById(domId); i.focus(); i.select();
+}
+function commitCount(key,domSuffix,len) {
+  const domId=`cnt-${key}-${domSuffix}`, inp=document.getElementById(domId);
+  if(!inp)return;
+  const parsedLen = isNaN(len) ? len : Number(len);
+  A().counts[key][parsedLen]=Math.max(0,parseInt(inp.value)||0);
+  J().modifiedAt=new Date().toISOString();
+  renderTally(); renderStrip(); renderAreaInfoBar();
+}
+function editItem(typeKey,idx) {
+  const item=getItemsForKey(typeKey)[idx];
+  const domId=`cnt-${typeKey}-${encodeKey(item)}`;
+  const el=document.getElementById(domId);
+  if(!el||el.tagName==='INPUT')return;
+  el.outerHTML=`<input class="sheet-count-input" id="${domId}" type="number" inputmode="numeric" pattern="[0-9]*" value="${A().counts[typeKey][item]}" min="0"
+    onblur="commitItem('${typeKey}',${idx})" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const i=document.getElementById(domId); i.focus(); i.select();
+}
+function commitItem(typeKey,idx) {
+  const item=getItemsForKey(typeKey)[idx];
+  const domId=`cnt-${typeKey}-${encodeKey(item)}`;
+  const inp=document.getElementById(domId);
+  if(!inp)return;
+  A().counts[typeKey][item]=Math.max(0,parseInt(inp.value)||0);
+  J().modifiedAt=new Date().toISOString();
+  renderTally(); renderStrip(); renderAreaInfoBar();
+}
+
+/* ── Render tally ── */
+function renderTally() {
+  const area = document.getElementById('tally-area');
+  if (!A()) {
+    document.getElementById('type-bar-wrap').style.display='none';
+    area.innerHTML=`
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.8"/>
+            <rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.8"/>
+            <rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/>
+          </svg>
+        </div>
+        <h3>No areas yet</h3>
+        <p>Add an area to start tallying.<br>Areas can be floors, rooms, or zones.</p>
+        <button class="empty-cta" onclick="openAreaForm(null)">+ Add Area</button>
+      </div>`;
+    return;
+  }
+
+  if (curCat === 'drywall') {
+    document.getElementById('type-bar-wrap').style.display='';
+    const t = DRYWALL_TYPES[curType];
+    const col = t.color;
+
+    if (t.isItems) {
+      const items = getItemsForKey(t.key);
+      const c = A().counts[t.key];
+      area.innerHTML=`
+        <div class="tally-header">
+          <div class="tally-type-label" style="color:${col}">${t.fullName}</div>
+        </div>
+        <div class="sheet-grid">
+          ${items.map((item,idx)=>`
+            <div class="sheet-card" style="border-color:${col}22">
+              <div class="sheet-card-top" style="background:${col}12">
+                <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
+                <div class="sheet-count" style="color:${col}" id="cnt-${t.key}-${encodeKey(item)}" onclick="editItem('${t.key}',${idx})">${c[item]}</div>
+              </div>
+              <div class="sheet-card-controls" style="border-top-color:${col}22">
+                <button class="ctrl" style="--add-color:${col}" onclick="subItem('${t.key}',${idx})">−</button>
+                <div class="ctrl-divider" style="background:${col}22"></div>
+                <button class="ctrl add" style="--add-color:${col}" onclick="addItem('${t.key}',${idx})">+</button>
+              </div>
+            </div>`).join('')}
+        </div>`;
+      return;
+    }
+
+    const c = A().counts[t.key];
+    area.innerHTML=`
+      <div class="tally-header">
+        <div class="tally-type-label" style="color:${col}">${t.fullName}</div>
+        <div class="tally-subtotal">Subtotal: <strong>${drywallSubtotal(t.key)}</strong></div>
+      </div>
+      <div class="sheet-grid">
+        ${t.lengths.map(l=>`
+          <div class="sheet-card" style="border-color:${col}22">
+            <div class="sheet-card-top" style="background:${col}12">
+              <div class="sheet-ft" style="color:${col}99">${l}'</div>
+              <div class="sheet-count" style="color:${col}" id="cnt-${t.key}-${l}" onclick="editCount('${t.key}',${l})">${c[l]}</div>
+            </div>
+            <div class="sheet-card-controls" style="border-top-color:${col}22">
+              <button class="ctrl" style="--add-color:${col}" onclick="sub('${t.key}',${l})">−</button>
+              <div class="ctrl-divider" style="background:${col}22"></div>
+              <button class="ctrl add" style="--add-color:${col}" onclick="add('${t.key}',${l})">+</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    return;
+  }
+
+  // Insulation / Steel / Mud — coming soon
+  document.getElementById('type-bar-wrap').style.display='none';
+  const labels = { insulation:'Insulation', steel:'Steel', mud:'Mud' };
+  area.innerHTML=`
+    <div class="coming-soon">
+      <div class="coming-soon-icon">🔧</div>
+      <h3>${labels[curCat]}</h3>
+      <p>Coming soon</p>
+    </div>`;
+}
+
+function renderStrip() {
+  if (!A()) { document.getElementById('totals-strip').innerHTML=''; return; }
+  const chips = DRYWALL_TYPES.filter(t=>!t.isItems).map(t=>{
+    const v=drywallSubtotal(t.key);
+    return v>0?`<div class="strip-chip">${t.label} <strong>${v}</strong></div>`:'';
+  }).join('');
+  document.getElementById('totals-strip').innerHTML=
+    `<div class="strip-total">Total <span>${jobTotal()}</span></div>${chips}`;
+}
+
+function renderAll() {
+  renderCatTabs();
+  renderAreaTabs();
+  renderAreaInfoBar();
+  renderTypeTabs();
+  renderTally();
+  renderStrip();
+}
+
+/* ── Drawer ── */
+function renderDrawerList(editId) {
+  document.getElementById('drawer-job-list').innerHTML=jobs.map(j=>{
+    if(editId&&j.id===editId){
+      return `<div class="drawer-job-item active"><input id="drawer-rename" type="text" value="${j.name}"
+        style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);color:#fff;font-size:14px;font-family:inherit;width:100%;outline:none;padding:0;"
+        onblur="commitDrawerRename(${j.id})" onkeydown="if(event.key==='Enter')this.blur();event.stopPropagation();" onclick="event.stopPropagation()"/></div>`;
+    }
+    return `<div class="drawer-job-item ${j.id===curJobId?'active':''}" onclick="selectJob(${j.id})">${j.name}</div>`;
+  }).join('');
+  if(editId) setTimeout(()=>{const i=document.getElementById('drawer-rename');if(i){i.focus();i.select();}},30);
+}
+function commitDrawerRename(id) {
+  const inp=document.getElementById('drawer-rename'); if(!inp)return;
+  const val=inp.value.trim()||('Job '+id);
+  jobs.find(j=>j.id===id).name=val;
+  if(id===curJobId) document.getElementById('job-name-display').textContent=val;
   renderDrawerList(null);
-  document.getElementById('drawer').classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('open');
 }
-function closeDrawer() {
-  // commit any in-progress rename before closing
-  const inp = document.getElementById('rename-input');
-  if (inp) inp.blur();
-  document.getElementById('drawer').classList.remove('open');
-  document.getElementById('drawer-overlay').classList.remove('open');
-}
+function openDrawer()  { renderDrawerList(null); document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
+function closeDrawer() { const i=document.getElementById('drawer-rename'); if(i)i.blur(); document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
 function selectJob(id) {
-  currentJobId = id;
-  document.getElementById('job-name-display').textContent = job().name;
-  closeDrawer();
-  renderTabs();
-  renderTab();
-  renderBottomStrip();
+  curJobId=id; curAreaId=J().areas[0]?.id||null; curType=0; curCat='drywall';
+  document.getElementById('job-name-display').textContent=J().name;
+  closeDrawer(); renderAll();
 }
 function newJob() {
   jobCounter++;
-  const name = 'Job ' + jobCounter;
-  jobs.push(newJobData(name, jobCounter));
-  currentJobId = jobCounter;
-  document.getElementById('job-name-display').textContent = name;
-  renderTabs();
-  renderTab();
-  renderBottomStrip();
-  // Open drawer and put the new job into rename mode
+  jobs.push(makeJob('Job '+jobCounter,jobCounter));
+  curJobId=jobCounter; curAreaId=null; curType=0; curCat='drywall';
+  document.getElementById('job-name-display').textContent=J().name;
+  renderAll();
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
   renderDrawerList(jobCounter);
 }
 
-function renderTabs() {
-  document.getElementById('type-tabs').innerHTML = TYPES.map((t, i) =>
-    `<button class="type-tab ${i === currentTab ? 'active' : ''}" onclick="switchTab(${i})">${t.label}</button>`
-  ).join('');
+/* ── Job Details ── */
+function fmtDate(iso) {
+  if(!iso)return'—';
+  return new Date(iso).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 }
-function switchTab(n) {
-  currentTab = n;
-  renderTabs();
-  renderTab();
-}
-
-function add(key, len) {
-  job().counts[key][len]++;
-  renderTab();
-  renderBottomStrip();
-}
-function sub(key, len) {
-  if (job().counts[key][len] > 0) job().counts[key][len]--;
-  renderTab();
-  renderBottomStrip();
-}
-
-function editCount(key, len) {
-  const id = `cnt-${key}-${len}`;
-  const el = document.getElementById(id);
-  if (!el || el.tagName === 'INPUT') return;
-  const current = job().counts[key][len];
-  el.outerHTML = `<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" value="${current}" min="0"
-    onblur="commitCount('${key}',${len})"
-    onkeydown="if(event.key==='Enter'){this.blur()}"
-  />`;
-  const input = document.getElementById(id);
-  input.focus();
-  input.select();
-}
-
-function commitCount(key, len) {
-  const id = `cnt-${key}-${len}`;
-  const input = document.getElementById(id);
-  if (!input) return;
-  const val = Math.max(0, parseInt(input.value) || 0);
-  job().counts[key][len] = val;
-  renderTab();
-  renderBottomStrip();
-}
-
-function renderTab() {
-  const t = TYPES[currentTab];
-  const counts = job().counts[t.key];
-  document.getElementById('tally-area').innerHTML = `
-    <div class="tally-header">
-      <div class="tally-type-label">${t.label}</div>
-      <div class="tally-subtotal">Subtotal: <strong>${typeTotal(t.key)}</strong></div>
-    </div>
-    <div class="sheet-grid">
-      ${t.lengths.map(l => `
-        <div class="sheet-card">
-          <div class="sheet-card-top" onclick="add('${t.key}',${l})">
-            <div class="sheet-ft">${l}'</div>
-            <div class="sheet-count" id="cnt-${t.key}-${l}" onclick="event.stopPropagation(); editCount('${t.key}',${l})">${counts[l]}</div>
-            <div class="sheet-unit">tap to add</div>
-          </div>
-          <div class="sheet-card-controls">
-            <button class="ctrl" onclick="sub('${t.key}',${l})">−</button>
-            <div class="ctrl-divider"></div>
-            <button class="ctrl add" onclick="add('${t.key}',${l})">+</button>
-          </div>
-        </div>
-      `).join('')}
-    </div>
+function openDetails() {
+  const j=J(),d=j.details;
+  document.getElementById('details-body').innerHTML=`
+    <div class="field-group"><div class="field-label">Job Name</div><input class="field-input" id="df-name" type="text" value="${j.name}" placeholder="Job name"/></div>
+    <div class="field-group"><div class="field-label">Customer</div><input class="field-input" id="df-customer" type="text" value="${d.customer}" placeholder="Customer name"/></div>
+    <div class="field-group"><div class="field-label">Site</div><input class="field-input" id="df-site" type="text" value="${d.site}" placeholder="Site address"/></div>
+    <div class="field-divider"></div>
+    <div class="field-group"><div class="field-label">Site Contact Name</div><input class="field-input" id="df-cname" type="text" value="${d.contactName}" placeholder="Contact name"/></div>
+    <div class="field-group"><div class="field-label">Site Contact Number</div><input class="field-input" id="df-cphone" type="tel" value="${d.contactPhone}" placeholder="Phone number"/></div>
+    <div class="field-group"><div class="field-label">Site Contact Email</div><input class="field-input" id="df-cemail" type="email" value="${d.contactEmail}" placeholder="Email address"/></div>
+    <div class="field-divider"></div>
+    <div class="field-group"><div class="field-label">Lockbox Code</div><input class="field-input" id="df-lockbox" type="text" value="${d.lockbox}" placeholder="Code"/></div>
+    <div class="field-divider"></div>
+    <div class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
+    <div class="field-divider"></div>
+    <div class="field-group"><div class="field-label">Notes</div><textarea class="field-input" id="df-notes" rows="3" placeholder="Notes…" style="resize:none;line-height:1.5">${d.notes}</textarea></div>
+    <div class="field-divider"></div>
+    <div class="field-group"><div class="field-label">Date Created</div><div class="field-readonly">${fmtDate(j.createdAt)}</div></div>
+    <div class="field-group"><div class="field-label">Last Modified</div><div class="field-readonly">${fmtDate(j.modifiedAt)}</div></div>
   `;
+  document.getElementById('details-overlay').classList.add('open');
 }
-
-function renderBottomStrip() {
-  const chips = TYPES.map(t => {
-    const v = typeTotal(t.key);
-    return v > 0 ? `<div class="strip-chip">${t.label} <strong>${v}</strong></div>` : '';
-  }).join('');
-  document.getElementById('bottom-strip').innerHTML = `
-    <div class="strip-total">Total <span>${grandTotal()}</span></div>
-    ${chips || '<div class="strip-chip">No sheets yet</div>'}
-  `;
+function saveDetails() {
+  const j=J();
+  j.name=document.getElementById('df-name').value.trim()||j.name;
+  j.details.customer=document.getElementById('df-customer').value.trim();
+  j.details.site=document.getElementById('df-site').value.trim();
+  j.details.contactName=document.getElementById('df-cname').value.trim();
+  j.details.contactPhone=document.getElementById('df-cphone').value.trim();
+  j.details.contactEmail=document.getElementById('df-cemail').value.trim();
+  j.details.lockbox=document.getElementById('df-lockbox').value.trim();
+  j.details.energyStar=document.getElementById('df-energystar').checked;
+  j.details.notes=document.getElementById('df-notes').value.trim();
+  j.modifiedAt=new Date().toISOString();
+  document.getElementById('job-name-display').textContent=j.name;
+  renderDrawerList(null);
+  closeDetails();
 }
+function closeDetails() { document.getElementById('details-overlay').classList.remove('open'); }
+function handleDetailsTap(e) { if(e.target===document.getElementById('details-overlay'))closeDetails(); }
 
+/* ── Report ── */
 function showReport() {
-  const j = job();
-  document.getElementById('modal-title').textContent = j.name + ' — Report';
-  let html = '';
-  let hasAny = false;
-  TYPES.forEach(t => {
-    const counts = j.counts[t.key];
-    const tot = Object.values(counts).reduce((a, v) => a + v, 0);
-    if (!tot) return;
-    hasAny = true;
-    html += `<div class="modal-section">${t.label}</div>`;
-    t.lengths.forEach(l => {
-      if (counts[l] > 0) html += `<div class="modal-row"><span>${l}' sheets</span><span>${counts[l]}</span></div>`;
+  const j=J();
+  document.getElementById('modal-title').textContent=j.name+' — Report';
+  let html=''; let hasAny=false;
+  j.areas.forEach(a=>{
+    let aHtml=''; let aHas=false;
+    DRYWALL_TYPES.forEach(t=>{
+      if(t.isItems){
+        const items=getItemsForKey(t.key);
+        const rows=items.filter(item=>a.counts[t.key][item]>0)
+          .map(item=>`<div class="modal-row"><span>${item}</span><span>${a.counts[t.key][item]}</span></div>`).join('');
+        if(!rows)return;
+        aHas=true;
+        aHtml+=`<div class="modal-type-head" style="color:${t.color}">${t.fullName}</div>${rows}`;
+      } else {
+        const rows=t.lengths.filter(l=>a.counts[t.key][l]>0)
+          .map(l=>`<div class="modal-row"><span>${l}' sheets</span><span>${a.counts[t.key][l]}</span></div>`).join('');
+        if(!rows)return;
+        aHas=true;
+        aHtml+=`<div class="modal-type-head" style="color:${t.color}">${t.fullName}</div>${rows}`;
+      }
     });
+    if(!aHas)return;
+    hasAny=true;
+    const meta=[a.height,a.texture].filter(Boolean).join(' · ');
+    html+=`<div class="modal-area-head">${a.name}${meta?` <span style="font-weight:400;font-size:12px;color:var(--muted)">${meta}</span>`:''} <span style="font-weight:400;font-size:12px;color:var(--muted);margin-left:4px">${areaTotal(a)} sheets</span></div>${aHtml}`;
   });
-  if (!hasAny) {
-    html = `<div class="empty-msg">No sheets tallied yet.</div>`;
-  } else {
-    html += `<div class="modal-grand-total"><span>Total Sheets</span><span>${grandTotal()}</span></div>`;
-  }
-  document.getElementById('modal-body').innerHTML = html;
+  if(!hasAny) html=`<div class="empty-msg">No sheets tallied yet.</div>`;
+  else html+=`<div class="modal-grand"><span>Total Sheets</span><span>${jobTotal()}</span></div>`;
+  document.getElementById('modal-body').innerHTML=html;
   document.getElementById('modal-overlay').classList.add('open');
 }
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-}
-function handleModalTap(e) {
-  if (e.target === document.getElementById('modal-overlay')) closeModal();
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function handleModalTap(e) { if(e.target===document.getElementById('modal-overlay'))closeModal(); }
+
+/* ── Export ── */
+function exportToSheets() {
+  const j=J(); const rows=[];
+  rows.push([j.name]);
+  if(j.details.customer) rows.push(['Customer',j.details.customer]);
+  if(j.details.site)     rows.push(['Site',j.details.site]);
+  rows.push([]);
+  j.areas.forEach(a=>{
+    rows.push([a.name+(a.height?'  |  '+a.height:'')+(a.texture?'  |  '+a.texture:'')]);
+    DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
+      t.lengths.forEach(l=>{ const v=a.counts[t.key][l]; if(v>0)rows.push([t.fullName,l+"'",v]); });
+    });
+    STEEL_ITEMS.forEach(item=>{ const v=a.counts['drywallSteel'][item]; if(v>0)rows.push(['Steel',item,v]); });
+    EXTRAS_ITEMS.forEach(item=>{ const v=a.counts['extras'][item]; if(v>0)rows.push(['Extras',item,v]); });
+    rows.push(['Area Total','',areaTotal(a)]);
+    rows.push([]);
+  });
+  rows.push(['JOB TOTAL','',jobTotal()]);
+  const csv=rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=(j.name||'drywall-tally')+'.csv'; a.click();
+  URL.revokeObjectURL(url);
 }
 
-renderTabs();
-renderTab();
-renderBottomStrip();
+/* ── Init ── */
+renderAll();
 </script>
 </body>
 </html>
