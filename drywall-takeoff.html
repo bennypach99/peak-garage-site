@@ -1,1 +1,183 @@
 
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drywall Tally 1.7</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; }
+    .card { transition: all 0.2s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+  </style>
+</head>
+<body class="h-full bg-gray-100">
+
+<div class="flex h-screen">
+
+  <!-- Sidebar -->
+  <div class="w-64 bg-gray-800 text-white p-4">
+    <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">
+      <i class="fas fa-ruler-combined"></i> Drywall Tally
+    </h1>
+    <div class="mb-4">
+      <button onclick="newJob()" class="w-full bg-blue-600 hover:bg-blue-700 py-2 px-4 rounded-lg flex items-center justify-center gap-2">
+        <i class="fas fa-plus"></i> New Job
+      </button>
+    </div>
+    <div class="text-sm text-gray-400 mb-2">JOBS</div>
+    <div id="job-list" class="space-y-1 text-sm"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Top Bar -->
+    <div class="bg-white shadow-sm p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <h2 id="current-job" class="text-xl font-semibold">Job 1 - Main Floor</h2>
+      </div>
+      <button onclick="showReport()" class="bg-green-600 text-white px-5 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700">
+        <i class="fas fa-file-alt"></i> Job Report
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white border-b px-6">
+      <div class="flex gap-6 text-sm" id="tabs">
+        <button onclick="switchTab(0)" class="tab-button py-4 border-b-2 border-blue-600 text-blue-600 font-medium">Regular 1/2"</button>
+        <button onclick="switchTab(1)" class="tab-button py-4 text-gray-500 hover:text-gray-700">5/8"</button>
+        <button onclick="switchTab(2)" class="tab-button py-4 text-gray-500 hover:text-gray-700">Ceilings</button>
+        <button onclick="switchTab(3)" class="tab-button py-4 text-gray-500 hover:text-gray-700">Fire Rated</button>
+        <button onclick="switchTab(4)" class="tab-button py-4 text-gray-500 hover:text-gray-700">Extras</button>
+      </div>
+    </div>
+
+    <!-- Tally Area -->
+    <div class="flex-1 p-6 overflow-auto" id="tally-content">
+      <!-- Content loaded by JS -->
+    </div>
+  </div>
+
+  <!-- Right Sidebar - Totals -->
+  <div class="w-80 bg-white border-l shadow-sm p-6 overflow-auto">
+    <h3 class="font-semibold text-lg mb-4">Job Totals</h3>
+    <div id="totals" class="space-y-4"></div>
+  </div>
+</div>
+
+<script>
+// Sample Data
+let currentJob = {
+  name: "Job 1 - Main Floor",
+  regular: { sheets48: 0, sheets412: 0 },
+  fiveEighth: { sheets48: 0, sheets412: 0 },
+  ceilings: { sheets48: 0, sheets412: 0 },
+  fire: { sheets48: 0, sheets412: 0 },
+  upcharges: []
+};
+
+function renderTotals() {
+  const totalSheets = 
+    currentJob.regular.sheets48 + currentJob.regular.sheets412 +
+    currentJob.fiveEighth.sheets48 + currentJob.fiveEighth.sheets412 +
+    currentJob.ceilings.sheets48 + currentJob.ceilings.sheets412 +
+    currentJob.fire.sheets48 + currentJob.fire.sheets412;
+
+  document.getElementById('totals').innerHTML = `
+    <div class="bg-gray-50 p-4 rounded-xl">
+      <div class="flex justify-between"><span class="text-gray-600">Total Sheets</span><span class="font-bold text-xl">${totalSheets}</span></div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 text-sm">
+      <div class="bg-white border rounded-xl p-3">
+        <div class="text-green-600">½" Regular</div>
+        <div class="text-2xl font-bold">${currentJob.regular.sheets48 + currentJob.regular.sheets412}</div>
+      </div>
+      <div class="bg-white border rounded-xl p-3">
+        <div class="text-amber-600">⅝"</div>
+        <div class="text-2xl font-bold">${currentJob.fiveEighth.sheets48 + currentJob.fiveEighth.sheets412}</div>
+      </div>
+      <div class="bg-white border rounded-xl p-3">
+        <div class="text-blue-600">Ceilings</div>
+        <div class="text-2xl font-bold">${currentJob.ceilings.sheets48 + currentJob.ceilings.sheets412}</div>
+      </div>
+      <div class="bg-white border rounded-xl p-3">
+        <div class="text-red-600">Fire Rated</div>
+        <div class="text-2xl font-bold">${currentJob.fire.sheets48 + currentJob.fire.sheets412}</div>
+      </div>
+    </div>
+  `;
+}
+
+function addSheet(type, size) {
+  if (type === 'regular') {
+    if (size === 8) currentJob.regular.sheets48++;
+    else currentJob.regular.sheets412++;
+  } else if (type === 'five') {
+    if (size === 8) currentJob.fiveEighth.sheets48++;
+    else currentJob.fiveEighth.sheets412++;
+  } else if (type === 'ceiling') {
+    if (size === 8) currentJob.ceilings.sheets48++;
+    else currentJob.ceilings.sheets412++;
+  } else if (type === 'fire') {
+    if (size === 8) currentJob.fire.sheets48++;
+    else currentJob.fire.sheets412++;
+  }
+  renderCurrentTab();
+  renderTotals();
+}
+
+function switchTab(n) {
+  document.querySelectorAll('.tab-button').forEach((el,i) => {
+    el.classList.toggle('border-blue-600', i===n);
+    el.classList.toggle('text-blue-600', i===n);
+    el.classList.toggle('text-gray-500', i!==n);
+  });
+
+  const content = document.getElementById('tally-content');
+  
+  if (n === 0) {
+    content.innerHTML = `
+      <h3 class="text-lg font-semibold mb-4">Regular ½" Drywall</h3>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="card bg-white p-6 rounded-2xl shadow text-center cursor-pointer" onclick="addSheet('regular',8)">
+          <div class="text-5xl mb-2">4×8</div>
+          <div class="text-3xl font-bold">${currentJob.regular.sheets48}</div>
+          <div class="text-sm text-gray-500">sheets</div>
+        </div>
+        <div class="card bg-white p-6 rounded-2xl shadow text-center cursor-pointer" onclick="addSheet('regular',12)">
+          <div class="text-5xl mb-2">4×12</div>
+          <div class="text-3xl font-bold">${currentJob.regular.sheets412}</div>
+          <div class="text-sm text-gray-500">sheets</div>
+        </div>
+      </div>`;
+  } else if (n === 1) {
+    content.innerHTML = `5/8" content... (same pattern)`;
+    // You can expand similarly
+  } else {
+    content.innerHTML = `<p class="text-gray-500">Tab ${n} coming soon...</p>`;
+  }
+}
+
+function renderCurrentTab() {
+  switchTab(0); // default to first tab
+}
+
+function newJob() {
+  alert("New job created! (Demo)");
+  currentJob = { name: "New Job", ...currentJob };
+  document.getElementById('current-job').textContent = currentJob.name;
+}
+
+function showReport() {
+  alert(`Job Report\n\nTotal Sheets: ${document.querySelector('#totals .text-xl').textContent}\n\nThank you for using Drywall Tally!`);
+}
+
+// Initialize
+renderTotals();
+renderCurrentTab();
+</script>
+
+</body>
+</html>
