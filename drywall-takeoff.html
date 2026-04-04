@@ -795,22 +795,79 @@ function handleModalTap(e) { if(e.target===document.getElementById('modal-overla
 
 /* ── Export ── */
 function exportToSheets() {
-  const j=J(); const rows=[];
-  rows.push([j.name]);
-  if(j.details.customer) rows.push(['Customer',j.details.customer]);
-  if(j.details.site)     rows.push(['Site',j.details.site]);
+  const j=J(); const d=j.details; const rows=[];
+  const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
+
+  // Title
+  rows.push([j.name+' - Report']);
   rows.push([]);
+
+  // Job details block
+  if(d.customer)    rows.push(['Customer',    d.customer]);
+  if(d.site)        rows.push(['Site',        d.site]);
+  if(d.contactName) rows.push(['Site Contact',d.contactName]);
+  if(d.contactPhone)rows.push(['Phone',       d.contactPhone]);
+  if(d.contactEmail)rows.push(['Email',       d.contactEmail]);
+  if(d.lockbox)     rows.push(['Lockbox',     d.lockbox]);
+  rows.push(['Energy Star', d.energyStar ? 'Yes' : 'No']);
+  if(d.notes)       rows.push(['Notes',       d.notes]);
+  rows.push(['Created',  fmtDate(j.createdAt)]);
+  rows.push(['Modified', fmtDate(j.modifiedAt)]);
+  rows.push([]);
+
   j.areas.forEach(a=>{
-    rows.push([a.name+(a.height?'  |  '+a.height:'')+(a.texture?'  |  '+a.texture:'')]);
-    DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
-      t.lengths.forEach(l=>{ const v=a.counts[t.key][l]; if(v>0)rows.push([t.fullName,l+"'",v]); });
-    });
-    STEEL_ITEMS.forEach(item=>{ const v=a.counts['drywallSteel'][item]; if(v>0)rows.push(['Steel',item,v]); });
-    EXTRAS_ITEMS.forEach(item=>{ const v=a.counts['extras'][item]; if(v>0)rows.push(['Extras',item,v]); });
-    rows.push(['Area Total','',areaTotal(a)]);
+    // Area header row: Area - Name | Ceiling Height - X' | Ceiling - Texture | XX sheets | XXX ft² ceiling | XXX ft² double
+    const ceilingSqft = Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
+    const doubleSqft  = Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
+    const areaRow = ['Area - '+a.name];
+    if(a.height)  areaRow.push('Ceiling Height - '+a.height);
+    if(a.texture) areaRow.push('Ceiling - '+a.texture);
+    areaRow.push(areaTotal(a)+' sheets');
+    if(ceilingSqft>0) areaRow.push(ceilingSqft+' ft² ceiling');
+    if(doubleSqft>0)  areaRow.push(doubleSqft+' ft² double');
+    rows.push(areaRow);
     rows.push([]);
+
+    // Drywall types (non-item)
+    DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
+      const entries = t.lengths.filter(l=>a.counts[t.key][l]>0);
+      if(!entries.length) return;
+
+      // Type header with Sheets / Sq Ft columns
+      rows.push([t.fullName, 'Sheets', 'Sq Ft']);
+
+      let typeSheets=0, typeSqft=0;
+      entries.forEach(l=>{
+        const qty=a.counts[t.key][l];
+        const sf=(SQFT[l]||0)*qty;
+        typeSheets+=qty; typeSqft+=sf;
+        rows.push([l+"' sheets", qty, sf>0?sf:'']);
+      });
+      rows.push(['Totals', typeSheets, typeSqft>0?typeSqft:'']);
+      rows.push([]);
+    });
+
+    // Steel items
+    const steelEntries = STEEL_ITEMS.filter(item=>a.counts['drywallSteel'][item]>0);
+    if(steelEntries.length){
+      rows.push(['Steel']);
+      rows.push([]);
+      steelEntries.forEach(item=>rows.push([item, a.counts['drywallSteel'][item]]));
+      rows.push([]);
+    }
+
+    // Extras items
+    const extrasEntries = EXTRAS_ITEMS.filter(item=>a.counts['extras'][item]>0);
+    if(extrasEntries.length){
+      rows.push(['Extras']);
+      rows.push([]);
+      extrasEntries.forEach(item=>rows.push([item, a.counts['extras'][item]]));
+      rows.push([]);
+    }
   });
-  rows.push(['JOB TOTAL','',jobTotal()]);
+
+  rows.push(['JOB TOTAL', '', jobTotal()]);
+
   const csv=rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
