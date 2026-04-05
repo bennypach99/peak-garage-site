@@ -213,22 +213,16 @@
         </svg>
       </div>
       <div class="job-name-display" id="job-name-display">Job 1</div>
-    </div>
-    <div class="topbar-right">
-      <div class="info-btn" onclick="openDetails()">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <circle cx="8" cy="8" r="7" stroke="#777" stroke-width="1.4"/>
-          <path d="M8 7v5" stroke="#777" stroke-width="1.5" stroke-linecap="round"/>
-          <circle cx="8" cy="4.5" r="0.8" fill="#777"/>
+      <div onclick="openDetails()" style="flex-shrink:0;cursor:pointer;display:flex;align-items:center;color:#7c3aed;opacity:0.7;padding:2px 0 0 2px">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 3L11 6" stroke="currentColor" stroke-width="1.5"/>
         </svg>
       </div>
+    </div>
+    <div class="topbar-right">
       <button class="add-area-btn" onclick="openAreaForm(null)">+ Add Area</button>
     </div>
-  </div>
-
-  <!-- Category tabs -->
-  <div class="cat-bar">
-    <div class="cat-scroll" id="cat-tabs"></div>
   </div>
 
   <!-- Area tabs -->
@@ -238,6 +232,11 @@
 
   <!-- Area info strip -->
   <div class="area-info-bar" id="area-info-bar"></div>
+
+  <!-- Category tabs -->
+  <div class="cat-bar">
+    <div class="cat-scroll" id="cat-tabs"></div>
+  </div>
 
   <!-- Type tabs (drywall sub-types, hidden for other cats) -->
   <div class="type-bar" id="type-bar-wrap">
@@ -251,6 +250,17 @@
     <button class="report-btn" onclick="showReport()">Report</button>
   </div>
 
+</div>
+
+<!-- Confirm Dialog -->
+<div id="confirm-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:16px">
+    <div id="confirm-message" style="font-size:15px;font-weight:500;color:#111;text-align:center;line-height:1.5"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="confirmResolve(false)" style="flex:1;padding:13px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;color:#555">No</button>
+      <button onclick="confirmResolve(true)" style="flex:1;padding:13px;border:none;border-radius:10px;background:#dc2626;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;color:#fff">Yes</button>
+    </div>
+  </div>
 </div>
 
 <!-- Drawer -->
@@ -299,8 +309,8 @@
         </select>
       </div>
     </div>
-    <div class="sheet-footer">
-      <button class="sheet-save-btn" onclick="saveAreaForm()">Add Area</button>
+    <div class="sheet-footer" id="area-form-footer" style="display:flex;gap:10px">
+      <button class="sheet-save-btn" onclick="saveAreaForm()" style="flex:1">Add Area</button>
     </div>
   </div>
 </div>
@@ -348,6 +358,7 @@ const CATS = [
   { label: 'Insulation', key: 'insulation' },
   { label: 'Steel',      key: 'steel' },
   { label: 'Mud',        key: 'mud' },
+  { label: 'Extras',     key: 'jobExtras' },
 ];
 
 /* ── Drywall sub-types ── */
@@ -362,12 +373,65 @@ const DRYWALL_TYPES = [
   { label: '54" × ⅝" FG',    fullName: '54" × ⅝" Fire Guard',     key: 'fg54',     lengths: [8,9,10,12],   color: '#dc2626' },
   { label: '48" × ½" Durock', fullName: '48" × ½" Durock',         key: 'durock48', lengths: [5,8,10,12],   color: '#111111' },
   { label: '48" × ¼" Flex',   fullName: '48" × ¼" Flex',           key: 'flex48',   lengths: [8,10,12],     color: '#ea580c' },
-  { label: 'Steel',            fullName: 'Steel',                    key: 'drywallSteel', lengths: [], color: '#475569', isItems: true },
   { label: 'Extras',           fullName: 'Extras',                   key: 'extras',   lengths: [], color: '#0891b2', isItems: true },
 ];
 
 const STEEL_ITEMS  = ['Res Channel', 'U-Bar', 'L-Edge', '1 5/8" Track'];
-const EXTRAS_ITEMS = ['Pot Lights', 'Green Glue', "2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'"];
+const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)'];
+
+// Extras category items
+const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights'];
+
+// Steel category — sub-tabs by size
+const STEEL_SUBTABS = [
+  { key: 'steel_158', label: '1 5/8"', items: ['1 5/8" Stud 8\'', '1 5/8" Stud 9\'', '1 5/8" Stud 10\'', '1 5/8" Stud 12\'', '1 5/8" Track'],
+    groups: [ { label: 'Stud', items: ['1 5/8" Stud 8\'', '1 5/8" Stud 9\'', '1 5/8" Stud 10\'', '1 5/8" Stud 12\''] }, { label: 'Track', items: ['1 5/8" Track'] } ] },
+  { key: 'steel_212', label: '2 1/2"', items: ['2 1/2" Stud 8\'', '2 1/2" Stud 9\'', '2 1/2" Stud 10\'', '2 1/2" Stud 12\'', '2 1/2" Track'],
+    groups: [ { label: 'Stud', items: ['2 1/2" Stud 8\'', '2 1/2" Stud 9\'', '2 1/2" Stud 10\'', '2 1/2" Stud 12\''] }, { label: 'Track', items: ['2 1/2" Track'] } ] },
+  { key: 'steel_358', label: '3 5/8"', items: ['3 5/8" Stud 8\'', '3 5/8" Stud 9\'', '3 5/8" Stud 10\'', '3 5/8" Stud 12\'', '3 5/8" Track'],
+    groups: [ { label: 'Stud', items: ['3 5/8" Stud 8\'', '3 5/8" Stud 9\'', '3 5/8" Stud 10\'', '3 5/8" Stud 12\''] }, { label: 'Track', items: ['3 5/8" Track'] } ] },
+  { key: 'steel_6',   label: '6"',     items: ['6" Stud 8\'', '6" Stud 9\'', '6" Stud 10\'', '6" Stud 12\'', '6" Track'],
+    groups: [ { label: 'Stud', items: ['6" Stud 8\'', '6" Stud 9\'', '6" Stud 10\'', '6" Stud 12\''] }, { label: 'Track', items: ['6" Track'] } ] },
+  { key: 'steel_8',   label: '8"',     items: ['8" Stud 8\'', '8" Stud 9\'', '8" Stud 10\'', '8" Stud 12\'', '8" Track'],
+    groups: [ { label: 'Stud', items: ['8" Stud 8\'', '8" Stud 9\'', '8" Stud 10\'', '8" Stud 12\''] }, { label: 'Track', items: ['8" Track'] } ] },
+  { key: 'steel_ch',  label: 'Ch/Angle', items: ['Resilient Channel', 'Hat Channel', 'Furring Channel', 'Cold Roll Channel', '1" x 2" Angle', '2" x 2" Angle'],
+    groups: [ { label: 'Channel', items: ['Resilient Channel', 'Hat Channel', 'Furring Channel', 'Cold Roll Channel'] }, { label: 'Angle', items: ['1" x 2" Angle', '2" x 2" Angle'] } ] },
+];
+// Steel category tab — Extras sub-tab items
+const STEEL_EXTRAS_ITEMS = [
+  'Pan Head Screws (Box)', 'Self-Drilling Screws (Box)', 'Hex-Head Screws (Box)',
+  'Tie-Wire (Box)', 'Hanger-Wire',
+  'Eye-Lag (Concrete)', 'Eye-Lag (Wood)',
+];
+
+// Insulation category tab — Extras sub-tab items
+const INSULATION_EXTRAS_ITEMS = [
+  "8' Poly", "9' Poly", "10' Poly", "12' Poly",
+  'Tuck Tape', 'Can Foam', 'Staples', 'Styro-Vents', 'Acoustic Caulking',
+];
+
+// Mud category tab items
+const MUD_ITEMS = [
+  'All Purpose (17L)', 'Machine (17L)',
+  'Lite Finish (17L)',
+  'Sheetrock 20 (bag)', 'Sheetrock 45 (bag)', 'Sheetrock 90 (bag)',
+  'Durabond 90 (Bag)',
+];
+
+// Mud — Corner Bead sub-tab, grouped by material
+const CORNER_BEAD_GROUPS = [
+  { label: 'Vinyl',    items: ["Vinyl 90° (8')", "Vinyl 90° (10')", "L-Bead Vinyl (8')", "L-Bead Vinyl (10')", "U-Bead Vinyl (8')", "U-Bead Vinyl (10')", "J-Bead Vinyl (8')", "J-Bead Vinyl (10')"] },
+  { label: 'Metal',    items: ["Metal 90° (8')", "Metal 90° (10')", "L-Bead Metal (8')", "L-Bead Metal (10')", "U-Bead Metal (8')", "U-Bead Metal (10')", "J-Bead Metal (8')", "J-Bead Metal (10')"] },
+  { label: 'Bullnose', items: ["Bullnose Metal (8')", "Bullnose Metal (10')"] },
+  { label: 'Misc',     items: ["Archway Bead (8')", "Archway Bead (10')"] },
+];
+// Flat list of all corner bead items (for blankCounts / report / export)
+const CORNER_BEAD_ITEMS = CORNER_BEAD_GROUPS.flatMap(g => g.items);
+
+// Mud category — Extras sub-tab items
+const MUD_EXTRAS_ITEMS = [
+  'Paper Tape (roll)', 'Fibre Tape (roll)', 'Mesh Tape (roll)', 'Flexbead (roll)',
+];
 
 function getItemsForKey(key) {
   if (key === 'drywallSteel') return STEEL_ITEMS;
@@ -415,10 +479,13 @@ const INSULATION_TYPES = [
   { label: 'Pink',     fullName: 'Pink Insulation', key: 'pink',  color: '#db2777', rvals: null,        kind: 'batt'  },
   { label: 'Roxul',   fullName: 'Roxul',            key: 'roxul', color: '#b45309', rvals: ROXUL_RVALS, kind: 'batt'  },
   { label: 'Blown-In',fullName: 'Blown-In',         key: 'blown', color: '#0369a1', rvals: null,        kind: 'blown' },
-  { label: 'Foam',    fullName: 'Foam',             key: 'foam',  color: '#059669', rvals: null,        kind: 'foam'  },
+  { label: 'Spray-Foam', fullName: 'Spray-Foam', key: 'foam',  color: '#059669', rvals: null, kind: 'foam'  },
 ];
 
 let curInsType = 0; // active insulation type index
+let curInsSubTab = 0; // 0 = insulation types, 1 = extras
+let curSteelSubTab = 0; // 0 = Steel, 1 = Extras
+let curMudSubTab = 0; // 0 = Mud, 1 = Extras
 
 /* ── Blank counts ── */
 function blankCounts() {
@@ -453,7 +520,27 @@ function blankCounts() {
       });
     }
   });
+  // Steel category counts
+  // Steel category counts — one object per size sub-tab
+  STEEL_SUBTABS.forEach(st => {
+    c[st.key] = {};
+    st.items.forEach(item => c[st.key][item] = 0);
+  });
+  c['steelExtras'] = {};
+  STEEL_EXTRAS_ITEMS.forEach(item => c['steelExtras'][item] = 0);
+  // Insulation extras counts
+  c['insExtras'] = {};
+  INSULATION_EXTRAS_ITEMS.forEach(item => c['insExtras'][item] = 0);
+  // Job Extras category counts
+  c['jobExtras'] = {};
+  JOB_EXTRAS_ITEMS.forEach(item => c['jobExtras'][item] = 0);
+  // Mud category counts
   c['mud'] = {};
+  MUD_ITEMS.forEach(item => c['mud'][item] = 0);
+  c['cornerBead'] = {};
+  CORNER_BEAD_ITEMS.forEach(item => c['cornerBead'][item] = 0);
+  c['mudExtras'] = {};
+  MUD_EXTRAS_ITEMS.forEach(item => c['mudExtras'][item] = 0);
   return c;
 }
 
@@ -545,12 +632,23 @@ function openAreaForm(editId) {
   areaFormEditId = editId;
   const title = document.getElementById('area-form-title');
   const saveBtn = document.querySelector('#area-form-overlay .sheet-save-btn');
+  const footer = document.getElementById('area-form-footer');
+  // Remove any existing delete button
+  const existing = document.getElementById('area-delete-btn');
+  if (existing) existing.remove();
   if (editId) {
     const a = J().areas.find(x => x.id === editId);
     title.textContent = 'Edit Area'; saveBtn.textContent = 'Save Changes';
     document.getElementById('af-name').value = a.name;
     document.getElementById('af-height').value = a.height;
     document.getElementById('af-texture').value = a.texture;
+    // Add delete button
+    const delBtn = document.createElement('button');
+    delBtn.id = 'area-delete-btn';
+    delBtn.textContent = 'Delete Area';
+    delBtn.style.cssText = 'flex:1;padding:14px;border:none;border-radius:10px;background:#fee2e2;color:#dc2626;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;';
+    delBtn.onclick = () => deleteArea(editId);
+    footer.appendChild(delBtn);
   } else {
     title.textContent = 'Add Area'; saveBtn.textContent = 'Add Area';
     document.getElementById('af-name').value = '';
@@ -560,14 +658,35 @@ function openAreaForm(editId) {
   document.getElementById('area-form-overlay').classList.add('open');
   setTimeout(() => document.getElementById('af-name').focus(), 300);
 }
+function deleteArea(id) {
+  showConfirm('Delete this area?', (yes) => {
+    if(!yes) return;
+    const j = J();
+    j.areas = j.areas.filter(a => a.id !== id);
+    if (curAreaId === id) curAreaId = j.areas[0]?.id || null;
+    j.modifiedAt = new Date().toISOString();
+    saveState();
+    closeAreaForm();
+    renderAll();
+  });
+}
 function closeAreaForm() { document.getElementById('area-form-overlay').classList.remove('open'); }
 function handleAreaFormTap(e) { if (e.target===document.getElementById('area-form-overlay')) closeAreaForm(); }
 function saveAreaForm() {
-  const name    = document.getElementById('af-name').value.trim();
+  let name    = document.getElementById('af-name').value.trim();
   const height  = document.getElementById('af-height').value;
   const texture = document.getElementById('af-texture').value;
-  if (!name)   { document.getElementById('af-name').focus(); return; }
   if (!height) { document.getElementById('af-height').focus(); return; }
+  // Auto-name if blank
+  if (!name) {
+    const usedNums = new Set(J().areas.map(a => {
+      const m = a.name.match(/^Area (\d+)$/);
+      return m ? parseInt(m[1]) : null;
+    }).filter(n => n !== null));
+    let n = 1;
+    while (usedNums.has(n)) n++;
+    name = 'Area ' + n;
+  }
   const j = J();
   if (areaFormEditId) {
     const a = j.areas.find(x=>x.id===areaFormEditId);
@@ -639,18 +758,42 @@ function renderTypeTabs() {
   } else if (curCat === 'insulation') {
     wrap.style.display = '';
     renderInsTypeTabs();
+  } else if (curCat === 'steel') {
+    wrap.style.display = '';
+    const col = '#475569';
+    document.getElementById('type-tabs').innerHTML =
+      STEEL_SUBTABS.map((st, idx) => {
+        const active = idx === curSteelSubTab;
+        return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchSteelSubTab(${idx})">${st.label}</button>`;
+      }).join('') +
+      `<button class="type-tab" style="${curSteelSubTab===STEEL_SUBTABS.length?`border-bottom-color:${col};color:${col}`:''}" onclick="switchSteelSubTab(${STEEL_SUBTABS.length})">Extras</button>`;
+  } else if (curCat === 'mud') {
+    wrap.style.display = '';
+    document.getElementById('type-tabs').innerHTML = [
+      { label: 'Mud', idx: 0 }, { label: 'Corner Bead', idx: 1 }, { label: 'Extras', idx: 2 }
+    ].map(({label, idx}) => {
+      const active = idx === curMudSubTab;
+      const col = '#92400e';
+      return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchMudSubTab(${idx})">${label}</button>`;
+    }).join('');
   } else {
     wrap.style.display = 'none';
   }
 }
 function renderInsTypeTabs() {
-  document.getElementById('type-tabs').innerHTML = INSULATION_TYPES.map((t,i) => {
-    const active = i===curInsType;
-    return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchInsType(${i})">${t.label}</button>`;
-  }).join('');
+  const insCol = '#db2777';
+  document.getElementById('type-tabs').innerHTML =
+    INSULATION_TYPES.map((t,i) => {
+      const active = curInsSubTab===0 && i===curInsType;
+      return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchInsType(${i})">${t.label}</button>`;
+    }).join('') +
+    `<button class="type-tab" style="${curInsSubTab===1?`border-bottom-color:${insCol};color:${insCol}`:''}" onclick="switchInsSubTab(1)">Extras</button>`;
 }
+function switchInsSubTab(n) { curInsSubTab=n; renderInsTypeTabs(); renderInsulation(); }
 function switchType(n) { curType=n; renderTypeTabs(); renderTally(); }
-function switchInsType(n) { curInsType=n; renderInsTypeTabs(); renderInsulation(); }
+function switchInsType(n) { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
+function switchSteelSubTab(n) { curSteelSubTab=n; renderTypeTabs(); renderTally(); }
+function switchMudSubTab(n) { curMudSubTab=n; renderTypeTabs(); renderTally(); }
 
 /* ── Counts ── */
 function encodeKey(str) { return String(str).replace(/[^a-zA-Z0-9]/g,'_'); }
@@ -777,18 +920,162 @@ function renderTally() {
     return;
   }
 
-  // Steel / Mud — coming soon
+  // Steel / Mud — item grids
+  if (curCat === 'steel') {
+    if (curSteelSubTab < STEEL_SUBTABS.length) {
+      const st = STEEL_SUBTABS[curSteelSubTab];
+      if (st.groups) { renderSteelGrouped(st); } else { renderCatItems(st.key, st.items, '#475569', st.label); }
+    } else {
+      renderCatItems('steelExtras', STEEL_EXTRAS_ITEMS, '#475569', 'Extras');
+    }
+    return;
+  }
+  if (curCat === 'mud') {
+    if (curMudSubTab === 0) { renderCatItems('mud', MUD_ITEMS, '#92400e', 'Mud'); return; }
+    if (curMudSubTab === 1) { renderCornerBead(); return; }
+    renderCatItems('mudExtras', MUD_EXTRAS_ITEMS, '#92400e', 'Extras');
+    return;
+  }
+  if (curCat === 'jobExtras') { renderCatItems('jobExtras', JOB_EXTRAS_ITEMS, '#0891b2', 'Extras'); return; }
   document.getElementById('type-bar-wrap').style.display='none';
-  const labels = { steel:'Steel', mud:'Mud' };
-  area.innerHTML=`
-    <div class="coming-soon">
-      <div class="coming-soon-icon">🔧</div>
-      <h3>${labels[curCat]}</h3>
-      <p>Coming soon</p>
-    </div>`;
 }
 
-/* ── Insulation: card-based renderer ── */
+/* ── Steel grouped renderer (for tabs with section headers) ── */
+function renderSteelGrouped(st) {
+  const area = document.getElementById('tally-area');
+  if (!A()) {
+    area.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/></svg></div><h3>No areas yet</h3><p>Add an area to start tallying.</p><button class="empty-cta" onclick="openAreaForm(null)">+ Add Area</button></div>`;
+    return;
+  }
+  const col = '#475569';
+  const c = A().counts[st.key];
+  let html = '';
+  st.groups.forEach(group => {
+    html += `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin:14px 0 8px">${group.label}</div>
+    <div class="sheet-grid">`;
+    group.items.forEach(item => {
+      const globalIdx = st.items.indexOf(item);
+      html += `<div class="sheet-card" style="border-color:${col}22">
+        <div class="sheet-card-top" style="background:${col}12">
+          <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
+          <div class="sheet-count" style="color:${col}" id="cnt-${st.key}-${encodeKey(item)}" onclick="catEditItem('${st.key}','${encodeKey(item)}',${globalIdx},'${col}')">${c[item]||0}</div>
+        </div>
+        <div class="sheet-card-controls" style="border-top-color:${col}22">
+          <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('${st.key}',${globalIdx})">−</button>
+          <div class="ctrl-divider" style="background:${col}22"></div>
+          <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('${st.key}',${globalIdx})">+</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  area.innerHTML = html;
+}
+
+/* ── Corner Bead grouped renderer ── */
+function renderCornerBead() {
+  const area = document.getElementById('tally-area');
+  if (!A()) {
+    area.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/></svg></div><h3>No areas yet</h3><p>Add an area to start tallying.</p><button class="empty-cta" onclick="openAreaForm(null)">+ Add Area</button></div>`;
+    return;
+  }
+  const col = '#92400e';
+  const c = A().counts['cornerBead'];
+  let html = ``;
+  CORNER_BEAD_GROUPS.forEach(group => {
+    html += `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin:14px 0 8px">${group.label}</div>
+    <div class="sheet-grid">`;
+    group.items.forEach(item => {
+      const globalIdx = CORNER_BEAD_ITEMS.indexOf(item);
+      html += `<div class="sheet-card" style="border-color:${col}22">
+        <div class="sheet-card-top" style="background:${col}12">
+          <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
+          <div class="sheet-count" style="color:${col}" id="cnt-cornerBead-${encodeKey(item)}" onclick="catEditItem('cornerBead','${encodeKey(item)}',${globalIdx},'${col}')">${c[item]||0}</div>
+        </div>
+        <div class="sheet-card-controls" style="border-top-color:${col}22">
+          <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('cornerBead',${globalIdx})">−</button>
+          <div class="ctrl-divider" style="background:${col}22"></div>
+          <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('cornerBead',${globalIdx})">+</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  area.innerHTML = html;
+}
+
+
+function renderCatItems(countKey, items, col, label) {
+  const area = document.getElementById('tally-area');
+  if (!A()) {
+    area.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/></svg></div><h3>No areas yet</h3><p>Add an area to start tallying.</p><button class="empty-cta" onclick="openAreaForm(null)">+ Add Area</button></div>`;
+    return;
+  }
+  const c = A().counts[countKey];
+  const total = items.reduce((s,item)=>s+(c[item]||0),0);
+  area.innerHTML=`
+    <div class="tally-header">
+      <div class="tally-type-label" style="color:${col}">${label}</div>
+      ${total>0?`<div class="tally-subtotal">Total: <strong>${total}</strong></div>`:''}
+    </div>
+    <div class="sheet-grid">
+      ${items.map((item,idx)=>`
+        <div class="sheet-card" style="border-color:${col}22">
+          <div class="sheet-card-top" style="background:${col}12">
+            <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
+            <div class="sheet-count" style="color:${col}" id="cnt-${countKey}-${encodeKey(item)}" onclick="catEditItem('${countKey}','${encodeKey(item)}',${idx},'${col}')">${c[item]||0}</div>
+          </div>
+          <div class="sheet-card-controls" style="border-top-color:${col}22">
+            <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('${countKey}',${idx})">−</button>
+            <div class="ctrl-divider" style="background:${col}22"></div>
+            <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('${countKey}',${idx})">+</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+function catItemsForKey(key) {
+  const st = STEEL_SUBTABS.find(s => s.key === key);
+  if (st) return st.items;
+  if (key==='steelExtras') return STEEL_EXTRAS_ITEMS;
+  if (key==='insExtras')   return INSULATION_EXTRAS_ITEMS;
+  if (key==='mud')         return MUD_ITEMS;
+  if (key==='cornerBead')  return CORNER_BEAD_ITEMS;
+  if (key==='mudExtras')   return MUD_EXTRAS_ITEMS;
+  if (key==='jobExtras')   return JOB_EXTRAS_ITEMS;
+  return [];
+}
+function catAddItem(countKey,idx) {
+  const item=catItemsForKey(countKey)[idx];
+  A().counts[countKey][item]=(A().counts[countKey][item]||0)+1;
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderTally(); renderStrip();
+}
+function catSubItem(countKey,idx) {
+  const item=catItemsForKey(countKey)[idx];
+  if((A().counts[countKey][item]||0)>0) A().counts[countKey][item]--;
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderTally(); renderStrip();
+}
+function catEditItem(countKey,domSuffix,idx,col) {
+  const domId=`cnt-${countKey}-${domSuffix}`;
+  const el=document.getElementById(domId);
+  if(!el||el.tagName==='INPUT') return;
+  const cur=A().counts[countKey][catItemsForKey(countKey)[idx]]||0;
+  el.outerHTML=`<input class="sheet-count-input" id="${domId}" type="number" inputmode="numeric" pattern="[0-9]*" value="${cur}" min="0"
+    onblur="catCommitItem('${countKey}',${idx})" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const i=document.getElementById(domId); i.focus(); i.select();
+}
+function catCommitItem(countKey,idx) {
+  const item=catItemsForKey(countKey)[idx];
+  const domId=`cnt-${countKey}-${encodeKey(item)}`;
+  const inp=document.getElementById(domId);
+  if(!inp)return;
+  A().counts[countKey][item]=Math.max(0,parseInt(inp.value)||0);
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderTally(); renderStrip();
+}
+
+
 function insBagsForType(typeKey) {
   if(!A()) return 0;
   const t = INSULATION_TYPES.find(x=>x.key===typeKey);
@@ -813,6 +1100,7 @@ function renderInsulation() {
   }
 
   const t = INSULATION_TYPES[curInsType];
+  if (curInsSubTab === 1) { renderCatItems('insExtras', INSULATION_EXTRAS_ITEMS, '#db2777', 'Insulation Extras'); return; }
   if (t.kind === 'blown') { renderBlown(); return; }
   if (t.kind === 'foam')  { renderFoam();  return; }
   const col = t.color;
@@ -947,7 +1235,7 @@ function renderBlown() {
     const rTotal = entries.reduce((s,m)=>s+m.l*m.w, 0);
     html += `<div class="meas-rval-section">
       <div class="meas-rval-header">
-        <div class="meas-rval-label" style="color:${col}">${r}${rTotal>0?` <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${Math.round(rTotal)} ft²</span>`:''}</div>
+        <div class="meas-rval-label" style="color:${col}">${r}</div>
       </div>
       <div class="meas-add-row">
         <input class="meas-input" id="blown-l-${r}" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
@@ -956,6 +1244,7 @@ function renderBlown() {
         <input class="meas-input" id="blown-w-${r}" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
           onkeydown="if(event.key==='Enter'){blownAdd('${r}');}"/>
         <button class="meas-add-btn" style="background:${col}" onclick="blownAdd('${r}')">Add</button>
+        ${rTotal>0?`<div id="blown-total-${encodeKey(r)}" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="blownEditTotal('${r}')">${Math.round(rTotal)} ft²</div>`:''}
       </div>
     </div>`;
   });
@@ -971,13 +1260,45 @@ function blownAdd(r) {
   J().modifiedAt=new Date().toISOString(); saveState();
   lEl.value=''; wEl.value='';
   renderBlown(); renderStrip();
-  // refocus length input for fast repeated entry
   setTimeout(()=>{ const el=document.getElementById(`blown-l-${r}`); if(el)el.focus(); },30);
 }
 function blownDel(r,idx) {
   A().counts['insulation']['blown'][r].splice(idx,1);
   J().modifiedAt=new Date().toISOString(); saveState();
   renderBlown(); renderStrip();
+}
+function blownEditTotal(r) {
+  const id=`blown-total-${encodeKey(r)}`;
+  const el=document.getElementById(id);
+  if(!el||el.tagName==='INPUT') return;
+  const cur=Math.round((A().counts['insulation']['blown'][r]||[]).reduce((s,m)=>s+m.l*m.w,0));
+  el.outerHTML=`<input id="${id}" type="number" inputmode="decimal" value="${cur}" min="0"
+    style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;width:90px;border:none;border-bottom:2px solid #0369a1;background:transparent;outline:none;text-align:center;-moz-appearance:textfield;"
+    onblur="blownCommitTotal('${r}',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const inp=document.getElementById(id); inp.focus(); inp.select();
+}
+function blownCommitTotal(r,val) {
+  const sqft=Math.max(0,parseFloat(val)||0);
+  // Replace all entries with a single synthetic 1×sqft entry (or clear if 0)
+  A().counts['insulation']['blown'][r] = sqft>0 ? [{l:sqft,w:1}] : [];
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderBlown(); renderStrip();
+}
+function foamEditTotal(r,density) {
+  const id=`foam-total-${encodeKey(r)}-${density}`;
+  const el=document.getElementById(id);
+  if(!el||el.tagName==='INPUT') return;
+  const cur=Math.round(((A().counts['insulation']['foam'][r]||{})[density]||[]).reduce((s,m)=>s+m.l*m.w,0));
+  el.outerHTML=`<input id="${id}" type="number" inputmode="decimal" value="${cur}" min="0"
+    style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;width:90px;border:none;border-bottom:2px solid #059669;background:transparent;outline:none;text-align:center;-moz-appearance:textfield;"
+    onblur="foamCommitTotal('${r}','${density}',this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const inp=document.getElementById(id); inp.focus(); inp.select();
+}
+function foamCommitTotal(r,density,val) {
+  const sqft=Math.max(0,parseFloat(val)||0);
+  A().counts['insulation']['foam'][r][density] = sqft>0 ? [{l:sqft,w:1}] : [];
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderFoam(); renderStrip();
 }
 
 /* ── Foam renderer ── */
@@ -1009,11 +1330,11 @@ function renderFoam() {
 
     html += `<div class="meas-rval-section">
       <div class="meas-rval-header">
-        <div class="meas-rval-label" style="color:${col}">${r}${rTotal>0?` <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600">${Math.round(rTotal)} ft²</span>`:''}</div>
+        <div class="meas-rval-label" style="color:${col}">${r}</div>
       </div>`;
 
     // ½ lb density
-    html += `<div class="meas-density-head">½ lb${halfTotal>0?` — <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text)">${Math.round(halfTotal)} ft²</span>`:''}</div>
+    html += `<div class="meas-density-head">½ lb</div>
       <div class="meas-add-row" style="margin-bottom:12px">
         <input class="meas-input" id="foam-l-${r}-half" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
           onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-half').focus();}"/>
@@ -1021,10 +1342,11 @@ function renderFoam() {
         <input class="meas-input" id="foam-w-${r}-half" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
           onkeydown="if(event.key==='Enter'){foamAdd('${r}','half');}"/>
         <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','half')">Add</button>
+        ${halfTotal>0?`<div id="foam-total-${encodeKey(r)}-half" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="foamEditTotal('${r}','half')">${Math.round(halfTotal)} ft²</div>`:''}
       </div>`;
 
     // 2 lb density
-    html += `<div class="meas-density-head">2 lb${twoTotal>0?` — <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--text)">${Math.round(twoTotal)} ft²</span>`:''}</div>
+    html += `<div class="meas-density-head">2 lb</div>
       <div class="meas-add-row">
         <input class="meas-input" id="foam-l-${r}-two" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
           onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-two').focus();}"/>
@@ -1032,6 +1354,7 @@ function renderFoam() {
         <input class="meas-input" id="foam-w-${r}-two" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
           onkeydown="if(event.key==='Enter'){foamAdd('${r}','two');}"/>
         <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','two')">Add</button>
+        ${twoTotal>0?`<div id="foam-total-${encodeKey(r)}-two" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="foamEditTotal('${r}','two')">${Math.round(twoTotal)} ft²</div>`:''}
       </div>`;
 
     if (r !== FOAM_RVALS[FOAM_RVALS.length-1]) html += `<div class="meas-section-divider"></div>`;
@@ -1059,6 +1382,12 @@ function foamDel(r, density, idx) {
 
 function renderStrip() {
   if (!A()) { document.getElementById('totals-strip').innerHTML=''; return; }
+  if (curCat === 'jobExtras') {
+    const total = A() ? JOB_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['jobExtras']?.[item]||0),0) : 0;
+    document.getElementById('totals-strip').innerHTML=
+      `<div class="strip-total">Extras <span>${total}</span></div>`;
+    return;
+  }
   if (curCat === 'insulation') {
     let totalBags=0;
     const chips = INSULATION_TYPES.map(t=>{
@@ -1074,10 +1403,39 @@ function renderStrip() {
       return b>0?`<div class="strip-chip">${t.label} <strong>${Math.ceil(b)} bags</strong></div>`:'';
     }).join('');
     const blownSf=blownTotalSqft(), foamSf=foamTotalSqft();
+    const extrasTotal = A() ? INSULATION_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['insExtras']?.[item]||0),0) : 0;
     const primaryLabel = totalBags>0 ? `Bags <span>${Math.ceil(totalBags)}</span>` :
                          (blownSf+foamSf)>0 ? `ft² <span>${Math.round(blownSf+foamSf)}</span>` : `Insulation <span>—</span>`;
     document.getElementById('totals-strip').innerHTML=
-      `<div class="strip-total">${primaryLabel}</div>${chips}`;
+      `<div class="strip-total">${primaryLabel}</div>${chips}`+
+      (extrasTotal>0?`<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>`:'');
+    return;
+  }
+  if (curCat === 'steel') {
+    let grandTotal = 0;
+    let chips = '';
+    STEEL_SUBTABS.forEach(st => {
+      const t = A() ? st.items.reduce((s,item)=>s+(A().counts[st.key]?.[item]||0),0) : 0;
+      grandTotal += t;
+      if (t > 0) chips += `<div class="strip-chip">${st.label} <strong>${t}</strong></div>`;
+    });
+    const extrasTotal = A() ? STEEL_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['steelExtras']?.[item]||0),0) : 0;
+    grandTotal += extrasTotal;
+    if (extrasTotal > 0) chips += `<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>`;
+    document.getElementById('totals-strip').innerHTML=
+      `<div class="strip-total">Total <span>${grandTotal}</span></div>${chips}`;
+    return;
+  }
+  if (curCat === 'mud') {
+    const mudTotal    = A() ? MUD_ITEMS.reduce((s,item)=>s+(A().counts['mud'][item]||0),0) : 0;
+    const cbTotal     = A() ? CORNER_BEAD_ITEMS.reduce((s,item)=>s+(A().counts['cornerBead']?.[item]||0),0) : 0;
+    const extrasTotal = A() ? MUD_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['mudExtras']?.[item]||0),0) : 0;
+    const grandTotal  = mudTotal + cbTotal + extrasTotal;
+    document.getElementById('totals-strip').innerHTML=
+      `<div class="strip-total">Total <span>${grandTotal}</span></div>`+
+      (mudTotal>0    ? `<div class="strip-chip">Mud <strong>${mudTotal}</strong></div>` : '')+
+      (cbTotal>0     ? `<div class="strip-chip">Corner Bead <strong>${cbTotal}</strong></div>` : '')+
+      (extrasTotal>0 ? `<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>` : '');
     return;
   }
   const chips = DRYWALL_TYPES.filter(t=>!t.isItems).map(t=>{
@@ -1101,13 +1459,42 @@ function renderAll() {
 function renderDrawerList(editId) {
   document.getElementById('drawer-job-list').innerHTML=jobs.map(j=>{
     if(editId&&j.id===editId){
-      return `<div class="drawer-job-item active"><input id="drawer-rename" type="text" value="${j.name}"
-        style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);color:#fff;font-size:14px;font-family:inherit;width:100%;outline:none;padding:0;"
-        onblur="commitDrawerRename(${j.id})" onkeydown="if(event.key==='Enter')this.blur();event.stopPropagation();" onclick="event.stopPropagation()"/></div>`;
+      return `<div class="drawer-job-item active" style="display:flex;align-items:center;gap:8px">
+        <input id="drawer-rename" type="text" value="${j.name}"
+          style="background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.5);color:#fff;font-size:14px;font-family:inherit;flex:1;outline:none;padding:0;"
+          onblur="commitDrawerRename(${j.id})" onkeydown="if(event.key==='Enter')this.blur();event.stopPropagation();" onclick="event.stopPropagation()"/>
+      </div>`;
     }
-    return `<div class="drawer-job-item ${j.id===curJobId?'active':''}" onclick="selectJob(${j.id})">${j.name}</div>`;
+    return `<div class="drawer-job-item ${j.id===curJobId?'active':''}" style="display:flex;align-items:center;gap:8px" onclick="selectJob(${j.id})">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.name}</span>
+      <button onclick="event.stopPropagation();deleteJob(${j.id})" style="flex-shrink:0;width:22px;height:22px;border-radius:50%;border:none;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1" title="Delete job">✕</button>
+    </div>`;
   }).join('');
   if(editId) setTimeout(()=>{const i=document.getElementById('drawer-rename');if(i){i.focus();i.select();}},30);
+}
+/* ── Confirm dialog ── */
+let _confirmCallback = null;
+function showConfirm(msg, cb) {
+  document.getElementById('confirm-message').textContent = msg;
+  document.getElementById('confirm-overlay').style.display = 'flex';
+  _confirmCallback = cb;
+}
+function confirmResolve(result) {
+  document.getElementById('confirm-overlay').style.display = 'none';
+  if (_confirmCallback) { _confirmCallback(result); _confirmCallback = null; }
+}
+
+function deleteJob(id) {
+  if(jobs.length===1) return;
+  showConfirm('Delete this job?', (yes) => {
+    if(!yes) return;
+    jobs = jobs.filter(j=>j.id!==id);
+    if(curJobId===id){ curJobId=jobs[0].id; curAreaId=J().areas[0]?.id||null; curType=0; curCat='drywall'; }
+    saveState();
+    document.getElementById('job-name-display').textContent=J().name;
+    renderDrawerList(null);
+    renderAll();
+  });
 }
 function commitDrawerRename(id) {
   const inp=document.getElementById('drawer-rename'); if(!inp)return;
@@ -1125,8 +1512,15 @@ function selectJob(id) {
   saveState(); closeDrawer(); renderAll();
 }
 function newJob() {
-  jobCounter++;
-  jobs.push(makeJob('Job '+jobCounter,jobCounter));
+  // Find the lowest available job number
+  const usedNums = new Set(jobs.map(j => {
+    const m = j.name.match(/^Job (\d+)$/);
+    return m ? parseInt(m[1]) : null;
+  }).filter(n => n !== null));
+  let n = 1;
+  while (usedNums.has(n)) n++;
+  jobCounter = Math.max(jobCounter, n);
+  jobs.push(makeJob('Job '+n, ++jobCounter));
   curJobId=jobCounter; curAreaId=null; curType=0; curCat='drywall';
   saveState();
   document.getElementById('job-name-display').textContent=J().name;
@@ -1217,11 +1611,27 @@ function showReport() {
   let hasAny=false;
   j.areas.forEach(a=>{
     let aHas=false;
-    // Check if area has anything
+    // Check drywall
     DRYWALL_TYPES.forEach(t=>{
       if(t.isItems){ if(getItemsForKey(t.key).some(item=>a.counts[t.key][item]>0))aHas=true; }
       else { if(t.lengths.some(l=>a.counts[t.key][l]>0))aHas=true; }
     });
+    // Check insulation
+    INSULATION_TYPES.forEach(t=>{
+      if(t.kind==='blown'){ if(BLOWN_RVALS.some(r=>(a.counts['insulation'][t.key][r]||[]).length>0))aHas=true; }
+      else if(t.kind==='foam'){ if(FOAM_RVALS.some(r=>((a.counts['insulation'][t.key][r]||{}).half||[]).length>0||((a.counts['insulation'][t.key][r]||{}).two||[]).length>0))aHas=true; }
+      else {
+        const rvals=t.rvals||INSULATION_RVALS;
+        rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{ const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si]; if(cell&&(cell.sqft>0||cell.pcs>0))aHas=true; }));
+      }
+    });
+    // Check steel category
+    STEEL_SUBTABS.forEach(st=>{ if(st.items.some(item=>(a.counts[st.key]?.[item]||0)>0))aHas=true; });
+    if(STEEL_EXTRAS_ITEMS.some(item=>(a.counts['steelExtras']?.[item]||0)>0))aHas=true;
+    // Check mud
+    if(MUD_ITEMS.some(item=>(a.counts['mud']?.[item]||0)>0))aHas=true;
+    // Check job extras
+    if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
     if(!aHas)return;
     hasAny=true;
 
@@ -1273,22 +1683,130 @@ function showReport() {
       html+=`<div style="height:8px"></div>`;
     });
 
-    // Steel items
-    const steelEntries=STEEL_ITEMS.filter(item=>a.counts['drywallSteel'][item]>0);
-    if(steelEntries.length){
-      html+=`<div class="modal-type-head" style="color:#475569">Steel</div>`;
-      steelEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['drywallSteel'][item]}</span></div>`;
-      });
-      html+=`<div style="height:8px"></div>`;
-    }
-
     // Extras items
     const extrasEntries=EXTRAS_ITEMS.filter(item=>a.counts['extras'][item]>0);
     if(extrasEntries.length){
       html+=`<div class="modal-type-head" style="color:#0891b2">Extras</div>`;
       extrasEntries.forEach(item=>{
         html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['extras'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
+
+    // Insulation
+    INSULATION_TYPES.forEach(t=>{
+      if(t.kind==='blown'){
+        const hasBlown=BLOWN_RVALS.some(r=>(a.counts['insulation'][t.key][r]||[]).length>0);
+        if(!hasBlown)return;
+        html+=`<div class="modal-type-head" style="color:${t.color}">${t.fullName}</div>`;
+        BLOWN_RVALS.forEach(r=>{
+          const entries=a.counts['insulation'][t.key][r]||[];
+          if(!entries.length)return;
+          const sqft=Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+          html+=`<div class="modal-row"><span>${r}</span><span>${sqft} ft²</span></div>`;
+        });
+        html+=`<div style="height:8px"></div>`;
+      } else if(t.kind==='foam'){
+        const hasFoam=FOAM_RVALS.some(r=>{const f=a.counts['insulation'][t.key][r]||{}; return (f.half||[]).length>0||(f.two||[]).length>0;});
+        if(!hasFoam)return;
+        html+=`<div class="modal-type-head" style="color:${t.color}">${t.fullName}</div>`;
+        FOAM_RVALS.forEach(r=>{
+          const f=a.counts['insulation'][t.key][r]||{};
+          const halfSqft=Math.round((f.half||[]).reduce((s,m)=>s+m.l*m.w,0));
+          const twoSqft=Math.round((f.two||[]).reduce((s,m)=>s+m.l*m.w,0));
+          if(halfSqft>0)html+=`<div class="modal-row"><span>${r} ½ lb</span><span>${halfSqft} ft²</span></div>`;
+          if(twoSqft>0)html+=`<div class="modal-row"><span>${r} 2 lb</span><span>${twoSqft} ft²</span></div>`;
+        });
+        html+=`<div style="height:8px"></div>`;
+      } else {
+        const rvals=t.rvals||INSULATION_RVALS;
+        let typeBags=0;
+        const insRows=[];
+        rvals.forEach(rv=>{
+          INSULATION_SIZES.forEach((sz,si)=>{
+            if(rv.sqft[si]===null)return;
+            const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
+            if(!cell)return;
+            const bags=(rv.sqft[si]&&cell.sqft>0?cell.sqft/rv.sqft[si]:0)+(rv.pcs[si]&&cell.pcs>0?cell.pcs/rv.pcs[si]:0);
+            if(bags>0||cell.sqft>0||cell.pcs>0){
+              typeBags+=bags;
+              let detail='';
+              if(cell.sqft>0)detail+=`${cell.sqft} ft²`;
+              if(cell.pcs>0) detail+=(detail?' / ':'')+`${cell.pcs} pcs`;
+              insRows.push([`${rv.r} ${sz}`, detail, bags>0?Math.ceil(bags)+' bags':'']);
+            }
+          });
+        });
+        if(!insRows.length)return;
+        html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px"><span>${t.fullName}</span><span style="font-weight:500">${Math.ceil(typeBags)} bags</span></div>`;
+        insRows.forEach(([label,detail,bags])=>{
+          html+=`<div class="modal-row"><span>${label}<span style="font-size:11px;color:var(--muted);margin-left:6px">${detail}</span></span><span>${bags}</span></div>`;
+        });
+        html+=`<div style="height:8px"></div>`;
+      }
+    });
+
+    // Steel category items
+    STEEL_SUBTABS.forEach(st=>{
+      const entries=st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0);
+      if(!entries.length)return;
+      html+=`<div class="modal-type-head" style="color:#475569">Steel ${st.label}</div>`;
+      entries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts[st.key][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    });
+    const steelExtrasEntries=STEEL_EXTRAS_ITEMS.filter(item=>(a.counts['steelExtras']?.[item]||0)>0);
+    if(steelExtrasEntries.length){
+      html+=`<div class="modal-type-head" style="color:#475569">Steel Extras</div>`;
+      steelExtrasEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['steelExtras'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
+
+    // Insulation extras
+    const insExtrasEntries=INSULATION_EXTRAS_ITEMS.filter(item=>(a.counts['insExtras']?.[item]||0)>0);
+    if(insExtrasEntries.length){
+      html+=`<div class="modal-type-head" style="color:#db2777">Insulation Extras</div>`;
+      insExtrasEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['insExtras'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
+
+    // Mud items
+    const mudEntries=MUD_ITEMS.filter(item=>(a.counts['mud']?.[item]||0)>0);
+    if(mudEntries.length){
+      html+=`<div class="modal-type-head" style="color:#92400e">Mud</div>`;
+      mudEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['mud'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
+    const cbEntries=CORNER_BEAD_ITEMS.filter(item=>(a.counts['cornerBead']?.[item]||0)>0);
+    if(cbEntries.length){
+      html+=`<div class="modal-type-head" style="color:#92400e">Corner Bead</div>`;
+      cbEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['cornerBead'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
+    const mudExtrasEntries=MUD_EXTRAS_ITEMS.filter(item=>(a.counts['mudExtras']?.[item]||0)>0);
+    if(mudExtrasEntries.length){
+      html+=`<div class="modal-type-head" style="color:#92400e">Mud Extras</div>`;
+      mudExtrasEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['mudExtras'][item]}</span></div>`;
+      });
+      html+=`<div style="height:8px"></div>`;
+    }
+
+    // Job Extras
+    const jobExtrasEntries=JOB_EXTRAS_ITEMS.filter(item=>(a.counts['jobExtras']?.[item]||0)>0);
+    if(jobExtrasEntries.length){
+      html+=`<div class="modal-type-head" style="color:#0891b2">Extras</div>`;
+      jobExtrasEntries.forEach(item=>{
+        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['jobExtras'][item]}</span></div>`;
       });
       html+=`<div style="height:8px"></div>`;
     }
@@ -1356,21 +1874,121 @@ function exportToSheets() {
       rows.push([]);
     });
 
-    // Steel items
-    const steelEntries = STEEL_ITEMS.filter(item=>a.counts['drywallSteel'][item]>0);
-    if(steelEntries.length){
-      rows.push(['Steel']);
-      rows.push([]);
-      steelEntries.forEach(item=>rows.push([item, a.counts['drywallSteel'][item]]));
-      rows.push([]);
-    }
-
     // Extras items
     const extrasEntries = EXTRAS_ITEMS.filter(item=>a.counts['extras'][item]>0);
     if(extrasEntries.length){
       rows.push(['Extras']);
       rows.push([]);
       extrasEntries.forEach(item=>rows.push([item, a.counts['extras'][item]]));
+      rows.push([]);
+    }
+
+    // Insulation
+    INSULATION_TYPES.forEach(t=>{
+      if(t.kind==='blown'){
+        const hasBlown=BLOWN_RVALS.some(r=>(a.counts['insulation'][t.key][r]||[]).length>0);
+        if(!hasBlown)return;
+        rows.push([t.fullName]);
+        rows.push(['R-Value','Sq Ft']);
+        BLOWN_RVALS.forEach(r=>{
+          const entries=a.counts['insulation'][t.key][r]||[];
+          if(!entries.length)return;
+          const sqft=Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+          rows.push([r, sqft]);
+        });
+        rows.push([]);
+      } else if(t.kind==='foam'){
+        const hasFoam=FOAM_RVALS.some(r=>{const f=a.counts['insulation'][t.key][r]||{}; return (f.half||[]).length>0||(f.two||[]).length>0;});
+        if(!hasFoam)return;
+        rows.push([t.fullName]);
+        rows.push(['R-Value','Density','Sq Ft']);
+        FOAM_RVALS.forEach(r=>{
+          const f=a.counts['insulation'][t.key][r]||{};
+          const halfSqft=Math.round((f.half||[]).reduce((s,m)=>s+m.l*m.w,0));
+          const twoSqft=Math.round((f.two||[]).reduce((s,m)=>s+m.l*m.w,0));
+          if(halfSqft>0)rows.push([r,'½ lb',halfSqft]);
+          if(twoSqft>0) rows.push([r,'2 lb', twoSqft]);
+        });
+        rows.push([]);
+      } else {
+        const rvals=t.rvals||INSULATION_RVALS;
+        let hasAny=false;
+        const insRows=[];
+        rvals.forEach(rv=>{
+          INSULATION_SIZES.forEach((sz,si)=>{
+            if(rv.sqft[si]===null)return;
+            const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
+            if(!cell)return;
+            const bags=(rv.sqft[si]&&cell.sqft>0?cell.sqft/rv.sqft[si]:0)+(rv.pcs[si]&&cell.pcs>0?cell.pcs/rv.pcs[si]:0);
+            if(bags>0||cell.sqft>0||cell.pcs>0){
+              hasAny=true;
+              insRows.push([`${rv.r} ${sz}`, cell.sqft>0?cell.sqft:'', cell.pcs>0?cell.pcs:'', bags>0?Math.ceil(bags):'']);
+            }
+          });
+        });
+        if(!hasAny)return;
+        rows.push([t.fullName]);
+        rows.push(['Size / R-Value','Sq Ft','Pcs','Bags']);
+        insRows.forEach(r=>rows.push(r));
+        rows.push([]);
+      }
+    });
+
+    // Steel category items
+    STEEL_SUBTABS.forEach(st=>{
+      const entries=st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0);
+      if(!entries.length)return;
+      rows.push([`Steel ${st.label}`]);
+      rows.push([]);
+      entries.forEach(item=>rows.push([item, a.counts[st.key][item]]));
+      rows.push([]);
+    });
+    const steelExtrasEntries=STEEL_EXTRAS_ITEMS.filter(item=>(a.counts['steelExtras']?.[item]||0)>0);
+    if(steelExtrasEntries.length){
+      rows.push(['Steel Extras']);
+      rows.push([]);
+      steelExtrasEntries.forEach(item=>rows.push([item, a.counts['steelExtras'][item]]));
+      rows.push([]);
+    }
+
+    // Insulation extras
+    const insExtrasEntries=INSULATION_EXTRAS_ITEMS.filter(item=>(a.counts['insExtras']?.[item]||0)>0);
+    if(insExtrasEntries.length){
+      rows.push(['Insulation Extras']);
+      rows.push([]);
+      insExtrasEntries.forEach(item=>rows.push([item, a.counts['insExtras'][item]]));
+      rows.push([]);
+    }
+
+    // Mud items
+    const mudEntries=MUD_ITEMS.filter(item=>(a.counts['mud']?.[item]||0)>0);
+    if(mudEntries.length){
+      rows.push(['Mud']);
+      rows.push([]);
+      mudEntries.forEach(item=>rows.push([item, a.counts['mud'][item]]));
+      rows.push([]);
+    }
+    const cbEntries=CORNER_BEAD_ITEMS.filter(item=>(a.counts['cornerBead']?.[item]||0)>0);
+    if(cbEntries.length){
+      rows.push(['Corner Bead']);
+      rows.push([]);
+      cbEntries.forEach(item=>rows.push([item, a.counts['cornerBead'][item]]));
+      rows.push([]);
+    }
+    const mudExtrasEntries=MUD_EXTRAS_ITEMS.filter(item=>(a.counts['mudExtras']?.[item]||0)>0);
+    if(mudExtrasEntries.length){
+      rows.push(['Mud Extras']);
+      rows.push([]);
+      mudExtrasEntries.forEach(item=>rows.push([item, a.counts['mudExtras'][item]]));
+      rows.push([]);
+    }
+
+    // Job Extras
+    const jobExtrasEntries=JOB_EXTRAS_ITEMS.filter(item=>(a.counts['jobExtras']?.[item]||0)>0);
+    if(jobExtrasEntries.length){
+      rows.push(['Extras']);
+      rows.push([]);
+      jobExtrasEntries.forEach(item=>rows.push([item, a.counts['jobExtras'][item]]));
       rows.push([]);
     }
   });
