@@ -29,10 +29,9 @@
     .job-name-display { font-size: 16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .job-name-input { font-size: 16px; font-weight: 600; font-family: inherit; color: var(--text); border: none; border-bottom: 2px solid var(--accent); background: transparent; outline: none; width: 130px; padding: 0; }
     .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .info-btn { width: 36px; height: 36px; border-radius: 9px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .add-area-btn { background: var(--purple); color: #fff; border: none; border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; white-space: nowrap; }
 
-    /* ── Category tabs (Drywall / Insulation / Steel / Mud) ── */
+    /* ── Category tabs (Drywall / Insulation / Steel / Mud / Extras) ── */
     .cat-bar { background: #1a1f2e; flex-shrink: 0; }
     .cat-scroll { display: flex; overflow-x: auto; padding: 0 12px; gap: 2px; scrollbar-width: none; }
     .cat-scroll::-webkit-scrollbar { display: none; }
@@ -158,27 +157,6 @@
     .modal-grand { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
     .modal-grand span:first-child { font-size: 14px; font-weight: 500; }
     .modal-grand span:last-child { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
-
-    /* ── Insulation grid ── */
-    .ins-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -14px; padding: 0 14px 8px; }
-    .ins-table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 12px; }
-    .ins-table th, .ins-table td { border: 1px solid var(--border-md); text-align: center; padding: 0; height: 42px; }
-    .ins-table thead th { background: #1a1f2e; color: #fff; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; padding: 6px 4px; height: auto; }
-    .ins-table thead th.size-head { background: #2d3450; letter-spacing: 0.06em; font-size: 12px; }
-    .ins-th-rval { width: 48px; }
-    .ins-td-rval { background: #1a1f2e; color: #fff; font-size: 12px; font-weight: 600; padding: 0 8px; white-space: nowrap; }
-    .ins-td-grey { background: #b0b0b0; }
-    .ins-td-white { background: #fff; cursor: pointer; }
-    .ins-td-pink  { background: #ffb6d9; cursor: pointer; }
-    .ins-td-white:active { background: #e8f0fe; }
-    .ins-td-pink:active  { background: #ff80c0; }
-    .ins-cell-val { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--text); display: block; line-height: 42px; }
-    .ins-cell-sub { font-size: 9px; color: var(--muted); display: block; line-height: 1; margin-top: -6px; padding-bottom: 4px; }
-    .ins-cell-input { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--accent); width: 100%; height: 42px; border: none; border-bottom: 2px solid var(--accent); background: transparent; text-align: center; outline: none; padding: 0; -moz-appearance: textfield; display: block; }
-    .ins-cell-input::-webkit-inner-spin-button, .ins-cell-input::-webkit-outer-spin-button { -webkit-appearance: none; }
-    .ins-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-    .ins-sum-chip { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; white-space: nowrap; }
-    .ins-sum-chip strong { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
 
     /* ── Blown-In / Foam measurement UI ── */
     .meas-rval-section { margin-bottom: 20px; }
@@ -376,13 +354,15 @@ const DRYWALL_TYPES = [
   { label: 'Extras',           fullName: 'Extras',                   key: 'extras',   lengths: [], color: '#0891b2', isItems: true },
 ];
 
-const STEEL_ITEMS  = ['Res Channel', 'U-Bar', 'L-Edge', '1 5/8" Track'];
 const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)'];
 
 // Extras category items
 const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights'];
 
-// Steel category — sub-tabs by size
+function getItemsForKey(key) {
+  if (key === 'extras') return EXTRAS_ITEMS;
+  return [];
+}
 const STEEL_SUBTABS = [
   { key: 'steel_158', label: '1 5/8"', items: ['1 5/8" Stud 8\'', '1 5/8" Stud 9\'', '1 5/8" Stud 10\'', '1 5/8" Stud 12\'', '1 5/8" Track'],
     groups: [ { label: 'Stud', items: ['1 5/8" Stud 8\'', '1 5/8" Stud 9\'', '1 5/8" Stud 10\'', '1 5/8" Stud 12\''] }, { label: 'Track', items: ['1 5/8" Track'] } ] },
@@ -432,12 +412,6 @@ const CORNER_BEAD_ITEMS = CORNER_BEAD_GROUPS.flatMap(g => g.items);
 const MUD_EXTRAS_ITEMS = [
   'Paper Tape (roll)', 'Fibre Tape (roll)', 'Mesh Tape (roll)', 'Flexbead (roll)',
 ];
-
-function getItemsForKey(key) {
-  if (key === 'drywallSteel') return STEEL_ITEMS;
-  if (key === 'extras') return EXTRAS_ITEMS;
-  return [];
-}
 
 /* ── Insulation data ── */
 // Sizes indexed: 0=15", 1=16", 2=23", 3=24"
@@ -514,13 +488,12 @@ function blankCounts() {
         c['insulation'][t.key][rv.r] = {};
         INSULATION_SIZES.forEach((sz, si) => {
           if (rv.sqft[si] !== null) {
-            c['insulation'][t.key][rv.r][si] = { sqft: 0, pcs: 0 };
+            c['insulation'][t.key][rv.r][si] = { bags: 0, extraSqft: 0 };
           }
         });
       });
     }
   });
-  // Steel category counts
   // Steel category counts — one object per size sub-tab
   STEEL_SUBTABS.forEach(st => {
     c[st.key] = {};
@@ -569,11 +542,28 @@ function loadState() {
     if (!raw) return false;
     const s = JSON.parse(raw);
     if (!s.jobs || !s.jobs.length) return false;
-    // Migrate each area's counts to ensure new insulation types are present
+    // Migrate each area's counts to ensure new keys are present
     s.jobs.forEach(j => j.areas.forEach(a => {
       const fresh = blankCounts();
-      // Deep merge: fresh is the template, s data overrides where it exists
       a.counts = deepMerge(fresh, a.counts);
+      // Migrate old insulation cell format {sqft, pcs} → {bags, extraSqft}
+      INSULATION_TYPES.forEach(t => {
+        if (t.kind === 'blown' || t.kind === 'foam') return;
+        const rvals = t.rvals || INSULATION_RVALS;
+        rvals.forEach(rv => {
+          INSULATION_SIZES.forEach((_, si) => {
+            if (rv.sqft[si] === null) return;
+            const cell = a.counts['insulation']?.[t.key]?.[rv.r]?.[si];
+            if (!cell) return;
+            if ('sqft' in cell || 'pcs' in cell) {
+              const totalSqft = (cell.sqft || 0) + (rv.sqft[si] && rv.pcs[si] ? (cell.pcs || 0) / rv.pcs[si] * rv.sqft[si] : 0);
+              cell.bags = rv.sqft[si] ? Math.floor(totalSqft / rv.sqft[si]) : 0;
+              cell.extraSqft = totalSqft - cell.bags * rv.sqft[si];
+              delete cell.sqft; delete cell.pcs;
+            }
+          });
+        });
+      });
     }));
     jobs = s.jobs;
     jobCounter = s.jobCounter || jobs.length;
@@ -739,9 +729,9 @@ function renderAreaInfoBar() {
   if (ceilingSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${ceilingSqft} ft²</span></div>`);
   const doubleSqft = Object.entries(A().counts['dl48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
   if (doubleSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Double</span><span class="area-info-chip-val">${doubleSqft} ft²</span></div>`);
-  const potLights = A().counts['extras']['Pot Lights'];
+  const potLights = A().counts['jobExtras']?.['Pot Lights'] || 0;
   if (potLights>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Pot Lights</span><span class="area-info-chip-val">${potLights}</span></div>`);
-  const greenGlue = A().counts['extras']['Green Glue'];
+  const greenGlue = A().counts['extras']?.['Green Glue'] || 0;
   if (greenGlue>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Green Glue</span><span class="area-info-chip-val">${greenGlue}</span></div>`);
   bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
 }
@@ -1086,7 +1076,8 @@ function insBagsForType(typeKey) {
       if(rv.sqft[si]===null) return;
       const cell=A().counts['insulation'][typeKey]?.[rv.r]?.[si];
       if(!cell) return;
-      total += (rv.sqft[si]?cell.sqft/rv.sqft[si]:0)+(rv.pcs[si]?cell.pcs/rv.pcs[si]:0);
+      const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+      if(totalSqft>0 && rv.sqft[si]) total+=totalSqft/rv.sqft[si];
     });
   });
   return total;
@@ -1129,37 +1120,32 @@ function renderInsulation() {
 
     availableSizes.forEach(({sz, si}) => {
       const cell = counts[rv.r][si];
-      const sqftBags = rv.sqft[si] && cell.sqft > 0 ? (cell.sqft/rv.sqft[si]).toFixed(1) : null;
-      const pcsBags  = rv.pcs[si]  && cell.pcs  > 0 ? (cell.pcs /rv.pcs[si] ).toFixed(1) : null;
-      // Use indices in onclick to avoid special-char issues with r-value strings
+      const sqftPerBag = rv.sqft[si] || 0;
+      const pcsPerBag  = rv.pcs[si]  || 0;
+      const totalSqft  = (cell.bags||0)*sqftPerBag + (cell.extraSqft||0);
+      const totalBags  = sqftPerBag > 0 ? totalSqft / sqftPerBag : (cell.bags||0);
+      const totalPcs   = pcsPerBag  > 0 ? totalSqft / sqftPerBag * pcsPerBag : 0;
       const sfId = `ins-sf-${ri}-${si}`;
       const pcId = `ins-pc-${ri}-${si}`;
-
-      const cardTotalBags = (() => {
-        let b = 0;
-        if (rv.sqft[si] && cell.sqft > 0) b += cell.sqft / rv.sqft[si];
-        if (rv.pcs[si]  && cell.pcs  > 0) b += cell.pcs  / rv.pcs[si];
-        return b;
-      })();
 
       html += `<div class="sheet-card" style="border-color:${col}22">
         <div class="sheet-card-top" style="background:${col}08;padding:12px 8px 8px">
           <div style="display:flex;align-items:baseline;justify-content:center;gap:6px">
             <div class="sheet-ft" style="color:${col}99">${sz}</div>
-            ${cardTotalBags > 0 ? `<div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${col}">${Math.ceil(cardTotalBags)} bags</div>` : ''}
+            <div id="ins-bags-${ri}-${si}" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${col};cursor:pointer" onclick="insEditBags(${ri},${si},${ti})">${totalBags.toFixed(1)} bags</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
 
             <div style="background:${col}10;border-radius:8px;padding:6px 4px;text-align:center;cursor:pointer" onclick="insEditSqft(${ri},${si},${ti})">
               <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:${col}88;margin-bottom:2px">SQ FT</div>
-              <div class="sheet-count" style="color:${col};font-size:38px" id="${sfId}">${cell.sqft||0}</div>
-              ${sqftBags?`<div style="font-size:9px;color:${col}77;margin-top:1px">${sqftBags} bags</div>`:'<div style="font-size:9px;color:transparent">·</div>'}
+              <div class="sheet-count" style="color:${col};font-size:38px" id="${sfId}">${Math.round(totalSqft)||0}</div>
+              <div style="font-size:13px;color:transparent">·</div>
             </div>
 
             <div style="background:#ffb6d955;border-radius:8px;padding:6px 4px;text-align:center">
               <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:${col}88;margin-bottom:2px">PCS</div>
-              <div class="sheet-count" style="color:${col};font-size:38px" id="${pcId}" onclick="insEditPcs(${ri},${si},${ti})">${cell.pcs||0}</div>
-              ${pcsBags?`<div style="font-size:9px;color:${col}77;margin-top:1px">${pcsBags} bags</div>`:'<div style="font-size:9px;color:transparent">·</div>'}
+              <div class="sheet-count" style="color:${col};font-size:38px" id="${pcId}" onclick="insEditPcs(${ri},${si},${ti})">${Math.round(totalPcs)||0}</div>
+              <div style="font-size:13px;color:transparent">·</div>
             </div>
 
           </div>
@@ -1183,31 +1169,77 @@ function insCell(ri,si,ti){
   const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
   return A().counts['insulation'][t.key][rvals[ri].r][si];
 }
-function insAddPcs(ri,si,ti) { insCell(ri,si,ti).pcs++;  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip(); }
-function insSubPcs(ri,si,ti) { const c=insCell(ri,si,ti); if(c.pcs>0)c.pcs--;  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip(); }
-
+function insAddPcs(ri,si,ti) {
+  const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
+  const rv=rvals[ri]; const c=insCell(ri,si,ti);
+  if(!rv.pcs[si]||!rv.sqft[si]) return;
+  c.extraSqft=(c.extraSqft||0)+(rv.sqft[si]/rv.pcs[si]);
+  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip();
+}
+function insSubPcs(ri,si,ti) {
+  const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
+  const rv=rvals[ri]; const c=insCell(ri,si,ti);
+  if(!rv.pcs[si]||!rv.sqft[si]) return;
+  const sqftPerPcs=rv.sqft[si]/rv.pcs[si];
+  const totalSqft=(c.bags||0)*rv.sqft[si]+(c.extraSqft||0);
+  if(totalSqft<sqftPerPcs) return;
+  c.extraSqft=(c.extraSqft||0)-sqftPerPcs;
+  if(c.extraSqft<0){ c.bags=Math.max(0,(c.bags||0)-1); c.extraSqft+=rv.sqft[si]; }
+  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip();
+}
 function insEditSqft(ri,si,ti){
   const id=`ins-sf-${ri}-${si}`, el=document.getElementById(id);
   if(!el||el.tagName==='INPUT') return;
-  const cur=insCell(ri,si,ti).sqft;
-  el.outerHTML=`<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" value="${cur}" min="0" style="font-size:38px"
+  el.outerHTML=`<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" placeholder="0" min="0" style="font-size:38px"
     onblur="insCommitSqft(${ri},${si},${ti},this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
-  const inp=document.getElementById(id); inp.focus(); inp.select();
+  document.getElementById(id).focus();
 }
 function insCommitSqft(ri,si,ti,val){
-  insCell(ri,si,ti).sqft=Math.max(0,parseInt(val)||0);
+  const sqft=Math.max(0,parseFloat(val)||0);
+  if(sqft===0){ renderInsulation(); return; }
+  const c=insCell(ri,si,ti);
+  c.extraSqft=(c.extraSqft||0)+sqft;
   J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip();
 }
 function insEditPcs(ri,si,ti){
   const id=`ins-pc-${ri}-${si}`, el=document.getElementById(id);
   if(!el||el.tagName==='INPUT') return;
-  const cur=insCell(ri,si,ti).pcs;
-  el.outerHTML=`<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" pattern="[0-9]*" value="${cur}" min="0" style="font-size:38px"
+  const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
+  const rv=rvals[ri]; const c=insCell(ri,si,ti);
+  const totalSqft=(c.bags||0)*rv.sqft[si]+(c.extraSqft||0);
+  const cur=rv.pcs[si]&&rv.sqft[si]?Math.round(totalSqft/rv.sqft[si]*rv.pcs[si]):0;
+  el.outerHTML=`<input class="sheet-count-input" id="${id}" type="number" inputmode="numeric" value="${cur}" min="0" style="font-size:38px"
     onblur="insCommitPcs(${ri},${si},${ti},this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
   const inp=document.getElementById(id); inp.focus(); inp.select();
 }
 function insCommitPcs(ri,si,ti,val){
-  insCell(ri,si,ti).pcs=Math.max(0,parseInt(val)||0);
+  const pcs=Math.max(0,parseInt(val)||0);
+  const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
+  const rv=rvals[ri]; const c=insCell(ri,si,ti);
+  if(!rv.pcs[si]||!rv.sqft[si]){ renderInsulation(); return; }
+  const totalSqft=pcs/rv.pcs[si]*rv.sqft[si];
+  c.bags=Math.floor(totalSqft/rv.sqft[si]);
+  c.extraSqft=totalSqft-(c.bags*rv.sqft[si]);
+  J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip();
+}
+function insEditBags(ri,si,ti){
+  const id=`ins-bags-${ri}-${si}`, el=document.getElementById(id);
+  if(!el||el.tagName==='INPUT') return;
+  const t=INSULATION_TYPES[ti], rvals=t.rvals||INSULATION_RVALS;
+  const rv=rvals[ri]; const c=insCell(ri,si,ti);
+  const totalSqft=(c.bags||0)*rv.sqft[si]+(c.extraSqft||0);
+  const currentBags=rv.sqft[si]?totalSqft/rv.sqft[si]:c.bags||0;
+  const col=t.color;
+  el.outerHTML=`<input id="${id}" type="number" inputmode="numeric" value="${Math.round(currentBags)}" min="0"
+    style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:${col};width:60px;border:none;border-bottom:2px solid ${col};background:transparent;outline:none;text-align:center;-moz-appearance:textfield;"
+    onblur="insCommitBags(${ri},${si},${ti},this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const inp=document.getElementById(id); inp.focus(); inp.select();
+}
+function insCommitBags(ri,si,ti,val){
+  const bags=Math.max(0,parseInt(val)||0);
+  const c=insCell(ri,si,ti);
+  c.bags=bags;
+  c.extraSqft=0;
   J().modifiedAt=new Date().toISOString(); saveState(); renderInsulation(); renderStrip();
 }
 
@@ -1261,11 +1293,6 @@ function blownAdd(r) {
   lEl.value=''; wEl.value='';
   renderBlown(); renderStrip();
   setTimeout(()=>{ const el=document.getElementById(`blown-l-${r}`); if(el)el.focus(); },30);
-}
-function blownDel(r,idx) {
-  A().counts['insulation']['blown'][r].splice(idx,1);
-  J().modifiedAt=new Date().toISOString(); saveState();
-  renderBlown(); renderStrip();
 }
 function blownEditTotal(r) {
   const id=`blown-total-${encodeKey(r)}`;
@@ -1373,11 +1400,6 @@ function foamAdd(r, density) {
   lEl.value=''; wEl.value='';
   renderFoam(); renderStrip();
   setTimeout(()=>{ const el=document.getElementById(`foam-l-${r}-${density}`); if(el)el.focus(); },30);
-}
-function foamDel(r, density, idx) {
-  A().counts['insulation']['foam'][r][density].splice(idx,1);
-  J().modifiedAt=new Date().toISOString(); saveState();
-  renderFoam(); renderStrip();
 }
 
 function renderStrip() {
@@ -1622,14 +1644,21 @@ function showReport() {
       else if(t.kind==='foam'){ if(FOAM_RVALS.some(r=>((a.counts['insulation'][t.key][r]||{}).half||[]).length>0||((a.counts['insulation'][t.key][r]||{}).two||[]).length>0))aHas=true; }
       else {
         const rvals=t.rvals||INSULATION_RVALS;
-        rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{ const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si]; if(cell&&(cell.sqft>0||cell.pcs>0))aHas=true; }));
+        rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{
+          const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
+          if(cell&&((cell.bags||0)>0||(cell.extraSqft||0)>0))aHas=true;
+        }));
       }
     });
     // Check steel category
     STEEL_SUBTABS.forEach(st=>{ if(st.items.some(item=>(a.counts[st.key]?.[item]||0)>0))aHas=true; });
     if(STEEL_EXTRAS_ITEMS.some(item=>(a.counts['steelExtras']?.[item]||0)>0))aHas=true;
+    // Check insulation extras
+    if(INSULATION_EXTRAS_ITEMS.some(item=>(a.counts['insExtras']?.[item]||0)>0))aHas=true;
     // Check mud
     if(MUD_ITEMS.some(item=>(a.counts['mud']?.[item]||0)>0))aHas=true;
+    if(CORNER_BEAD_ITEMS.some(item=>(a.counts['cornerBead']?.[item]||0)>0))aHas=true;
+    if(MUD_EXTRAS_ITEMS.some(item=>(a.counts['mudExtras']?.[item]||0)>0))aHas=true;
     // Check job extras
     if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
     if(!aHas)return;
@@ -1727,20 +1756,19 @@ function showReport() {
             if(rv.sqft[si]===null)return;
             const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
             if(!cell)return;
-            const bags=(rv.sqft[si]&&cell.sqft>0?cell.sqft/rv.sqft[si]:0)+(rv.pcs[si]&&cell.pcs>0?cell.pcs/rv.pcs[si]:0);
-            if(bags>0||cell.sqft>0||cell.pcs>0){
+            const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const bags=rv.sqft[si]>0?totalSqft/rv.sqft[si]:0;
+            const pcs=rv.pcs[si]>0?Math.round(bags*rv.pcs[si]):0;
+            if(bags>0){
               typeBags+=bags;
-              let detail='';
-              if(cell.sqft>0)detail+=`${cell.sqft} ft²`;
-              if(cell.pcs>0) detail+=(detail?' / ':'')+`${cell.pcs} pcs`;
-              insRows.push([`${rv.r} ${sz}`, detail, bags>0?Math.ceil(bags)+' bags':'']);
+              insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft)+' ft²', pcs+' pcs', bags.toFixed(1)+' bags']);
             }
           });
         });
         if(!insRows.length)return;
-        html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px"><span>${t.fullName}</span><span style="font-weight:500">${Math.ceil(typeBags)} bags</span></div>`;
-        insRows.forEach(([label,detail,bags])=>{
-          html+=`<div class="modal-row"><span>${label}<span style="font-size:11px;color:var(--muted);margin-left:6px">${detail}</span></span><span>${bags}</span></div>`;
+        html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px"><span>${t.fullName}</span><span style="font-weight:500">${typeBags.toFixed(1)} bags</span></div>`;
+        insRows.forEach(([label,sqft,pcs,bags])=>{
+          html+=`<div class="modal-row"><span>${label}</span><span style="display:flex;gap:12px"><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${sqft}</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${pcs}</span><span>${bags}</span></span></div>`;
         });
         html+=`<div style="height:8px"></div>`;
       }
@@ -1919,10 +1947,12 @@ function exportToSheets() {
             if(rv.sqft[si]===null)return;
             const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
             if(!cell)return;
-            const bags=(rv.sqft[si]&&cell.sqft>0?cell.sqft/rv.sqft[si]:0)+(rv.pcs[si]&&cell.pcs>0?cell.pcs/rv.pcs[si]:0);
-            if(bags>0||cell.sqft>0||cell.pcs>0){
+            const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const bags=rv.sqft[si]>0?totalSqft/rv.sqft[si]:0;
+            const pcs=rv.pcs[si]>0?Math.round(bags*rv.pcs[si]):0;
+            if(bags>0){
               hasAny=true;
-              insRows.push([`${rv.r} ${sz}`, cell.sqft>0?cell.sqft:'', cell.pcs>0?cell.pcs:'', bags>0?Math.ceil(bags):'']);
+              insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft), pcs, bags.toFixed(1)]);
             }
           });
         });
