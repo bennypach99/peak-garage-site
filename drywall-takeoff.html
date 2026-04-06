@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="favicon.ico">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -343,19 +342,29 @@ const CATS = [
 /* ── Drywall sub-types ── */
 const DRYWALL_TYPES = [
   { label: '48" × ½" PL',     fullName: '48" × ½" Plain',           key: 'pl48',     lengths: [7,8,9,10,12], color: '#2563eb' },
-  { label: '54" × ½" PL',     fullName: '54" × ½" Plain',           key: 'pl54',     lengths: [8,9,10,12],   color: '#2563eb' },
-  { label: '48" × ½" CD',     fullName: '48" × ½" Ceiling Drywall', key: 'cd48',     lengths: [8,9,10,12],   color: '#7c3aed' },
-  { label: '48" × ½" Dens',   fullName: '48" × ½" Denshield',       key: 'dens48',   lengths: [5,8,9,10,12], color: '#6b7280' },
-  { label: '48" × ½" W/R',    fullName: '48" × ½" Water Resistant', key: 'wr48',     lengths: [5,8,9,10,12], color: '#ca8a04' },
+  { label: '54" × ½" PL',     fullName: '54" × ½" Plain',           key: 'pl54',     lengths: [8,10,12],     color: '#2563eb' },
+  { label: '48" × ½" CD',     fullName: '48" × ½" Ceiling Drywall', key: 'cd48',     lengths: [8,10,12],     color: '#7c3aed' },
+  { label: '48" × ½" Dens',   fullName: '48" × ½" Denshield',       key: 'dens48',   lengths: [5,8],         color: '#6b7280' },
+  { label: '48" × ½" W/R',    fullName: '48" × ½" Water Resistant', key: 'wr48',     lengths: [8,10,12],     color: '#ca8a04' },
   { label: '48" × ⅝" FG',    fullName: '48" × ⅝" Fire Guard',     key: 'fg48',     lengths: [8,9,10,12],   color: '#dc2626' },
   { label: '48" × ⅝" DL',    fullName: '48" × ⅝" Double Layer',   key: 'dl48',     lengths: [8,9,10,12],   color: '#dc2626' },
-  { label: '54" × ⅝" FG',    fullName: '54" × ⅝" Fire Guard',     key: 'fg54',     lengths: [8,9,10,12],   color: '#dc2626' },
-  { label: '48" × ½" Durock', fullName: '48" × ½" Durock',         key: 'durock48', lengths: [5,8,10,12],   color: '#111111' },
+  { label: '54" × ⅝" FG',    fullName: '54" × ⅝" Fire Guard',     key: 'fg54',     lengths: [8,10,12],     color: '#dc2626' },
+  { label: '½" Durock',       fullName: '½" Durock',               key: 'durock48', lengths: [5,8],         labels: ["3' × 5'", "4' × 8'"], color: '#111111' },
   { label: '48" × ¼" Flex',   fullName: '48" × ¼" Flex',           key: 'flex48',   lengths: [8,10,12],     color: '#ea580c' },
   { label: 'Extras',           fullName: 'Extras',                   key: 'extras',   lengths: [], color: '#0891b2', isItems: true },
 ];
 
 const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)'];
+
+// Returns sq ft per sheet given a drywall type key and length in feet
+// 54" types = 4.5 ft wide; durock48 3x5 panel = 15 sqft; all others = 4 ft wide
+const SQFT_54_KEYS = new Set(['pl54', 'fg54']);
+const SQFT_OVERRIDES = { durock48: { 5: 15 } };
+function sheetSqft(typeKey, lengthFt) {
+  const override = SQFT_OVERRIDES[typeKey]?.[lengthFt];
+  if (override !== undefined) return override;
+  return SQFT_54_KEYS.has(typeKey) ? 4.5 * lengthFt : 4 * lengthFt;
+}
 
 // Extras category items
 const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights'];
@@ -533,15 +542,15 @@ function makeJob(name, id) {
 /* ── Persistence ── */
 function saveState() {
   try {
-    localStorage.setItem('drywall-tally', JSON.stringify({ jobs, jobCounter, curJobId }));
+    window.storage.set('drywall-tally', JSON.stringify({ jobs, jobCounter, curJobId }));
   } catch(e) {}
 }
 
-function loadState() {
+async function loadState() {
   try {
-    const raw = localStorage.getItem('drywall-tally');
-    if (!raw) return false;
-    const s = JSON.parse(raw);
+    const result = await window.storage.get('drywall-tally');
+    if (!result) return false;
+    const s = JSON.parse(result.value);
     if (!s.jobs || !s.jobs.length) return false;
     // Migrate each area's counts to ensure new keys are present
     s.jobs.forEach(j => j.areas.forEach(a => {
@@ -585,11 +594,6 @@ function deepMerge(target, source) {
 
 // Load or init
 let jobs, jobCounter, curJobId;
-if (!loadState()) {
-  jobs = [makeJob('Job 1', 1)];
-  jobCounter = 1;
-  curJobId = 1;
-}
 
 let curAreaId = null;
 let curCat    = 'drywall';
@@ -725,10 +729,9 @@ function renderAreaInfoBar() {
   const chips = [];
   if (A().height)  chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${A().height}</span></div>`);
   if (A().texture) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Texture</span><span class="area-info-chip-val">${A().texture}</span></div>`);
-  const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
-  const ceilingSqft = Object.entries(A().counts['cd48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
+  const ceilingSqft = Object.entries(A().counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
   if (ceilingSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${ceilingSqft} ft²</span></div>`);
-  const doubleSqft = Object.entries(A().counts['dl48']).reduce((s,[l,q])=>s+(SQFT[l]||0)*q,0);
+  const doubleSqft = Object.entries(A().counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
   if (doubleSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Double</span><span class="area-info-chip-val">${doubleSqft} ft²</span></div>`);
   const potLights = A().counts['jobExtras']?.['Pot Lights'] || 0;
   if (potLights>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Pot Lights</span><span class="area-info-chip-val">${potLights}</span></div>`);
@@ -887,10 +890,10 @@ function renderTally() {
         <div class="tally-subtotal">Subtotal: <strong>${drywallSubtotal(t.key)}</strong></div>
       </div>
       <div class="sheet-grid">
-        ${t.lengths.map(l=>`
+        ${t.lengths.map((l,li)=>`
           <div class="sheet-card" style="border-color:${col}22">
             <div class="sheet-card-top" style="background:${col}12">
-              <div class="sheet-ft" style="color:${col}99">${l}'</div>
+              <div class="sheet-ft" style="color:${col}99">${t.labels ? t.labels[li] : l+"'"}</div>
               <div class="sheet-count" style="color:${col}" id="cnt-${t.key}-${l}" onclick="editCount('${t.key}',${l})">${c[l]}</div>
             </div>
             <div class="sheet-card-controls" style="border-top-color:${col}22">
@@ -1604,7 +1607,6 @@ function showReport() {
   const j=J();
   document.getElementById('modal-title').textContent=j.name+' — Report';
   const d=j.details;
-  const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
 
   // Job details block
   const detailRows = [
@@ -1666,8 +1668,8 @@ function showReport() {
     hasAny=true;
 
     // Area header
-    const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
-    const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
+    const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
+    const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
     const metaParts=[a.height,a.texture].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${s}</span>`);
     const sqftParts=[
       ceilingSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${ceilingSqft} ft² ceiling</span>`:'',
@@ -1691,11 +1693,13 @@ function showReport() {
 
       let typeSheets=0,typeSqft=0;
       entries.forEach(l=>{
+        const li=t.lengths.indexOf(l);
+        const lLabel = t.labels ? t.labels[li] : l+"' sheets";
         const qty=a.counts[t.key][l];
-        const sf=(SQFT[l]||0)*qty;
+        const sf=sheetSqft(t.key,l)*qty;
         typeSheets+=qty; typeSqft+=sf;
         html+=`<div class="modal-row">
-          <span>${l}' sheets</span>
+          <span>${lLabel}</span>
           <span style="display:flex;gap:32px">
             <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${qty}</span>
             <span style="min-width:48px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${sf>0?sf:''}</span>
@@ -1852,7 +1856,6 @@ function handleModalTap(e) { if(e.target===document.getElementById('modal-overla
 /* ── Export ── */
 function exportToSheets() {
   const j=J(); const d=j.details; const rows=[];
-  const SQFT={5:20,7:28,8:32,9:36,10:40,12:48};
 
   // Title
   rows.push([j.name+' - Report']);
@@ -1873,8 +1876,8 @@ function exportToSheets() {
 
   j.areas.forEach(a=>{
     // Area header row: Area - Name | Ceiling Height - X' | Ceiling - Texture | XX sheets | XXX ft² ceiling | XXX ft² double
-    const ceilingSqft = Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
-    const doubleSqft  = Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+(SQFT[Number(l)]||0)*q,0);
+    const ceilingSqft = Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
+    const doubleSqft  = Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
     const areaRow = ['Area - '+a.name];
     if(a.height)  areaRow.push('Ceiling Height - '+a.height);
     if(a.texture) areaRow.push('Ceiling - '+a.texture);
@@ -1894,10 +1897,12 @@ function exportToSheets() {
 
       let typeSheets=0, typeSqft=0;
       entries.forEach(l=>{
+        const li=t.lengths.indexOf(l);
+        const lLabel = t.labels ? t.labels[li] : l+"' sheets";
         const qty=a.counts[t.key][l];
-        const sf=(SQFT[l]||0)*qty;
+        const sf=sheetSqft(t.key,l)*qty;
         typeSheets+=qty; typeSqft+=sf;
-        rows.push([l+"' sheets", qty, sf>0?sf:'']);
+        rows.push([lLabel, qty, sf>0?sf:'']);
       });
       rows.push(['Totals', typeSheets, typeSqft>0?typeSqft:'']);
       rows.push([]);
@@ -2035,10 +2040,18 @@ function exportToSheets() {
 }
 
 /* ── Init ── */
-// Set curAreaId to first area of current job if any
-curAreaId = J()?.areas[0]?.id || null;
-saveState();
-renderAll();
+async function init() {
+  const loaded = await loadState();
+  if (!loaded) {
+    jobs = [makeJob('Job 1', 1)];
+    jobCounter = 1;
+    curJobId = 1;
+  }
+  curAreaId = J()?.areas[0]?.id || null;
+  saveState();
+  renderAll();
+}
+init();
 </script>
 </body>
 </html>
