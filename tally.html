@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -200,6 +199,9 @@
       </div>
     </div>
 
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <button onclick="openPrices()" style="background:#15803d;color:#fff;border:none;border-radius:10px;padding:9px 14px;font-size:13px;font-family:inherit;font-weight:500;cursor:pointer">Prices</button>
+    </div>
   </div>
 
   <!-- Jobs bar -->
@@ -295,9 +297,31 @@
           <option value="stacked">Stacked</option>
         </select>
       </div>
+      <div class="field-group">
+        <div class="field-label">Energy Star</div>
+        <select class="field-select" id="jf-energystar">
+          <option value="no">No</option>
+          <option value="yes">Yes</option>
+        </select>
+      </div>
     </div>
     <div class="sheet-footer" id="job-form-footer" style="display:flex;gap:10px">
       <button class="sheet-save-btn" onclick="saveJobForm()" style="flex:1">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prices Form -->
+<div class="sheet-overlay" id="prices-overlay" onclick="handlePricesTap(event)">
+  <div class="bottom-sheet" style="max-height:92vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Prices</h3>
+      <button class="sheet-close" onclick="closePrices()">✕</button>
+    </div>
+    <div class="sheet-body" id="prices-body"></div>
+    <div class="sheet-footer">
+      <button class="sheet-save-btn" onclick="savePrices()">Save Prices</button>
     </div>
   </div>
 </div>
@@ -400,10 +424,16 @@ const DUROCK_LENGTHS = [5,8];
 // Map key → width for sqft calculations
 const GROUP_WIDTH = {};
 [...HALF_GROUPS, ...FIVET_GROUPS].forEach(g => { GROUP_WIDTH[g.key] = g.width; });
-GROUP_WIDTH['durock'] = 4; // 48" wide
+GROUP_WIDTH['durock'] = 4; // default
+
+// Durock sheets are non-standard sizes: 3'×5'=15 ft², 4'×8'=32 ft²
+const DUROCK_SQFT = { 5: 15, 8: 32 };
 
 // sqft for one sheet of a given key and length
-function sheetSqft(key, len) { return (GROUP_WIDTH[key] || 4) * len; }
+function sheetSqft(key, len) {
+  if (key === 'durock') return DUROCK_SQFT[len] ?? (GROUP_WIDTH[key] || 4) * len;
+  return (GROUP_WIDTH[key] || 4) * len;
+}
 
 // All drywall count keys (for blankCounts / areaTotal)
 const DRYWALL_KEYS = [
@@ -419,22 +449,31 @@ const DRYWALL_TYPES = DRYWALL_KEYS.map(key => ({ key, isItems: false }));
 const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)'];
 
 // Extras category items
-const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights'];
+const JOB_EXTRAS_PAID = ['Pot Light/Sprinkler', 'Tray/Waffle', "2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Round Stairs', "OTA <64'", "OTA >64'"];
+const JOB_EXTRAS_PURCHASED = ['Screws (Box)'];
+const JOB_EXTRAS_ITEMS = [...JOB_EXTRAS_PAID, ...JOB_EXTRAS_PURCHASED];
 
 function getItemsForKey(key) {
   if (key === 'extras') return EXTRAS_ITEMS;
   return [];
 }
 const STEEL_LENGTHS = [8, 9, 10, 12];
+const STEEL_SUBTYPES = [
+  { key: 'steel_studs', label: 'Studs' },
+  { key: 'steel_ceil',  label: 'Suspended Ceiling', kind: 'measure', sections: ['Suspended Ceiling', 'With Hangers'] },
+  { key: 'steel_doors', label: 'Door Frames', items: ['Single', 'Double'] },
+];
 
 // Steel category tab — Extras sub-tab items (kept for migration safety, no longer shown)
 const STEEL_EXTRAS_ITEMS = [];
 
 // Insulation category tab — Extras sub-tab items
-const INSULATION_EXTRAS_ITEMS = [
+const INSULATION_EXTRAS_PAID = ['Styro-Vents'];
+const INSULATION_EXTRAS_PURCHASED = [
   "8' Poly", "9' Poly", "10' Poly", "12' Poly",
-  'Tuck Tape', 'Can Foam', 'Staples', 'Styro-Vents', 'Acoustic Caulking',
+  'Tuck Tape', 'Can Foam', 'Staples', 'Acoustic Caulking',
 ];
+const INSULATION_EXTRAS_ITEMS = [...INSULATION_EXTRAS_PAID, ...INSULATION_EXTRAS_PURCHASED];
 
 /* ── Insulation data ── */
 // Sizes indexed: 0=15", 1=16", 2=23", 3=24"
@@ -452,12 +491,8 @@ const INSULATION_RVALS = [
   { r: 'R40', sqft: [null,   32.00,  null,   48.00 ], pcs: [null, 6,  null,  6]  },
 ];
 
-/* ── Roxul-specific R-values (from Drywall Takeoff Sheet Master) ── */
-// Sizes indexed: 0=15", 1=16", 2=23", 3=24"
-// sqft per bag; null = size not available for this product
-const ROXUL_RVALS = [
-  // sqft/bag from Insulation sheet C13:M17; pcs/bag from Data Sheet A35:J39
-  // Sizes indexed: 0=15", 1=16", 2=23", 3=24"
+/* ── Rockwool-specific R-values ── */
+const ROCKWOOL_RVALS = [
   { r: '1½" QZ', sqft: [190.0, null, null, null], pcs: [38,   null, null, null] },
   { r: '3" QZ',  sqft: [59.7,  64.0, 60.1, 64.0], pcs: [12,   12,   8,    8   ] },
   { r: 'R14',    sqft: [59.7,  null, 60.1, null ], pcs: [12,   null, 8,    null] },
@@ -465,15 +500,22 @@ const ROXUL_RVALS = [
   { r: 'R24',    sqft: [29.4,  null, 29.7, null ], pcs: [6,    null, 4,    null] },
 ];
 
+// R-24 batt rvals (reuse standard insulation rvals filtered to R24)
+const R24_RVALS = [
+  { r: 'R24 15"', sqft: [38.51, null, null, null], pcs: [8, null, null, null] },
+  { r: 'R24 23"', sqft: [null,  null, 51.98, null], pcs: [null, null, 7, null] },
+];
 
 // Insulation product types
 const INSULATION_TYPES = [
-  { label: 'Pink',  fullName: 'Pink Insulation', key: 'pink',  color: '#db2777', rvals: null,        kind: 'batt' },
-  { label: 'Roxul', fullName: 'Roxul',            key: 'roxul', color: '#b45309', rvals: ROXUL_RVALS, kind: 'batt' },
+  { label: 'Pink',     fullName: 'Pink Insulation', key: 'pink',     color: '#db2777', kind: 'items', items: ['Interior', 'Exterior'] },
+  { label: 'Rockwool', fullName: 'Rockwool',        key: 'rockwool', color: '#b45309', kind: 'items', items: ['Interior', 'Exterior'] },
+  { label: 'R-24',     fullName: 'R-24',            key: 'r24',      color: '#0369a1', kind: 'items', items: ['Interior', 'Exterior'] },
 ];
 
 let curInsType = 0; // active insulation type index
 let curInsSubTab = 0; // 0 = insulation types, 1 = extras
+let curSteelSubType = 0; // 0=Studs, 1=Ceilings, 2=Door Frames
 
 
 /* ── Blank counts ── */
@@ -490,20 +532,23 @@ function blankCounts() {
   // Insulation counts (batt only)
   c['insulation'] = {};
   INSULATION_TYPES.forEach(t => {
-    const rvals = t.rvals || INSULATION_RVALS;
     c['insulation'][t.key] = {};
-    rvals.forEach(rv => {
-      c['insulation'][t.key][rv.r] = {};
-      INSULATION_SIZES.forEach((sz, si) => {
-        if (rv.sqft[si] !== null) {
-          c['insulation'][t.key][rv.r][si] = { bags: 0, extraSqft: 0 };
-        }
-      });
-    });
+    // items kind: each item stores an array of {bags, sqftPerBag} entries
+    t.items.forEach(item => c['insulation'][t.key][item] = []);
   });
-  // Steel counts — simple length counters
-  c['steel'] = {};
-  STEEL_LENGTHS.forEach(l => c['steel'][l] = 0);
+  // Steel counts — Studs use lengths, Ceilings use measurements, Door Frames use named items
+  STEEL_SUBTYPES.forEach(st => {
+    if (st.kind === 'measure') {
+      if (st.sections) {
+        c[st.key] = {};
+        st.sections.forEach(s => c[st.key][s] = []);
+      } else {
+        c[st.key] = [];
+      }
+    }
+    else if (st.items) { c[st.key] = {}; st.items.forEach(item => c[st.key][item] = 0); }
+    else { c[st.key] = {}; STEEL_LENGTHS.forEach(l => c[st.key][l] = 0); }
+  });
   c['steelExtras'] = {};
   // Insulation extras counts
   c['insExtras'] = {};
@@ -514,8 +559,8 @@ function blankCounts() {
   return c;
 }
 
-function makeUnit(name, id, rate, townhouse) {
-  return { id, name, rate: rate||'', townhouse: townhouse||'none', areas: [], areaCounter: 0 };
+function makeUnit(name, id, rate, townhouse, energyStar) {
+  return { id, name, rate: rate||'', townhouse: townhouse||'none', energyStar: energyStar||'no', areas: [], areaCounter: 0 };
 }
 function makeArea(name, id, height, rate) {
   return { id, name, height: height||'', rate: rate||'', texture: '', counts: blankCounts() };
@@ -556,6 +601,7 @@ function loadState() {
         const fresh = blankCounts();
         a.counts = deepMerge(fresh, a.counts);
         INSULATION_TYPES.forEach(t => {
+          if (t.kind === 'items') return; // no migration needed for item-based types
           const rvals = t.rvals || INSULATION_RVALS;
           rvals.forEach(rv => {
             INSULATION_SIZES.forEach((_, si) => {
@@ -650,6 +696,7 @@ function switchCat(key) {
   renderCatTabs();
   renderTypeTabs();
   renderTally();
+  renderStrip();
 }
 
 /* ── Area form ── */
@@ -800,6 +847,7 @@ function openUnitForm(editId) {
   document.getElementById('jf-name').value = u ? u.name : '';
   document.getElementById('jf-rate').value = u ? (u.rate||'') : '';
   document.getElementById('jf-townhouse').value = u ? (u.townhouse||'none') : 'none';
+  document.getElementById('jf-energystar').value = u ? (u.energyStar||'no') : 'no';
   document.getElementById('jf-townhouse-group').style.display = (u && u.rate === 'lowrise') ? '' : 'none';
 
   // Add/remove delete button
@@ -822,10 +870,11 @@ function saveJobForm() {
   const val = document.getElementById('jf-name').value.trim();
   const rate = document.getElementById('jf-rate').value;
   const townhouse = document.getElementById('jf-townhouse').value;
+  const energyStar = document.getElementById('jf-energystar').value;
   if (!val) { document.getElementById('jf-name').focus(); return; }
   if (!rate) { document.getElementById('jf-rate').focus(); return; }
   const unit = J().units.find(x=>x.id===unitFormEditId);
-  if (unit) { unit.name = val; unit.rate = rate; unit.townhouse = townhouse; J().modifiedAt = new Date().toISOString(); }
+  if (unit) { unit.name = val; unit.rate = rate; unit.townhouse = townhouse; unit.energyStar = energyStar; J().modifiedAt = new Date().toISOString(); }
   saveState(); closeJobForm(); renderAll();
 }
 function closeJobForm() { document.getElementById('job-form-overlay').classList.remove('open'); }
@@ -850,6 +899,7 @@ function renderJobInfoBar() {
   const chips = [];
   if (U().rate) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Rate</span><span class="area-info-chip-val">${U().rate.charAt(0).toUpperCase()+U().rate.slice(1)}</span></div>`);
   if (U().townhouse && U().townhouse !== 'none') chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Type</span><span class="area-info-chip-val">${U().townhouse.charAt(0).toUpperCase()+U().townhouse.slice(1)}</span></div>`);
+  if (U().energyStar === 'yes') chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Energy Star</span><span class="area-info-chip-val">Yes</span></div>`);
   bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
 }
 
@@ -865,8 +915,8 @@ function renderAreaInfoBar() {
   if(fivetSqft2>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">⅝"</span><span class="area-info-chip-val">${fivetSqft2} ft²</span></div>`);
   const durockSqft2 = Object.entries(A().counts['durock']||{}).reduce((s,[l,q])=>s+sheetSqft('durock',Number(l))*q,0);
   if(durockSqft2>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Durock</span><span class="area-info-chip-val">${durockSqft2} ft²</span></div>`);
-  const potLights = A().counts['jobExtras']?.['Pot Lights'] || 0;
-  if (potLights>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Pot Lights</span><span class="area-info-chip-val">${potLights}</span></div>`);
+  const potLights = A().counts['jobExtras']?.['Pot Light/Sprinkler'] || 0;
+  if (potLights>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">PL/Sprinkler</span><span class="area-info-chip-val">${potLights}</span></div>`);
   const greenGlue = A().counts['extras']?.['Green Glue'] || 0;
   if (greenGlue>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Green Glue</span><span class="area-info-chip-val">${greenGlue}</span></div>`);
   bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
@@ -887,7 +937,12 @@ function renderTypeTabs() {
     wrap.style.display = '';
     renderInsTypeTabs();
   } else if (curCat === 'steel') {
-    wrap.style.display = 'none';
+    wrap.style.display = '';
+    const col = '#475569';
+    document.getElementById('type-tabs').innerHTML = STEEL_SUBTYPES.map((st, i) => {
+      const active = i === curSteelSubType;
+      return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchSteelSubType(${i})">${st.label}</button>`;
+    }).join('');
   } else {
     wrap.style.display = 'none';
   }
@@ -903,6 +958,7 @@ function renderInsTypeTabs() {
 }
 function switchInsSubTab(n) { curInsSubTab=n; renderInsTypeTabs(); renderInsulation(); }
 function switchDrywallTab(n) { curDrywallTab=n; renderTypeTabs(); renderTally(); }
+function switchSteelSubType(n) { curSteelSubType=n; renderTypeTabs(); renderTally(); renderStrip(); }
 function switchType(n) { curType=n; renderTypeTabs(); renderTally(); } // legacy
 function switchInsType(n) { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
 function switchSteelSubTab(n) { curSteelSubTab=n; renderTypeTabs(); renderTally(); }
@@ -989,14 +1045,16 @@ function renderTally() {
       const total = Object.values(c).reduce((s,v)=>s+v,0);
       area.innerHTML=`
         <div class="tally-header">
-          <div class="tally-type-label" style="color:${col}">48" × ½" Durock</div>
+          <div class="tally-type-label" style="color:${col}">Durock</div>
           <div class="tally-subtotal">Subtotal: <strong>${total}</strong></div>
         </div>
         <div class="sheet-grid">
-          ${DUROCK_LENGTHS.map(l=>`
+          ${DUROCK_LENGTHS.map(l=>{
+            const label = l===5 ? "3'×5'" : l===8 ? "4'×8'" : l+"'";
+            return `
             <div class="sheet-card" style="border-color:${col}22">
               <div class="sheet-card-top" style="background:${col}0d">
-                <div class="sheet-ft" style="color:${col}99">${l}'</div>
+                <div class="sheet-ft" style="color:${col}99">${label}</div>
                 <div class="sheet-count" style="color:${col}" id="cnt-durock-${l}" onclick="editCount('durock',${l})">${c[l]}</div>
               </div>
               <div class="sheet-card-controls" style="border-top-color:${col}22">
@@ -1004,7 +1062,8 @@ function renderTally() {
                 <div class="ctrl-divider" style="background:${col}22"></div>
                 <button class="ctrl" style="--add-color:${col}" onclick="add('durock',${l})">+</button>
               </div>
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
         </div>`;
     }
     return;
@@ -1023,7 +1082,7 @@ function renderTally() {
     renderSteelAll();
     return;
   }
-  if (curCat === 'jobExtras') { renderCatItems('jobExtras', JOB_EXTRAS_ITEMS, '#0891b2', 'Extras'); return; }
+  if (curCat === 'jobExtras') { renderJobExtras(); return; }
   document.getElementById('type-bar-wrap').style.display='none';
 }
 
@@ -1066,28 +1125,132 @@ function renderSteelAll() {
     return;
   }
   const col = '#475569';
-  const c = A().counts['steel'];
-  const total = STEEL_LENGTHS.reduce((s,l)=>s+(c[l]||0),0);
-  area.innerHTML = `
-    <div class="tally-header">
-      <div class="tally-type-label" style="color:${col}">Steel</div>
-      <div class="tally-subtotal">Subtotal: <strong>${total}</strong></div>
-    </div>
-    <div class="sheet-grid">
-      ${STEEL_LENGTHS.map(l=>`
-        <div class="sheet-card" style="border-color:${col}22">
-          <div class="sheet-card-top" style="background:${col}12">
-            <div class="sheet-ft" style="color:${col}99">${l}'</div>
-            <div class="sheet-count" style="color:${col}" id="cnt-steel-${l}" onclick="editCount('steel',${l})">${c[l]||0}</div>
-          </div>
-          <div class="sheet-card-controls" style="border-top-color:${col}22">
-            <button class="ctrl" style="--add-color:${col}" onclick="sub('steel',${l})">−</button>
-            <div class="ctrl-divider" style="background:${col}22"></div>
-            <button class="ctrl" style="--add-color:${col}" onclick="add('steel',${l})">+</button>
-          </div>
-        </div>`).join('')}
-    </div>`;
+  const st = STEEL_SUBTYPES[curSteelSubType];
+  const c = A().counts[st.key];
+
+  if (st.kind === 'measure') {
+    const col2 = '#475569';
+    const data = A().counts[st.key];
+
+    function renderMeasSection(sectionName, entries) {
+      const totalSqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w, 0));
+      const safeId = encodeKey(sectionName);
+      return `
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col2};margin:14px 0 8px;display:flex;justify-content:space-between">
+          <span>${sectionName}</span>
+          ${totalSqft>0?`<span style="font-weight:500;color:var(--muted)"><span style="font-family:'DM Mono',monospace;color:var(--text)">${totalSqft}</span> ft²</span>`:''}
+        </div>
+        <div class="meas-list" style="margin-bottom:8px">
+          ${entries.map((m,i)=>`
+            <div class="meas-row">
+              <div class="meas-dims">${m.l} × ${m.w}</div>
+              <div class="meas-sqft">${Math.round(m.l*m.w)} ft²</div>
+              <button class="meas-del" onclick="ceilDel('${sectionName}',${i})">×</button>
+            </div>`).join('')}
+        </div>
+        <div class="meas-add-row">
+          <input class="meas-input" id="ceil-l-${safeId}" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+            onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('ceil-w-${safeId}').focus();}"/>
+          <span class="meas-x">×</span>
+          <input class="meas-input" id="ceil-w-${safeId}" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+            onkeydown="if(event.key==='Enter'){ceilAdd('${sectionName}');}"/>
+          <button class="meas-add-btn" style="background:${col2}" onclick="ceilAdd('${sectionName}')">Add</button>
+        </div>`;
+    }
+
+    const sections = st.sections || [st.label];
+    const totalAllSqft = sections.reduce((s,sec)=>{
+      const e = st.sections ? (Array.isArray(data[sec])?data[sec]:[]) : (Array.isArray(data)?data:[]);
+      return s + Math.round(e.reduce((x,m)=>x+m.l*m.w,0));
+    },0);
+    area.innerHTML = `
+      <div class="tally-header">
+        <div class="tally-type-label" style="color:${col2}">${st.label}</div>
+        <div class="tally-subtotal">Subtotal: <strong>${totalAllSqft} ft²</strong></div>
+      </div>
+      ${sections.map(sec => {
+        const e = st.sections ? (Array.isArray(data[sec])?data[sec]:[]) : (Array.isArray(data)?data:[]);
+        return renderMeasSection(sec, e);
+      }).join('<div style="height:4px"></div>')}`;
+    return;
+  } else if (st.items) {
+    const total = st.items.reduce((s,item)=>s+(c[item]||0),0);
+    area.innerHTML = `
+      <div class="tally-header">
+        <div class="tally-type-label" style="color:${col}">${st.label}</div>
+        <div class="tally-subtotal">Subtotal: <strong>${total}</strong></div>
+      </div>
+      <div class="sheet-grid">
+        ${st.items.map((item,idx)=>`
+          <div class="sheet-card" style="border-color:${col}22">
+            <div class="sheet-card-top" style="background:${col}12">
+              <div class="sheet-ft" style="color:${col}99;font-size:13px">${item}</div>
+              <div class="sheet-count" style="color:${col}" id="cnt-${st.key}-${encodeKey(item)}" onclick="catEditItem('${st.key}','${encodeKey(item)}',${idx},'${col}')">${c[item]||0}</div>
+            </div>
+            <div class="sheet-card-controls" style="border-top-color:${col}22">
+              <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('${st.key}',${idx})">−</button>
+              <div class="ctrl-divider" style="background:${col}22"></div>
+              <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('${st.key}',${idx})">+</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    const total = STEEL_LENGTHS.reduce((s,l)=>s+(c[l]||0),0);
+    area.innerHTML = `
+      <div class="tally-header">
+        <div class="tally-type-label" style="color:${col}">${st.label}</div>
+        <div class="tally-subtotal">Subtotal: <strong>${total}</strong></div>
+      </div>
+      <div class="sheet-grid">
+        ${STEEL_LENGTHS.map(l=>`
+          <div class="sheet-card" style="border-color:${col}22">
+            <div class="sheet-card-top" style="background:${col}12">
+              <div class="sheet-ft" style="color:${col}99">${l}'</div>
+              <div class="sheet-count" style="color:${col}" id="cnt-${st.key}-${l}" onclick="editCount('${st.key}',${l})">${c[l]||0}</div>
+            </div>
+            <div class="sheet-card-controls" style="border-top-color:${col}22">
+              <button class="ctrl" style="--add-color:${col}" onclick="sub('${st.key}',${l})">−</button>
+              <div class="ctrl-divider" style="background:${col}22"></div>
+              <button class="ctrl" style="--add-color:${col}" onclick="add('${st.key}',${l})">+</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }
 }
+
+function ceilAdd(section) {
+  const safeId = encodeKey(section);
+  const lEl=document.getElementById(`ceil-l-${safeId}`), wEl=document.getElementById(`ceil-w-${safeId}`);
+  const l=parseFloat(lEl.value), w=parseFloat(wEl.value);
+  if(!l||!w||l<=0||w<=0){ lEl.focus(); return; }
+  const st = STEEL_SUBTYPES.find(x=>x.kind==='measure');
+  const data = A().counts[st.key];
+  if(st.sections){
+    if(!Array.isArray(data[section])) data[section]=[];
+    data[section].push({l,w});
+  } else {
+    if(!Array.isArray(A().counts[st.key])) A().counts[st.key]=[];
+    A().counts[st.key].push({l,w});
+  }
+  J().modifiedAt=new Date().toISOString(); saveState();
+  lEl.value=''; wEl.value='';
+  renderSteelAll(); renderStrip();
+  setTimeout(()=>{ const el=document.getElementById(`ceil-l-${safeId}`); if(el)el.focus(); },30);
+}
+function ceilDel(section, i) {
+  const st = STEEL_SUBTYPES.find(x=>x.kind==='measure');
+  const data = A().counts[st.key];
+  if(st.sections){
+    if(!Array.isArray(data[section])) return;
+    data[section].splice(i,1);
+  } else {
+    if(!Array.isArray(data)) return;
+    data.splice(i,1);
+  }
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderSteelAll(); renderStrip();
+}
+
 function renderCatItems(countKey, items, col, label) {
   const area = document.getElementById('tally-area');
   if (!A()) {
@@ -1117,6 +1280,8 @@ function renderCatItems(countKey, items, col, label) {
     </div>`;
 }
 function catItemsForKey(key) {
+  const st = STEEL_SUBTYPES.find(s => s.key === key);
+  if (st?.items) return st.items;
   if (key==='steelExtras') return STEEL_EXTRAS_ITEMS;
   if (key==='insExtras')   return INSULATION_EXTRAS_ITEMS;
   if (key==='jobExtras')   return JOB_EXTRAS_ITEMS;
@@ -1157,6 +1322,7 @@ function catCommitItem(countKey,idx) {
 function insBagsForType(typeKey) {
   if(!A()) return 0;
   const t = INSULATION_TYPES.find(x=>x.key===typeKey);
+  if(t?.kind === 'items') return 0; // items-based types don't use bags
   const rvals = (t && t.rvals) ? t.rvals : INSULATION_RVALS;
   let total=0;
   rvals.forEach(rv=>{
@@ -1171,6 +1337,103 @@ function insBagsForType(typeKey) {
   return total;
 }
 
+function renderJobExtras() {
+  const area = document.getElementById('tally-area');
+  if (!A()) {
+    area.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/></svg></div><h3>No areas yet</h3><p>Add an area to start tallying.</p><button class="empty-cta" onclick="openAreaForm(null)">+ Add Area</button></div>`;
+    return;
+  }
+  const col = '#0891b2';
+  const c = A().counts['jobExtras'];
+
+  function renderGroup(title, items, startIdx) {
+    const total = items.reduce((s,item)=>s+(c[item]||0),0);
+    let html = `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin:14px 0 8px;display:flex;justify-content:space-between">
+      <span>${title}</span>
+      ${total>0?`<span style="font-weight:500;color:var(--muted)">Total: <span style="font-family:'DM Mono',monospace;color:var(--text)">${total}</span></span>`:''}
+    </div><div class="sheet-grid">`;
+    items.forEach((item, i) => {
+      const idx = startIdx + i;
+      html += `<div class="sheet-card" style="border-color:${col}22">
+        <div class="sheet-card-top" style="background:${col}0d">
+          <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
+          <div class="sheet-count" style="color:${col}" id="cnt-jobExtras-${encodeKey(item)}" onclick="catEditItem('jobExtras','${encodeKey(item)}',${idx},'${col}')">${c[item]||0}</div>
+        </div>
+        <div class="sheet-card-controls" style="border-top-color:${col}22">
+          <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('jobExtras',${idx})">−</button>
+          <div class="ctrl-divider" style="background:${col}22"></div>
+          <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('jobExtras',${idx})">+</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+    return html;
+  }
+
+  area.innerHTML =
+    renderGroup('Paid Extras', JOB_EXTRAS_PAID, 0) +
+    renderGroup('Purchased Extras', JOB_EXTRAS_PURCHASED, JOB_EXTRAS_PAID.length);
+}
+
+function renderInsExtras() {
+  const area = document.getElementById('tally-area');
+  if (!A()) {
+    area.innerHTML=`<div class="empty-state"><div class="empty-state-icon"><svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.8"/><rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/></svg></div><h3>No areas yet</h3><p>Add an area to start tallying.</p><button class="empty-cta" onclick="openAreaForm(null)">+ Add Area</button></div>`;
+    return;
+  }
+  const col = '#db2777';
+  const c = A().counts['insExtras'];
+
+  function renderGroup(title, items, startIdx) {
+    const total = items.reduce((s,item)=>s+(c[item]||0),0);
+    let html = `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin:14px 0 8px;display:flex;justify-content:space-between">
+      <span>${title}</span>
+      ${total>0?`<span style="font-weight:500;color:var(--muted)">Total: <span style="font-family:'DM Mono',monospace;color:var(--text)">${total}</span></span>`:''}
+    </div><div class="sheet-grid">`;
+    items.forEach((item, i) => {
+      const idx = startIdx + i;
+      html += `<div class="sheet-card" style="border-color:${col}22">
+        <div class="sheet-card-top" style="background:${col}0d">
+          <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
+          <div class="sheet-count" style="color:${col}" id="cnt-insExtras-${encodeKey(item)}" onclick="catEditItem('insExtras','${encodeKey(item)}',${idx},'${col}')">${c[item]||0}</div>
+        </div>
+        <div class="sheet-card-controls" style="border-top-color:${col}22">
+          <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('insExtras',${idx})">−</button>
+          <div class="ctrl-divider" style="background:${col}22"></div>
+          <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('insExtras',${idx})">+</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+    return html;
+  }
+
+  area.innerHTML =
+    renderGroup('Paid Extras', INSULATION_EXTRAS_PAID, 0) +
+    renderGroup('Purchased Extras', INSULATION_EXTRAS_PURCHASED, INSULATION_EXTRAS_PAID.length);
+}
+
+function insMeasAdd(typeKey, item, itemIdx) {
+  const bagsEl = document.getElementById(`ins-bags-${itemIdx}`);
+  const sqftEl = document.getElementById(`ins-sqft-${itemIdx}`);
+  const bags = parseFloat(bagsEl.value);
+  const sqftPerBag = parseFloat(sqftEl.value);
+  if(!bags||!sqftPerBag||bags<=0||sqftPerBag<=0){ bagsEl.focus(); return; }
+  if(!Array.isArray(A().counts['insulation'][typeKey][item])) A().counts['insulation'][typeKey][item]=[];
+  A().counts['insulation'][typeKey][item].push({bags, sqftPerBag});
+  J().modifiedAt=new Date().toISOString(); saveState();
+  bagsEl.value=''; sqftEl.value='';
+  renderInsulation(); renderStrip();
+  setTimeout(()=>{ const el=document.getElementById(`ins-bags-${itemIdx}`); if(el)el.focus(); },30);
+}
+function insMeasDel(typeKey, item, idx) {
+  if(!Array.isArray(A().counts['insulation'][typeKey][item])) return;
+  A().counts['insulation'][typeKey][item].splice(idx, 1);
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderInsulation(); renderStrip();
+}
+
+
 function renderInsulation() {
   const area = document.getElementById('tally-area');
   if(!A()){
@@ -1179,8 +1442,47 @@ function renderInsulation() {
   }
 
   const t = INSULATION_TYPES[curInsType];
-  if (curInsSubTab === 1) { renderCatItems('insExtras', INSULATION_EXTRAS_ITEMS, '#db2777', 'Insulation Extras'); return; }
+  if (curInsSubTab === 1) { renderInsExtras(); return; }
   const col = t.color;
+
+  // Items kind — bags × sqft per bag measurement list
+  if (t.kind === 'items') {
+    const counts = A().counts['insulation'][t.key];
+    let html = `
+      <div class="tally-header"><div class="tally-type-label" style="color:${col}">${t.fullName}</div></div>
+      <div style="font-size:11px;color:var(--muted);font-style:italic;margin:-4px 0 14px;padding:0 2px">* When Lowrise selected use Interior only.</div>`;
+    t.items.forEach((item, itemIdx) => {
+      const entries = Array.isArray(counts[item]) ? counts[item] : [];
+      const totalBags = entries.reduce((s,e)=>s+e.bags, 0);
+      const totalSqft = Math.round(entries.reduce((s,e)=>s+e.bags*e.sqftPerBag, 0));
+      html += `
+        <div style="margin-bottom:20px">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin-bottom:8px;display:flex;justify-content:space-between">
+            <span>${item}</span>
+            ${totalBags>0?`<span style="font-weight:500;color:var(--muted)"><span style="font-family:'DM Mono',monospace;color:var(--text)">${totalBags}</span> bags · <span style="font-family:'DM Mono',monospace;color:var(--text)">${totalSqft}</span> ft²</span>`:''}
+          </div>
+          <div class="meas-list" style="margin-bottom:8px">
+            ${entries.map((e,i)=>`
+              <div class="meas-row">
+                <div class="meas-dims">${e.bags} bags × ${e.sqftPerBag} ft²</div>
+                <div class="meas-sqft">${Math.round(e.bags*e.sqftPerBag)} ft²</div>
+                <button class="meas-del" onclick="insMeasDel('${t.key}','${item}',${i})">×</button>
+              </div>`).join('')}
+          </div>
+          <div class="meas-add-row">
+            <input class="meas-input" id="ins-bags-${itemIdx}" type="number" inputmode="decimal" placeholder="Bags" min="0" step="1"
+              onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('ins-sqft-${itemIdx}').focus();}"/>
+            <span class="meas-x">×</span>
+            <input class="meas-input" id="ins-sqft-${itemIdx}" type="number" inputmode="decimal" placeholder="ft²/bag" min="0" step="0.1"
+              onkeydown="if(event.key==='Enter'){insMeasAdd('${t.key}','${item}',${itemIdx});}"/>
+            <button class="meas-add-btn" style="background:${col}" onclick="insMeasAdd('${t.key}','${item}',${itemIdx})">Add</button>
+          </div>
+        </div>`;
+    });
+    area.innerHTML = html;
+    return;
+  }
+
   const counts = A().counts['insulation'][t.key];
   const rvals = t.rvals || INSULATION_RVALS;
 
@@ -1290,36 +1592,53 @@ function insCommitBags(ri,si,ti,val){
 function renderStrip() {
   if (!A()) { document.getElementById('totals-strip').innerHTML=''; return; }
   if (curCat === 'jobExtras') {
-    const total = A() ? JOB_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['jobExtras']?.[item]||0),0) : 0;
-    document.getElementById('totals-strip').innerHTML=
-      `<div class="strip-total">Extras <span>${total}</span></div>`;
+    const chips = JOB_EXTRAS_ITEMS.map(item => {
+      const v = A()?.counts['jobExtras']?.[item]||0;
+      return v>0 ? `<div class="strip-chip">${item} <strong>${v}</strong></div>` : '';
+    }).join('');
+    document.getElementById('totals-strip').innerHTML = chips;
     return;
   }
   if (curCat === 'insulation') {
     let totalBags=0;
     const chips = INSULATION_TYPES.map(t=>{
-      const b=insBagsForType(t.key); totalBags+=b;
-      return b>0?`<div class="strip-chip">${t.label} <strong>${Math.round(b)} bags</strong></div>`:'';
+      return t.items.map(item=>{
+        const entries = Array.isArray(A()?.counts['insulation'][t.key]?.[item]) ? A().counts['insulation'][t.key][item] : [];
+        const sqft = Math.round(entries.reduce((s,e)=>s+e.bags*e.sqftPerBag,0));
+        totalBags += entries.reduce((s,e)=>s+e.bags,0);
+        return sqft>0?`<div class="strip-chip">${t.label} ${item} <strong>${sqft} ft²</strong></div>`:'';
+      }).join('');
     }).join('');
     const extrasTotal = A() ? INSULATION_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['insExtras']?.[item]||0),0) : 0;
-    const primaryLabel = totalBags>0 ? `Bags <span>${Math.round(totalBags)}</span>` : `Insulation <span>—</span>`;
-    document.getElementById('totals-strip').innerHTML=
-      `<div class="strip-total">${primaryLabel}</div>${chips}`+
-      (extrasTotal>0?`<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>`:'');
+    document.getElementById('totals-strip').innerHTML= chips;
     return;
   }
   if (curCat === 'steel') {
-    const total = STEEL_LENGTHS.reduce((s,l)=>s+(A()?.counts['steel']?.[l]||0),0);
-    const chips = STEEL_LENGTHS.map(l=>{
-      const v=A()?.counts['steel']?.[l]||0;
-      return v>0?`<div class="strip-chip">${l}' <strong>${v}</strong></div>`:'';
+    const chips = STEEL_SUBTYPES.map(st => {
+      if (st.kind === 'measure') {
+        const data = A()?.counts[st.key];
+        let sqft = 0;
+        if (st.sections) {
+          st.sections.forEach(sec => { sqft += Math.round((Array.isArray(data?.[sec])?data[sec]:[]).reduce((s,m)=>s+m.l*m.w,0)); });
+        } else {
+          sqft = Math.round((Array.isArray(data)?data:[]).reduce((s,m)=>s+m.l*m.w,0));
+        }
+        return sqft>0 ? `<div class="strip-chip">${st.label} <strong>${sqft} ft²</strong></div>` : '';
+      }
+      if (st.items) {
+        return st.items.map(item => {
+          const v = A()?.counts[st.key]?.[item]||0;
+          return v>0 ? `<div class="strip-chip">${item} <strong>${v}</strong></div>` : '';
+        }).join('');
+      }
+      const totalFt = STEEL_LENGTHS.reduce((s,l)=>s+(A()?.counts[st.key]?.[l]||0)*l,0);
+      return totalFt>0 ? `<div class="strip-chip">${st.label} <strong>${totalFt}'</strong></div>` : '';
     }).join('');
-    document.getElementById('totals-strip').innerHTML=
-      `<div class="strip-total">Total <span>${total}</span></div>${chips}`;
+    document.getElementById('totals-strip').innerHTML = chips;
     return;
   }
   if (curCat === 'mud') { return; } // mud removed
-  // Drywall strip — show per-tab subtotals
+  // Drywall strip — show per-tab sqft chips only
   const halfSheets = HALF_GROUPS.reduce((s,g)=>s+Object.values(A()?.counts[g.key]||{}).reduce((x,v)=>x+v,0),0);
   const fivetSheets = FIVET_GROUPS.reduce((s,g)=>s+Object.values(A()?.counts[g.key]||{}).reduce((x,v)=>x+v,0),0);
   const durockSheets = Object.values(A()?.counts['durock']||{}).reduce((s,v)=>s+v,0);
@@ -1327,11 +1646,10 @@ function renderStrip() {
   const fivetSqft = FIVET_GROUPS.reduce((s,g)=>s+Object.entries(A()?.counts[g.key]||{}).reduce((x,[l,q])=>x+sheetSqft(g.key,Number(l))*q,0),0);
   const durockSqft = Object.entries(A()?.counts['durock']||{}).reduce((s,[l,q])=>s+sheetSqft('durock',Number(l))*q,0);
   let chips = '';
-  if(halfSheets>0)   chips+=`<div class="strip-chip">½" <strong>${halfSheets} sheets</strong>${halfSqft>0?' · '+halfSqft+' ft²':''}</div>`;
-  if(fivetSheets>0)  chips+=`<div class="strip-chip">⅝" <strong>${fivetSheets} sheets</strong>${fivetSqft>0?' · '+fivetSqft+' ft²':''}</div>`;
-  if(durockSheets>0) chips+=`<div class="strip-chip">Durock <strong>${durockSheets} sheets</strong>${durockSqft>0?' · '+durockSqft+' ft²':''}</div>`;
-  document.getElementById('totals-strip').innerHTML=
-    `<div class="strip-total">Total <span>${jobTotal()}</span></div>${chips}`;
+  if(halfSqft>0)   chips+=`<div class="strip-chip">½" <strong>${halfSqft} ft²</strong></div>`;
+  if(fivetSqft>0)  chips+=`<div class="strip-chip">⅝" <strong>${fivetSqft} ft²</strong></div>`;
+  if(durockSqft>0) chips+=`<div class="strip-chip">Durock <strong>${durockSqft} ft²</strong></div>`;
+  document.getElementById('totals-strip').innerHTML= chips;
 }
 
 function renderAll() {
@@ -1469,7 +1787,7 @@ function handleDetailsTap(e) { if(e.target===document.getElementById('details-ov
 /* ── Report ── */
 function showReport() {
   const j=J();
-  document.getElementById('modal-title').textContent=j.name+' — Report';
+  document.getElementById('modal-title').textContent=j.name+' — Invoice';
   const d=j.details;
 
   // Job details block
@@ -1503,64 +1821,64 @@ function showReport() {
     if(DRYWALL_KEYS.some(key=>Object.values(a.counts[key]||{}).some(v=>v>0))) aHas=true;
     // Check insulation
     INSULATION_TYPES.forEach(t=>{
-      const rvals=t.rvals||INSULATION_RVALS;
-      rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{
-        const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
-        if(cell&&((cell.bags||0)>0||(cell.extraSqft||0)>0))aHas=true;
-      }));
+      if(t.kind==='items'){
+        if(t.items.some(item=>{
+          const entries = Array.isArray(a.counts['insulation'][t.key]?.[item]) ? a.counts['insulation'][t.key][item] : [];
+          return entries.length>0;
+        })) aHas=true;
+      } else {
+        const rvals=t.rvals||INSULATION_RVALS;
+        rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{
+          const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
+          if(cell&&((cell.bags||0)>0||(cell.extraSqft||0)>0))aHas=true;
+        }));
+      }
     });
     // Check steel
-    if(STEEL_LENGTHS.some(l=>(a.counts['steel']?.[l]||0)>0)) aHas=true;
+    if(STEEL_SUBTYPES.some(st=>{
+      if(st.kind==='measure') {
+        const data = a.counts[st.key];
+        const sections = st.sections || [st.label];
+        return sections.some(sec=>{ const e=st.sections?(Array.isArray(data?.[sec])?data[sec]:[]):(Array.isArray(data)?data:[]); return e.length>0; });
+      }
+      if(st.items) return st.items.some(item=>(a.counts[st.key]?.[item]||0)>0);
+      return STEEL_LENGTHS.some(l=>(a.counts[st.key]?.[l]||0)>0);
+    })) aHas=true;
     if(INSULATION_EXTRAS_ITEMS.some(item=>(a.counts['insExtras']?.[item]||0)>0))aHas=true;
     if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
     if(!aHas)return;
     hasAny=true;
 
     // Area header
-    const metaParts=[a.height].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${s}</span>`);
-    html+=`<div class="modal-area-head">Area - ${a.name} ${metaParts.join(' · ')} <span style="font-weight:400;font-size:12px;color:var(--muted)">${areaTotal(a)} sheets</span></div>`;
+    const metaParts=[a.height].filter(Boolean).map(s=>`- ${s}`);
+    html+=`<div class="modal-area-head">Area - ${a.name} ${metaParts.join(' ')}</div>`;
 
     // Helper to render a group of lengths as sheets/sqft rows
-    function renderDrywallGroupReport(label, key, lengths, col) {
-      const entries = lengths.filter(l=>(a.counts[key]||{})[l]>0);
-      if(!entries.length) return;
-      let typeSheets=0, typeSqft=0;
-      let rows='';
-      entries.forEach(l=>{
-        const qty=a.counts[key][l];
-        const sf=sheetSqft(key,l)*qty;
-        typeSheets+=qty; typeSqft+=sf;
-        rows+=`<div class="modal-row">
-          <span>${l}' sheets</span>
-          <span style="display:flex;gap:32px">
-            <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${qty}</span>
-            <span style="min-width:48px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${sf>0?sf:''}</span>
-          </span>
-        </div>`;
+    // Helper to render combined groups under one header
+    function renderDrywallCombinedReport(label, groups, col) {
+      let typeSqft=0;
+      groups.forEach(g => {
+        g.lengths.filter(l=>(a.counts[g.key]||{})[l]>0).forEach(l=>{
+          typeSqft += sheetSqft(g.key,l) * a.counts[g.key][l];
+        });
       });
+      if(!typeSqft) return;
       html+=`<div class="modal-type-head" style="color:${col};display:flex;justify-content:space-between;padding-right:4px">
-        <span>${label}</span>
-        <span style="display:flex;gap:32px">
-          <span style="min-width:32px;text-align:right">Sheets</span>
-          <span style="min-width:48px;text-align:right">Sq Ft</span>
-        </span>
+        <span style="font-size:15px;font-weight:600">${label}</span>
+        <span style="min-width:48px;text-align:right">SQ FT</span>
       </div>`;
-      html+=rows;
       html+=`<div class="modal-row" style="font-weight:500;color:var(--text);border-bottom:1.5px solid var(--border-md)">
-        <span>Totals</span>
-        <span style="display:flex;gap:32px">
-          <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSheets}</span>
-          <span style="min-width:48px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSqft>0?typeSqft:''}</span>
-        </span>
+        <span>Total</span>
+        <span style="font-family:'DM Mono',monospace;font-weight:500">${typeSqft}</span>
       </div><div style="height:8px"></div>`;
     }
 
-    // ½" groups
-    HALF_GROUPS.forEach(g => renderDrywallGroupReport(g.label, g.key, g.lengths, '#2563eb'));
-    // ⅝" groups
-    FIVET_GROUPS.forEach(g => renderDrywallGroupReport(g.label, g.key, g.lengths, '#dc2626'));
+    // ½" combined
+    renderDrywallCombinedReport('½"', HALF_GROUPS, '#2563eb');
+    // ⅝" combined
+    renderDrywallCombinedReport('⅝"', FIVET_GROUPS, '#dc2626');
     // Durock
-    renderDrywallGroupReport('48" × ½" Durock', 'durock', DUROCK_LENGTHS, '#111111');
+    renderDrywallCombinedReport('Durock', [{key:'durock', lengths:DUROCK_LENGTHS, width:4}], '#111111');
 
     // Extras items
     const extrasEntries=EXTRAS_ITEMS.filter(item=>a.counts['extras'][item]>0);
@@ -1574,39 +1892,78 @@ function showReport() {
 
     // Insulation
     INSULATION_TYPES.forEach(t=>{
-      const rvals=t.rvals||INSULATION_RVALS;
-      let typeBags=0;
-      const insRows=[];
-      rvals.forEach(rv=>{
-        INSULATION_SIZES.forEach((sz,si)=>{
-          if(rv.sqft[si]===null)return;
-          const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
-          if(!cell)return;
-          const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
-          const bags=rv.sqft[si]>0?totalSqft/rv.sqft[si]:0;
-          if(bags>0){
-            typeBags+=bags;
-            insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft)+' ft²', Math.round(bags)+' bags']);
-          }
+      if(t.kind==='items'){
+        let hasAny = false;
+        t.items.forEach(item=>{
+          const entries = Array.isArray(a.counts['insulation'][t.key]?.[item]) ? a.counts['insulation'][t.key][item] : [];
+          if(!entries.length) return;
+          hasAny = true;
+          const totalBags = entries.reduce((s,e)=>s+e.bags,0);
+          const totalSqft = Math.round(entries.reduce((s,e)=>s+e.bags*e.sqftPerBag,0));
+          html+=`<div class="modal-type-head" style="color:${t.color}">${item === 'Interior' ? t.label : `${t.label} - ${item}`}</div>`;
+          const totalSqftAll = Math.round(entries.reduce((s,e)=>s+e.bags*e.sqftPerBag,0));
+          html+=`<div class="modal-row"><span>Total</span><span style="font-family:'DM Mono',monospace;font-weight:500">${totalSqftAll} ft²</span></div>`;
         });
-      });
-      if(!insRows.length)return;
-      html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px"><span>${t.fullName}</span><span style="font-weight:500">${Math.round(typeBags)} bags</span></div>`;
-      insRows.forEach(([label,sqft,bags])=>{
-        html+=`<div class="modal-row"><span>${label}</span><span style="display:flex;gap:12px"><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${sqft}</span><span>${bags}</span></span></div>`;
-      });
-      html+=`<div style="height:8px"></div>`;
+        if(hasAny) html+=`<div style="height:8px"></div>`;
+      } else {
+        const rvals=t.rvals||INSULATION_RVALS;
+        let typeBags=0;
+        const insRows=[];
+        rvals.forEach(rv=>{
+          INSULATION_SIZES.forEach((sz,si)=>{
+            if(rv.sqft[si]===null)return;
+            const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
+            if(!cell)return;
+            const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const bags=rv.sqft[si]>0?totalSqft/rv.sqft[si]:0;
+            if(bags>0){
+              typeBags+=bags;
+              insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft)+' ft²', Math.round(bags)+' bags']);
+            }
+          });
+        });
+        if(!insRows.length)return;
+        html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px"><span>${t.fullName}</span><span style="font-weight:500">${Math.round(typeBags)} bags</span></div>`;
+        insRows.forEach(([label,sqft,bags])=>{
+          html+=`<div class="modal-row"><span>${label}</span><span style="display:flex;gap:12px"><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${sqft}</span><span>${bags}</span></span></div>`;
+        });
+        html+=`<div style="height:8px"></div>`;
+      }
     });
 
     // Steel
-    const steelEntries = STEEL_LENGTHS.filter(l=>(a.counts['steel']?.[l]||0)>0);
-    if(steelEntries.length){
-      html+=`<div class="modal-type-head" style="color:#475569">Steel</div>`;
-      steelEntries.forEach(l=>{
-        html+=`<div class="modal-row"><span>${l}' studs</span><span>${a.counts['steel'][l]}</span></div>`;
-      });
-      html+=`<div style="height:8px"></div>`;
-    }
+    STEEL_SUBTYPES.forEach(st => {
+      if (st.kind === 'measure') {
+        const data = a.counts[st.key];
+        const sections = st.sections || [st.label];
+        let hasAny = false;
+        sections.forEach(sec => {
+          const entries = st.sections ? (Array.isArray(data?.[sec])?data[sec]:[]) : (Array.isArray(data)?data:[]);
+          if(!entries.length) return;
+          hasAny = true;
+          const totalSqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+          html+=`<div class="modal-type-head" style="color:#475569">${sec}</div>`;
+          entries.forEach(m=>{
+            html+=`<div class="modal-row"><span>${m.l} × ${m.w}</span><span>${Math.round(m.l*m.w)} ft²</span></div>`;
+          });
+        });
+        if(hasAny) html+=`<div style="height:8px"></div>`;
+      } else if (st.items) {
+        const entries = st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0);
+        if(!entries.length) return;
+        html+=`<div class="modal-type-head" style="color:#475569">${st.label}</div>`;
+        entries.forEach(item=>{
+          html+=`<div class="modal-row"><span>${item}</span><span>${a.counts[st.key][item]}</span></div>`;
+        });
+        html+=`<div style="height:8px"></div>`;
+      } else {
+        const totalFt = STEEL_LENGTHS.reduce((s,l)=>s+(a.counts[st.key]?.[l]||0)*l,0);
+        if(!totalFt) return;
+        html+=`<div class="modal-type-head" style="color:#475569">${st.label}</div>`;
+        html+=`<div class="modal-row"><span>Linear Feet</span><span>${totalFt}'</span></div>`;
+        html+=`<div style="height:8px"></div>`;
+      }
+    });
 
     // Insulation extras
     const insExtrasEntries=INSULATION_EXTRAS_ITEMS.filter(item=>(a.counts['insExtras']?.[item]||0)>0);
@@ -1698,34 +2055,71 @@ function exportToSheets() {
 
     // Insulation
     INSULATION_TYPES.forEach(t=>{
-      const rvals=t.rvals||INSULATION_RVALS;
-      let hasAny=false;
-      const insRows=[];
-      rvals.forEach(rv=>{
-        INSULATION_SIZES.forEach((sz,si)=>{
-          if(rv.sqft[si]===null)return;
-          const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
-          if(!cell)return;
-          const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
-          const bags=rv.sqft[si]>0?totalSqft/rv.sqft[si]:0;
-          if(bags>0){ hasAny=true; insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft), Math.round(bags)]); }
+      if(t.kind==='items'){
+        let hasAny = false;
+        t.items.forEach(item=>{
+          const entries = Array.isArray(a.counts['insulation'][t.key]?.[item]) ? a.counts['insulation'][t.key][item] : [];
+          if(!entries.length) return;
+          hasAny = true;
+          const totalBags = entries.reduce((s,e)=>s+e.bags,0);
+          const totalSqft = Math.round(entries.reduce((s,e)=>s+e.bags*e.sqftPerBag,0));
+          rows.push([`${t.fullName} — ${item}`, 'Bags', 'ft²/bag', 'Total ft²']);
+          entries.forEach(e=>rows.push(['', e.bags, e.sqftPerBag, Math.round(e.bags*e.sqftPerBag)]));
+          rows.push(['Total', totalBags, '', totalSqft]);
         });
-      });
-      if(!hasAny)return;
-      rows.push([t.fullName]);
-      rows.push(['Size / R-Value','Sq Ft','Bags']);
-      insRows.forEach(r=>rows.push(r));
-      rows.push([]);
+        if(hasAny) rows.push([]);
+      } else {
+        const rvals=t.rvals||INSULATION_RVALS;
+        let hasAny=false;
+        const insRows=[];
+        rvals.forEach(rv=>{
+          INSULATION_SIZES.forEach((sz,si)=>{
+            if(rv.sqft[si]===null)return;
+            const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
+            if(!cell)return;
+            const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const bags=rv.sqft[si]>0?totalSqft/rv.sqft[si]:0;
+            if(bags>0){ hasAny=true; insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft), Math.round(bags)]); }
+          });
+        });
+        if(!hasAny)return;
+        rows.push([t.fullName]);
+        rows.push(['Size / R-Value','Sq Ft','Bags']);
+        insRows.forEach(r=>rows.push(r));
+        rows.push([]);
+      }
     });
 
-    // Steel category items
     // Steel
-    const steelCsvEntries = STEEL_LENGTHS.filter(l=>(a.counts['steel']?.[l]||0)>0);
-    if(steelCsvEntries.length){
-      rows.push(['Steel', 'Count']);
-      steelCsvEntries.forEach(l=>rows.push([l+"' studs", a.counts['steel'][l]]));
-      rows.push([]);
-    }
+    STEEL_SUBTYPES.forEach(st => {
+      if (st.kind === 'measure') {
+        const data = a.counts[st.key];
+        const sections = st.sections || [st.label];
+        let hasAny = false;
+        sections.forEach(sec => {
+          const entries = st.sections ? (Array.isArray(data?.[sec])?data[sec]:[]) : (Array.isArray(data)?data:[]);
+          if(!entries.length) return;
+          hasAny = true;
+          const totalSqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+          rows.push([sec, 'L', 'W', 'Sq Ft']);
+          entries.forEach(m=>rows.push(['', m.l, m.w, Math.round(m.l*m.w)]));
+          rows.push(['Total', '', '', totalSqft]);
+        });
+        if(hasAny) rows.push([]);
+      } else if (st.items) {
+        const entries = st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0);
+        if(!entries.length) return;
+        rows.push([st.label, 'Count']);
+        entries.forEach(item=>rows.push([item, a.counts[st.key][item]]));
+        rows.push([]);
+      } else {
+        const entries = STEEL_LENGTHS.filter(l=>(a.counts[st.key]?.[l]||0)>0);
+        if(!entries.length) return;
+        rows.push([st.label, 'Count']);
+        entries.forEach(l=>rows.push([l+"'", a.counts[st.key][l]]));
+        rows.push([]);
+      }
+    });
 
     // Insulation extras
     const insExtrasEntries=INSULATION_EXTRAS_ITEMS.filter(item=>(a.counts['insExtras']?.[item]||0)>0);
@@ -1757,6 +2151,71 @@ function exportToSheets() {
   a.href=url; a.download=(j.name||'drywall-tally')+'.csv'; a.click();
   URL.revokeObjectURL(url);
 }
+
+/* ── Prices ── */
+const PRICE_FIELDS = [
+  { key: 'half',         label: '½" Drywall (per ft²)',              default: 0.00 },
+  { key: 'fivet',        label: '⅝" Drywall (per ft²)',              default: 0.00 },
+  { key: 'durock',       label: 'Durock (per ft²)',                   default: 0.60 },
+  { key: 'ins_pink_int', label: 'Pink Insulation Interior (per ft²)', default: 0.00 },
+  { key: 'ins_pink_ext', label: 'Pink Insulation Exterior (per ft²)', default: 0.00 },
+  { key: 'ins_rock_int', label: 'Rockwool Interior (per ft²)',        default: 0.00 },
+  { key: 'ins_rock_ext', label: 'Rockwool Exterior (per ft²)',        default: 0.00 },
+  { key: 'ins_r24_int',  label: 'R-24 Interior (per ft²)',           default: 0.00 },
+  { key: 'ins_r24_ext',  label: 'R-24 Exterior (per ft²)',           default: 0.00 },
+  { key: 'studs',        label: 'Studs (per linear ft)',              default: 0.00 },
+  { key: 'ceil_susp',    label: 'Suspended Ceiling (per ft²)',        default: 0.00 },
+  { key: 'ceil_hang',    label: 'With Hangers (per ft²)',             default: 0.00 },
+  { key: 'door_single',  label: 'Door Frame Single (each)',           default: 0.00 },
+  { key: 'door_double',  label: 'Door Frame Double (each)',           default: 0.00 },
+  { key: 'pot_light',    label: 'Pot Light/Sprinkler (each)',         default: 0.00 },
+  { key: 'tray_waffle',  label: 'Tray/Waffle (each)',                 default: 0.00 },
+  { key: 'skylight_24',  label: "2'×4' Skylight (each)",             default: 0.00 },
+  { key: 'skylight_44',  label: "4'×4' Skylight (each)",             default: 0.00 },
+  { key: 'peak',         label: 'Peak (each)',                        default: 0.00 },
+  { key: 'round_stairs', label: 'Round Stairs (each)',                default: 0.00 },
+  { key: 'ota_under',    label: "OTA <64' (each)",                    default: 0.00 },
+  { key: 'ota_over',     label: "OTA >64' (each)",                    default: 0.00 },
+  { key: 'styro_vents',  label: 'Styro-Vents (each)',                 default: 0.00 },
+  { key: 'screws_box',   label: 'Screws Box (each)',                  default: 0.00 },
+];
+
+let prices = {};
+function loadPrices() {
+  try {
+    const raw = localStorage.getItem('employee-tally-prices');
+    if (raw) prices = JSON.parse(raw);
+  } catch(e) {}
+  // Fill defaults for any missing
+  PRICE_FIELDS.forEach(f => { if(prices[f.key] === undefined) prices[f.key] = f.default; });
+}
+function savePricesData() {
+  try { localStorage.setItem('employee-tally-prices', JSON.stringify(prices)); } catch(e) {}
+}
+loadPrices();
+
+function openPrices() {
+  document.getElementById('prices-body').innerHTML = PRICE_FIELDS.map(f => `
+    <div class="field-group">
+      <div class="field-label">${f.label}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="color:var(--muted);font-size:15px">$</span>
+        <input class="field-input" id="price-${f.key}" type="number" inputmode="decimal" step="0.01" min="0"
+          value="${prices[f.key].toFixed(2)}" placeholder="0.00" style="flex:1"/>
+      </div>
+    </div>`).join('<div class="field-divider"></div>');
+  document.getElementById('prices-overlay').classList.add('open');
+}
+function savePrices() {
+  PRICE_FIELDS.forEach(f => {
+    const val = parseFloat(document.getElementById(`price-${f.key}`)?.value) || 0;
+    prices[f.key] = val;
+  });
+  savePricesData();
+  closePrices();
+}
+function closePrices() { document.getElementById('prices-overlay').classList.remove('open'); }
+function handlePricesTap(e) { if(e.target===document.getElementById('prices-overlay')) closePrices(); }
 
 /* ── Init ── */
 saveState();
