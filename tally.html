@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="favicon.ico">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -81,6 +80,8 @@
     .sheet-count { font-family: 'DM Mono', monospace; font-size: 54px; font-weight: 500; line-height: 1; cursor: text; }
     .sheet-count-input { font-family: 'DM Mono', monospace; font-size: 54px; font-weight: 500; color: var(--accent); line-height: 1; width: 100%; border: none; border-bottom: 2px solid var(--accent); background: transparent; text-align: center; outline: none; padding: 0; -moz-appearance: textfield; }
     .sheet-count-input::-webkit-inner-spin-button, .sheet-count-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
     .sheet-card-controls { display: flex; border-top: 1px solid var(--border); }
     .ctrl { flex: 1; height: 50px; border: none; background: none; font-size: 24px; color: var(--muted); cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: background 0.1s, color 0.1s; }
     .ctrl:active { background: color-mix(in srgb, var(--add-color, var(--accent)) 10%, white); color: var(--add-color, var(--accent)); }
@@ -194,7 +195,7 @@
   </div>
 
   <!-- Job tabs -->
-  <div class="area-bar" id="unit-bar" style="background:#f0ede8;border-bottom:1px solid rgba(0,0,0,0.09)">
+  <div class="area-bar" style="background:#f0ede8;border-bottom:1px solid rgba(0,0,0,0.09)">
     <div class="area-scroll" id="unit-tabs"></div>
     <button class="add-area-btn" onclick="addUnit()">+ Add Job</button>
   </div>
@@ -221,7 +222,7 @@
 
   <div class="bottom-bar">
     <div class="totals-strip" id="totals-strip"></div>
-    <button class="report-btn" onclick="showReport()">Report</button>
+    <button class="report-btn" onclick="showReport()">Invoice</button>
   </div>
 
 </div>
@@ -304,7 +305,7 @@
       <h3>Prices</h3>
       <button class="sheet-close" onclick="closePrices()">✕</button>
     </div>
-    <div class="sheet-body" id="prices-body"></div>
+    <div class="sheet-body" id="prices-body" style="display:block"></div>
     <div class="sheet-footer">
       <button class="sheet-save-btn" onclick="savePrices()">Save Prices</button>
     </div>
@@ -361,14 +362,13 @@
     </div>
     <div class="sheet-body" id="modal-body" style="gap:0"></div>
     <div class="sheet-footer">
-      <button class="sheet-save-btn" style="background:var(--green);display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportCSV()">
+      <button class="sheet-save-btn" style="background:var(--green);display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportPDF()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <rect x="3" y="3" width="18" height="18" rx="2" fill="white" fill-opacity="0.2"/>
           <path d="M8 8h8M8 12h8M8 16h5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-          <rect x="14" y="13" width="7" height="7" rx="1.5" fill="white"/>
-          <path d="M17.5 15v4M15.5 17h4" stroke="#15803d" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M15 14l2.5 2.5L20 14M17.5 16.5V20" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Export to CSV
+        Export to PDF
       </button>
     </div>
   </div>
@@ -430,7 +430,7 @@ const INS_EXTRAS_ALL       = [...INS_EXTRAS_PAID, ...INS_EXTRAS_PURCHASED];
 const STEEL_LENGTHS = [8, 9, 10, 12];
 const STEEL_SUBTYPES = [
   { key: 'steel_studs', label: 'Studs' },
-  { key: 'steel_ceil',  label: 'Suspended Ceiling', kind: 'measure', sections: ['Suspended Ceiling', 'With Hangers'] },
+  { key: 'steel_ceil',  label: 'Suspended Ceiling', kind: 'measure', sections: ['Suspended Ceiling', 'Ceilings with Hangers'] },
   { key: 'steel_doors', label: 'Door Frames', items: ['Single', 'Double'] },
 ];
 
@@ -1016,7 +1016,11 @@ function renderAreaInfoBar() {
   if (halfSqft>0)   chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">½"</span><span class="area-info-chip-val">${halfSqft} ft²</span></div>`);
   if (fivetSqft>0)  chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">⅝"</span><span class="area-info-chip-val">${fivetSqft} ft²</span></div>`);
   if (durockSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Durock</span><span class="area-info-chip-val">${durockSqft} ft²</span></div>`);
-  if (plCount>0)    chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">PL/Sprinkler</span><span class="area-info-chip-val">${plCount}</span></div>`);
+  if (plCount>0) {
+    const billable = Math.max(0, plCount - 5);
+    const plLabel = billable > 0 ? `${plCount} (${billable} billable)` : `${plCount} (incl.)`;
+    chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">PL/Sprinkler</span><span class="area-info-chip-val">${plLabel}</span></div>`);
+  }
   bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
 }
 
@@ -1136,7 +1140,7 @@ function renderInsulation() {
   const counts = A().counts['insulation'][t.key];
   let html = `
     <div class="tally-header"><div class="tally-type-label" style="color:${col}">${t.fullName}</div></div>
-    <div style="font-size:11px;color:var(--muted);font-style:italic;margin:-4px 0 14px;padding:0 2px">* When Lowrise selected use Interior only.</div>`;
+    <div style="font-size:11px;color:var(--muted);font-style:italic;margin:-4px 0 14px;padding:0 2px">* Lowrise: one all-in rate (incl. material) for all types — use Interior only. Highrise: labour only, separate Interior/Exterior rates.</div>`;
   t.items.forEach((item, itemIdx) => {
     const entries  = Array.isArray(counts[item]) ? counts[item] : [];
     const totalBags = entries.reduce((s,e) => s+e.bags, 0);
@@ -1346,55 +1350,75 @@ function renderStrip() {
 
 // Rates from Local 675 Residential Agreement, effective May 4, 2025
 // Drywall per 1000 ft²; insulation all-in per ft²
+// Agreement rate schedule — [May 4 2025, May 3 2026, May 2 2027]
+// All boarding rates are per 1000 ft² in the agreement; stored here as per ft² (÷1000)
+// ⅝" = ½" + $105/1000 = +$0.105/ft² premium for low/high-rise
 const PRICE_FIELDS = [
-  // ½" Drywall — Lowrise (per ft²)
-  { key: 'half_lr_8',    label: "½\" Lowrise ≤8'",      default: 0.352, group: '½" Drywall — Lowrise' },
-  { key: 'half_lr_9',    label: "½\" Lowrise 8'–9'",     default: 0.373, group: '½" Drywall — Lowrise' },
-  { key: 'half_lr_10',   label: "½\" Lowrise 9'–10'",    default: 0.422, group: '½" Drywall — Lowrise' },
-  { key: 'half_lr_11',   label: "½\" Lowrise 10'–11'",   default: 0.451, group: '½" Drywall — Lowrise' },
-  { key: 'half_lr_12',   label: "½\" Lowrise 11'–12'",   default: 0.466, group: '½" Drywall — Lowrise' },
-  // ½" Drywall — Highrise (per ft²)
-  { key: 'half_hr_9',    label: "½\" Highrise 8'–9'",    default: 0.377, group: '½" Drywall — Highrise' },
-  { key: 'half_hr_10',   label: "½\" Highrise 9'–10'",   default: 0.397, group: '½" Drywall — Highrise' },
-  { key: 'half_hr_11',   label: "½\" Highrise 10'–11'",  default: 0.416, group: '½" Drywall — Highrise' },
-  { key: 'half_hr_12',   label: "½\" Highrise 11'–12'",  default: 0.434, group: '½" Drywall — Highrise' },
-  // ⅝" Drywall — Lowrise (base + $0.105 premium, per ft²)
-  { key: 'fivet_lr_8',   label: "⅝\" Lowrise ≤8'",      default: 0.457, group: '⅝" Drywall — Lowrise' },
-  { key: 'fivet_lr_9',   label: "⅝\" Lowrise 8'–9'",    default: 0.478, group: '⅝" Drywall — Lowrise' },
-  { key: 'fivet_lr_10',  label: "⅝\" Lowrise 9'–10'",   default: 0.527, group: '⅝" Drywall — Lowrise' },
-  { key: 'fivet_lr_11',  label: "⅝\" Lowrise 10'–11'",  default: 0.556, group: '⅝" Drywall — Lowrise' },
-  { key: 'fivet_lr_12',  label: "⅝\" Lowrise 11'–12'",  default: 0.571, group: '⅝" Drywall — Lowrise' },
-  // ⅝" Drywall — Highrise (base + $0.105 premium, per ft²)
-  { key: 'fivet_hr_9',   label: "⅝\" Highrise 8'–9'",   default: 0.482, group: '⅝" Drywall — Highrise' },
-  { key: 'fivet_hr_10',  label: "⅝\" Highrise 9'–10'",  default: 0.502, group: '⅝" Drywall — Highrise' },
-  { key: 'fivet_hr_11',  label: "⅝\" Highrise 10'–11'", default: 0.521, group: '⅝" Drywall — Highrise' },
-  { key: 'fivet_hr_12',  label: "⅝\" Highrise 11'–12'", default: 0.539, group: '⅝" Drywall — Highrise' },
-  // Durock
-  { key: 'durock',       label: 'Durock (per ft²)',       default: 0.60,  group: 'Durock' },
-  // Insulation — all-in (base + premium, per ft²)
-  { key: 'ins_pink_int', label: 'Pink Interior',          default: 0.328, group: 'Insulation' },
-  { key: 'ins_pink_ext', label: 'Pink Exterior',          default: 0.389, group: 'Insulation' },
-  { key: 'ins_rock_int', label: 'Rockwool Interior',      default: 0.407, group: 'Insulation' },
-  { key: 'ins_rock_ext', label: 'Rockwool Exterior',      default: 0.468, group: 'Insulation' },
-  { key: 'ins_r24_int',  label: 'R-24 Interior',          default: 0.388, group: 'Insulation' },
-  { key: 'ins_r24_ext',  label: 'R-24 Exterior',          default: 0.449, group: 'Insulation' },
-  // Steel
-  { key: 'studs',        label: 'Studs (per linear ft)',  default: 0.00,  group: 'Steel' },
-  { key: 'ceil_susp',    label: 'Suspended Ceiling (per ft²)', default: 0.66, group: 'Steel' },
-  { key: 'ceil_hang',    label: 'With Hangers (per ft²)', default: 0.71,  group: 'Steel' },
-  { key: 'door_single',  label: 'Door Frame Single',      default: 87.00, group: 'Steel' },
-  { key: 'door_double',  label: 'Door Frame Double',      default: 174.00,group: 'Steel' },
-  // Extras
-  { key: 'pot_light',    label: 'Pot Light/Sprinkler',    default: 4.28,  group: 'Extras' },
-  { key: 'tray_waffle',  label: 'Tray/Waffle',            default: 84.00, group: 'Extras' },
-  { key: 'skylight_24',  label: "2'×4' Skylight",         default: 82.00, group: 'Extras' },
-  { key: 'skylight_44',  label: "4'×4' Skylight",         default: 174.00,group: 'Extras' },
-  { key: 'round_stairs', label: 'Round Stairs',           default: 161.00,group: 'Extras' },
-  { key: 'ota',          label: 'OTA/Cathedral',          default: 213.00,group: 'Extras' },
-  // Purchased (deductions)
-  { key: 'styro_vents',  label: 'Styro-Vents',            default: 0.00,  group: 'Purchased Extras' },
-  { key: 'screws_box',   label: 'Screws (Box)',            default: 0.00,  group: 'Purchased Extras' },
+  // Lowrise — ½"
+  { key: 'half_lr_8',    label: "≤8'",           default: 0.352, rates: [0.352, 0.359, 0.366], col: 'lr', group: 'Drywall', subgroup: '½" Drywall' },
+  { key: 'half_lr_9',    label: ">8' to ≤9'",    default: 0.373, rates: [0.373, 0.381, 0.388], col: 'lr', group: 'Drywall', subgroup: '½" Drywall' },
+  { key: 'half_lr_10',   label: ">9' to ≤10'",   default: 0.422, rates: [0.422, 0.431, 0.439], col: 'lr', group: 'Drywall', subgroup: '½" Drywall' },
+  { key: 'half_lr_11',   label: ">10' to ≤11'",  default: 0.451, rates: [0.451, 0.460, 0.469], col: 'lr', group: 'Drywall', subgroup: '½" Drywall' },
+  { key: 'half_lr_12',   label: ">11' to ≤12'",  default: 0.466, rates: [0.466, 0.475, 0.485], col: 'lr', group: 'Drywall', subgroup: '½" Drywall' },
+  // Lowrise — ⅝"  (½" + $0.105 premium)
+  { key: 'fivet_lr_8',   label: "≤8'",           default: 0.457, rates: [0.457, 0.464, 0.471], col: 'lr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  { key: 'fivet_lr_9',   label: ">8' to ≤9'",    default: 0.478, rates: [0.478, 0.486, 0.493], col: 'lr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  { key: 'fivet_lr_10',  label: ">9' to ≤10'",   default: 0.527, rates: [0.527, 0.536, 0.544], col: 'lr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  { key: 'fivet_lr_11',  label: ">10' to ≤11'",  default: 0.556, rates: [0.556, 0.565, 0.574], col: 'lr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  { key: 'fivet_lr_12',  label: ">11' to ≤12'",  default: 0.571, rates: [0.571, 0.580, 0.590], col: 'lr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  // Highrise — ½"
+  { key: 'half_hr_9',    label: ">8' to ≤9'",    default: 0.377, rates: [0.377, 0.385, 0.393], col: 'hr', group: 'Drywall', subgroup: '½" Drywall' },
+  { key: 'half_hr_10',   label: ">9' to ≤10'",   default: 0.397, rates: [0.397, 0.405, 0.413], col: 'hr', group: 'Drywall', subgroup: '½" Drywall' },
+  { key: 'half_hr_11',   label: ">10' to ≤11'",  default: 0.416, rates: [0.416, 0.424, 0.433], col: 'hr', group: 'Drywall', subgroup: '½" Drywall' },
+  { key: 'half_hr_12',   label: ">11' to ≤12'",  default: 0.434, rates: [0.434, 0.442, 0.451], col: 'hr', group: 'Drywall', subgroup: '½" Drywall' },
+  // Highrise — ⅝"  (½" + $0.105 premium)
+  { key: 'fivet_hr_9',   label: ">8' to ≤9'",    default: 0.482, rates: [0.482, 0.490, 0.498], col: 'hr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  { key: 'fivet_hr_10',  label: ">9' to ≤10'",   default: 0.502, rates: [0.502, 0.510, 0.518], col: 'hr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  { key: 'fivet_hr_11',  label: ">10' to ≤11'",  default: 0.521, rates: [0.521, 0.529, 0.538], col: 'hr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  { key: 'fivet_hr_12',  label: ">11' to ≤12'",  default: 0.539, rates: [0.539, 0.547, 0.556], col: 'hr', group: 'Drywall', subgroup: '⅝" Drywall' },
+  // Durock — Lowrise col
+  { key: 'durock',       label: 'Durock (per ft²)',             default: 0.60,  rates: [0.60,  0.61,  0.63],  col: 'lr', group: 'Durock' },
+  // Insulation — Lowrise all-in (labour + material), single rate for all types
+  // Lowrise insulation — all-in incl. material. Pink is base; Rockwool/R-24 add premiums
+  { key: 'ins_lr_pink',  label: 'Pink',           default: 0.617, rates: [0.617, 0.629, 0.642], col: 'lr', group: 'Insulation' },
+  { key: 'ins_lr_rock',  label: 'Rockwool',        default: 0.696, rates: [0.696, 0.709, 0.724], col: 'lr', group: 'Insulation' },
+  { key: 'ins_lr_r24',   label: 'R-24',            default: 0.677, rates: [0.677, 0.690, 0.705], col: 'lr', group: 'Insulation' },
+  // Highrise — Pink is the base rate; Rockwool & R-24 = Pink + premium
+  { key: 'ins_pink_int', label: 'Pink — Interior Walls',   default: 0.328, rates: [0.328, 0.335, 0.342], col: 'hr', group: 'Insulation' },
+  { key: 'ins_pink_ext', label: 'Pink — Exterior Walls',   default: 0.389, rates: [0.389, 0.396, 0.404], col: 'hr', group: 'Insulation' },
+  { key: 'ins_rock_int', label: 'Rockwool — Interior',     default: 0.407, rates: [0.407, 0.415, 0.424], col: 'hr', group: 'Insulation' },
+  { key: 'ins_rock_ext', label: 'Rockwool — Exterior',     default: 0.468, rates: [0.468, 0.476, 0.486], col: 'hr', group: 'Insulation' },
+  { key: 'ins_r24_int',  label: 'R-24 — Interior',         default: 0.388, rates: [0.388, 0.396, 0.405], col: 'hr', group: 'Insulation' },
+  { key: 'ins_r24_ext',  label: 'R-24 — Exterior',         default: 0.449, rates: [0.449, 0.457, 0.467], col: 'hr', group: 'Insulation' },
+  // Steel Studs — Highrise col
+  { key: 'studs_8',      label: "≤8'",                          default: 0.343, rates: [0.343, 0.349, 0.357], col: 'hr', group: 'Steel', subgroup: 'Studs (per linear ft)' },
+  { key: 'studs_9',      label: ">8' to ≤9'",                   default: 0.361, rates: [0.361, 0.368, 0.376], col: 'hr', group: 'Steel', subgroup: 'Studs (per linear ft)' },
+  { key: 'studs_10',     label: ">9' to ≤10'",                  default: 0.384, rates: [0.384, 0.391, 0.399], col: 'hr', group: 'Steel', subgroup: 'Studs (per linear ft)' },
+  { key: 'studs_11',     label: ">10' to ≤11'",                 default: 0.405, rates: [0.405, 0.413, 0.421], col: 'hr', group: 'Steel', subgroup: 'Studs (per linear ft)' },
+  { key: 'studs_12',     label: ">11' to ≤12'",                 default: 0.427, rates: [0.427, 0.436, 0.444], col: 'hr', group: 'Steel', subgroup: 'Studs (per linear ft)' },
+  { key: 'ceil_susp',    label: 'Suspended Ceiling (per ft²)',  default: 0.66,  rates: [0.66,  0.68,  0.69],  col: 'hr', group: 'Steel', subgroup: 'Ceilings' },
+  { key: 'ceil_hang',    label: 'Ceilings with Hangers (per ft²)',      default: 0.71,  rates: [0.71,  0.73,  0.74],  col: 'hr', group: 'Steel', subgroup: 'Ceilings' },
+  { key: 'door_single',  label: 'Door Frame Single',            default: 87.00, rates: [87.00, 87.00, 87.00], col: 'hr', group: 'Steel', subgroup: 'Door Frames' },
+  { key: 'door_double',  label: 'Door Frame Double',            default: 174.00,rates: [174.00,174.00,174.00], col: 'hr', group: 'Steel', subgroup: 'Door Frames' },
+  // Extras — Lowrise col
+  { key: 'pot_light',    label: 'Pot Light/Sprinkler',          default: 4.28,  rates: [4.28,  4.37,  4.46],  col: 'lr', group: 'Extras' },
+  { key: 'tray_waffle',  label: 'Tray/Waffle',                  default: 84.00, rates: [84.00, 85.00, 87.00], col: 'lr', group: 'Extras' },
+  { key: 'skylight_24',  label: "2'×4' Skylight",               default: 82.00, rates: [82.00, 83.00, 85.00], col: 'lr', group: 'Extras' },
+  { key: 'skylight_44',  label: "4'×4' Skylight",               default: 174.00,rates: [174.00,178.00,181.00], col: 'lr', group: 'Extras' },
+  { key: 'round_stairs', label: 'Round Stairs',                 default: 161.00,rates: [161.00,164.00,168.00], col: 'lr', group: 'Extras' },
+  { key: 'ota',          label: 'OTA/Cathedral',                default: 213.00,rates: [213.00,217.00,222.00], col: 'lr', group: 'Extras' },
+  // Purchased Extras — deducted from total (your cost)
+  { key: 'styro_vents',  label: 'Styro-Vents',           default: 0.00,  rates: [0.00,  0.00,  0.00],  col: 'lr', group: 'Purchased Extras' },
+  { key: 'screws_box',   label: 'Screws (Box)',            default: 0.00,  rates: [0.00,  0.00,  0.00],  col: 'lr', group: 'Purchased Extras' },
+  { key: 'poly_roll',    label: 'Roll of Poly (all sizes)',default: 84.00, rates: [84.00, 84.00, 84.00], col: 'lr', group: 'Purchased Extras' },
+  { key: 'tuck_tape',    label: 'Tuck Tape (roll)',        default: 12.61, rates: [12.61, 12.61, 12.61], col: 'lr', group: 'Purchased Extras' },
+  { key: 'acous_caulk',  label: 'Acoustic Caulking (tube)',default: 11.44, rates: [11.44, 11.44, 11.44], col: 'lr', group: 'Purchased Extras' },
+  { key: 'can_foam',     label: 'Can Foam',                default: 0.00,  rates: [0.00,  0.00,  0.00],  col: 'lr', group: 'Purchased Extras' },
+  { key: 'staples',      label: 'Staples',                 default: 0.00,  rates: [0.00,  0.00,  0.00],  col: 'lr', group: 'Purchased Extras' },
 ];
+
+// Rate schedule dates (Local 675 Residential Agreement)
+const RATE_DATES = ['May 4, 2025', 'May 3, 2026', 'May 2, 2027'];
 
 let prices = {};
 function loadPrices() {
@@ -1406,26 +1430,142 @@ function savePricesData() {
 }
 loadPrices();
 
-function openPrices() {
-  const groups = [];
-  let lastGroup = null;
+function applyRateYear(idx) {
   PRICE_FIELDS.forEach(f => {
-    if (f.group !== lastGroup) { groups.push({ label: f.group, fields: [] }); lastGroup = f.group; }
-    groups[groups.length-1].fields.push(f);
+    if (!f.rates) return;
+    if (f.rates[idx] === 0) return; // don't overwrite manually-entered values with 0
+    const inp = document.getElementById('price-' + f.key);
+    if (inp) inp.value = f.rates[idx].toFixed(3);
   });
-  document.getElementById('prices-body').innerHTML = groups.map(g => `
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--purple);margin:16px 0 8px;padding-bottom:4px;border-bottom:1.5px solid #ede9fe">${g.label}</div>
-    ${g.fields.map(f => `
-      <div class="field-group">
-        <div class="field-label">${f.label}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="color:var(--muted);font-size:15px">$</span>
-          <input class="field-input" id="price-${f.key}" type="number" inputmode="decimal" step="0.001" min="0"
-            value="${(prices[f.key] ?? f.default).toFixed(3)}" placeholder="0.000" style="flex:1"/>
-        </div>
-      </div>`).join('<div class="field-divider"></div>')}
-  `).join('');
+  [0,1,2].forEach(i => {
+    const btn = document.getElementById('rate-yr-btn-' + i);
+    if (btn) btn.style.cssText = i === idx
+      ? 'flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-family:inherit;font-weight:600;cursor:pointer;background:var(--purple);color:#fff'
+      : 'flex:1;padding:8px 4px;border:1.5px solid #ede9fe;border-radius:8px;font-size:12px;font-family:inherit;font-weight:500;cursor:pointer;background:transparent;color:var(--purple)';
+  });
+}
+
+function openPrices() {
+
+  function colField(f) {
+    const val = (prices[f.key] ?? f.default).toFixed(3);
+    return '<div class="field-group" style="gap:3px">'
+      + '<div style="font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em">' + f.label + '</div>'
+      + '<div style="display:flex;align-items:center;gap:3px">'
+      + '<span style="color:var(--muted);font-size:13px">$</span>'
+      + '<input class="field-input" id="price-' + f.key + '" type="number" inputmode="decimal" step="0.001" min="0" value="' + val + '" placeholder="0.000" style="font-size:13px;padding:4px 0"/>'
+      + '</div></div>';
+  }
+
+  function fullField(f) {
+    const val = (prices[f.key] ?? f.default).toFixed(3);
+    return '<div class="field-group">'
+      + '<div class="field-label">' + f.label + '</div>'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+      + '<span style="color:var(--muted);font-size:15px">$</span>'
+      + '<input class="field-input" id="price-' + f.key + '" type="number" inputmode="decimal" step="0.001" min="0" value="' + val + '" placeholder="0.000" style="flex:1"/>'
+      + '</div></div>';
+  }
+
+  function colSgTitle(label, color) {
+    return '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:' + color + ';margin:10px 0 5px">' + label + '</div>';
+  }
+
+  function sectionTitle(label) {
+    return '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--purple);margin:20px 0 10px;padding-bottom:5px;border-bottom:2px solid #ede9fe">' + label + '</div>';
+  }
+
+  function sharedTitle(label) {
+    return '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin:10px -10px 8px;padding:6px 10px;background:#f7f5f2;border-top:1px solid #ede9fe;border-bottom:1px solid #ede9fe">' + label + '</div>';
+  }
+
+  const D = '<div class="field-divider"></div>';
+
+  // Split PRICE_FIELDS by key prefix — no subgroup string matching needed
+  const lrHalf   = PRICE_FIELDS.filter(f => f.key.startsWith('half_lr_'));
+  const lrFivet  = PRICE_FIELDS.filter(f => f.key.startsWith('fivet_lr_'));
+  const hrHalf   = PRICE_FIELDS.filter(f => f.key.startsWith('half_hr_'));
+  const hrFivet  = PRICE_FIELDS.filter(f => f.key.startsWith('fivet_hr_'));
+  const studs    = PRICE_FIELDS.filter(f => f.key.startsWith('studs_'));
+  const byGroup  = new Map();
+  PRICE_FIELDS.forEach(f => {
+    if (!byGroup.has(f.group)) byGroup.set(f.group, []);
+    byGroup.get(f.group).push(f);
+  });
+  const steelShared = (byGroup.get('Steel') || []).filter(f => !f.key.startsWith('studs_'));
+
+  const lrInsFields = PRICE_FIELDS.filter(f => f.key.startsWith('ins_lr_'));
+
+  // Helper: one row with a full-width header + two columns side by side
+  function twoColRow(title, lrContent, hrContent) {
+    return '<div style="border-bottom:1px solid #ede9fe">'
+      + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);padding:6px 10px;background:#f7f5f2;border-bottom:1px solid #ede9fe">' + title + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr">'
+      + '<div style="padding:8px 10px 12px;border-right:1px solid #ede9fe">' + lrContent + '</div>'
+      + '<div style="padding:8px 10px 12px">' + hrContent + '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  // Column header row
+  const colHeaders =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:2px solid #ede9fe">'
+    + '<div style="padding:8px 10px 6px;border-right:1px solid #ede9fe"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--purple)">Lowrise</div></div>'
+    + '<div style="padding:8px 10px 6px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--purple)">Highrise</div></div>'
+    + '</div>';
+
+  let html =
+    '<div style="border:1.5px solid #ede9fe;border-radius:12px;overflow:hidden">'
+    + colHeaders
+    + twoColRow('<span style="color:#2563eb">1/2&quot; Drywall</span>',
+        lrHalf.map(colField).join(D),
+        hrHalf.map(colField).join(D))
+    + twoColRow('<span style="color:#dc2626">5/8&quot; Drywall</span>',
+        lrFivet.map(colField).join(D),
+        hrFivet.map(colField).join(D))
+    + twoColRow('Studs',
+        '<div style="font-size:10px;color:var(--muted);font-style:italic;line-height:1.4;padding:2px 0">No separate lowrise rate &mdash; use highrise rates.</div>',
+        studs.map(colField).join(D))
+    + twoColRow('Insulation',
+        lrInsFields.map(colField).join(D),
+        PRICE_FIELDS.filter(f => !f.key.startsWith('ins_lr_') && f.group === 'Insulation').map(colField).join(D))
+    + '</div>';
+
+  html += sectionTitle('Durock');
+  html += (byGroup.get('Durock') || []).map(fullField).join(D);
+  html += sectionTitle('Steel - Ceilings & Doors');
+  html += steelShared.map(fullField).join(D);
+  html += sectionTitle('Extras');
+  html += (byGroup.get('Extras') || []).map(fullField).join(D);
+  html += sectionTitle('Purchased Extras');
+  html += (byGroup.get('Purchased Extras') || []).map(fullField).join(D);
+
+  const yearBanner =
+    '<div style="background:#f5f3ff;border:1.5px solid #ede9fe;border-radius:12px;padding:12px 14px;margin-bottom:8px">'
+    + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--purple);margin-bottom:8px">Local 675 - Rate Schedule</div>'
+    + '<div style="display:flex;gap:6px">'
+    + RATE_DATES.map(function(d,i) {
+        return '<button id="rate-yr-btn-' + i + '" onclick="applyRateYear(' + i + ')" style="flex:1;padding:8px 4px;border:1.5px solid #ede9fe;border-radius:8px;font-size:12px;font-family:inherit;font-weight:500;cursor:pointer;background:transparent;color:var(--purple)">' + d + '</button>';
+      }).join('')
+    + '</div>'
+    + '<div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.4">Tap a date to auto-fill all fields with that year&#39;s negotiated rates. You can still edit any field manually.</div>'
+    + '</div>';
+
+  document.getElementById('prices-body').innerHTML = yearBanner + html;
   document.getElementById('prices-overlay').classList.add('open');
+
+  const today = new Date();
+  const rateDates = [new Date('2025-05-04'), new Date('2026-05-03'), new Date('2027-05-02')];
+  let activeIdx = 0;
+  for (let i = rateDates.length - 1; i >= 0; i--) {
+    if (today >= rateDates[i]) { activeIdx = i; break; }
+  }
+  [0,1,2].forEach(function(i) {
+    const btn = document.getElementById('rate-yr-btn-' + i);
+    if (btn) btn.style.cssText = i === activeIdx
+      ? 'flex:1;padding:8px 4px;border:none;border-radius:8px;font-size:12px;font-family:inherit;font-weight:600;cursor:pointer;background:var(--purple);color:#fff'
+      : 'flex:1;padding:8px 4px;border:1.5px solid #ede9fe;border-radius:8px;font-size:12px;font-family:inherit;font-weight:500;cursor:pointer;background:transparent;color:var(--purple)';
+  });
 }
 function savePrices() {
   PRICE_FIELDS.forEach(f => { prices[f.key] = parseFloat(document.getElementById(`price-${f.key}`)?.value) || 0; });
@@ -1446,7 +1586,17 @@ function drywallPrice(isHalf, rate, height) {
   return prices[`${prefix}_${rk}_${hk}`] ?? prices[`${prefix}_${rk}_9`] ?? 0;
 }
 
-function insPrice(typeKey, item) {
+function studsPrice(height) {
+  const hMap = { "8'": 'studs_8', "9'": 'studs_9', "10'": 'studs_10', "11'": 'studs_11', "12'+": 'studs_12' };
+  const key = hMap[height] || 'studs_8';
+  return prices[key] ?? 0;
+}
+
+function insPrice(typeKey, item, rate) {
+  if (rate === 'lowrise') {
+    const lrMap = { pink: 'ins_lr_pink', rockwool: 'ins_lr_rock', r24: 'ins_lr_r24' };
+    return prices[lrMap[typeKey] ?? 'ins_lr_pink'] ?? 0;
+  }
   const map = {
     pink:     { Interior: 'ins_pink_int', Exterior: 'ins_pink_ext' },
     rockwool: { Interior: 'ins_rock_int', Exterior: 'ins_rock_ext' },
@@ -1454,6 +1604,18 @@ function insPrice(typeKey, item) {
   };
   return prices[map[typeKey]?.[item]] ?? 0;
 }
+
+// Invoice price lookup maps (defined once at module level)
+const EXTRAS_PRICE_MAP = {
+  'Pot Light/Sprinkler': 'pot_light', 'Tray/Waffle': 'tray_waffle',
+  "2' × 4' Skylight": 'skylight_24', "4' × 4' Skylight": 'skylight_44',
+  'Round Stairs': 'round_stairs', 'OTA/Cathedral': 'ota',
+};
+const INS_PURCH_PRICE_MAP = {
+  "8' Poly": 'poly_roll', "9' Poly": 'poly_roll', "10' Poly": 'poly_roll', "12' Poly": 'poly_roll',
+  'Tuck Tape': 'tuck_tape', 'Acoustic Caulking': 'acous_caulk',
+  'Can Foam': 'can_foam', 'Staples': 'staples',
+};
 
 function showReport() {
   const j = J();
@@ -1489,13 +1651,11 @@ function showReport() {
   const areaSubtotals = [];
   const areaCosts = [];
 
-  const EXTRAS_PRICE_MAP = {
-    'Pot Light/Sprinkler': 'pot_light', 'Tray/Waffle': 'tray_waffle',
-    "2' × 4' Skylight": 'skylight_24', "4' × 4' Skylight": 'skylight_44',
-    'Round Stairs': 'round_stairs', 'OTA/Cathedral': 'ota',
-  };
-
   j.units.forEach(u => {
+    // Show job unit header if multiple jobs exist
+    if (j.units.length > 1) {
+      html += `<div style="font-size:15px;font-weight:700;color:#111;margin:20px 0 6px;padding-bottom:8px;border-bottom:2px solid #e5e7eb">${u.name}${u.rate ? ' — ' + u.rate.charAt(0).toUpperCase() + u.rate.slice(1) : ''}</div>`;
+    }
     u.areas.forEach(a => {
       // Check if area has anything
       const anyDrywall   = DRYWALL_KEYS.some(key => Object.values(a.counts[key]||{}).some(v=>v>0));
@@ -1525,21 +1685,22 @@ function showReport() {
       if (fivetSqft>0)  { const p = drywallPrice(false, rate, height); lineItems.push({ label:'⅝"',   qty:`${fivetSqft} ft²`,  price:p, sub:fivetSqft*p,  col:'#dc2626' }); }
       if (durockSqft>0) { const p = prices['durock']||0;               lineItems.push({ label:'Durock', qty:`${durockSqft} ft²`, price:p, sub:durockSqft*p, col:'#111' }); }
 
-      // Insulation
+      // Insulation — lowrise uses a single all-in rate (Interior entry only); skip Exterior
       INSULATION_TYPES.forEach(t => {
         t.items.forEach(item => {
+          if (rate === 'lowrise' && item === 'Exterior') return;
           const entries = Array.isArray(a.counts['insulation']?.[t.key]?.[item]) ? a.counts['insulation'][t.key][item] : [];
           if (!entries.length) return;
           const sqft = Math.round(entries.reduce((s,e) => s+e.bags*e.sqftPerBag, 0));
           if (!sqft) return;
-          const p = insPrice(t.key, item);
+          const p = insPrice(t.key, item, rate);
           lineItems.push({ label: item === 'Interior' ? t.label : `${t.label} - ${item}`, qty:`${sqft} ft²`, price:p, sub:sqft*p, col:t.color });
         });
       });
 
       // Studs
       const studsFt = STEEL_LENGTHS.reduce((s,l) => s+(a.counts['steel_studs']?.[l]||0)*l, 0);
-      if (studsFt>0) { const p = prices['studs']||0; lineItems.push({ label:'Studs', qty:`${studsFt}'`, price:p, sub:studsFt*p, col:'#475569' }); }
+      if (studsFt>0) { const p = studsPrice(height); lineItems.push({ label:'Studs', qty:`${studsFt}'`, price:p, sub:studsFt*p, col:'#475569' }); }
 
       // Ceilings
       const ceilSt = STEEL_SUBTYPES.find(x => x.key === 'steel_ceil');
@@ -1564,19 +1725,31 @@ function showReport() {
         const p = prices['styro_vents'] || 0;
         lineItems.push({ label:item, qty, price:p||null, sub:p?qty*p:null, col:'#db2777' });
       });
-      // Insulation Extras — Purchased (costs)
+      // Insulation Extras — Purchased (costs, deducted)
       INS_EXTRAS_PURCHASED.forEach(item => {
         const qty = a.counts['insExtras']?.[item] || 0;
         if (!qty) return;
-        costItems.push({ label:item, qty, price:null, sub:null, col:'#db2777' });
+        const pk = INS_PURCH_PRICE_MAP[item];
+        const p = pk ? (prices[pk] || 0) : 0;
+        costItems.push({ label:item, qty, price:p||null, sub:p?qty*p:null, col:'#db2777' });
       });
 
       // Job Extras — Paid
       JOB_EXTRAS_PAID.forEach(item => {
-        const qty = a.counts['jobExtras']?.[item] || 0;
+        let qty = a.counts['jobExtras']?.[item] || 0;
         if (!qty) return;
         const pk = EXTRAS_PRICE_MAP[item];
         const p = pk ? (prices[pk]||0) : null;
+        // First 5 pot lights/sprinklers are included free
+        if (item === 'Pot Light/Sprinkler') {
+          const billable = Math.max(0, qty - 5);
+          if (billable === 0) {
+            lineItems.push({ label:'Pot Light/Sprinkler (' + qty + ' incl.)', qty:qty, price:0, sub:0, col:'#0891b2' });
+          } else {
+            lineItems.push({ label:'Pot Light/Sprinkler (' + qty + ' total, ' + Math.min(qty,5) + ' free, ' + billable + ' charged)', qty:billable, price:p, sub:p!==null?billable*p:null, col:'#0891b2' });
+          }
+          return;
+        }
         lineItems.push({ label:item, qty, price:p, sub:p!==null?qty*p:null, col:'#0891b2' });
       });
       // Job Extras — Purchased (costs)
@@ -1592,13 +1765,14 @@ function showReport() {
       // Earned items table
       if (lineItems.length) {
         html += `<table class="inv-table">
-          <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead><tbody>`;
+          <colgroup><col style="width:40%"><col style="width:22%"><col style="width:18%"><col style="width:20%"></colgroup>
+          <thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Subtotal</th></tr></thead><tbody>`;
         lineItems.forEach(row => {
           html += `<tr>
             <td style="color:${row.col};font-weight:500">${row.label}</td>
-            <td>${row.qty}</td>
-            <td>${row.price !== null ? fmt$(row.price) : '—'}</td>
-            <td>${row.sub !== null ? fmt$(row.sub) : '—'}</td>
+            <td style="text-align:right">${row.qty}</td>
+            <td style="text-align:right">${row.price !== null ? fmt$(row.price) : '—'}</td>
+            <td style="text-align:right">${row.sub !== null ? fmt$(row.sub) : '—'}</td>
           </tr>`;
         });
         html += `</tbody></table>`;
@@ -1611,19 +1785,22 @@ function showReport() {
       if (costItems.length) {
         html += `<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--red);margin:10px 0 4px">Deductions (Your Cost)</div>
           <table class="inv-table">
-          <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Cost</th></tr></thead><tbody>`;
+          <colgroup><col style="width:40%"><col style="width:22%"><col style="width:18%"><col style="width:20%"></colgroup>
+          <thead><tr><th>Item</th><th style="text-align:right">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Cost</th></tr></thead><tbody>`;
         costItems.forEach(row => {
           html += `<tr>
             <td style="color:${row.col};font-weight:500">${row.label}</td>
-            <td>${row.qty}</td>
-            <td>${row.price !== null ? fmt$(row.price) : '—'}</td>
-            <td style="color:var(--red)">${row.sub !== null ? `(${fmt$(row.sub)})` : '—'}</td>
+            <td style="text-align:right">${row.qty}</td>
+            <td style="text-align:right">${row.price !== null ? fmt$(row.price) : '—'}</td>
+            <td style="text-align:right;color:var(--red)">${row.sub !== null ? `(${fmt$(row.sub)})` : '—'}</td>
           </tr>`;
         });
         html += `</tbody></table>`;
         const areaCost = costItems.reduce((s,r) => s+(r.sub||0), 0);
         areaCosts.push(areaCost);
         html += `<div class="inv-area-sub" style="color:var(--red)">Area Deductions: <strong>(${fmt$(areaCost)})</strong></div>`;
+      } else {
+        areaCosts.push(0);
       }
     });
   });
@@ -1651,80 +1828,138 @@ function showReport() {
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
 /* ═══════════════════════════════════════════
-   CSV EXPORT
+   PDF EXPORT
 ═══════════════════════════════════════════ */
 
-function exportCSV() {
+function exportPDF() {
   const j = J(), d = j.details;
-  const rows = [];
-  rows.push([j.name + ' — Invoice']);
-  rows.push([]);
-  if (d.site)         rows.push(['Site',         d.site]);
-  if (d.contactName)  rows.push(['Site Contact', d.contactName]);
-  if (d.contactPhone) rows.push(['Phone',        d.contactPhone]);
-  if (d.contactEmail) rows.push(['Email',        d.contactEmail]);
-  if (d.lockbox)      rows.push(['Lockbox',      d.lockbox]);
-  if (d.notes)        rows.push(['Notes',        d.notes]);
-  rows.push(['Created',  fmtDate(j.createdAt)]);
-  rows.push(['Modified', fmtDate(j.modifiedAt)]);
-  rows.push([]);
 
-  j.units.forEach(u => {
-    if (u.areas.length) rows.push(['Job - ' + u.name]);
-    u.areas.forEach(a => {
-      rows.push(['Area - ' + a.name + (a.height ? ' - ' + a.height : '')]);
-      rows.push([]);
+  // Reuse the same invoice HTML already rendered in modal-body
+  const invoiceHtml = document.getElementById('modal-body').innerHTML;
 
-      // Drywall — combined per type
-      const half  = HALF_GROUPS.reduce((s,g) => s+g.lengths.reduce((x,l) => x+sheetSqft(g.key,l)*(a.counts[g.key]?.[l]||0),0), 0);
-      const fivet = FIVET_GROUPS.reduce((s,g) => s+g.lengths.reduce((x,l) => x+sheetSqft(g.key,l)*(a.counts[g.key]?.[l]||0),0), 0);
-      const durock = DUROCK_LENGTHS.reduce((s,l) => s+sheetSqft('durock',l)*(a.counts['durock']?.[l]||0), 0);
-      if (half>0)   rows.push(['½"',    half  + ' ft²']);
-      if (fivet>0)  rows.push(['⅝"',   fivet + ' ft²']);
-      if (durock>0) rows.push(['Durock', durock + ' ft²']);
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${j.name} — Invoice</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      color: #111;
+      background: #fff;
+      padding: 32px 36px;
+      font-size: 13px;
+      line-height: 1.5;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
 
-      // Insulation
-      INSULATION_TYPES.forEach(t => {
-        t.items.forEach(item => {
-          const entries = Array.isArray(a.counts['insulation']?.[t.key]?.[item]) ? a.counts['insulation'][t.key][item] : [];
-          if (!entries.length) return;
-          const totalBags = entries.reduce((s,e) => s+e.bags, 0);
-          const totalSqft = Math.round(entries.reduce((s,e) => s+e.bags*e.sqftPerBag, 0));
-          const label = item === 'Interior' ? t.label : `${t.label} - ${item}`;
-          rows.push([label, totalBags + ' bags', totalSqft + ' ft²']);
-        });
-      });
+    /* Header */
+    .pdf-header { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #ede9fe; }
+    .pdf-title { font-size: 22px; font-weight: 700; color: #111; margin-bottom: 4px; }
+    .pdf-subtitle { font-size: 12px; color: #777; }
+    .pdf-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; margin-top: 12px; font-size: 12px; }
+    .pdf-meta-row { display: flex; gap: 8px; }
+    .pdf-meta-label { color: #777; font-weight: 600; min-width: 90px; }
 
-      // Steel
-      const studsFt = STEEL_LENGTHS.reduce((s,l) => s+(a.counts['steel_studs']?.[l]||0)*l, 0);
-      if (studsFt > 0) rows.push(['Studs', studsFt + "'", 'linear ft']);
-      STEEL_SUBTYPES.find(x=>x.key==='steel_ceil').sections.forEach(sec => {
-        const entries = Array.isArray(a.counts['steel_ceil']?.[sec]) ? a.counts['steel_ceil'][sec] : [];
-        if (!entries.length) return;
-        const sqft = Math.round(entries.reduce((s,m) => s+m.l*m.w, 0));
-        rows.push([sec, sqft + ' ft²']);
-      });
-      const single = a.counts['steel_doors']?.['Single'] || 0;
-      const double = a.counts['steel_doors']?.['Double'] || 0;
-      if (single > 0) rows.push(['Door Frame Single', single]);
-      if (double > 0) rows.push(['Door Frame Double', double]);
+    /* Area heading */
+    .modal-area-head {
+      font-size: 13px; font-weight: 700; color: #7c3aed;
+      margin: 20px 0 8px; padding-bottom: 6px;
+      border-bottom: 1.5px solid #ede9fe;
+    }
+    .modal-area-head:first-child { margin-top: 0; }
 
-      // Extras
-      [...INS_EXTRAS_ALL, ...JOB_EXTRAS_ALL].forEach(item => {
-        const countKey = INS_EXTRAS_ALL.includes(item) ? 'insExtras' : 'jobExtras';
-        const qty = a.counts[countKey]?.[item] || 0;
-        if (qty > 0) rows.push([item, qty]);
-      });
-      rows.push([]);
-    });
-  });
+    /* Job heading */
+    .pdf-job-head {
+      font-size: 15px; font-weight: 700; color: #111;
+      margin: 28px 0 4px; padding-bottom: 8px;
+      border-bottom: 2px solid #e5e7eb;
+    }
 
-  const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url; link.download = (j.name || 'invoice') + '.csv'; link.click();
-  URL.revokeObjectURL(url);
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 6px; }
+    colgroup col:first-child { width: 42%; }
+    colgroup col:nth-child(2) { width: 20%; }
+    colgroup col:nth-child(3) { width: 18%; }
+    colgroup col:nth-child(4) { width: 20%; }
+    thead tr th {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: #777;
+      padding: 4px 6px 4px 0; border-bottom: 1px solid #d1d5db;
+      text-align: right;
+    }
+    thead tr th:first-child { text-align: left; }
+    tbody tr td {
+      padding: 5px 6px 5px 0; border-bottom: 1px solid #f3f4f6;
+      vertical-align: middle; color: #777;
+      text-align: right; font-family: 'DM Mono', monospace;
+    }
+    tbody tr td:first-child { text-align: left; font-family: 'DM Sans', sans-serif; font-weight: 600; color: #111; }
+
+    /* Deductions heading */
+    .deduct-head {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; color: #dc2626; margin: 10px 0 4px;
+    }
+
+    /* Subtotals */
+    .inv-area-sub {
+      text-align: right; font-size: 12px; color: #777;
+      padding: 4px 0 10px; border-top: 1px solid #d1d5db;
+    }
+    .inv-area-sub strong { color: #111; font-family: 'DM Mono', monospace; }
+
+    /* Grand totals */
+    .inv-totals { margin-top: 20px; border-top: 2px solid #374151; padding-top: 12px; }
+    .inv-totals-row {
+      display: flex; justify-content: space-between;
+      padding: 5px 0; font-size: 13px;
+    }
+    .inv-totals-row .mono { font-family: 'DM Mono', monospace; }
+    .inv-totals-row.grand {
+      font-size: 16px; font-weight: 700;
+      border-top: 2px solid #111; margin-top: 6px; padding-top: 10px;
+    }
+
+    /* Detail rows (site info etc) */
+    .pdf-detail-block { margin-bottom: 16px; font-size: 12px; }
+    .pdf-detail-row {
+      display: flex; justify-content: space-between;
+      padding: 5px 0; border-bottom: 1px solid #f3f4f6;
+    }
+    .pdf-detail-row span:first-child { color: #777; }
+
+    @media print {
+      body { padding: 20px 24px; }
+      @page { margin: 16mm; size: A4 portrait; }
+    }
+  </style>
+</head>
+<body>
+  <div class="pdf-header">
+    <div class="pdf-title">${j.name}</div>
+    <div class="pdf-subtitle">Invoice — Generated ${new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'})}</div>
+    ${(d.site || d.contactName || d.contactPhone || d.lockbox) ? `<div class="pdf-meta">
+      ${d.site         ? `<div class="pdf-meta-row"><span class="pdf-meta-label">Site</span><span>${d.site}</span></div>` : ''}
+      ${d.contactName  ? `<div class="pdf-meta-row"><span class="pdf-meta-label">Contact</span><span>${d.contactName}</span></div>` : ''}
+      ${d.contactPhone ? `<div class="pdf-meta-row"><span class="pdf-meta-label">Phone</span><span>${d.contactPhone}</span></div>` : ''}
+      ${d.lockbox      ? `<div class="pdf-meta-row"><span class="pdf-meta-label">Lockbox</span><span>${d.lockbox}</span></div>` : ''}
+      ${d.notes        ? `<div class="pdf-meta-row"><span class="pdf-meta-label">Notes</span><span>${d.notes}</span></div>` : ''}
+    </div>` : ''}
+  </div>
+  ${invoiceHtml}
+  <script>
+    window.onload = function() {
+      window.print();
+    };
+  <\/script>
+</body>
+</html>`);
+  win.document.close();
 }
 
 /* ═══════════════════════════════════════════
