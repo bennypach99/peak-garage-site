@@ -2170,8 +2170,9 @@ function exportPDF() {
 </head>
 <body>
   <div class="pdf-header">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#777;margin-bottom:4px">Pay Period</div>
     <div class="pdf-title">${j.name}</div>
-    <div class="pdf-subtitle">Invoice — Generated ${new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'})}</div>
+    <div class="pdf-subtitle">Invoice Date — ${new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'})}</div>
     ${(d.site || d.contactName || d.contactPhone || d.lockbox) ? `<div class="pdf-meta">
       ${d.site         ? `<div class="pdf-meta-row"><span class="pdf-meta-label">Site</span><span>${d.site}</span></div>` : ''}
       ${d.contactName  ? `<div class="pdf-meta-row"><span class="pdf-meta-label">Contact</span><span>${d.contactName}</span></div>` : ''}
