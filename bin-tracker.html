@@ -755,22 +755,53 @@ function stopQr() {
 }
 
 function handleQrScan(text) {
-  // text format: "A1", "B3", or "shelf0_A1"
-  let targetLabel = text.trim().toUpperCase();
-  // Strip shelf prefix if present
-  const m = targetLabel.match(/^SHELF\d+_(.+)$/);
-  if (m) targetLabel = m[1];
+  const raw = text.trim();
+
+  // Parse formats:
+  // 1. "Garage - Tools | Bin A1"  (new rich format)
+  // 2. "shelf0_A1"                (old key format)
+  // 3. "A1"                       (plain label)
+
+  let targetLabel = null;
+  let targetShelfHint = null;
+
+  const richMatch = raw.match(/Bin\s+([A-Fa-f]\d+)/i);
+  if (richMatch) {
+    targetLabel = richMatch[1].toUpperCase();
+    // Extract area hint before the pipe
+    const pipePart = raw.split('|')[0].trim();
+    targetShelfHint = pipePart;
+  } else {
+    let upper = raw.toUpperCase();
+    const keyMatch = upper.match(/^SHELF(\d+)_(.+)$/);
+    if (keyMatch) {
+      targetLabel = keyMatch[2];
+    } else {
+      targetLabel = upper;
+    }
+  }
 
   const msg = document.getElementById('qrResultMsg');
-
-  // Find which shelf/col/row has this label
   let found = false;
-  for (let si = 0; si < state.shelves.length; si++) {
+
+  // Try to match shelf hint first for accuracy, then fall back to any shelf
+  const shelfOrder = [];
+  if (targetShelfHint) {
+    state.shelves.forEach((s, si) => {
+      const hint = targetShelfHint.toLowerCase();
+      if (s.area.toLowerCase().includes(hint) || hint.includes(s.area.toLowerCase())) shelfOrder.unshift(si);
+      else shelfOrder.push(si);
+    });
+  } else {
+    state.shelves.forEach((_, si) => shelfOrder.push(si));
+  }
+
+  for (const si of shelfOrder) {
     const s = state.shelves[si];
     for (let r = 0; r < s.rows; r++) {
       for (let c = 0; c < s.cols; c++) {
         if (binLabel(c, r) === targetLabel) {
-          msg.textContent = '✓ Found: Bin ' + targetLabel + ' on ' + s.area + ' – ' + s.desc;
+          msg.textContent = '✓ Bin ' + targetLabel + ' — ' + s.area + ' · ' + s.desc;
           msg.classList.add('show');
           found = true;
           closeQrModal();
@@ -788,31 +819,12 @@ function handleQrScan(text) {
     }
   }
   if (!found) {
-    msg.textContent = 'No bin found for "' + text + '"';
+    msg.textContent = 'No bin found for "' + raw + '"';
     msg.classList.add('show');
   }
 }
 
-// Hidden camera input for direct QR scan
-const qrCamInput = document.createElement('input');
-qrCamInput.type = 'file';
-qrCamInput.accept = 'image/*';
-qrCamInput.capture = 'environment';
-qrCamInput.style.display = 'none';
-document.body.appendChild(qrCamInput);
-
-document.getElementById('qrScanBtn').onclick = () => qrCamInput.click();
-
-qrCamInput.addEventListener('change', function() {
-  const file = this.files[0];
-  if (!file) return;
-  Html5Qrcode.scanFile(file, true).then(text => {
-    handleQrScan(text);
-  }).catch(() => {
-    showToast('No QR code found in image');
-  });
-  this.value = '';
-});
+document.getElementById('qrScanBtn').onclick = openQrModal;
 document.getElementById('closeQrBtn').onclick = closeQrModal;
 document.getElementById('qrModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeQrModal(); });
 document.getElementById('startQrBtn').onclick = startQr;
@@ -903,7 +915,9 @@ function buildPrintPreview(labels) {
   let labelCells = '';
   labels.forEach((lbl, i) => {
     // We'll render a placeholder div; actual QR rendered after iframe loads
-    labelCells += '<div class="qr-label" data-bin="' + lbl.bin + '" data-shelf="' + lbl.shelf.replace(/\n/g,'|') + '">' +
+    const shelfObj = state.shelves[lbl.si];
+    const qrText = (shelfObj ? shelfObj.area + ' - ' + shelfObj.desc + ' | ' : '') + 'Bin ' + lbl.bin;
+    labelCells += '<div class="qr-label" data-bin="' + lbl.bin + '" data-qrtext="' + qrText.replace(/"/g,"'") + '" data-shelf="' + lbl.shelf.replace(/\n/g,'|') + '">' +
       '<div class="qr-img" id="qr_'+i+'"></div>' +
       '<div class="lbl-bin">' + lbl.bin + '</div>' +
     '</div>';
@@ -954,11 +968,12 @@ body{font-family:'Rajdhani',sans-serif;background:white;}
 window.onload = function() {
   document.querySelectorAll('.qr-label:not(.empty)').forEach(function(el, i) {
     const bin = el.dataset.bin;
+    const qrText = el.dataset.qrtext || bin;
     const container = el.querySelector('.qr-img');
     if (!container || !bin) return;
     try {
       new QRCode(container, {
-        text: bin,
+        text: qrText,
         width: 72, height: 72,
         colorDark: '#1a1a1a', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
