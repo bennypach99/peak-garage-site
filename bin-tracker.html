@@ -872,7 +872,6 @@ document.getElementById('previewLabelsBtn').onclick = function() {
 
   // Collect all bin labels across selected shelves
   const labels = [];
-  const qrUrls = [];
   selected.forEach(si => {
     const s = state.shelves[si];
     for (let r = 0; r < s.rows; r++) {
@@ -892,16 +891,14 @@ document.getElementById('previewLabelsBtn').onclick = function() {
 };
 
 function buildPrintPreview(labels) {
-  // Avery Presta 94506: 8.5"×11" page, 20 labels (4 cols × 5 rows), 1.5" diameter circles
-  // Margins: top 0.67", left 0.75", col gap 0.8", row gap 0.56"
-  const labelDiameter = 1.5; // inches
+  const labelDiameter = 1.5;
   const cols = 4, rows = 5;
   const pageW = 8.5, pageH = 11;
   const marginTop = 0.67, marginLeft = 0.75;
   const colGap = 0.8, rowGap = 0.56;
 
-  // Build label HTML — use a separate document rendered inside iframe
   let labelCells = '';
+  const qrUrls = [];
   labels.forEach((lbl, i) => {
     // Build URL and store safely
     const shelfObj = state.shelves[lbl.si];
@@ -977,14 +974,11 @@ window.onload = function() {
 <\/script>
 </body></html>`;
 
-  // Remove auto-print from iframe html
-  const htmlNoAutoPrint = html.replace("setTimeout(function() { window.print(); }, 600);", "");
-
   const overlay = document.getElementById('printPreviewOverlay');
   const frame = document.getElementById('printFrame');
   overlay.style.display = 'flex';
   const doc = frame.contentDocument || frame.contentWindow.document;
-  doc.open(); doc.write(htmlNoAutoPrint); doc.close();
+  doc.open(); doc.write(html); doc.close();
   showToast('Preview ready');
 }
 
