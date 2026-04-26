@@ -7,8 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -36,7 +34,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 /* ── PAGE ── */
 .page{padding:16px;}
 
-/* ── SHELF HERO (empty state) ── */
+/* ── EMPTY STATE ── */
 .shelf-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:16px;}
 .shelf-hero-title{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);text-align:center;}
 .shelf-hero-sub{font-size:.85rem;color:var(--muted);text-align:center;max-width:260px;line-height:1.6;}
@@ -111,7 +109,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 .icon-btn.danger{color:var(--danger);}
 .icon-btn.danger:hover{background:rgba(192,57,43,.15);color:#e05040;}
 
-/* ── MODAL BOTTOM SHEET ── */
+/* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
 .modal-overlay.open{opacity:1;pointer-events:all;}
 .modal-sheet{background:var(--ch2);border:1px solid var(--bstrong);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 16px 32px;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
@@ -119,27 +117,13 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 .modal-handle{width:36px;height:3px;background:var(--bstrong);border-radius:2px;margin:0 auto 16px;}
 .modal-title{font-family:'Rajdhani',sans-serif;font-size:1.35rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text);margin-bottom:4px;}
 .modal-sub{font-size:.8rem;color:var(--muted);margin-bottom:16px;}
+.mt8{margin-top:8px;}.mt16{margin-top:16px;}
 
-/* ── SIZE PICKER (add shelf modal) ── */
+/* ── SIZE PICKER ── */
 .size-btn-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;}
 .size-btn{background:var(--ch3);border:1px solid var(--border);border-radius:5px;padding:8px 4px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s;}
 .size-btn.sel{background:var(--gold-pale);border-color:var(--gold);color:var(--gold-light);}
 .size-btn:hover:not(.sel){border-color:rgba(201,168,76,.4);color:var(--text);}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ch2);border:1px solid var(--bstrong);color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:24px;opacity:0;transition:all .25s;z-index:300;white-space:nowrap;pointer-events:none;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* ── BOTTOM DISCLAIMER ── */
-.bottom-disclaimer{display:flex;align-items:flex-start;gap:8px;padding:12px 16px;color:var(--muted);font-size:.73rem;line-height:1.6;border-top:1px solid var(--border);margin-top:24px;}
-.bottom-disclaimer strong{color:var(--gold);font-weight:600;}
-
-/* ── UTILITY ── */
-.mt8{margin-top:8px;}.mt16{margin-top:16px;}
-.flex-between{display:flex;align-items:center;justify-content:space-between;}
-.tag{display:inline-block;background:var(--gold-pale);border:1px solid var(--bstrong);color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:20px;}
-
-
 
 /* ── QR SCANNER MODAL ── */
 .qr-modal-inner{padding:20px 16px 28px;}
@@ -149,8 +133,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 .qr-status{font-size:.82rem;color:var(--muted);text-align:center;padding:6px 0;}
 .qr-result{background:rgba(58,125,68,.2);border:1px solid rgba(58,125,68,.5);border-radius:8px;padding:10px 14px;color:#5fda8a;font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.04em;text-align:center;margin:8px 0;display:none;}
 .qr-result.show{display:block;}
-.qr-manual{background:var(--ch3);border-radius:8px;padding:12px;margin-top:10px;}
-.qr-manual-title{font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 
 /* ── LABEL MODAL ── */
 .label-shelf-list{max-height:220px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:6px;}
@@ -159,12 +141,20 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 .label-shelf-item input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;}
 .label-shelf-name{font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
 .label-shelf-sub{font-size:.72rem;color:var(--muted);}
-.label-preview-btn{display:flex;align-items:center;gap:6px;}
 
-/* ── PRINT STYLES ── */
-@media print {
-  body > *{display:none!important;}
-}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ch2);border:1px solid var(--bstrong);color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:24px;opacity:0;transition:all .25s;z-index:300;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── TAG ── */
+.tag{display:inline-block;background:var(--gold-pale);border:1px solid var(--bstrong);color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:20px;}
+
+/* ── DISCLAIMER ── */
+.bottom-disclaimer{display:flex;align-items:flex-start;gap:8px;padding:12px 16px;color:var(--muted);font-size:.73rem;line-height:1.6;border-top:1px solid var(--border);margin-top:24px;}
+.bottom-disclaimer strong{color:var(--gold);font-weight:600;}
+
+/* ── PRINT ── */
+@media print{body>*{display:none!important;}}
 </style>
 </head>
 <body>
@@ -178,10 +168,10 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
   </div>
   <div class="nav-bar">
     <div class="nav-data-btns" id="sideBtns" style="display:none;">
-      <button class="nav-data-btn" id="qrScanBtn" title="Scan QR Code">
+      <button class="nav-data-btn" id="qrScanBtn">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>QR Scan
       </button>
-      <button class="nav-data-btn" id="printLabelsBtn" title="Print Labels">
+      <button class="nav-data-btn" id="printLabelsBtn">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>Print Labels
       </button>
     </div>
@@ -199,7 +189,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 
 <div class="page">
 
-  <!-- ── EMPTY STATE ── -->
+  <!-- Empty state -->
   <div id="shelfEmpty" class="shelf-hero">
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="var(--gold)" stroke-width="1.5" opacity=".5">
       <rect x="6" y="14" width="52" height="8" rx="2"/><rect x="6" y="34" width="52" height="8" rx="2"/>
@@ -211,10 +201,8 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
     <button class="btn btn-primary btn-lg" style="width:220px;" id="addShelfBtnEmpty">+ Add Shelf</button>
   </div>
 
-  <!-- ── ACTIVE STATE ── -->
+  <!-- Active state -->
   <div id="shelfActive" style="display:none;">
-
-    <!-- Controls row -->
     <div class="shelf-controls">
       <select class="shelf-select" id="shelfDropdown"></select>
       <button class="btn btn-secondary btn-sm" id="searchToggleBtn">
@@ -222,8 +210,6 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
       </button>
       <button class="btn btn-primary btn-sm" id="addShelfBtnActive">+ Add Shelf</button>
     </div>
-
-    <!-- Inline search -->
     <div id="searchPanel" style="display:none;margin-bottom:14px;">
       <div class="search-wrap">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
@@ -231,73 +217,12 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
       </div>
       <div id="searchResults"></div>
     </div>
-
-    <!-- Shelf info + diagram + bin detail -->
     <div id="shelfDisplay"></div>
-
   </div>
 
 </div>
 
-
-
-<!-- ── QR SCANNER MODAL ── -->
-<div class="modal-overlay" id="qrModal">
-  <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="qr-modal-inner">
-      <h2>Scan Bin Label</h2>
-      <p>Point your camera at a bin QR code to jump straight to it.</p>
-      <div id="qrReaderBox"></div>
-      <div class="qr-status" id="qrStatusText">Camera not started</div>
-      <div class="qr-result" id="qrResultMsg"></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
-        <button class="btn btn-primary btn-sm" id="startQrBtn">Start Camera</button>
-        <button class="btn btn-ghost btn-sm" id="stopQrBtn" style="display:none;">Stop</button>
-      </div>
-
-    </div>
-    <button class="btn btn-ghost btn-sm" id="closeQrBtn" style="margin:0 16px 16px;">Close</button>
-  </div>
-</div>
-
-<!-- ── LABEL PRINT MODAL ── -->
-<div class="modal-overlay" id="labelModal">
-  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Print Bin Labels</div>
-    <div class="modal-sub">Select shelves to generate Avery Presta 94506 labels (1.5" round, 20 per sheet)</div>
-    <div class="label-shelf-list" id="labelShelfList"></div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;">
-      <button class="btn btn-ghost btn-sm" id="selectAllLabels">Select All</button>
-      <button class="btn btn-ghost btn-sm" id="deselectAllLabels">Deselect All</button>
-    </div>
-    <button class="btn btn-primary" id="previewLabelsBtn">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"><rect x="1" y="3" width="14" height="10" rx="1.5"/><line x1="4" y1="7" x2="12" y2="7"/><line x1="4" y1="10" x2="9" y2="10"/></svg>
-      Preview &amp; Print
-    </button>
-    <button class="btn btn-ghost mt8" id="closeLabelBtn">Cancel</button>
-  </div>
-</div>
-
-<!-- ── PRINT PREVIEW MODAL ── -->
-<div id="printPreviewOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 16px 0;">
-  <div style="width:100%;max-width:900px;flex:1;display:flex;flex-direction:column;min-height:0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;">
-      <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);">Label Preview — Avery Presta 94506</div>
-      <div style="font-family:'Rajdhani',sans-serif;font-size:.72rem;color:var(--muted);">1.5" round · 20 per sheet</div>
-    </div>
-    <iframe id="printFrame" style="flex:1;width:100%;border:none;border-radius:8px;background:white;min-height:0;"></iframe>
-    <div style="display:flex;gap:10px;padding:14px 0 20px;flex-shrink:0;">
-      <button class="btn btn-primary" id="doPrintBtn" style="flex:1;">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>Print
-      </button>
-      <button class="btn btn-ghost" id="closePrintPreviewBtn" style="flex:1;">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- ── ADD SHELF MODAL ── -->
+<!-- Add Shelf Modal -->
 <div class="modal-overlay" id="addShelfModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -334,6 +259,61 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
   </div>
 </div>
 
+<!-- QR Scanner Modal -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="qr-modal-inner">
+      <h2>Scan Bin Label</h2>
+      <p>Point your camera at a bin QR code to jump straight to it.</p>
+      <div id="qrReaderBox"></div>
+      <div class="qr-status" id="qrStatusText">Camera not started</div>
+      <div class="qr-result" id="qrResultMsg"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" id="startQrBtn">Start Camera</button>
+        <button class="btn btn-ghost btn-sm" id="stopQrBtn" style="display:none;">Stop</button>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="closeQrBtn" style="margin:0 16px 16px;">Close</button>
+  </div>
+</div>
+
+<!-- Print Labels Modal -->
+<div class="modal-overlay" id="labelModal">
+  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Print Bin Labels</div>
+    <div class="modal-sub">Select shelves to generate Avery Presta 94506 labels (1.5" round, 20 per sheet)</div>
+    <div class="label-shelf-list" id="labelShelfList"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-ghost btn-sm" id="selectAllLabels">Select All</button>
+      <button class="btn btn-ghost btn-sm" id="deselectAllLabels">Deselect All</button>
+    </div>
+    <button class="btn btn-primary" id="previewLabelsBtn">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>
+      Preview &amp; Print
+    </button>
+    <button class="btn btn-ghost mt8" id="closeLabelBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- Print Preview Overlay -->
+<div id="printPreviewOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 16px 0;">
+  <div style="width:100%;max-width:900px;flex:1;display:flex;flex-direction:column;min-height:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);">Label Preview — Avery Presta 94506</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:.72rem;color:var(--muted);">1.5" round · 20 per sheet</div>
+    </div>
+    <iframe id="printFrame" style="flex:1;width:100%;border:none;border-radius:8px;background:white;min-height:0;"></iframe>
+    <div style="display:flex;gap:10px;padding:14px 0 20px;flex-shrink:0;">
+      <button class="btn btn-primary" id="doPrintBtn" style="flex:1;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>Print
+      </button>
+      <button class="btn btn-ghost" id="closePrintPreviewBtn" style="flex:1;">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="bottom-disclaimer">
   <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0;opacity:.5;"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7" x2="8" y2="11"/><circle cx="8" cy="5" r="0.5" fill="currentColor" stroke="none"/></svg>
@@ -344,7 +324,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 const COL_LETTERS = ['A','B','C','D','E','F'];
 const WIDTH_IN  = {1:23.5,2:45.5,3:67.5,4:89.5,5:111.5,6:133.5};
 const HEIGHT_IN = {2:36,3:52,4:68,5:84,6:100};
-const MAX_W_IN=133.5,MAX_H_IN=100,CVS_W=420,CVS_H=320,PAD=20;
+const MAX_W_IN=133.5, MAX_H_IN=100, CVS_W=420, CVS_H=320, PAD=20;
 const SCALE_X=(CVS_W-PAD*2)/MAX_W_IN, SCALE_Y=(CVS_H-PAD*2)/MAX_H_IN;
 
 // ── STATE ──
@@ -352,33 +332,33 @@ let state = { shelves:[], shelfBins:{}, addShelfCols:3, addShelfRows:4 };
 
 function loadState() {
   try {
-    const d = JSON.parse(localStorage.getItem('peakBinTracker') || '{}');
+    const d = JSON.parse(localStorage.getItem('peakBinTracker')||'{}');
     state.shelves   = d.shelves   || [];
     state.shelfBins = d.shelfBins || {};
   } catch(e) {}
 }
 function saveState() {
-  localStorage.setItem('peakBinTracker', JSON.stringify({ shelves:state.shelves, shelfBins:state.shelfBins }));
+  localStorage.setItem('peakBinTracker', JSON.stringify({shelves:state.shelves, shelfBins:state.shelfBins}));
 }
 loadState();
 
 // ── UTILS ──
-function binKey(si,c,r)  { return 'shelf'+si+'_'+COL_LETTERS[c]+(r+1); }
+function binKey(si,c,r)   { return 'shelf'+si+'_'+COL_LETTERS[c]+(r+1); }
 function binLabel(c,r)    { return COL_LETTERS[c]+(r+1); }
-function showToast(msg)   {
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
-}
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showToast(msg)   { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function openModal(id)    { document.getElementById(id).classList.add('open'); }
+function closeModal(id)   { document.getElementById(id).classList.remove('open'); }
 
 // ── SHELVES PAGE ──
+function updateSideBtns() {
+  document.getElementById('sideBtns').style.display = state.shelves.length ? 'flex' : 'none';
+}
+
 function renderShelvesPage(selectIdx) {
   const empty  = document.getElementById('shelfEmpty');
   const active = document.getElementById('shelfActive');
-  if (!state.shelves.length) { empty.style.display='flex'; active.style.display='none'; return; }
-  empty.style.display='none'; active.style.display='block';
+  if (!state.shelves.length) { empty.style.display='flex'; active.style.display='none'; updateSideBtns(); return; }
+  empty.style.display='none'; active.style.display='block'; updateSideBtns();
   const dd = document.getElementById('shelfDropdown');
   const prev = dd.value;
   dd.innerHTML = state.shelves.map((s,i)=>`<option value="${i}">${s.area} – ${s.desc}</option>`).join('');
@@ -396,13 +376,12 @@ document.getElementById('shelfDropdown').addEventListener('change', function() {
 function renderShelfDiagram(idx) {
   const s = state.shelves[idx];
   if (!s) return;
-  const { cols, rows } = s;
-  const wIn = WIDTH_IN[cols] || cols*22.5, hIn = HEIGHT_IN[rows] || rows*17;
-  const unitW = wIn*SCALE_X, unitH = hIn*SCALE_Y;
-  const cvW = Math.round(unitW+PAD*2), cvH = Math.round(unitH+PAD*2);
-  const cellW = unitW/cols, cellH = unitH/rows;
-  const ft = Math.max(3, Math.round(unitW/(cols*7)));
-  const FC='#c8b08a', FA='#C9A84C';
+  const {cols, rows} = s;
+  const wIn=WIDTH_IN[cols]||cols*22.5, hIn=HEIGHT_IN[rows]||rows*17;
+  const unitW=wIn*SCALE_X, unitH=hIn*SCALE_Y;
+  const cvW=Math.round(unitW+PAD*2), cvH=Math.round(unitH+PAD*2);
+  const cellW=unitW/cols, cellH=unitH/rows;
+  const ft=Math.max(3,Math.round(unitW/(cols*7)));
 
   document.getElementById('shelfDisplay').innerHTML =
     '<div class="shelf-info-card">' +
@@ -426,18 +405,17 @@ function renderShelfDiagram(idx) {
     '</div></div>' +
     '<div id="binDetailPanel"></div>';
 
-  // Column labels
-  const colHdr = document.getElementById('colHeaders');
+  // Column letters
+  const colHdr=document.getElementById('colHeaders');
   colHdr.style.cssText='display:flex;margin-left:24px;margin-bottom:4px;width:'+cvW+'px;';
-  const sp=document.createElement('div'); sp.style.cssText='width:'+PAD+'px;flex-shrink:0;';
-  colHdr.appendChild(sp);
+  const sp=document.createElement('div'); sp.style.cssText='width:'+PAD+'px;flex-shrink:0;'; colHdr.appendChild(sp);
   for(let c=0;c<cols;c++){
     const d=document.createElement('div');
     d.textContent=COL_LETTERS[c];
     d.style.cssText='width:'+cellW+'px;text-align:center;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#C9A84C;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;';
     colHdr.appendChild(d);
   }
-  // Row labels
+  // Row numbers
   const rowLbl=document.getElementById('rowLabels');
   rowLbl.style.cssText='display:flex;flex-direction:column;width:24px;padding-top:'+PAD+'px;';
   for(let r=0;r<rows;r++){
@@ -448,55 +426,39 @@ function renderShelfDiagram(idx) {
   }
   // Draw canvas
   const ctx=document.getElementById('shelfCanvas').getContext('2d');
-  for(let c=0;c<=cols;c++){const x=PAD+(unitW/cols)*c;ctx.fillStyle=FC;ctx.fillRect(x-ft/2,PAD,ft,unitH);ctx.strokeStyle=FA;ctx.lineWidth=0.7;ctx.strokeRect(x-ft/2,PAD,ft,unitH);}
-  for(let r=0;r<=rows;r++){const y=PAD+(unitH/rows)*r;ctx.fillStyle=FC;ctx.fillRect(PAD,y-ft/2,unitW,ft);ctx.strokeStyle=FA;ctx.lineWidth=0.7;ctx.strokeRect(PAD,y-ft/2,unitW,ft);}
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const bx=PAD+c*cellW+ft/2+2,by=PAD+r*cellH+ft/2+2,bw=cellW-ft-4,bh=cellH-ft-4;
-      if(bw<4||bh<4)continue;
-      ctx.fillStyle='#222';ctx.beginPath();ctx.roundRect(bx,by+bh*.24,bw,bh*.76,2);ctx.fill();ctx.strokeStyle='#3a3a3a';ctx.lineWidth=0.5;ctx.stroke();
-      const lh=Math.max(3,bh*.17);ctx.fillStyle='#D4A017';ctx.beginPath();ctx.roundRect(bx+bw*.04,by+bh*.13,bw*.92,lh,2);ctx.fill();ctx.strokeStyle='#A87C10';ctx.lineWidth=0.4;ctx.stroke();
-      if(bw>18){ctx.fillStyle='#A87C10';ctx.fillRect(bx+bw*.13,by+bh*.10,bw*.1,bh*.06);ctx.fillRect(bx+bw*.77,by+bh*.10,bw*.1,bh*.06);}
-    }
+  for(let c=0;c<=cols;c++){const x=PAD+(unitW/cols)*c;ctx.fillStyle='#c8b08a';ctx.fillRect(x-ft/2,PAD,ft,unitH);ctx.strokeStyle='#C9A84C';ctx.lineWidth=0.7;ctx.strokeRect(x-ft/2,PAD,ft,unitH);}
+  for(let r=0;r<=rows;r++){const y=PAD+(unitH/rows)*r;ctx.fillStyle='#c8b08a';ctx.fillRect(PAD,y-ft/2,unitW,ft);ctx.strokeStyle='#C9A84C';ctx.lineWidth=0.7;ctx.strokeRect(PAD,y-ft/2,unitW,ft);}
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const bx=PAD+c*cellW+ft/2+2,by=PAD+r*cellH+ft/2+2,bw=cellW-ft-4,bh=cellH-ft-4;
+    if(bw<4||bh<4)continue;
+    ctx.fillStyle='#222';ctx.beginPath();ctx.roundRect(bx,by+bh*.24,bw,bh*.76,2);ctx.fill();ctx.strokeStyle='#3a3a3a';ctx.lineWidth=0.5;ctx.stroke();
+    const lh=Math.max(3,bh*.17);ctx.fillStyle='#D4A017';ctx.beginPath();ctx.roundRect(bx+bw*.04,by+bh*.13,bw*.92,lh,2);ctx.fill();ctx.strokeStyle='#A87C10';ctx.lineWidth=0.4;ctx.stroke();
+    if(bw>18){ctx.fillStyle='#A87C10';ctx.fillRect(bx+bw*.13,by+bh*.10,bw*.1,bh*.06);ctx.fillRect(bx+bw*.77,by+bh*.10,bw*.1,bh*.06);}
   }
-  // Clickable overlays
+  // Clickable bin overlays
   const ov=document.getElementById('binOverlay');
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const bx=PAD+c*cellW+ft/2+2,by=PAD+r*cellH+ft/2+2,bw=cellW-ft-4,bh=cellH-ft-4;
-      const btn=document.createElement('button');
-      btn.dataset.col=c; btn.dataset.row=r;
-      btn.style.cssText='position:absolute;left:'+bx+'px;top:'+by+'px;width:'+bw+'px;height:'+bh+'px;background:transparent;border:2px solid transparent;border-radius:3px;cursor:pointer;transition:background .15s,border-color .15s;outline:none;';
-      btn.addEventListener('mouseenter',function(){if(!this.classList.contains('sel')){this.style.background='rgba(201,168,76,.18)';this.style.borderColor='#C9A84C';}});
-      btn.addEventListener('mouseleave',function(){if(!this.classList.contains('sel')){this.style.background='transparent';this.style.borderColor='transparent';}});
-      btn.addEventListener('click',function(){
-        ov.querySelectorAll('button').forEach(b=>{b.classList.remove('sel');b.style.background='transparent';b.style.borderColor='transparent';});
-        this.classList.add('sel');this.style.background='rgba(201,168,76,.25)';this.style.borderColor='#E8C96A';
-        renderBinDetail(idx,parseInt(this.dataset.col),parseInt(this.dataset.row));
-      });
-      ov.appendChild(btn);
-    }
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const bx=PAD+c*cellW+ft/2+2,by=PAD+r*cellH+ft/2+2,bw=cellW-ft-4,bh=cellH-ft-4;
+    const btn=document.createElement('button');
+    btn.dataset.col=c; btn.dataset.row=r;
+    btn.style.cssText='position:absolute;left:'+bx+'px;top:'+by+'px;width:'+bw+'px;height:'+bh+'px;background:transparent;border:2px solid transparent;border-radius:3px;cursor:pointer;transition:background .15s,border-color .15s;outline:none;';
+    btn.addEventListener('mouseenter',function(){if(!this.classList.contains('sel')){this.style.background='rgba(201,168,76,.18)';this.style.borderColor='#C9A84C';}});
+    btn.addEventListener('mouseleave',function(){if(!this.classList.contains('sel')){this.style.background='transparent';this.style.borderColor='transparent';}});
+    btn.addEventListener('click',function(){
+      ov.querySelectorAll('button').forEach(b=>{b.classList.remove('sel');b.style.background='transparent';b.style.borderColor='transparent';});
+      this.classList.add('sel');this.style.background='rgba(201,168,76,.25)';this.style.borderColor='#E8C96A';
+      renderBinDetail(idx,parseInt(this.dataset.col),parseInt(this.dataset.row));
+    });
+    ov.appendChild(btn);
   }
 }
 
 // ── BIN DETAIL ──
 function renderBinDetail(si, col, row) {
-  const key   = binKey(si,col,row);
-  const label = binLabel(col,row);
+  const key=binKey(si,col,row), label=binLabel(col,row);
   if (!state.shelfBins[key]) state.shelfBins[key]=[];
-  const items = state.shelfBins[key];
-  const panel = document.getElementById('binDetailPanel');
-
-  let itemsHtml = items.length
-    ? items.map((item,i)=>
-        '<div class="sbin-item-row">' +
-          '<div class="sbin-item-name">'+item.name+'</div>' +
-          (item.qty>1?'<div class="sbin-item-qty">\xd7'+item.qty+'</div>':'') +
-          '<button class="icon-btn danger" data-key="'+key+'" data-idx="'+i+'" onclick="removeItem(this)">' +
-            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>' +
-          '</button>' +
-        '</div>').join('')
-    : '<div class="sbin-empty">Empty</div>';
+  const items=state.shelfBins[key];
+  const panel=document.getElementById('binDetailPanel');
 
   panel.innerHTML =
     '<div class="sbin-panel">' +
@@ -504,102 +466,103 @@ function renderBinDetail(si, col, row) {
         '<div class="sbin-title">Bin '+label+'</div>' +
         '<div class="sbin-count">'+items.length+' item'+(items.length!==1?'s':'')+'</div>' +
       '</div>' +
-      '<div class="sbin-items">'+itemsHtml+'</div>' +
+      '<div class="sbin-items">' +
+        (items.length
+          ? items.map((item,i)=>
+              '<div class="sbin-item-row">' +
+                '<div class="sbin-item-name">'+item.name+'</div>' +
+                (item.qty>1?'<div class="sbin-item-qty">×'+item.qty+'</div>':'') +
+                '<button class="icon-btn danger" data-key="'+key+'" data-idx="'+i+'" onclick="removeItem(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button>' +
+              '</div>').join('')
+          : '<div class="sbin-empty">Empty</div>') +
+      '</div>' +
       '<div class="sbin-add-row">' +
-        '<input class="form-input" id="newItemName" placeholder="Add item\u2026" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;">' +
+        '<input class="form-input" id="newItemName" placeholder="Add item…" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;">' +
         '<input class="form-input" id="newItemQty" type="number" min="1" value="1" style="width:64px;font-size:.88rem;padding:9px 8px;">' +
         '<button class="btn btn-primary btn-sm" id="addItemBtn">Add</button>' +
       '</div>' +
     '</div>';
 
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-
   document.getElementById('addItemBtn').onclick = function() {
-    const name = document.getElementById('newItemName').value.trim();
+    const name=document.getElementById('newItemName').value.trim();
     if (!name) { showToast('Enter an item name'); return; }
-    const qty = parseInt(document.getElementById('newItemQty').value)||1;
+    const qty=parseInt(document.getElementById('newItemQty').value)||1;
     state.shelfBins[key].push({name,qty});
-    saveState();
-    showToast('"'+name+'" added to '+label);
+    saveState(); showToast('"'+name+'" added to '+label);
     renderBinDetail(si,col,row);
   };
-  document.getElementById('newItemName').onkeydown = e => { if(e.key==='Enter') document.getElementById('addItemBtn').click(); };
+  document.getElementById('newItemName').onkeydown = e=>{ if(e.key==='Enter') document.getElementById('addItemBtn').click(); };
 }
 
 function removeItem(btn) {
   const k=btn.dataset.key, i=parseInt(btn.dataset.idx);
   state.shelfBins[k].splice(i,1);
   saveState();
-  // Re-render: find shelf/col/row from key
   const m=k.match(/^shelf(\d+)_([A-F])(\d+)$/);
   if(m) renderBinDetail(parseInt(m[1]),COL_LETTERS.indexOf(m[2]),parseInt(m[3])-1);
 }
 
 // ── SEARCH ──
 function closeSearch() {
-  document.getElementById('searchPanel').style.display = 'none';
-  document.getElementById('searchInput').value = '';
-  document.getElementById('searchResults').innerHTML = '';
-  const sb = document.getElementById('searchToggleBtn');
-  sb.style.background = sb.style.borderColor = sb.style.color = '';
+  document.getElementById('searchPanel').style.display='none';
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchResults').innerHTML='';
+  const sb=document.getElementById('searchToggleBtn');
+  sb.style.background=sb.style.borderColor=sb.style.color='';
 }
 
 document.getElementById('searchToggleBtn').addEventListener('click', function() {
-  const panel = document.getElementById('searchPanel');
-  const open  = panel.style.display !== 'none';
+  const open = document.getElementById('searchPanel').style.display !== 'none';
   if (open) { closeSearch(); return; }
-  panel.style.display = 'block';
-  this.style.background  = 'rgba(201,168,76,.15)';
-  this.style.borderColor = 'var(--gold)';
-  this.style.color       = 'var(--gold-light)';
+  document.getElementById('searchPanel').style.display='block';
+  this.style.background='rgba(201,168,76,.15)';
+  this.style.borderColor='var(--gold)';
+  this.style.color='var(--gold-light)';
   document.getElementById('searchInput').focus();
 });
 
 document.getElementById('searchInput').addEventListener('input', function() {
-  const q   = this.value.trim().toLowerCase();
-  const out = document.getElementById('searchResults');
+  const q=this.value.trim().toLowerCase();
+  const out=document.getElementById('searchResults');
   if (!q) { out.innerHTML=''; return; }
   let html='', found=0;
   Object.keys(state.shelfBins).forEach(key => {
-    const items = state.shelfBins[key];
+    const items=state.shelfBins[key];
     if (!items||!items.length) return;
-    const m = key.match(/^shelf(\d+)_(.+)$/);
+    const m=key.match(/^shelf(\d+)_(.+)$/);
     if (!m) return;
     const si=parseInt(m[1]), lbl=m[2], shelf=state.shelves[si];
-    const sName = shelf ? shelf.area+' \u2013 '+shelf.desc : 'Shelf '+si;
+    const sName=shelf?shelf.area+' – '+shelf.desc:'Shelf '+si;
     items.forEach(item => {
       if (!item.name.toLowerCase().includes(q)) return;
       found++;
       html += '<div class="result-card">' +
         '<div class="result-item-name">'+item.name+'</div>' +
         '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">' +
-          (item.qty>1?'<div class="tag">\xd7'+item.qty+'</div>':'') +
+          (item.qty>1?'<div class="tag">×'+item.qty+'</div>':'') +
           '<button class="result-location result-bin-chip" data-si="'+si+'" data-lbl="'+lbl+'">'+
-            '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="12" height="11" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>'+
-            'Bin '+lbl+
+            '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="12" height="11" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>Bin '+lbl+
           '</button>' +
         '</div>' +
         '<div class="result-bin-label">'+sName+'</div>' +
       '</div>';
     });
   });
-  out.innerHTML = found ? html : '<div class="no-results">No items found for \u201c<strong>'+this.value+'</strong>\u201d</div>';
+  out.innerHTML = found ? html : '<div class="no-results">No items found for “<strong>'+this.value+'</strong>”</div>';
 });
 
 document.getElementById('searchResults').addEventListener('click', function(e) {
-  const chip = e.target.closest('.result-bin-chip');
+  const chip=e.target.closest('.result-bin-chip');
   if (!chip) return;
-  const si  = parseInt(chip.dataset.si);
-  const lbl = chip.dataset.lbl;
+  const si=parseInt(chip.dataset.si), lbl=chip.dataset.lbl;
   closeSearch();
-  // Switch shelf & click bin
   renderShelvesPage(si);
   setTimeout(()=>{
     const ov=document.getElementById('binOverlay');
     if (!ov) return;
     ov.querySelectorAll('button').forEach(btn=>{
-      const c=parseInt(btn.dataset.col),r=parseInt(btn.dataset.row);
-      if(binLabel(c,r)===lbl) btn.click();
+      if(binLabel(parseInt(btn.dataset.col),parseInt(btn.dataset.row))===lbl) btn.click();
     });
   },80);
 });
@@ -615,16 +578,15 @@ function openAddShelfModal() {
 }
 document.getElementById('addShelfBtnEmpty').onclick = openAddShelfModal;
 document.getElementById('addShelfBtnActive').onclick = openAddShelfModal;
-
 document.getElementById('colBtns').addEventListener('click',e=>{
-  const b=e.target.closest('.size-btn');if(!b)return;
+  const b=e.target.closest('.size-btn'); if(!b)return;
   state.addShelfCols=parseInt(b.dataset.val);
-  document.querySelectorAll('#colBtns .size-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+  document.querySelectorAll('#colBtns .size-btn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
 });
 document.getElementById('rowBtns').addEventListener('click',e=>{
-  const b=e.target.closest('.size-btn');if(!b)return;
+  const b=e.target.closest('.size-btn'); if(!b)return;
   state.addShelfRows=parseInt(b.dataset.val);
-  document.querySelectorAll('#rowBtns .size-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+  document.querySelectorAll('#rowBtns .size-btn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
 });
 document.getElementById('confirmAddShelf').onclick = () => {
   const area=document.getElementById('newShelfArea').value.trim();
@@ -633,7 +595,7 @@ document.getElementById('confirmAddShelf').onclick = () => {
   if (!desc) { showToast('Enter a description'); return; }
   state.shelves.push({area,desc,cols:state.addShelfCols,rows:state.addShelfRows});
   saveState(); closeModal('addShelfModal');
-  showToast('"'+area+' \u2013 '+desc+'" added!');
+  showToast('"'+area+' – '+desc+'" added!');
   renderShelvesPage(state.shelves.length-1);
 };
 document.getElementById('cancelAddShelf').onclick = ()=>closeModal('addShelfModal');
@@ -650,7 +612,7 @@ document.getElementById('exportBtn').addEventListener('click',()=>{
   state.shelves.forEach((s,si)=>{
     const rows=[['Bin','Item','Quantity']];
     for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++){
-      const k=binKey(si,c,r),items=(state.shelfBins[k]||[]);
+      const k=binKey(si,c,r), items=state.shelfBins[k]||[];
       if(items.length) items.forEach(it=>rows.push([binLabel(c,r),it.name,it.qty]));
       else rows.push([binLabel(c,r),'Empty','']);
     }
@@ -701,344 +663,214 @@ document.getElementById('importInput').addEventListener('change',function(e){
   reader.readAsArrayBuffer(file);
 });
 
-// ── SIDE BUTTONS VISIBILITY ──
-function updateSideBtns() {
-  document.getElementById('sideBtns').style.display = state.shelves.length ? 'flex' : 'none';
-}
-
 // ── QR SCANNER ──
-let qrScanner = null, qrActive = false;
+let qrScanner=null, qrActive=false;
 
 function openQrModal() {
   openModal('qrModal');
   document.getElementById('qrResultMsg').classList.remove('show');
-  document.getElementById('qrStatusText').textContent = 'Camera not started';
-  document.getElementById('startQrBtn').style.display = '';
-  document.getElementById('stopQrBtn').style.display = 'none';
+  document.getElementById('qrStatusText').textContent='Camera not started';
+  document.getElementById('startQrBtn').style.display='';
+  document.getElementById('stopQrBtn').style.display='none';
 }
-function closeQrModal() {
-  stopQr();
-  closeModal('qrModal');
-}
-
+function closeQrModal() { stopQr(); closeModal('qrModal'); }
 function startQr() {
   if (qrActive) return;
-  const box = document.getElementById('qrReaderBox');
-  box.innerHTML = '';
-  document.getElementById('qrStatusText').textContent = 'Starting camera…';
-  qrScanner = new Html5Qrcode('qrReaderBox');
+  document.getElementById('qrReaderBox').innerHTML='';
+  document.getElementById('qrStatusText').textContent='Starting camera…';
+  qrScanner=new Html5Qrcode('qrReaderBox');
   qrScanner.start(
-    { facingMode: 'environment' },
-    { fps: 10, qrbox: { width: 220, height: 220 } },
-    (text) => { stopQr(); handleQrScan(text); },
-    () => {}
-  ).then(() => {
-    qrActive = true;
-    document.getElementById('qrStatusText').textContent = 'Scanning — point at a bin label';
-    document.getElementById('startQrBtn').style.display = 'none';
-    document.getElementById('stopQrBtn').style.display = '';
-  }).catch(() => {
-    document.getElementById('qrStatusText').textContent = 'Camera access denied. Use manual lookup.';
+    {facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},
+    (text)=>{ stopQr(); handleQrScan(text); },()=>{}
+  ).then(()=>{
+    qrActive=true;
+    document.getElementById('qrStatusText').textContent='Scanning — point at a bin label';
+    document.getElementById('startQrBtn').style.display='none';
+    document.getElementById('stopQrBtn').style.display='';
+  }).catch(()=>{
+    document.getElementById('qrStatusText').textContent='Camera access denied.';
   });
 }
 function stopQr() {
-  if (qrScanner && qrActive) { qrScanner.stop().catch(()=>{}); qrActive = false; }
-  document.getElementById('startQrBtn').style.display = '';
-  document.getElementById('stopQrBtn').style.display = 'none';
-  document.getElementById('qrStatusText').textContent = 'Camera stopped';
+  if (qrScanner&&qrActive) { qrScanner.stop().catch(()=>{}); qrActive=false; }
+  document.getElementById('startQrBtn').style.display='';
+  document.getElementById('stopQrBtn').style.display='none';
+  document.getElementById('qrStatusText').textContent='Camera stopped';
 }
 
 function handleQrScan(text) {
-  const raw = text.trim();
-
-  // Parse formats:
-  // 1. "Garage - Tools | Bin A1"  (new rich format)
-  // 2. "shelf0_A1"                (old key format)
-  // 3. "A1"                       (plain label)
-
-  let targetLabel = null;
-  let targetShelfHint = null;
-
-  const richMatch = raw.match(/Bin\s+([A-Fa-f]\d+)/i);
-  if (richMatch) {
-    targetLabel = richMatch[1].toUpperCase();
-    // Extract area hint before the pipe
-    const pipePart = raw.split('|')[0].trim();
-    targetShelfHint = pipePart;
-  } else {
-    let upper = raw.toUpperCase();
-    const keyMatch = upper.match(/^SHELF(\d+)_(.+)$/);
-    if (keyMatch) {
-      targetLabel = keyMatch[2];
-    } else {
-      targetLabel = upper;
+  const raw=text.trim();
+  // QR codes encode a URL: extract ?si= and ?bin= params
+  let targetSi=null, targetLabel=null;
+  try {
+    const url=new URL(raw);
+    targetLabel=(url.searchParams.get('bin')||'').toUpperCase();
+    const si=url.searchParams.get('si');
+    if (si!==null&&state.shelves[parseInt(si)]) targetSi=parseInt(si);
+    if (!targetSi) {
+      const area=url.searchParams.get('area')||'';
+      state.shelves.forEach((s,i)=>{ if(s.area.toLowerCase()===area.toLowerCase()) targetSi=i; });
     }
+  } catch(e) {
+    // fallback: plain label like "A1"
+    targetLabel=raw.toUpperCase().replace(/^SHELF\d+_/,'');
   }
-
-  const msg = document.getElementById('qrResultMsg');
-  let found = false;
-
-  // Try to match shelf hint first for accuracy, then fall back to any shelf
-  const shelfOrder = [];
-  if (targetShelfHint) {
-    state.shelves.forEach((s, si) => {
-      const hint = targetShelfHint.toLowerCase();
-      if (s.area.toLowerCase().includes(hint) || hint.includes(s.area.toLowerCase())) shelfOrder.unshift(si);
-      else shelfOrder.push(si);
-    });
-  } else {
-    state.shelves.forEach((_, si) => shelfOrder.push(si));
-  }
-
-  for (const si of shelfOrder) {
-    const s = state.shelves[si];
-    for (let r = 0; r < s.rows; r++) {
-      for (let c = 0; c < s.cols; c++) {
-        if (binLabel(c, r) === targetLabel) {
-          msg.textContent = '✓ Bin ' + targetLabel + ' — ' + s.area + ' · ' + s.desc;
-          msg.classList.add('show');
-          found = true;
-          closeQrModal();
-          renderShelvesPage(si);
-          setTimeout(() => {
-            const ov = document.getElementById('binOverlay');
-            if (!ov) return;
-            ov.querySelectorAll('button').forEach(btn => {
-              if (binLabel(parseInt(btn.dataset.col), parseInt(btn.dataset.row)) === targetLabel) btn.click();
-            });
-          }, 100);
-          return;
-        }
+  // Find bin across shelves
+  if (!targetLabel) { showToast('Could not read QR code'); return; }
+  const order=targetSi!==null?[targetSi]:state.shelves.map((_,i)=>i);
+  for (const si of order) {
+    const s=state.shelves[si];
+    for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++) {
+      if(binLabel(c,r)===targetLabel){
+        const msg=document.getElementById('qrResultMsg');
+        msg.textContent='✓ Bin '+targetLabel+' — '+s.area+' · '+s.desc;
+        msg.classList.add('show');
+        closeQrModal();
+        renderShelvesPage(si);
+        setTimeout(()=>{
+          const ov=document.getElementById('binOverlay');
+          if(!ov)return;
+          ov.querySelectorAll('button').forEach(btn=>{
+            if(binLabel(parseInt(btn.dataset.col),parseInt(btn.dataset.row))===targetLabel) btn.click();
+          });
+        },100);
+        return;
       }
     }
   }
-  if (!found) {
-    msg.textContent = 'No bin found for "' + raw + '"';
-    msg.classList.add('show');
-  }
+  document.getElementById('qrResultMsg').textContent='No bin found for "'+targetLabel+'"';
+  document.getElementById('qrResultMsg').classList.add('show');
 }
 
 document.getElementById('qrScanBtn').onclick = openQrModal;
 document.getElementById('closeQrBtn').onclick = closeQrModal;
-document.getElementById('qrModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeQrModal(); });
+document.getElementById('qrModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQrModal();});
 document.getElementById('startQrBtn').onclick = startQr;
 document.getElementById('stopQrBtn').onclick = stopQr;
 
-
 // ── LABEL PRINT ──
-document.getElementById('printLabelsBtn').onclick = openLabelModal;
-document.getElementById('closeLabelBtn').onclick = () => closeModal('labelModal');
-document.getElementById('labelModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('labelModal'); });
-document.getElementById('selectAllLabels').onclick = () => {
-  document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el => {
-    el.classList.add('sel');
-    el.querySelector('input').checked = true;
-  });
-};
-document.getElementById('deselectAllLabels').onclick = () => {
-  document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el => {
-    el.classList.remove('sel');
-    el.querySelector('input').checked = false;
-  });
-};
-
 function openLabelModal() {
   const list = document.getElementById('labelShelfList');
-  list.innerHTML = state.shelves.map((s, i) =>
-    '<label class="label-shelf-item" id="lsi_'+i+'">' +
-      '<input type="checkbox" value="'+i+'" onchange="toggleLabelShelf('+i+',this.checked)">' +
-      '<div><div class="label-shelf-name">'+s.area+' – '+s.desc+'</div>' +
-      '<div class="label-shelf-sub">'+s.cols+' wide × '+s.rows+' high · '+(s.cols*s.rows)+' labels</div></div>' +
-    '</label>'
-  ).join('');
+  list.innerHTML = '';
+  state.shelves.forEach((s, i) => {
+    const lbl = document.createElement('label');
+    lbl.className = 'label-shelf-item'; lbl.id = 'lsi_'+i;
+    const cb = document.createElement('input');
+    cb.type='checkbox'; cb.value=i;
+    cb.addEventListener('change', function(){ lbl.classList.toggle('sel', this.checked); });
+    const info = document.createElement('div');
+    info.innerHTML =
+      '<div class="label-shelf-name">'+s.area+' – '+s.desc+'</div>'+
+      '<div class="label-shelf-sub">'+s.cols+' wide × '+s.rows+' high · '+(s.cols*s.rows)+' labels</div>';
+    lbl.appendChild(cb); lbl.appendChild(info); list.appendChild(lbl);
+  });
   // Pre-select current shelf
-  const dd = document.getElementById('shelfDropdown');
-  if (dd.value !== '') {
-    const idx = parseInt(dd.value);
-    const el = document.getElementById('lsi_'+idx);
-    if (el) { el.classList.add('sel'); el.querySelector('input').checked = true; }
-  }
+  const idx = parseInt(document.getElementById('shelfDropdown').value);
+  const el = document.getElementById('lsi_'+idx);
+  if (el) { el.classList.add('sel'); el.querySelector('input').checked = true; }
   openModal('labelModal');
 }
-
-function toggleLabelShelf(idx, checked) {
-  const el = document.getElementById('lsi_'+idx);
-  if (el) el.classList.toggle('sel', checked);
-}
-
-document.getElementById('previewLabelsBtn').onclick = function() {
-  const selected = [...document.querySelectorAll('#labelShelfList input:checked')].map(i => parseInt(i.value));
-  if (!selected.length) { showToast('Select at least one shelf'); return; }
-
-  // Collect all bin labels across selected shelves
-  const labels = [];
-  selected.forEach(si => {
-    const s = state.shelves[si];
-    for (let r = 0; r < s.rows; r++) {
-      for (let c = 0; c < s.cols; c++) {
-        labels.push({
-          shelf: s.area + '\n' + s.desc,
-          bin: binLabel(c, r),
-          key: binKey(si, c, r),
-          si: si
-        });
-      }
-    }
-  });
-
-  closeModal('labelModal');
-  buildPrintPreview(labels);
+document.getElementById('printLabelsBtn').onclick = openLabelModal;
+document.getElementById('closeLabelBtn').onclick = ()=>closeModal('labelModal');
+document.getElementById('labelModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('labelModal');});
+document.getElementById('selectAllLabels').onclick = ()=>{
+  document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.add('sel');el.querySelector('input').checked=true;});
+};
+document.getElementById('deselectAllLabels').onclick = ()=>{
+  document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false;});
 };
 
-function buildPrintPreview(labels) {
-  const labelDiameter = 1.5;
-  const cols = 4, rows = 5;
-  const pageW = 8.5, pageH = 11;
-  const marginTop = 0.67, marginLeft = 0.75;
-  const colGap = 0.8, rowGap = 0.56;
-
-  let labelCells = '';
-  const qrUrls = [];
-  labels.forEach((lbl, i) => {
-    // Build URL and store safely
-    const shelfObj = state.shelves[lbl.si];
-    const qrUrl = 'https://peakgaragesolutions.ca/bin-tracker.html?si=' + lbl.si +
-      '&bin=' + encodeURIComponent(lbl.bin) +
-      '&area=' + encodeURIComponent(shelfObj ? shelfObj.area : '') +
-      '&desc=' + encodeURIComponent(shelfObj ? shelfObj.desc : '');
-    qrUrls.push(qrUrl);
-    labelCells += '<div class="qr-label" id="lbl_'+i+'">' +
-      '<div class="qr-img" id="qr_'+i+'"></div>' +
-      '<div class="lbl-bin">' + lbl.bin + '</div>' +
-    '</div>';
+document.getElementById('previewLabelsBtn').onclick = function() {
+  const selected=[...document.querySelectorAll('#labelShelfList input:checked')].map(i=>parseInt(i.value));
+  if(!selected.length){showToast('Select at least one shelf');return;}
+  const labels=[], qrUrls=[];
+  selected.forEach(si=>{
+    const s=state.shelves[si];
+    for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++){
+      labels.push({bin:binLabel(c,r),si});
+      qrUrls.push('https://peakgaragesolutions.ca/bin-tracker.html?si='+si+'&bin='+encodeURIComponent(binLabel(c,r))+'&area='+encodeURIComponent(s.area)+'&desc='+encodeURIComponent(s.desc));
+    }
   });
+  closeModal('labelModal');
+  buildPrintPreview(labels, qrUrls);
+};
 
-  // Pad to multiple of 20
-  const remainder = labels.length % 20;
-  if (remainder) {
-    for (let i = 0; i < 20 - remainder; i++) labelCells += '<div class="qr-label empty"></div>';
-  }
+function buildPrintPreview(labels, qrUrls) {
+  const D=1.5, cols=4, rows=5, pageW=8.5, pageH=11;
+  const marginTop=0.67, marginLeft=0.75, colGap=0.8, rowGap=0.56;
+  let cells='';
+  labels.forEach((lbl,i)=>{ cells+='<div class="qr-label"><div class="qr-img" id="qr_'+i+'"></div><div class="lbl-bin">'+lbl.bin+'</div></div>'; });
+  const rem=labels.length%20; if(rem) for(let i=0;i<20-rem;i++) cells+='<div class="qr-label empty"></div>';
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Rajdhani',sans-serif;background:white;}
-.page-sheet{
-  width:${pageW}in;min-height:${pageH}in;
-  padding:${marginTop}in ${marginLeft - 0.05}in 0;
-  display:grid;
-  grid-template-columns:repeat(${cols},${labelDiameter}in);
-  grid-template-rows:repeat(${rows},${labelDiameter}in);
-  column-gap:${colGap}in;
-  row-gap:${rowGap}in;
-  page-break-after:always;
-}
-.qr-label{
-  width:${labelDiameter}in;height:${labelDiameter}in;
-  border-radius:50%;
-  border:0.6pt solid #ccc;
-  overflow:hidden;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;
-  padding:2pt;
-}
+.page-sheet{width:${pageW}in;min-height:${pageH}in;padding:${marginTop}in ${marginLeft-0.05}in 0;display:grid;grid-template-columns:repeat(${cols},${D}in);grid-template-rows:repeat(${rows},${D}in);column-gap:${colGap}in;row-gap:${rowGap}in;page-break-after:always;}
+.qr-label{width:${D}in;height:${D}in;border-radius:50%;border:0.6pt solid #ccc;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2pt;}
 .qr-label.empty{border:0.4pt dashed #eee;}
 .qr-img{width:72pt;height:72pt;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 .qr-img canvas,.qr-img img{width:72pt!important;height:72pt!important;}
 .lbl-bin{font-family:'Rajdhani',sans-serif;font-size:10pt;font-weight:700;color:#1a1a1a;letter-spacing:.04em;line-height:1;margin-top:2pt;}
-@media print{
-  @page{size:letter;margin:0;}
-  body{margin:0;}
-}
+@media print{@page{size:letter;margin:0;}body{margin:0;}}
 </style></head><body>
-<div class="page-sheet">${labelCells}</div>
+<div class="page-sheet">${cells}</div>
 <script>
-var QR_URLS = ${JSON.stringify(qrUrls)};
-window.onload = function() {
-  document.querySelectorAll('.qr-label:not(.empty)').forEach(function(el, i) {
-    var url = QR_URLS[i];
-    var container = el.querySelector('.qr-img');
-    if (!container || !url) return;
-    try {
-      new QRCode(container, {
-        text: url,
-        width: 72, height: 72,
-        colorDark: '#1a1a1a', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } catch(e) {}
+var URLS=${JSON.stringify(qrUrls)};
+window.onload=function(){
+  document.querySelectorAll('.qr-label:not(.empty)').forEach(function(el,i){
+    var c=el.querySelector('.qr-img');
+    if(!c||!URLS[i])return;
+    try{new QRCode(c,{text:URLS[i],width:72,height:72,colorDark:'#1a1a1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});}catch(e){}
   });
 };
-<\/script>
-</body></html>`;
+<\/script></body></html>`;
 
-  const overlay = document.getElementById('printPreviewOverlay');
-  const frame = document.getElementById('printFrame');
-  overlay.style.display = 'flex';
-  const doc = frame.contentDocument || frame.contentWindow.document;
+  const overlay=document.getElementById('printPreviewOverlay');
+  const frame=document.getElementById('printFrame');
+  overlay.style.display='flex';
+  const doc=frame.contentDocument||frame.contentWindow.document;
   doc.open(); doc.write(html); doc.close();
   showToast('Preview ready');
 }
 
-// ── PRINT PREVIEW CONTROLS ──
-document.getElementById('doPrintBtn').onclick = function() {
-  const frame = document.getElementById('printFrame');
-  if (frame.contentWindow) frame.contentWindow.print();
+document.getElementById('doPrintBtn').onclick = function(){
+  const f=document.getElementById('printFrame');
+  if(f.contentWindow) f.contentWindow.print();
 };
-document.getElementById('closePrintPreviewBtn').onclick = function() {
-  document.getElementById('printPreviewOverlay').style.display = 'none';
-  const frame = document.getElementById('printFrame');
-  const doc = frame.contentDocument || frame.contentWindow.document;
-  doc.open(); doc.write(''); doc.close();
+document.getElementById('closePrintPreviewBtn').onclick = function(){
+  document.getElementById('printPreviewOverlay').style.display='none';
+  const f=document.getElementById('printFrame');
+  const d=f.contentDocument||f.contentWindow.document;
+  d.open(); d.write(''); d.close();
 };
 
 // ── INIT ──
 renderShelvesPage();
-updateSideBtns();
 
-// Handle incoming QR deep-link: ?si=0&bin=A1&area=Garage&desc=Tools
-(function() {
-  const params = new URLSearchParams(window.location.search);
-  const bin  = params.get('bin');
-  const si   = params.get('si');
-  const area = params.get('area');
-  if (!bin) return;
-
-  // Find matching shelf — prefer si param, fall back to area+desc match
-  let targetSi = null;
-  if (si !== null && state.shelves[parseInt(si)]) {
-    targetSi = parseInt(si);
-  } else if (area) {
-    state.shelves.forEach((s, i) => {
-      if (s.area.toLowerCase() === area.toLowerCase()) targetSi = i;
-    });
-  }
-  // Fall back: scan all shelves for the bin label
-  if (targetSi === null) {
-    state.shelves.forEach((s, i) => {
-      for (let r = 0; r < s.rows; r++)
-        for (let c = 0; c < s.cols; c++)
-          if (binLabel(c, r) === bin.toUpperCase()) targetSi = i;
-    });
-  }
-  if (targetSi === null) { showToast('Bin "' + bin + '" not found'); return; }
-
+// Deep-link from QR code: ?si=0&bin=A1
+(function(){
+  const p=new URLSearchParams(window.location.search);
+  const bin=p.get('bin'), si=p.get('si'), area=p.get('area');
+  if(!bin) return;
+  let targetSi=null;
+  if(si!==null&&state.shelves[parseInt(si)]) targetSi=parseInt(si);
+  else if(area) state.shelves.forEach((s,i)=>{ if(s.area.toLowerCase()===area.toLowerCase()) targetSi=i; });
+  if(targetSi===null) state.shelves.forEach((s,i)=>{ for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++) if(binLabel(c,r)===bin.toUpperCase()) targetSi=i; });
+  if(targetSi===null){showToast('Bin "'+bin+'" not found');return;}
   renderShelvesPage(targetSi);
-  setTimeout(() => {
-    const ov = document.getElementById('binOverlay');
-    if (!ov) return;
-    ov.querySelectorAll('button').forEach(btn => {
-      if (binLabel(parseInt(btn.dataset.col), parseInt(btn.dataset.row)) === bin.toUpperCase()) {
-        btn.click();
-        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(()=>{
+    const ov=document.getElementById('binOverlay');
+    if(!ov)return;
+    ov.querySelectorAll('button').forEach(btn=>{
+      if(binLabel(parseInt(btn.dataset.col),parseInt(btn.dataset.row))===bin.toUpperCase()){
+        btn.click(); btn.scrollIntoView({behavior:'smooth',block:'center'});
       }
     });
-  }, 150);
-
-  // Clean URL without reloading
-  window.history.replaceState({}, '', window.location.pathname);
+  },150);
+  window.history.replaceState({},'',window.location.pathname);
 })();
 </script>
 </body>
