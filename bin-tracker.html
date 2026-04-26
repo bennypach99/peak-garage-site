@@ -872,6 +872,7 @@ document.getElementById('previewLabelsBtn').onclick = function() {
 
   // Collect all bin labels across selected shelves
   const labels = [];
+  const qrUrls = [];
   selected.forEach(si => {
     const s = state.shelves[si];
     for (let r = 0; r < s.rows; r++) {
@@ -902,13 +903,14 @@ function buildPrintPreview(labels) {
   // Build label HTML — use a separate document rendered inside iframe
   let labelCells = '';
   labels.forEach((lbl, i) => {
-    // We'll render a placeholder div; actual QR rendered after iframe loads
+    // Build URL and store safely
     const shelfObj = state.shelves[lbl.si];
     const qrUrl = 'https://peakgaragesolutions.ca/bin-tracker.html?si=' + lbl.si +
       '&bin=' + encodeURIComponent(lbl.bin) +
       '&area=' + encodeURIComponent(shelfObj ? shelfObj.area : '') +
       '&desc=' + encodeURIComponent(shelfObj ? shelfObj.desc : '');
-    labelCells += '<div class="qr-label" data-bin="' + lbl.bin + '" data-qrtext="' + qrUrl.replace(/"/g,"'") + '" data-shelf="' + lbl.shelf.replace(/\n/g,'|') + '">' +
+    qrUrls.push(qrUrl);
+    labelCells += '<div class="qr-label" id="lbl_'+i+'">' +
       '<div class="qr-img" id="qr_'+i+'"></div>' +
       '<div class="lbl-bin">' + lbl.bin + '</div>' +
     '</div>';
@@ -956,23 +958,21 @@ body{font-family:'Rajdhani',sans-serif;background:white;}
 </style></head><body>
 <div class="page-sheet">${labelCells}</div>
 <script>
+var QR_URLS = ${JSON.stringify(qrUrls)};
 window.onload = function() {
   document.querySelectorAll('.qr-label:not(.empty)').forEach(function(el, i) {
-    const bin = el.dataset.bin;
-    const qrText = el.dataset.qrtext || bin;
-    const container = el.querySelector('.qr-img');
-    if (!container || !bin) return;
+    var url = QR_URLS[i];
+    var container = el.querySelector('.qr-img');
+    if (!container || !url) return;
     try {
       new QRCode(container, {
-        text: qrText,
+        text: url,
         width: 72, height: 72,
         colorDark: '#1a1a1a', colorLight: '#ffffff',
         correctLevel: QRCode.CorrectLevel.M
       });
     } catch(e) {}
   });
-  // Small delay to let QR codes render, then open print dialog
-  setTimeout(function() { window.print(); }, 600);
 };
 <\/script>
 </body></html>`;
