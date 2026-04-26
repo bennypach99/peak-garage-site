@@ -1,1217 +1,1002 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Peak Bin Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<title>Peak Bin Tracker – Peak Garage Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  :root {
-    --brown-dark: #1a1108;
-    --brown-mid: #2d1f0e;
-    --brown-warm: #4a3520;
-    --brown-tan: #7a5c3a;
-    --brown-light: #c4a882;
-    --cream: #f5efe6;
-    --cream-dark: #e8ddd0;
-    --orange-accent: #d4521a;
-    --orange-light: #f07340;
-    --text-primary: #1a1108;
-    --text-muted: #6b5540;
-    --text-light: #9a7e63;
-    --border: rgba(74,53,32,0.18);
-    --border-strong: rgba(74,53,32,0.35);
-    --success: #3a7d44;
-    --danger: #c0392b;
-    --shadow: 0 2px 12px rgba(26,17,8,0.12);
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --gold:#C9A84C;--gold-light:#E8C96A;--gold-dark:#A07830;--gold-pale:#2a2210;
+  --ch:#1a1a1a;--ch2:#222222;--ch3:#2d2d2d;
+  --text:#f0e6cc;--muted:#9a8a6a;
+  --border:rgba(201,168,76,0.2);--bstrong:rgba(201,168,76,0.45);
+  --radius:10px;--radius-sm:7px;--danger:#c0392b;
+}
+body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);min-height:100vh;padding-bottom:60px;}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* ── HEADER ── */
+.site-header{background:var(--ch2);border-bottom:1px solid var(--bstrong);padding:.7rem 1.1rem .5rem;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;align-items:center;gap:12px;margin-bottom:.45rem;}
+.logo-wrap{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.logo-wrap img{height:48px;width:auto;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.25rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;line-height:1.2;white-space:nowrap;}
+.logo-sep{font-weight:400;color:var(--muted);}
+.logo-sub{display:block;font-size:.65rem;font-weight:500;color:var(--muted);letter-spacing:.14em;}
+.nav-bar{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);}
+.nav-data-btns{display:flex;gap:4px;padding:4px 6px;flex-shrink:0;}
+.nav-data-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--bstrong);border-radius:6px;color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.nav-data-btn:hover{background:rgba(201,168,76,.1);color:var(--gold-light);}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--cream);
-    color: var(--text-primary);
-    min-height: 100vh;
-    padding-bottom: 80px;
-  }
+/* ── PAGE ── */
+.page{padding:16px;}
 
-  /* HEADER */
-  .header {
-    background: var(--brown-dark);
-    padding: 14px 16px 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .header-logo {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-  }
-  .header-text h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 17px;
-    color: var(--cream);
-    line-height: 1.1;
-  }
-  .header-text p {
-    font-size: 11px;
-    color: var(--brown-light);
-    letter-spacing: 0.04em;
-  }
+/* ── SHELF HERO (empty state) ── */
+.shelf-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:16px;}
+.shelf-hero-title{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);text-align:center;}
+.shelf-hero-sub{font-size:.85rem;color:var(--muted);text-align:center;max-width:260px;line-height:1.6;}
 
-  /* NAV TABS */
-  .nav-tabs {
-    background: var(--brown-mid);
-    display: flex;
-    padding: 0 8px;
-    gap: 2px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .nav-tabs::-webkit-scrollbar { display: none; }
-  .nav-tab {
-    background: none;
-    border: none;
-    color: var(--brown-light);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 10px 14px;
-    cursor: pointer;
-    white-space: nowrap;
-    border-bottom: 2px solid transparent;
-    transition: all 0.18s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .nav-tab.active {
-    color: var(--orange-light);
-    border-bottom-color: var(--orange-light);
-  }
-  .nav-tab svg { width: 15px; height: 15px; flex-shrink: 0; }
+/* ── SHELF CONTROLS ── */
+.shelf-controls{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.shelf-select{flex:1;min-width:0;background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:9px 32px 9px 12px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:600;letter-spacing:.04em;color:var(--gold);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .65rem center;text-transform:uppercase;}
+.shelf-select option{background:var(--ch2);color:var(--text);}
 
-  /* PAGE SECTIONS */
-  .page { display: none; padding: 16px; }
-  .page.active { display: block; }
+/* ── SHELF INFO CARD ── */
+.shelf-info-card{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;}
+.shelf-info-area{font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.06em;}
+.shelf-info-desc{font-size:.82rem;color:var(--muted);margin-top:2px;}
+.shelf-info-meta{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+.shelf-meta-chip{font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);background:var(--gold-pale);border:1px solid var(--bstrong);padding:3px 10px;border-radius:20px;}
 
-  /* SEARCH */
-  .search-wrap {
-    position: relative;
-    margin-bottom: 16px;
-  }
-  .search-wrap svg {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    color: var(--text-light);
-  }
-  .search-input {
-    width: 100%;
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 11px 12px 11px 38px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    color: var(--text-primary);
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .search-input:focus { border-color: var(--orange-accent); }
-  .search-input::placeholder { color: var(--text-light); }
+/* ── SHELF DIAGRAM ── */
+.shelf-diagram-wrap{width:100%;overflow-x:auto;padding:4px 0 12px;display:flex;justify-content:center;}
+.shelf-diagram-inner{display:inline-block;}
+.shelf-col-header-row{display:flex;}
+.shelf-body-row{display:flex;align-items:flex-start;}
+.shelf-row-labels{flex-shrink:0;}
 
-  /* SEARCH RESULTS */
-  .search-results { display: none; }
-  .search-results.visible { display: block; }
-  .result-card {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    margin-bottom: 10px;
-  }
-  .result-item-name {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-  }
-  .result-location {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: var(--brown-dark);
-    color: var(--cream);
-    font-size: 12px;
-    font-weight: 500;
-    padding: 3px 9px;
-    border-radius: 20px;
-    margin-top: 4px;
-  }
-  .result-bin-label {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 6px;
-  }
-  .no-results {
-    text-align: center;
-    padding: 32px 16px;
-    color: var(--text-light);
-    font-size: 14px;
-  }
+/* ── SEARCH ── */
+.search-wrap{position:relative;margin-bottom:10px;}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted);}
+.search-input{width:100%;background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 12px 11px 38px;font-family:'Open Sans',sans-serif;font-size:.92rem;color:var(--text);outline:none;transition:border-color .15s;}
+.search-input:focus{border-color:var(--gold);}
+.search-input::placeholder{color:var(--muted);}
+.result-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.result-item-name{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text);margin-bottom:6px;}
+.result-location{display:inline-flex;align-items:center;gap:5px;background:rgba(201,168,76,.1);border:1px solid var(--bstrong);color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;}
+.result-bin-chip{cursor:pointer;transition:background .15s,color .15s;}
+.result-bin-chip:hover{background:rgba(201,168,76,.25);color:var(--gold-light);}
+.result-bin-label{font-size:.78rem;color:var(--muted);margin-top:5px;}
+.no-results{text-align:center;padding:24px 16px;color:var(--muted);font-size:.85rem;}
 
-  /* BIN GRID */
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-light);
-    margin-bottom: 10px;
-  }
-  .bin-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-  .bin-card {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-    overflow: hidden;
-  }
-  .bin-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--brown-tan);
-  }
-  .bin-card:active { transform: scale(0.97); }
-  .bin-card-id {
-    font-family: 'DM Serif Display', serif;
-    font-size: 22px;
-    color: var(--brown-dark);
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .bin-card-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-  .bin-item-count {
-    font-size: 13px;
-    color: var(--text-light);
-  }
-  .bin-item-count span {
-    font-weight: 600;
-    color: var(--orange-accent);
-  }
-  .add-bin-btn {
-    background: var(--cream-dark);
-    border: 1.5px dashed var(--border-strong);
-    border-radius: var(--radius);
-    padding: 14px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    color: var(--text-light);
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    min-height: 90px;
-    transition: background 0.15s;
-  }
-  .add-bin-btn:active { background: var(--cream); }
-  .add-bin-btn svg { width: 20px; height: 20px; color: var(--brown-tan); }
+/* ── BIN DETAIL PANEL ── */
+.sbin-panel{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);overflow:hidden;margin-top:12px;}
+.sbin-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
+.sbin-title{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.08em;}
+.sbin-count{font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;color:var(--gold);background:var(--gold-pale);border:1px solid var(--bstrong);padding:3px 10px;border-radius:20px;letter-spacing:.06em;}
+.sbin-items{padding:4px 0;}
+.sbin-item-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border);}
+.sbin-item-row:last-child{border-bottom:none;}
+.sbin-item-name{flex:1;font-size:.9rem;color:var(--text);}
+.sbin-item-qty{font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;color:var(--gold);background:var(--gold-pale);border:1px solid var(--bstrong);padding:2px 8px;border-radius:20px;}
+.sbin-empty{padding:20px 16px;font-size:.85rem;color:var(--muted);font-style:italic;}
+.sbin-add-row{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border);background:var(--ch3);}
 
-  /* BIN DETAIL */
-  .back-btn {
-    background: none;
-    border: none;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    color: var(--orange-accent);
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 0;
-    margin-bottom: 16px;
-  }
-  .bin-detail-header {
-    background: var(--brown-dark);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .bin-detail-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 26px;
-    color: var(--cream);
-  }
-  .bin-detail-sub {
-    font-size: 12px;
-    color: var(--brown-light);
-    margin-top: 2px;
-  }
-  .bin-detail-count {
-    background: var(--orange-accent);
-    color: white;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 5px 11px;
-    border-radius: 20px;
-  }
+/* ── FORMS ── */
+.form-row{margin-bottom:12px;}
+.form-row-inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.form-label{display:block;font-family:'Rajdhani',sans-serif;font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;}
+.form-input{width:100%;background:var(--ch);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:'Open Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;transition:border-color .15s;}
+.form-input:focus{border-color:var(--gold);}
+.form-input::placeholder{color:var(--muted);}
 
-  /* ITEM LIST */
-  .item-list { margin-bottom: 16px; }
-  .item-row {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .item-row-name {
-    flex: 1;
-    font-size: 15px;
-    color: var(--text-primary);
-  }
-  .item-row-qty {
-    font-size: 13px;
-    color: var(--text-muted);
-    background: var(--cream-dark);
-    padding: 2px 8px;
-    border-radius: 20px;
-  }
-  .item-actions {
-    display: flex;
-    gap: 6px;
-  }
-  .icon-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 6px;
-    color: var(--text-light);
-    transition: all 0.15s;
-  }
-  .icon-btn:active { background: var(--cream-dark); }
-  .icon-btn svg { width: 16px; height: 16px; }
-  .icon-btn.danger { color: var(--danger); }
+/* ── BUTTONS ── */
+.btn{width:100%;padding:12px;border:none;border-radius:var(--radius-sm);font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.btn-primary{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);}
+.btn-primary:hover{opacity:.88;}
+.btn-secondary{background:var(--ch3);border:1px solid var(--bstrong);color:var(--gold);}
+.btn-secondary:hover{background:rgba(201,168,76,.08);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--text);}
+.btn-sm{padding:7px 14px;font-size:.82rem;width:auto;display:inline-block;}
+.btn-lg{padding:18px;font-size:1.1rem;}
+.icon-btn{background:none;border:none;cursor:pointer;padding:5px;border-radius:5px;color:var(--muted);transition:all .15s;}
+.icon-btn:hover{background:rgba(201,168,76,.1);color:var(--gold);}
+.icon-btn svg{width:15px;height:15px;}
+.icon-btn.danger{color:var(--danger);}
+.icon-btn.danger:hover{background:rgba(192,57,43,.15);color:#e05040;}
 
-  /* EMPTY STATE */
-  .empty-state {
-    text-align: center;
-    padding: 32px 16px;
-    color: var(--text-light);
-  }
-  .empty-state svg { width: 44px; height: 44px; margin-bottom: 10px; opacity: 0.4; }
-  .empty-state p { font-size: 14px; }
+/* ── MODAL BOTTOM SHEET ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-sheet{background:var(--ch2);border:1px solid var(--bstrong);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 16px 32px;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-handle{width:36px;height:3px;background:var(--bstrong);border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.35rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text);margin-bottom:4px;}
+.modal-sub{font-size:.8rem;color:var(--muted);margin-bottom:16px;}
 
-  /* ADD ITEM FORM */
-  .add-item-form {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-  .form-row { margin-bottom: 12px; }
-  .form-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 5px;
-  }
-  .form-input {
-    width: 100%;
-    background: var(--cream);
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    color: var(--text-primary);
-    outline: none;
-    transition: border-color 0.15s;
-  }
-  .form-input:focus { border-color: var(--orange-accent); background: white; }
-  .form-row-inline {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
+/* ── SIZE PICKER (add shelf modal) ── */
+.size-btn-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;}
+.size-btn{background:var(--ch3);border:1px solid var(--border);border-radius:5px;padding:8px 4px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s;}
+.size-btn.sel{background:var(--gold-pale);border-color:var(--gold);color:var(--gold-light);}
+.size-btn:hover:not(.sel){border-color:rgba(201,168,76,.4);color:var(--text);}
 
-  /* BUTTONS */
-  .btn {
-    width: 100%;
-    padding: 13px;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-primary {
-    background: var(--orange-accent);
-    color: white;
-  }
-  .btn-primary:active { background: #b8451a; transform: scale(0.98); }
-  .btn-secondary {
-    background: var(--brown-dark);
-    color: var(--cream);
-  }
-  .btn-secondary:active { background: var(--brown-mid); transform: scale(0.98); }
-  .btn-ghost {
-    background: var(--cream-dark);
-    color: var(--text-primary);
-    border: 1.5px solid var(--border);
-  }
-  .btn-ghost:active { background: var(--cream); transform: scale(0.98); }
-  .btn-sm {
-    padding: 9px 14px;
-    font-size: 13px;
-    width: auto;
-    display: inline-block;
-  }
+/* ── TOAST ── */
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ch2);border:1px solid var(--bstrong);color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:24px;opacity:0;transition:all .25s;z-index:300;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* QR SCANNER */
-  .qr-outer {
-    background: var(--brown-dark);
-    border-radius: var(--radius);
-    padding: 20px 16px;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  .qr-outer h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 20px;
-    color: var(--cream);
-    margin-bottom: 6px;
-  }
-  .qr-outer p {
-    font-size: 13px;
-    color: var(--brown-light);
-    margin-bottom: 16px;
-  }
-  #qr-reader {
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
-  #qr-reader video { border-radius: var(--radius-sm); }
-  .qr-status {
-    font-size: 14px;
-    color: var(--brown-light);
-    text-align: center;
-    padding: 8px;
-  }
-  .qr-result-box {
-    background: var(--success);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-    color: white;
-    font-size: 14px;
-    font-weight: 500;
-    text-align: center;
-    margin-top: 8px;
-    display: none;
-  }
-  .qr-result-box.visible { display: block; }
+/* ── BOTTOM DISCLAIMER ── */
+.bottom-disclaimer{display:flex;align-items:flex-start;gap:8px;padding:12px 16px;color:var(--muted);font-size:.73rem;line-height:1.6;border-top:1px solid var(--border);margin-top:24px;}
+.bottom-disclaimer strong{color:var(--gold);font-weight:600;}
 
-  /* QR CARD GENERATOR */
-  .qr-gen-section {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-  }
-  .qr-gen-section h3 {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    color: var(--text-primary);
-  }
-  .qr-code-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-top: 12px;
-  }
-  .qr-code-tile {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-    text-align: center;
-    cursor: pointer;
-  }
-  .qr-code-tile canvas { display: none; }
-  .qr-code-tile img { width: 80px; height: 80px; }
-  .qr-tile-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-top: 6px;
-  }
+/* ── UTILITY ── */
+.mt8{margin-top:8px;}.mt16{margin-top:16px;}
+.flex-between{display:flex;align-items:center;justify-content:space-between;}
+.tag{display:inline-block;background:var(--gold-pale);border:1px solid var(--bstrong);color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:20px;}
 
-  /* MOVE MODAL */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(26,17,8,0.6);
-    z-index: 200;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-  }
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: all;
-  }
-  .modal-sheet {
-    background: var(--cream);
-    width: 100%;
-    max-width: 480px;
-    border-radius: 20px 20px 0 0;
-    padding: 20px 16px 32px;
-    transform: translateY(100%);
-    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  .modal-overlay.open .modal-sheet { transform: translateY(0); }
-  .modal-handle {
-    width: 36px;
-    height: 4px;
-    background: var(--border-strong);
-    border-radius: 2px;
-    margin: 0 auto 16px;
-  }
-  .modal-title {
-    font-family: 'DM Serif Display', serif;
-    font-size: 20px;
-    margin-bottom: 4px;
-  }
-  .modal-sub {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 16px;
-  }
-  .bin-select-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 16px;
-    max-height: 280px;
-    overflow-y: auto;
-  }
-  .bin-select-btn {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 8px;
-    cursor: pointer;
-    text-align: center;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    transition: all 0.15s;
-  }
-  .bin-select-btn:active, .bin-select-btn.selected {
-    background: var(--brown-dark);
-    color: var(--cream);
-    border-color: var(--brown-dark);
-  }
 
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%) translateY(10px);
-    background: var(--brown-dark);
-    color: var(--cream);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 10px 18px;
-    border-radius: 24px;
-    opacity: 0;
-    transition: all 0.25s;
-    z-index: 300;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
 
-  /* ADD BIN MODAL */
-  .add-bin-modal .form-row { margin-bottom: 12px; }
+/* ── QR SCANNER MODAL ── */
+.qr-modal-inner{padding:20px 16px 28px;}
+.qr-modal-inner h2{font-family:'Rajdhani',sans-serif;font-size:1.3rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gold-light);margin-bottom:4px;}
+.qr-modal-inner p{font-size:.82rem;color:var(--muted);margin-bottom:14px;}
+#qrReaderBox{border-radius:8px;overflow:hidden;margin-bottom:10px;}
+.qr-status{font-size:.82rem;color:var(--muted);text-align:center;padding:6px 0;}
+.qr-result{background:rgba(58,125,68,.2);border:1px solid rgba(58,125,68,.5);border-radius:8px;padding:10px 14px;color:#5fda8a;font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.04em;text-align:center;margin:8px 0;display:none;}
+.qr-result.show{display:block;}
+.qr-manual{background:var(--ch3);border-radius:8px;padding:12px;margin-top:10px;}
+.qr-manual-title{font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
 
-  /* UTILITY */
-  .mt8 { margin-top: 8px; }
-  .mt16 { margin-top: 16px; }
-  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-  .flex-between { display: flex; align-items: center; justify-content: space-between; }
-  .tag {
-    display: inline-block;
-    background: var(--cream-dark);
-    color: var(--text-muted);
-    font-size: 12px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-  }
+/* ── LABEL MODAL ── */
+.label-shelf-list{max-height:220px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:6px;}
+.label-shelf-item{display:flex;align-items:center;gap:10px;background:var(--ch3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;transition:all .15s;}
+.label-shelf-item.sel{background:var(--gold-pale);border-color:var(--gold);}
+.label-shelf-item input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;}
+.label-shelf-name{font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
+.label-shelf-sub{font-size:.72rem;color:var(--muted);}
+.label-preview-btn{display:flex;align-items:center;gap:6px;}
+
+/* ── PRINT STYLES ── */
+@media print {
+  body > *{display:none!important;}
+}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <svg class="header-logo" viewBox="0 0 32 32" fill="none">
-    <rect width="32" height="32" rx="6" fill="#4a3520"/>
-    <rect x="5" y="18" width="22" height="3" rx="1" fill="#c4a882"/>
-    <rect x="5" y="11" width="22" height="3" rx="1" fill="#c4a882"/>
-    <rect x="5" y="6" width="4" height="20" rx="1" fill="#7a5c3a"/>
-    <rect x="23" y="6" width="4" height="20" rx="1" fill="#7a5c3a"/>
-    <rect x="8" y="14" width="6" height="7" rx="1" fill="#d4521a" opacity="0.9"/>
-    <rect x="16" y="14" width="6" height="7" rx="1" fill="#d4521a" opacity="0.7"/>
-  </svg>
-  <div class="header-text">
-    <h1>Peak Bin Tracker</h1>
-    <p>peakgaragesolutions.ca</p>
+<header class="site-header">
+  <div class="header-top">
+    <a class="logo-wrap" href="#">
+      <img src="data:image/png;base64,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" alt="Peak Garage Solutions" style="height:48px;width:auto;"/>
+      <div class="logo-text">Peak Garage Solutions<span class="logo-sep"> – </span>Bin Tracker<span class="logo-sub">peakgaragesolutions.ca</span></div>
+    </a>
+  </div>
+  <div class="nav-bar">
+    <div class="nav-data-btns" id="sideBtns" style="display:none;">
+      <button class="nav-data-btn" id="qrScanBtn" title="Scan QR Code">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>QR Scan
+      </button>
+      <button class="nav-data-btn" id="printLabelsBtn" title="Print Labels">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>Print Labels
+      </button>
+    </div>
+    <div class="nav-data-btns" style="margin-left:auto;">
+      <button class="nav-data-btn" id="exportBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><path d="M8 2v8M5 7l3 3 3-3"/><rect x="2" y="11" width="12" height="3" rx="1"/></svg>Export
+      </button>
+      <label class="nav-data-btn" style="cursor:pointer;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><path d="M8 10V2M5 5l3-3 3 3"/><rect x="2" y="11" width="12" height="3" rx="1"/></svg>Import
+        <input type="file" id="importInput" accept=".xlsx,.xls" style="display:none;">
+      </label>
+    </div>
   </div>
 </header>
 
-<nav class="nav-tabs" id="navTabs">
-  <button class="nav-tab active" data-page="search">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
-    Search
-  </button>
-  <button class="nav-tab" data-page="bins">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="5" height="5" rx="1"/><rect x="9" y="3" width="5" height="5" rx="1"/><rect x="2" y="10" width="5" height="5" rx="1"/><rect x="9" y="10" width="5" height="5" rx="1"/></svg>
-    Bins
-  </button>
-  <button class="nav-tab" data-page="scanner">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
-    QR Scan
-  </button>
-  <button class="nav-tab" data-page="labels">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2L14 8L8 14L2 8L8 2Z"/><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>
-    Labels
-  </button>
-</nav>
+<div class="page">
 
-<!-- SEARCH PAGE -->
-<section class="page active" id="page-search">
-  <div class="search-wrap">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
-    <input class="search-input" id="searchInput" type="search" placeholder="Search items across all bins…" autocomplete="off">
+  <!-- ── EMPTY STATE ── -->
+  <div id="shelfEmpty" class="shelf-hero">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="var(--gold)" stroke-width="1.5" opacity=".5">
+      <rect x="6" y="14" width="52" height="8" rx="2"/><rect x="6" y="34" width="52" height="8" rx="2"/>
+      <line x1="12" y1="22" x2="12" y2="34"/><line x1="52" y1="22" x2="52" y2="34"/>
+      <rect x="12" y="42" width="12" height="10" rx="1.5"/><rect x="28" y="42" width="12" height="10" rx="1.5"/>
+    </svg>
+    <div class="shelf-hero-title">No Shelves Yet</div>
+    <div class="shelf-hero-sub">Add your first shelf to start tracking tote bins by location.</div>
+    <button class="btn btn-primary btn-lg" style="width:220px;" id="addShelfBtnEmpty">+ Add Shelf</button>
   </div>
 
-  <div class="search-results" id="searchResults"></div>
+  <!-- ── ACTIVE STATE ── -->
+  <div id="shelfActive" style="display:none;">
 
-  <div id="searchHome">
-    <div class="section-label">Quick Stats</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-      <div style="background:var(--brown-dark);border-radius:var(--radius);padding:14px;">
-        <div style="font-size:11px;color:var(--brown-light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Total Bins</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--cream);" id="statBins">0</div>
+    <!-- Controls row -->
+    <div class="shelf-controls">
+      <select class="shelf-select" id="shelfDropdown"></select>
+      <button class="btn btn-secondary btn-sm" id="searchToggleBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>Search
+      </button>
+      <button class="btn btn-primary btn-sm" id="addShelfBtnActive">+ Add Shelf</button>
+    </div>
+
+    <!-- Inline search -->
+    <div id="searchPanel" style="display:none;margin-bottom:14px;">
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+        <input class="search-input" id="searchInput" type="search" placeholder="Search all bins across all shelves…" autocomplete="off">
       </div>
-      <div style="background:var(--brown-dark);border-radius:var(--radius);padding:14px;">
-        <div style="font-size:11px;color:var(--brown-light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Total Items</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--cream);" id="statItems">0</div>
-      </div>
+      <div id="searchResults"></div>
     </div>
 
-    <div class="section-label">Recently Added</div>
-    <div id="recentItems">
-      <div class="empty-state">
-        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="12" width="28" height="22" rx="2"/><path d="M15 12V9a2 2 0 014 0v3"/><path d="M25 12V9a2 2 0 014 0v3"/><line x1="15" y1="22" x2="29" y2="22"/><line x1="15" y1="28" x2="22" y2="28"/></svg>
-        <p>No items yet. Add bins and start filling them!</p>
-      </div>
-    </div>
-  </div>
-</section>
+    <!-- Shelf info + diagram + bin detail -->
+    <div id="shelfDisplay"></div>
 
-<!-- BINS PAGE -->
-<section class="page" id="page-bins">
-  <div id="binListView">
-    <div class="flex-between" style="margin-bottom:14px;">
-      <div class="section-label" style="margin:0;">Your Bins</div>
-      <button class="btn btn-primary btn-sm" id="openAddBin">+ New Bin</button>
-    </div>
-    <div class="bin-grid" id="binGrid"></div>
   </div>
 
-  <div id="binDetailView" style="display:none;">
-    <button class="back-btn" id="backToBins">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8L10 13"/></svg>
-      All Bins
-    </button>
-    <div class="bin-detail-header" id="binDetailHeader"></div>
+</div>
 
-    <div class="section-label">Items in this bin</div>
-    <div class="item-list" id="binItemList"></div>
 
-    <div class="section-label mt16">Add Item</div>
-    <div class="add-item-form">
-      <div class="form-row">
-        <label class="form-label">Item Name</label>
-        <input class="form-input" id="addItemName" type="text" placeholder="e.g. Winter gloves">
-      </div>
-      <div class="form-row-inline">
-        <div>
-          <label class="form-label">Quantity</label>
-          <input class="form-input" id="addItemQty" type="number" placeholder="1" min="1" value="1">
-        </div>
-        <div>
-          <label class="form-label">Category</label>
-          <input class="form-input" id="addItemCat" type="text" placeholder="e.g. Winter">
-        </div>
-      </div>
-      <button class="btn btn-primary" id="addItemBtn">Add to Bin</button>
-    </div>
-  </div>
-</section>
 
-<!-- QR SCANNER PAGE -->
-<section class="page" id="page-scanner">
-  <div class="qr-outer">
-    <h2>Scan Bin Label</h2>
-    <p>Point camera at a QR code on your tote rack label</p>
-    <div id="qr-reader" style="width:100%;max-width:320px;margin:0 auto 12px;"></div>
-    <div class="qr-status" id="qrStatus">Camera not started</div>
-    <div class="qr-result-box" id="qrResultBox"></div>
-    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;">
-      <button class="btn btn-secondary btn-sm" id="startScanBtn">Start Camera</button>
-      <button class="btn btn-ghost btn-sm" id="stopScanBtn" style="display:none;">Stop</button>
-    </div>
-  </div>
-
-  <div id="qrBinPreview" style="display:none;">
-    <div class="section-label">Scanned Bin Contents</div>
-    <div class="bin-detail-header" id="qrBinHeader"></div>
-    <div class="item-list mt8" id="qrItemList"></div>
-    <button class="btn btn-secondary mt8" id="qrOpenBinBtn">Open Full Bin View</button>
-  </div>
-
-  <div style="margin-top:16px;background:var(--cream-dark);border-radius:var(--radius);padding:14px;">
-    <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-primary);">Manual Bin Lookup</div>
-    <div style="display:flex;gap:8px;">
-      <input class="form-input" id="manualBinInput" placeholder="e.g. C2-R3" style="flex:1;font-size:14px;padding:9px 12px;">
-      <button class="btn btn-primary btn-sm" id="manualLookupBtn">Go</button>
-    </div>
-  </div>
-</section>
-
-<!-- LABELS PAGE -->
-<section class="page" id="page-labels">
-  <div style="background:var(--brown-dark);border-radius:var(--radius);padding:16px;margin-bottom:16px;text-align:center;">
-    <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--cream);margin-bottom:6px;">QR Label Generator</div>
-    <div style="font-size:13px;color:var(--brown-light);">Print these labels and stick them on your totes. Scanning opens the bin instantly.</div>
-  </div>
-
-  <div class="qr-gen-section">
-    <h3>Your Bin Labels</h3>
-    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Tap a label to download it, or use your browser's print function.</p>
-    <div class="qr-code-grid" id="labelGrid"></div>
-    <div id="labelsEmpty" class="empty-state" style="display:none;">
-      <p>No bins yet. Create bins first to generate QR labels.</p>
-    </div>
-  </div>
-</section>
-
-<!-- MOVE ITEM MODAL -->
-<div class="modal-overlay" id="moveModal">
+<!-- ── QR SCANNER MODAL ── -->
+<div class="modal-overlay" id="qrModal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Move Item</div>
-    <div class="modal-sub" id="moveModalSub">Select destination bin</div>
-    <div class="bin-select-grid" id="moveBinGrid"></div>
-    <button class="btn btn-primary" id="confirmMoveBtn">Move to Selected Bin</button>
-    <button class="btn btn-ghost mt8" id="cancelMoveBtn">Cancel</button>
+    <div class="qr-modal-inner">
+      <h2>Scan Bin Label</h2>
+      <p>Point your camera at a bin QR code to jump straight to it.</p>
+      <div id="qrReaderBox"></div>
+      <div class="qr-status" id="qrStatusText">Camera not started</div>
+      <div class="qr-result" id="qrResultMsg"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" id="startQrBtn">Start Camera</button>
+        <button class="btn btn-ghost btn-sm" id="stopQrBtn" style="display:none;">Stop</button>
+      </div>
+      <div class="qr-manual">
+        <div class="qr-manual-title">Manual Lookup</div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="manualQrInput" placeholder="e.g. A1, B3" style="flex:1;font-size:.88rem;padding:9px 12px;">
+          <button class="btn btn-primary btn-sm" id="manualQrBtn">Go</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="closeQrBtn" style="margin:0 16px 16px;">Close</button>
   </div>
 </div>
 
-<!-- ADD BIN MODAL -->
-<div class="modal-overlay" id="addBinModal">
-  <div class="modal-sheet add-bin-modal">
+<!-- ── LABEL PRINT MODAL ── -->
+<div class="modal-overlay" id="labelModal">
+  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add New Bin</div>
-    <div class="modal-sub">Bins are identified by column (C) and row (R) position on your rack</div>
-    <div class="form-row-inline mt16">
-      <div>
-        <label class="form-label">Column #</label>
-        <input class="form-input" id="newBinCol" type="number" placeholder="1" min="1" max="6">
-      </div>
-      <div>
-        <label class="form-label">Row #</label>
-        <input class="form-input" id="newBinRow" type="number" placeholder="1" min="1" max="6">
-      </div>
+    <div class="modal-title">Print Bin Labels</div>
+    <div class="modal-sub">Select shelves to generate Avery Presta 94506 labels (1.5" round, 20 per sheet)</div>
+    <div class="label-shelf-list" id="labelShelfList"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-ghost btn-sm" id="selectAllLabels">Select All</button>
+      <button class="btn btn-ghost btn-sm" id="deselectAllLabels">Deselect All</button>
+    </div>
+    <button class="btn btn-primary" id="previewLabelsBtn">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"><rect x="1" y="3" width="14" height="10" rx="1.5"/><line x1="4" y1="7" x2="12" y2="7"/><line x1="4" y1="10" x2="9" y2="10"/></svg>
+      Preview &amp; Print
+    </button>
+    <button class="btn btn-ghost mt8" id="closeLabelBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- ── PRINT PREVIEW MODAL ── -->
+<div id="printPreviewOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 16px 0;">
+  <div style="width:100%;max-width:900px;flex:1;display:flex;flex-direction:column;min-height:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);">Label Preview — Avery Presta 94506</div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:.72rem;color:var(--muted);">1.5" round · 20 per sheet</div>
+    </div>
+    <iframe id="printFrame" style="flex:1;width:100%;border:none;border-radius:8px;background:white;min-height:0;"></iframe>
+    <div style="display:flex;gap:10px;padding:14px 0 20px;flex-shrink:0;">
+      <button class="btn btn-primary" id="doPrintBtn" style="flex:1;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>Print
+      </button>
+      <button class="btn btn-ghost" id="closePrintPreviewBtn" style="flex:1;">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD SHELF MODAL ── -->
+<div class="modal-overlay" id="addShelfModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add New Shelf</div>
+    <div class="modal-sub">Where is this shelf and what does it hold?</div>
+    <div class="form-row">
+      <label class="form-label">Area</label>
+      <input class="form-input" id="newShelfArea" type="text" placeholder="e.g. Garage, Basement">
     </div>
     <div class="form-row">
-      <label class="form-label">Bin Label (optional)</label>
-      <input class="form-input" id="newBinLabel" type="text" placeholder="e.g. Winter Gear, Holiday Decor">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="newShelfDesc" type="text" placeholder="e.g. Tools and Outdoor Stuff">
     </div>
-    <button class="btn btn-primary mt8" id="confirmAddBin">Create Bin</button>
-    <button class="btn btn-ghost mt8" id="cancelAddBin">Cancel</button>
+    <div class="form-row-inline" style="margin-top:4px;">
+      <div>
+        <label class="form-label">Columns (A–F)</label>
+        <div class="size-btn-grid" id="colBtns">
+          <button class="size-btn" data-val="1">1</button><button class="size-btn" data-val="2">2</button>
+          <button class="size-btn sel" data-val="3">3</button><button class="size-btn" data-val="4">4</button>
+          <button class="size-btn" data-val="5">5</button><button class="size-btn" data-val="6">6</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Rows (1–6)</label>
+        <div class="size-btn-grid" id="rowBtns">
+          <button class="size-btn" data-val="1">1</button><button class="size-btn" data-val="2">2</button>
+          <button class="size-btn" data-val="3">3</button><button class="size-btn sel" data-val="4">4</button>
+          <button class="size-btn" data-val="5">5</button><button class="size-btn" data-val="6">6</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary mt16" id="confirmAddShelf">Create Shelf</button>
+    <button class="btn btn-ghost mt8" id="cancelAddShelf">Cancel</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="bottom-disclaimer">
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0;opacity:.5;"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7" x2="8" y2="11"/><circle cx="8" cy="5" r="0.5" fill="currentColor" stroke="none"/></svg>
+  <span>Your shelf data is stored in this browser only. If you clear your cache or switch devices, your data will be lost. Use <strong>Export</strong> to save a backup — restore it anytime with <strong>Import</strong>.</span>
+</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-// ===== STATE =====
-let state = {
-  bins: [],
-  currentBin: null,
-  moveItem: null,
-  moveFromBin: null,
-  selectedMoveBin: null,
-  scanner: null,
-  scannerActive: false
-};
+const COL_LETTERS = ['A','B','C','D','E','F'];
+const WIDTH_IN  = {1:23.5,2:45.5,3:67.5,4:89.5,5:111.5,6:133.5};
+const HEIGHT_IN = {2:36,3:52,4:68,5:84,6:100};
+const MAX_W_IN=133.5,MAX_H_IN=100,CVS_W=420,CVS_H=320,PAD=20;
+const SCALE_X=(CVS_W-PAD*2)/MAX_W_IN, SCALE_Y=(CVS_H-PAD*2)/MAX_H_IN;
+
+// ── STATE ──
+let state = { shelves:[], shelfBins:{}, addShelfCols:3, addShelfRows:4 };
 
 function loadState() {
-  const saved = localStorage.getItem('peakBinTracker');
-  if (saved) {
-    try { state.bins = JSON.parse(saved).bins || []; } catch(e) {}
-  }
+  try {
+    const d = JSON.parse(localStorage.getItem('peakBinTracker') || '{}');
+    state.shelves   = d.shelves   || [];
+    state.shelfBins = d.shelfBins || {};
+  } catch(e) {}
 }
 function saveState() {
-  localStorage.setItem('peakBinTracker', JSON.stringify({ bins: state.bins }));
+  localStorage.setItem('peakBinTracker', JSON.stringify({ shelves:state.shelves, shelfBins:state.shelfBins }));
 }
 loadState();
 
-// ===== UTILITIES =====
-function binId(col, row) { return `C${col}-R${row}`; }
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+// ── UTILS ──
+function binKey(si,c,r)  { return 'shelf'+si+'_'+COL_LETTERS[c]+(r+1); }
+function binLabel(c,r)    { return COL_LETTERS[c]+(r+1); }
+function showToast(msg)   {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
 }
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-// ===== NAVIGATION =====
-document.getElementById('navTabs').addEventListener('click', e => {
-  const btn = e.target.closest('.nav-tab');
-  if (!btn) return;
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  const pageId = 'page-' + btn.dataset.page;
-  document.getElementById(pageId).classList.add('active');
-  if (btn.dataset.page === 'bins') renderBinGrid();
-  if (btn.dataset.page === 'search') renderStats();
-  if (btn.dataset.page === 'labels') renderLabels();
+// ── SHELVES PAGE ──
+function renderShelvesPage(selectIdx) {
+  const empty  = document.getElementById('shelfEmpty');
+  const active = document.getElementById('shelfActive');
+  if (!state.shelves.length) { empty.style.display='flex'; active.style.display='none'; return; }
+  empty.style.display='none'; active.style.display='block';
+  const dd = document.getElementById('shelfDropdown');
+  const prev = dd.value;
+  dd.innerHTML = state.shelves.map((s,i)=>`<option value="${i}">${s.area} – ${s.desc}</option>`).join('');
+  if (selectIdx !== undefined) dd.value = selectIdx;
+  else if (prev !== '' && parseInt(prev) < state.shelves.length) dd.value = prev;
+  else dd.value = state.shelves.length - 1;
+  renderShelfDiagram(parseInt(dd.value));
+}
+
+document.getElementById('shelfDropdown').addEventListener('change', function() {
+  renderShelfDiagram(parseInt(this.value));
 });
 
-// ===== SEARCH =====
-document.getElementById('searchInput').addEventListener('input', function() {
-  const q = this.value.trim().toLowerCase();
-  const results = document.getElementById('searchResults');
-  const home = document.getElementById('searchHome');
-  if (!q) {
-    results.classList.remove('visible');
-    home.style.display = '';
-    return;
+// ── SHELF DIAGRAM ──
+function renderShelfDiagram(idx) {
+  const s = state.shelves[idx];
+  if (!s) return;
+  const { cols, rows } = s;
+  const wIn = WIDTH_IN[cols] || cols*22.5, hIn = HEIGHT_IN[rows] || rows*17;
+  const unitW = wIn*SCALE_X, unitH = hIn*SCALE_Y;
+  const cvW = Math.round(unitW+PAD*2), cvH = Math.round(unitH+PAD*2);
+  const cellW = unitW/cols, cellH = unitH/rows;
+  const ft = Math.max(3, Math.round(unitW/(cols*7)));
+  const FC='#c8b08a', FA='#C9A84C';
+
+  document.getElementById('shelfDisplay').innerHTML =
+    '<div class="shelf-info-card">' +
+      '<div class="shelf-info-area">'+s.area+'</div>' +
+      '<div class="shelf-info-desc">'+s.desc+'</div>' +
+      '<div class="shelf-info-meta">' +
+        '<div class="shelf-meta-chip">'+cols+' Wide</div>' +
+        '<div class="shelf-meta-chip">'+rows+' High</div>' +
+        '<div class="shelf-meta-chip">'+(cols*rows)+' Slots</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="shelf-diagram-wrap"><div class="shelf-diagram-inner">' +
+      '<div class="shelf-col-header-row" id="colHeaders"></div>' +
+      '<div class="shelf-body-row">' +
+        '<div class="shelf-row-labels" id="rowLabels"></div>' +
+        '<div style="position:relative;display:inline-block;">' +
+          '<canvas id="shelfCanvas" width="'+cvW+'" height="'+cvH+'" style="display:block;border-radius:6px;"></canvas>' +
+          '<div id="binOverlay" style="position:absolute;top:0;left:0;width:'+cvW+'px;height:'+cvH+'px;"></div>' +
+        '</div>' +
+      '</div>' +
+    '</div></div>' +
+    '<div id="binDetailPanel"></div>';
+
+  // Column labels
+  const colHdr = document.getElementById('colHeaders');
+  colHdr.style.cssText='display:flex;margin-left:24px;margin-bottom:4px;width:'+cvW+'px;';
+  const sp=document.createElement('div'); sp.style.cssText='width:'+PAD+'px;flex-shrink:0;';
+  colHdr.appendChild(sp);
+  for(let c=0;c<cols;c++){
+    const d=document.createElement('div');
+    d.textContent=COL_LETTERS[c];
+    d.style.cssText='width:'+cellW+'px;text-align:center;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#C9A84C;letter-spacing:1px;text-transform:uppercase;flex-shrink:0;';
+    colHdr.appendChild(d);
   }
-  results.classList.add('visible');
-  home.style.display = 'none';
-  let html = '';
-  let found = 0;
-  state.bins.forEach(bin => {
-    bin.items.forEach(item => {
-      if (item.name.toLowerCase().includes(q) || (item.cat && item.cat.toLowerCase().includes(q))) {
-        found++;
-        html += `<div class="result-card">
-          <div class="result-item-name">${item.name}</div>
-          ${item.cat ? `<div class="tag">${item.cat}</div>` : ''}
-          <div class="result-location">
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="12" height="11" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
-            ${binId(bin.col, bin.row)}${bin.label ? ' · ' + bin.label : ''}
-          </div>
-          <div class="result-bin-label">Qty: ${item.qty} · Column ${bin.col}, Row ${bin.row}</div>
-        </div>`;
-      }
+  // Row labels
+  const rowLbl=document.getElementById('rowLabels');
+  rowLbl.style.cssText='display:flex;flex-direction:column;width:24px;padding-top:'+PAD+'px;';
+  for(let r=0;r<rows;r++){
+    const d=document.createElement('div');
+    d.textContent=String(r+1);
+    d.style.cssText='height:'+cellH+'px;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700;color:#C9A84C;';
+    rowLbl.appendChild(d);
+  }
+  // Draw canvas
+  const ctx=document.getElementById('shelfCanvas').getContext('2d');
+  for(let c=0;c<=cols;c++){const x=PAD+(unitW/cols)*c;ctx.fillStyle=FC;ctx.fillRect(x-ft/2,PAD,ft,unitH);ctx.strokeStyle=FA;ctx.lineWidth=0.7;ctx.strokeRect(x-ft/2,PAD,ft,unitH);}
+  for(let r=0;r<=rows;r++){const y=PAD+(unitH/rows)*r;ctx.fillStyle=FC;ctx.fillRect(PAD,y-ft/2,unitW,ft);ctx.strokeStyle=FA;ctx.lineWidth=0.7;ctx.strokeRect(PAD,y-ft/2,unitW,ft);}
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const bx=PAD+c*cellW+ft/2+2,by=PAD+r*cellH+ft/2+2,bw=cellW-ft-4,bh=cellH-ft-4;
+      if(bw<4||bh<4)continue;
+      ctx.fillStyle='#222';ctx.beginPath();ctx.roundRect(bx,by+bh*.24,bw,bh*.76,2);ctx.fill();ctx.strokeStyle='#3a3a3a';ctx.lineWidth=0.5;ctx.stroke();
+      const lh=Math.max(3,bh*.17);ctx.fillStyle='#D4A017';ctx.beginPath();ctx.roundRect(bx+bw*.04,by+bh*.13,bw*.92,lh,2);ctx.fill();ctx.strokeStyle='#A87C10';ctx.lineWidth=0.4;ctx.stroke();
+      if(bw>18){ctx.fillStyle='#A87C10';ctx.fillRect(bx+bw*.13,by+bh*.10,bw*.1,bh*.06);ctx.fillRect(bx+bw*.77,by+bh*.10,bw*.1,bh*.06);}
+    }
+  }
+  // Clickable overlays
+  const ov=document.getElementById('binOverlay');
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const bx=PAD+c*cellW+ft/2+2,by=PAD+r*cellH+ft/2+2,bw=cellW-ft-4,bh=cellH-ft-4;
+      const btn=document.createElement('button');
+      btn.dataset.col=c; btn.dataset.row=r;
+      btn.style.cssText='position:absolute;left:'+bx+'px;top:'+by+'px;width:'+bw+'px;height:'+bh+'px;background:transparent;border:2px solid transparent;border-radius:3px;cursor:pointer;transition:background .15s,border-color .15s;outline:none;';
+      btn.addEventListener('mouseenter',function(){if(!this.classList.contains('sel')){this.style.background='rgba(201,168,76,.18)';this.style.borderColor='#C9A84C';}});
+      btn.addEventListener('mouseleave',function(){if(!this.classList.contains('sel')){this.style.background='transparent';this.style.borderColor='transparent';}});
+      btn.addEventListener('click',function(){
+        ov.querySelectorAll('button').forEach(b=>{b.classList.remove('sel');b.style.background='transparent';b.style.borderColor='transparent';});
+        this.classList.add('sel');this.style.background='rgba(201,168,76,.25)';this.style.borderColor='#E8C96A';
+        renderBinDetail(idx,parseInt(this.dataset.col),parseInt(this.dataset.row));
+      });
+      ov.appendChild(btn);
+    }
+  }
+}
+
+// ── BIN DETAIL ──
+function renderBinDetail(si, col, row) {
+  const key   = binKey(si,col,row);
+  const label = binLabel(col,row);
+  if (!state.shelfBins[key]) state.shelfBins[key]=[];
+  const items = state.shelfBins[key];
+  const panel = document.getElementById('binDetailPanel');
+
+  let itemsHtml = items.length
+    ? items.map((item,i)=>
+        '<div class="sbin-item-row">' +
+          '<div class="sbin-item-name">'+item.name+'</div>' +
+          (item.qty>1?'<div class="sbin-item-qty">\xd7'+item.qty+'</div>':'') +
+          '<button class="icon-btn danger" data-key="'+key+'" data-idx="'+i+'" onclick="removeItem(this)">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>' +
+          '</button>' +
+        '</div>').join('')
+    : '<div class="sbin-empty">Empty</div>';
+
+  panel.innerHTML =
+    '<div class="sbin-panel">' +
+      '<div class="sbin-header">' +
+        '<div class="sbin-title">Bin '+label+'</div>' +
+        '<div class="sbin-count">'+items.length+' item'+(items.length!==1?'s':'')+'</div>' +
+      '</div>' +
+      '<div class="sbin-items">'+itemsHtml+'</div>' +
+      '<div class="sbin-add-row">' +
+        '<input class="form-input" id="newItemName" placeholder="Add item\u2026" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;">' +
+        '<input class="form-input" id="newItemQty" type="number" min="1" value="1" style="width:64px;font-size:.88rem;padding:9px 8px;">' +
+        '<button class="btn btn-primary btn-sm" id="addItemBtn">Add</button>' +
+      '</div>' +
+    '</div>';
+
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  document.getElementById('addItemBtn').onclick = function() {
+    const name = document.getElementById('newItemName').value.trim();
+    if (!name) { showToast('Enter an item name'); return; }
+    const qty = parseInt(document.getElementById('newItemQty').value)||1;
+    state.shelfBins[key].push({name,qty});
+    saveState();
+    showToast('"'+name+'" added to '+label);
+    renderBinDetail(si,col,row);
+  };
+  document.getElementById('newItemName').onkeydown = e => { if(e.key==='Enter') document.getElementById('addItemBtn').click(); };
+}
+
+function removeItem(btn) {
+  const k=btn.dataset.key, i=parseInt(btn.dataset.idx);
+  state.shelfBins[k].splice(i,1);
+  saveState();
+  // Re-render: find shelf/col/row from key
+  const m=k.match(/^shelf(\d+)_([A-F])(\d+)$/);
+  if(m) renderBinDetail(parseInt(m[1]),COL_LETTERS.indexOf(m[2]),parseInt(m[3])-1);
+}
+
+// ── SEARCH ──
+function closeSearch() {
+  document.getElementById('searchPanel').style.display = 'none';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+  const sb = document.getElementById('searchToggleBtn');
+  sb.style.background = sb.style.borderColor = sb.style.color = '';
+}
+
+document.getElementById('searchToggleBtn').addEventListener('click', function() {
+  const panel = document.getElementById('searchPanel');
+  const open  = panel.style.display !== 'none';
+  if (open) { closeSearch(); return; }
+  panel.style.display = 'block';
+  this.style.background  = 'rgba(201,168,76,.15)';
+  this.style.borderColor = 'var(--gold)';
+  this.style.color       = 'var(--gold-light)';
+  document.getElementById('searchInput').focus();
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q   = this.value.trim().toLowerCase();
+  const out = document.getElementById('searchResults');
+  if (!q) { out.innerHTML=''; return; }
+  let html='', found=0;
+  Object.keys(state.shelfBins).forEach(key => {
+    const items = state.shelfBins[key];
+    if (!items||!items.length) return;
+    const m = key.match(/^shelf(\d+)_(.+)$/);
+    if (!m) return;
+    const si=parseInt(m[1]), lbl=m[2], shelf=state.shelves[si];
+    const sName = shelf ? shelf.area+' \u2013 '+shelf.desc : 'Shelf '+si;
+    items.forEach(item => {
+      if (!item.name.toLowerCase().includes(q)) return;
+      found++;
+      html += '<div class="result-card">' +
+        '<div class="result-item-name">'+item.name+'</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">' +
+          (item.qty>1?'<div class="tag">\xd7'+item.qty+'</div>':'') +
+          '<button class="result-location result-bin-chip" data-si="'+si+'" data-lbl="'+lbl+'">'+
+            '<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="12" height="11" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>'+
+            'Bin '+lbl+
+          '</button>' +
+        '</div>' +
+        '<div class="result-bin-label">'+sName+'</div>' +
+      '</div>';
     });
   });
-  if (!found) {
-    html = `<div class="no-results"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;opacity:0.4;display:block;margin-left:auto;margin-right:auto;"><circle cx="16" cy="16" r="10"/><line x1="23" y1="23" x2="32" y2="32"/><line x1="12" y1="16" x2="20" y2="16"/></svg>No items found for "<strong>${this.value}</strong>"</div>`;
-  }
-  results.innerHTML = html;
+  out.innerHTML = found ? html : '<div class="no-results">No items found for \u201c<strong>'+this.value+'</strong>\u201d</div>';
 });
 
-function renderStats() {
-  const totalItems = state.bins.reduce((s, b) => s + b.items.length, 0);
-  document.getElementById('statBins').textContent = state.bins.length;
-  document.getElementById('statItems').textContent = totalItems;
+document.getElementById('searchResults').addEventListener('click', function(e) {
+  const chip = e.target.closest('.result-bin-chip');
+  if (!chip) return;
+  const si  = parseInt(chip.dataset.si);
+  const lbl = chip.dataset.lbl;
+  closeSearch();
+  // Switch shelf & click bin
+  renderShelvesPage(si);
+  setTimeout(()=>{
+    const ov=document.getElementById('binOverlay');
+    if (!ov) return;
+    ov.querySelectorAll('button').forEach(btn=>{
+      const c=parseInt(btn.dataset.col),r=parseInt(btn.dataset.row);
+      if(binLabel(c,r)===lbl) btn.click();
+    });
+  },80);
+});
 
-  const recent = [];
-  state.bins.forEach(bin => bin.items.forEach(item => recent.push({...item, binId: binId(bin.col, bin.row), binLabel: bin.label})));
-  recent.reverse();
-  const last5 = recent.slice(0, 5);
-  const el = document.getElementById('recentItems');
-  if (!last5.length) {
-    el.innerHTML = `<div class="empty-state"><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="12" width="28" height="22" rx="2"/><path d="M15 12V9a2 2 0 014 0v3"/><path d="M25 12V9a2 2 0 014 0v3"/><line x1="15" y1="22" x2="29" y2="22"/><line x1="15" y1="28" x2="22" y2="28"/></svg><p>No items yet. Add bins and start filling them!</p></div>`;
-    return;
-  }
-  el.innerHTML = last5.map(item => `
-    <div class="item-row">
-      <div class="item-row-name">${item.name}</div>
-      <div class="result-location" style="font-size:11px;">${item.binId}</div>
-    </div>`).join('');
+// ── ADD SHELF ──
+function openAddShelfModal() {
+  document.getElementById('newShelfArea').value='';
+  document.getElementById('newShelfDesc').value='';
+  state.addShelfCols=3; state.addShelfRows=4;
+  document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===3));
+  document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===4));
+  openModal('addShelfModal');
 }
+document.getElementById('addShelfBtnEmpty').onclick = openAddShelfModal;
+document.getElementById('addShelfBtnActive').onclick = openAddShelfModal;
 
-// ===== BINS =====
-function renderBinGrid() {
-  const grid = document.getElementById('binGrid');
-  let html = state.bins.map(bin => `
-    <div class="bin-card" onclick="openBinDetail('${binId(bin.col, bin.row)}')">
-      <div class="bin-card-id">${binId(bin.col, bin.row)}</div>
-      <div class="bin-card-label">${bin.label || 'No label'}</div>
-      <div class="bin-item-count"><span>${bin.items.length}</span> item${bin.items.length !== 1 ? 's' : ''}</div>
-    </div>`).join('');
-  html += `<button class="add-bin-btn" id="openAddBin2">
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="4" x2="10" y2="16"/><line x1="4" y1="10" x2="16" y2="10"/></svg>
-    Add Bin
-  </button>`;
-  grid.innerHTML = html;
-  document.getElementById('openAddBin2').onclick = () => openModal('addBinModal');
-}
-
-function openBinDetail(id) {
-  const bin = state.bins.find(b => binId(b.col, b.row) === id);
-  if (!bin) return;
-  state.currentBin = id;
-  document.getElementById('binListView').style.display = 'none';
-  document.getElementById('binDetailView').style.display = 'block';
-
-  document.getElementById('binDetailHeader').innerHTML = `
-    <div>
-      <div class="bin-detail-title">${id}</div>
-      <div class="bin-detail-sub">${bin.label || 'No label'} · Col ${bin.col}, Row ${bin.row}</div>
-    </div>
-    <div class="bin-detail-count">${bin.items.length}</div>`;
-
-  renderBinItems(bin);
-}
-
-function renderBinItems(bin) {
-  const list = document.getElementById('binItemList');
-  if (!bin.items.length) {
-    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;width:40px;height:40px;"><rect x="10" y="10" width="24" height="28" rx="2"/><line x1="16" y1="20" x2="28" y2="20"/><line x1="16" y1="26" x2="24" y2="26"/></svg><p>No items yet. Add some below!</p></div>`;
-    return;
-  }
-  list.innerHTML = bin.items.map((item, i) => `
-    <div class="item-row">
-      <div>
-        <div class="item-row-name">${item.name}</div>
-        ${item.cat ? `<div class="tag" style="margin-top:3px;">${item.cat}</div>` : ''}
-      </div>
-      <div class="item-row-qty">×${item.qty}</div>
-      <div class="item-actions">
-        <button class="icon-btn" title="Move item" onclick="initMoveItem('${state.currentBin}',${i})">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8l5 5 5-5"/></svg>
-        </button>
-        <button class="icon-btn danger" title="Remove item" onclick="removeItem('${state.currentBin}',${i})">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
-        </button>
-      </div>
-    </div>`).join('');
-}
-
-document.getElementById('backToBins').onclick = () => {
-  document.getElementById('binListView').style.display = '';
-  document.getElementById('binDetailView').style.display = 'none';
-  renderBinGrid();
+document.getElementById('colBtns').addEventListener('click',e=>{
+  const b=e.target.closest('.size-btn');if(!b)return;
+  state.addShelfCols=parseInt(b.dataset.val);
+  document.querySelectorAll('#colBtns .size-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+});
+document.getElementById('rowBtns').addEventListener('click',e=>{
+  const b=e.target.closest('.size-btn');if(!b)return;
+  state.addShelfRows=parseInt(b.dataset.val);
+  document.querySelectorAll('#rowBtns .size-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+});
+document.getElementById('confirmAddShelf').onclick = () => {
+  const area=document.getElementById('newShelfArea').value.trim();
+  const desc=document.getElementById('newShelfDesc').value.trim();
+  if (!area) { showToast('Enter an area name'); return; }
+  if (!desc) { showToast('Enter a description'); return; }
+  state.shelves.push({area,desc,cols:state.addShelfCols,rows:state.addShelfRows});
+  saveState(); closeModal('addShelfModal');
+  showToast('"'+area+' \u2013 '+desc+'" added!');
+  renderShelvesPage(state.shelves.length-1);
 };
+document.getElementById('cancelAddShelf').onclick = ()=>closeModal('addShelfModal');
+document.getElementById('addShelfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('addShelfModal');});
 
-document.getElementById('addItemBtn').onclick = () => {
-  const name = document.getElementById('addItemName').value.trim();
-  if (!name) { showToast('Enter an item name'); return; }
-  const qty = parseInt(document.getElementById('addItemQty').value) || 1;
-  const cat = document.getElementById('addItemCat').value.trim();
-  const bin = state.bins.find(b => binId(b.col, b.row) === state.currentBin);
-  if (!bin) return;
-  bin.items.push({ name, qty, cat, added: Date.now() });
-  saveState();
-  document.getElementById('addItemName').value = '';
-  document.getElementById('addItemQty').value = '1';
-  document.getElementById('addItemCat').value = '';
-  renderBinItems(bin);
-  document.getElementById('binDetailHeader').querySelector('.bin-detail-count').textContent = bin.items.length;
-  showToast(`"${name}" added to ${state.currentBin}`);
-  renderStats();
-};
+// ── EXPORT ──
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  if(!state.shelves.length){showToast('No shelves to export');return;}
+  const wb=XLSX.utils.book_new();
+  const ov=[['Shelf #','Area','Description','Columns','Rows','Total Slots']];
+  state.shelves.forEach((s,i)=>ov.push([i+1,s.area,s.desc,s.cols,s.rows,s.cols*s.rows]));
+  const ws0=XLSX.utils.aoa_to_sheet(ov); ws0['!cols']=[{wch:8},{wch:20},{wch:30},{wch:10},{wch:8},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws0,'Shelves');
+  state.shelves.forEach((s,si)=>{
+    const rows=[['Bin','Item','Quantity']];
+    for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++){
+      const k=binKey(si,c,r),items=(state.shelfBins[k]||[]);
+      if(items.length) items.forEach(it=>rows.push([binLabel(c,r),it.name,it.qty]));
+      else rows.push([binLabel(c,r),'Empty','']);
+    }
+    const name=(s.area+' '+s.desc).replace(/[\\/*?:\[\]]/g,'').substring(0,31)||'Shelf '+(si+1);
+    const ws=XLSX.utils.aoa_to_sheet(rows); ws['!cols']=[{wch:8},{wch:30},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  XLSX.writeFile(wb,'peak-bin-tracker.xlsx');
+  showToast('Exported successfully');
+});
 
-function removeItem(binId, idx) {
-  const bin = state.bins.find(b => `C${b.col}-R${b.row}` === binId);
-  if (!bin) return;
-  const name = bin.items[idx].name;
-  bin.items.splice(idx, 1);
-  saveState();
-  renderBinItems(bin);
-  document.getElementById('binDetailHeader').querySelector('.bin-detail-count').textContent = bin.items.length;
-  showToast(`"${name}" removed`);
-  renderStats();
+// ── IMPORT ──
+document.getElementById('importInput').addEventListener('change',function(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws0=wb.Sheets['Shelves'];
+      if(!ws0){showToast('Invalid file');return;}
+      const rows=XLSX.utils.sheet_to_json(ws0,{header:1});
+      const newShelves=[],newBins={};
+      for(let i=1;i<rows.length;i++){
+        const r=rows[i]; if(!r||!r[1])continue;
+        newShelves.push({area:String(r[1]||''),desc:String(r[2]||''),cols:parseInt(r[3])||2,rows:parseInt(r[4])||2});
+      }
+      newShelves.forEach((s,si)=>{
+        const name=(s.area+' '+s.desc).replace(/[\\/*?:\[\]]/g,'').substring(0,31)||'Shelf '+(si+1);
+        const ws=wb.Sheets[name]||wb.Sheets['Shelf '+(si+1)]; if(!ws)return;
+        const srows=XLSX.utils.sheet_to_json(ws,{header:1});
+        for(let j=1;j<srows.length;j++){
+          const r=srows[j]; if(!r||!r[0])continue;
+          const lbl=String(r[0]),nm=String(r[1]||''),qty=parseInt(r[2])||1;
+          if(!nm||nm==='Empty')continue;
+          const k='shelf'+si+'_'+lbl;
+          if(!newBins[k])newBins[k]=[];
+          newBins[k].push({name:nm,qty});
+        }
+      });
+      if(!newShelves.length){showToast('No shelves found');return;}
+      if(state.shelves.length&&!confirm('Replace all current data with imported data?')){e.target.value='';return;}
+      state.shelves=newShelves; state.shelfBins=newBins;
+      saveState(); renderShelvesPage(0);
+      showToast('Imported '+newShelves.length+' shelf'+(newShelves.length!==1?'ves':''));
+    }catch(err){showToast('Import failed');console.error(err);}
+    e.target.value='';
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// ── SIDE BUTTONS VISIBILITY ──
+function updateSideBtns() {
+  document.getElementById('sideBtns').style.display = state.shelves.length ? 'flex' : 'none';
 }
 
-// ===== MOVE ITEM =====
-function initMoveItem(fromBinId, itemIdx) {
-  const bin = state.bins.find(b => `C${b.col}-R${b.row}` === fromBinId);
-  if (!bin) return;
-  state.moveItem = itemIdx;
-  state.moveFromBin = fromBinId;
-  state.selectedMoveBin = null;
-  document.getElementById('moveModalSub').textContent = `Moving "${bin.items[itemIdx].name}" from ${fromBinId}`;
-  const grid = document.getElementById('moveBinGrid');
-  grid.innerHTML = state.bins
-    .filter(b => `C${b.col}-R${b.row}` !== fromBinId)
-    .map(b => `<button class="bin-select-btn" onclick="selectMoveBin('${`C${b.col}-R${b.row}`}',this)">${`C${b.col}-R${b.row}`}${b.label ? '<br><span style="font-size:10px;font-weight:400;color:var(--text-muted)">'+b.label+'</span>' : ''}</button>`)
-    .join('');
-  if (!grid.innerHTML) grid.innerHTML = '<p style="font-size:13px;color:var(--text-muted);grid-column:span 3;">No other bins available. Create more bins first.</p>';
-  openModal('moveModal');
+// ── QR SCANNER ──
+let qrScanner = null, qrActive = false;
+
+function openQrModal() {
+  openModal('qrModal');
+  document.getElementById('qrResultMsg').classList.remove('show');
+  document.getElementById('qrStatusText').textContent = 'Camera not started';
+  document.getElementById('startQrBtn').style.display = '';
+  document.getElementById('stopQrBtn').style.display = 'none';
 }
-function selectMoveBin(id, el) {
-  document.querySelectorAll('.bin-select-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  state.selectedMoveBin = id;
+function closeQrModal() {
+  stopQr();
+  closeModal('qrModal');
 }
-document.getElementById('confirmMoveBtn').onclick = () => {
-  if (!state.selectedMoveBin) { showToast('Select a destination bin'); return; }
-  const fromBin = state.bins.find(b => `C${b.col}-R${b.row}` === state.moveFromBin);
-  const toBin = state.bins.find(b => `C${b.col}-R${b.row}` === state.selectedMoveBin);
-  const item = fromBin.items.splice(state.moveItem, 1)[0];
-  toBin.items.push(item);
-  saveState();
-  closeModal('moveModal');
-  renderBinItems(fromBin);
-  document.getElementById('binDetailHeader').querySelector('.bin-detail-count').textContent = fromBin.items.length;
-  showToast(`Moved "${item.name}" to ${state.selectedMoveBin}`);
-  renderStats();
-};
-document.getElementById('cancelMoveBtn').onclick = () => closeModal('moveModal');
-document.getElementById('moveModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('moveModal'); });
 
-// ===== ADD BIN =====
-document.getElementById('openAddBin').onclick = () => openModal('addBinModal');
-document.getElementById('cancelAddBin').onclick = () => closeModal('addBinModal');
-document.getElementById('addBinModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('addBinModal'); });
-document.getElementById('confirmAddBin').onclick = () => {
-  const col = parseInt(document.getElementById('newBinCol').value);
-  const row = parseInt(document.getElementById('newBinRow').value);
-  const label = document.getElementById('newBinLabel').value.trim();
-  if (!col || !row) { showToast('Enter column and row numbers'); return; }
-  if (col < 1 || col > 6 || row < 1 || row > 6) { showToast('Column and row must be 1–6'); return; }
-  const id = binId(col, row);
-  if (state.bins.find(b => b.col === col && b.row === row)) { showToast(`${id} already exists`); return; }
-  state.bins.push({ col, row, label, items: [] });
-  state.bins.sort((a, b) => a.col !== b.col ? a.col - b.col : a.row - b.row);
-  saveState();
-  closeModal('addBinModal');
-  document.getElementById('newBinCol').value = '';
-  document.getElementById('newBinRow').value = '';
-  document.getElementById('newBinLabel').value = '';
-  renderBinGrid();
-  renderStats();
-  showToast(`${id} created!`);
-};
-
-// ===== QR SCANNER =====
-document.getElementById('startScanBtn').onclick = startScanner;
-document.getElementById('stopScanBtn').onclick = stopScanner;
-
-function startScanner() {
-  if (state.scannerActive) return;
-  const status = document.getElementById('qrStatus');
-  const resultBox = document.getElementById('qrResultBox');
-  resultBox.classList.remove('visible');
-  status.textContent = 'Starting camera…';
-
-  state.scanner = new Html5Qrcode('qr-reader');
-  state.scanner.start(
+function startQr() {
+  if (qrActive) return;
+  const box = document.getElementById('qrReaderBox');
+  box.innerHTML = '';
+  document.getElementById('qrStatusText').textContent = 'Starting camera…';
+  qrScanner = new Html5Qrcode('qrReaderBox');
+  qrScanner.start(
     { facingMode: 'environment' },
     { fps: 10, qrbox: { width: 220, height: 220 } },
-    (text) => {
-      stopScanner();
-      handleScan(text);
-    },
-    (err) => {}
+    (text) => { stopQr(); handleQrScan(text); },
+    () => {}
   ).then(() => {
-    state.scannerActive = true;
-    status.textContent = 'Scanning… point at a bin QR code';
-    document.getElementById('startScanBtn').style.display = 'none';
-    document.getElementById('stopScanBtn').style.display = '';
-  }).catch(err => {
-    status.textContent = 'Camera access denied. Use manual lookup below.';
+    qrActive = true;
+    document.getElementById('qrStatusText').textContent = 'Scanning — point at a bin label';
+    document.getElementById('startQrBtn').style.display = 'none';
+    document.getElementById('stopQrBtn').style.display = '';
+  }).catch(() => {
+    document.getElementById('qrStatusText').textContent = 'Camera access denied. Use manual lookup.';
   });
 }
-
-function stopScanner() {
-  if (state.scanner && state.scannerActive) {
-    state.scanner.stop().catch(() => {});
-    state.scannerActive = false;
-  }
-  document.getElementById('startScanBtn').style.display = '';
-  document.getElementById('stopScanBtn').style.display = 'none';
-  document.getElementById('qrStatus').textContent = 'Camera stopped';
+function stopQr() {
+  if (qrScanner && qrActive) { qrScanner.stop().catch(()=>{}); qrActive = false; }
+  document.getElementById('startQrBtn').style.display = '';
+  document.getElementById('stopQrBtn').style.display = 'none';
+  document.getElementById('qrStatusText').textContent = 'Camera stopped';
 }
 
-function handleScan(text) {
-  const bin = state.bins.find(b => binId(b.col, b.row) === text || text.includes(binId(b.col, b.row)));
-  const resultBox = document.getElementById('qrResultBox');
-  if (bin) {
-    const id = binId(bin.col, bin.row);
-    resultBox.textContent = `✓ Found bin ${id}${bin.label ? ' — ' + bin.label : ''}`;
-    resultBox.classList.add('visible');
-    showQrBinPreview(bin);
-    showToast(`Bin ${id} loaded!`);
-  } else {
-    resultBox.textContent = `QR scanned: "${text}" — no matching bin found.`;
-    resultBox.classList.add('visible');
-  }
-}
+function handleQrScan(text) {
+  // text format: "A1", "B3", or "shelf0_A1"
+  let targetLabel = text.trim().toUpperCase();
+  // Strip shelf prefix if present
+  const m = targetLabel.match(/^SHELF\d+_(.+)$/);
+  if (m) targetLabel = m[1];
 
-function showQrBinPreview(bin) {
-  const id = binId(bin.col, bin.row);
-  document.getElementById('qrBinPreview').style.display = 'block';
-  document.getElementById('qrBinHeader').innerHTML = `
-    <div>
-      <div class="bin-detail-title">${id}</div>
-      <div class="bin-detail-sub">${bin.label || 'No label'} · Col ${bin.col}, Row ${bin.row}</div>
-    </div>
-    <div class="bin-detail-count">${bin.items.length}</div>`;
-  const list = document.getElementById('qrItemList');
-  list.innerHTML = bin.items.length
-    ? bin.items.map(i => `<div class="item-row"><div class="item-row-name">${i.name}</div><div class="item-row-qty">×${i.qty}</div></div>`).join('')
-    : '<div class="empty-state" style="padding:16px;"><p>This bin is empty.</p></div>';
-  document.getElementById('qrOpenBinBtn').onclick = () => {
-    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelector('[data-page="bins"]').classList.add('active');
-    document.getElementById('page-bins').classList.add('active');
-    renderBinGrid();
-    setTimeout(() => openBinDetail(binId(bin.col, bin.row)), 50);
-  };
-}
+  const msg = document.getElementById('qrResultMsg');
 
-document.getElementById('manualLookupBtn').onclick = () => {
-  const val = document.getElementById('manualBinInput').value.trim().toUpperCase();
-  const bin = state.bins.find(b => binId(b.col, b.row) === val);
-  if (bin) {
-    handleScan(val);
-    document.getElementById('manualBinInput').value = '';
-  } else {
-    showToast(`No bin found: ${val}`);
-  }
-};
-document.getElementById('manualBinInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('manualLookupBtn').click(); });
-
-// ===== LABELS / QR GENERATOR =====
-function renderLabels() {
-  const grid = document.getElementById('labelGrid');
-  const empty = document.getElementById('labelsEmpty');
-  if (!state.bins.length) {
-    grid.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
-  grid.innerHTML = state.bins.map(bin => {
-    const id = binId(bin.col, bin.row);
-    return `<div class="qr-code-tile" id="tile-${id.replace('-','_')}">
-      <div id="qrimg-${id.replace('-','_')}"></div>
-      <div class="qr-tile-label">${id}${bin.label ? '<br><span style="font-size:10px;color:var(--text-muted)">'+bin.label+'</span>' : ''}</div>
-    </div>`;
-  }).join('');
-
-  state.bins.forEach(bin => {
-    const id = binId(bin.col, bin.row);
-    const key = id.replace('-', '_');
-    const el = document.getElementById('qrimg-' + key);
-    if (el) {
-      el.innerHTML = '';
-      try {
-        new QRCode(el, {
-          text: id,
-          width: 80,
-          height: 80,
-          colorDark: '#1a1108',
-          colorLight: '#ffffff',
-          correctLevel: QRCode.CorrectLevel.M
-        });
-      } catch(e) {}
+  // Find which shelf/col/row has this label
+  let found = false;
+  for (let si = 0; si < state.shelves.length; si++) {
+    const s = state.shelves[si];
+    for (let r = 0; r < s.rows; r++) {
+      for (let c = 0; c < s.cols; c++) {
+        if (binLabel(c, r) === targetLabel) {
+          msg.textContent = '✓ Found: Bin ' + targetLabel + ' on ' + s.area + ' – ' + s.desc;
+          msg.classList.add('show');
+          found = true;
+          closeQrModal();
+          renderShelvesPage(si);
+          setTimeout(() => {
+            const ov = document.getElementById('binOverlay');
+            if (!ov) return;
+            ov.querySelectorAll('button').forEach(btn => {
+              if (binLabel(parseInt(btn.dataset.col), parseInt(btn.dataset.row)) === targetLabel) btn.click();
+            });
+          }, 100);
+          return;
+        }
+      }
     }
-    document.getElementById('tile-' + key).onclick = () => downloadQR(id, key);
-  });
-}
-
-function downloadQR(id, key) {
-  const el = document.getElementById('qrimg-' + key);
-  if (!el) return;
-  const canvas = el.querySelector('canvas');
-  const img = el.querySelector('img');
-  if (canvas) {
-    const a = document.createElement('a');
-    a.download = `peak-bin-${id}.png`;
-    a.href = canvas.toDataURL('image/png');
-    a.click();
-  } else if (img) {
-    const a = document.createElement('a');
-    a.download = `peak-bin-${id}.png`;
-    a.href = img.src;
-    a.click();
   }
-  showToast(`Label ${id} downloading…`);
+  if (!found) {
+    msg.textContent = 'No bin found for "' + text + '"';
+    msg.classList.add('show');
+  }
 }
 
-// ===== INIT =====
-renderStats();
-renderBinGrid();
+// Hidden camera input for direct QR scan
+const qrCamInput = document.createElement('input');
+qrCamInput.type = 'file';
+qrCamInput.accept = 'image/*';
+qrCamInput.capture = 'environment';
+qrCamInput.style.display = 'none';
+document.body.appendChild(qrCamInput);
+
+document.getElementById('qrScanBtn').onclick = () => qrCamInput.click();
+
+qrCamInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  Html5Qrcode.scanFile(file, true).then(text => {
+    handleQrScan(text);
+  }).catch(() => {
+    showToast('No QR code found in image');
+  });
+  this.value = '';
+});
+document.getElementById('closeQrBtn').onclick = closeQrModal;
+document.getElementById('qrModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeQrModal(); });
+document.getElementById('startQrBtn').onclick = startQr;
+document.getElementById('stopQrBtn').onclick = stopQr;
+document.getElementById('manualQrBtn').onclick = () => {
+  const val = document.getElementById('manualQrInput').value.trim().toUpperCase();
+  if (!val) return;
+  document.getElementById('manualQrInput').value = '';
+  handleQrScan(val);
+};
+document.getElementById('manualQrInput').onkeydown = e => { if (e.key === 'Enter') document.getElementById('manualQrBtn').click(); };
+
+// ── LABEL PRINT ──
+document.getElementById('printLabelsBtn').onclick = openLabelModal;
+document.getElementById('closeLabelBtn').onclick = () => closeModal('labelModal');
+document.getElementById('labelModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('labelModal'); });
+document.getElementById('selectAllLabels').onclick = () => {
+  document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el => {
+    el.classList.add('sel');
+    el.querySelector('input').checked = true;
+  });
+};
+document.getElementById('deselectAllLabels').onclick = () => {
+  document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el => {
+    el.classList.remove('sel');
+    el.querySelector('input').checked = false;
+  });
+};
+
+function openLabelModal() {
+  const list = document.getElementById('labelShelfList');
+  list.innerHTML = state.shelves.map((s, i) =>
+    '<label class="label-shelf-item" id="lsi_'+i+'">' +
+      '<input type="checkbox" value="'+i+'" onchange="toggleLabelShelf('+i+',this.checked)">' +
+      '<div><div class="label-shelf-name">'+s.area+' – '+s.desc+'</div>' +
+      '<div class="label-shelf-sub">'+s.cols+' wide × '+s.rows+' high · '+(s.cols*s.rows)+' labels</div></div>' +
+    '</label>'
+  ).join('');
+  // Pre-select current shelf
+  const dd = document.getElementById('shelfDropdown');
+  if (dd.value !== '') {
+    const idx = parseInt(dd.value);
+    const el = document.getElementById('lsi_'+idx);
+    if (el) { el.classList.add('sel'); el.querySelector('input').checked = true; }
+  }
+  openModal('labelModal');
+}
+
+function toggleLabelShelf(idx, checked) {
+  const el = document.getElementById('lsi_'+idx);
+  if (el) el.classList.toggle('sel', checked);
+}
+
+document.getElementById('previewLabelsBtn').onclick = function() {
+  const selected = [...document.querySelectorAll('#labelShelfList input:checked')].map(i => parseInt(i.value));
+  if (!selected.length) { showToast('Select at least one shelf'); return; }
+
+  // Collect all bin labels across selected shelves
+  const labels = [];
+  selected.forEach(si => {
+    const s = state.shelves[si];
+    for (let r = 0; r < s.rows; r++) {
+      for (let c = 0; c < s.cols; c++) {
+        labels.push({
+          shelf: s.area + '\n' + s.desc,
+          bin: binLabel(c, r),
+          key: binKey(si, c, r),
+          si: si
+        });
+      }
+    }
+  });
+
+  closeModal('labelModal');
+  buildPrintPreview(labels);
+};
+
+function buildPrintPreview(labels) {
+  // Avery Presta 94506: 8.5"×11" page, 20 labels (4 cols × 5 rows), 1.5" diameter circles
+  // Margins: top 0.67", left 0.75", col gap 0.8", row gap 0.56"
+  const labelDiameter = 1.5; // inches
+  const cols = 4, rows = 5;
+  const pageW = 8.5, pageH = 11;
+  const marginTop = 0.67, marginLeft = 0.75;
+  const colGap = 0.8, rowGap = 0.56;
+
+  // Build label HTML — use a separate document rendered inside iframe
+  let labelCells = '';
+  labels.forEach((lbl, i) => {
+    // We'll render a placeholder div; actual QR rendered after iframe loads
+    labelCells += '<div class="qr-label" data-bin="' + lbl.bin + '" data-shelf="' + lbl.shelf.replace(/\n/g,'|') + '">' +
+      '<div class="qr-img" id="qr_'+i+'"></div>' +
+      '<div class="lbl-bin">' + lbl.bin + '</div>' +
+    '</div>';
+  });
+
+  // Pad to multiple of 20
+  const remainder = labels.length % 20;
+  if (remainder) {
+    for (let i = 0; i < 20 - remainder; i++) labelCells += '<div class="qr-label empty"></div>';
+  }
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Rajdhani',sans-serif;background:white;}
+.page-sheet{
+  width:${pageW}in;min-height:${pageH}in;
+  padding:${marginTop}in ${marginLeft - 0.05}in 0;
+  display:grid;
+  grid-template-columns:repeat(${cols},${labelDiameter}in);
+  grid-template-rows:repeat(${rows},${labelDiameter}in);
+  column-gap:${colGap}in;
+  row-gap:${rowGap}in;
+  page-break-after:always;
+}
+.qr-label{
+  width:${labelDiameter}in;height:${labelDiameter}in;
+  border-radius:50%;
+  border:0.6pt solid #ccc;
+  overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+  padding:2pt;
+}
+.qr-label.empty{border:0.4pt dashed #eee;}
+.qr-img{width:72pt;height:72pt;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.qr-img canvas,.qr-img img{width:72pt!important;height:72pt!important;}
+.lbl-bin{font-family:'Rajdhani',sans-serif;font-size:10pt;font-weight:700;color:#1a1a1a;letter-spacing:.04em;line-height:1;margin-top:2pt;}
+@media print{
+  @page{size:letter;margin:0;}
+  body{margin:0;}
+}
+</style></head><body>
+<div class="page-sheet">${labelCells}</div>
+<script>
+window.onload = function() {
+  document.querySelectorAll('.qr-label:not(.empty)').forEach(function(el, i) {
+    const bin = el.dataset.bin;
+    const container = el.querySelector('.qr-img');
+    if (!container || !bin) return;
+    try {
+      new QRCode(container, {
+        text: bin,
+        width: 72, height: 72,
+        colorDark: '#1a1a1a', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch(e) {}
+  });
+  // Small delay to let QR codes render, then open print dialog
+  setTimeout(function() { window.print(); }, 600);
+};
+<\/script>
+</body></html>`;
+
+  // Remove auto-print from iframe html
+  const htmlNoAutoPrint = html.replace("setTimeout(function() { window.print(); }, 600);", "");
+
+  const overlay = document.getElementById('printPreviewOverlay');
+  const frame = document.getElementById('printFrame');
+  overlay.style.display = 'flex';
+  const doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open(); doc.write(htmlNoAutoPrint); doc.close();
+  showToast('Preview ready');
+}
+
+// ── PRINT PREVIEW CONTROLS ──
+document.getElementById('doPrintBtn').onclick = function() {
+  const frame = document.getElementById('printFrame');
+  if (frame.contentWindow) frame.contentWindow.print();
+};
+document.getElementById('closePrintPreviewBtn').onclick = function() {
+  document.getElementById('printPreviewOverlay').style.display = 'none';
+  const frame = document.getElementById('printFrame');
+  const doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open(); doc.write(''); doc.close();
+};
+
+// ── INIT ──
+renderShelvesPage();
+updateSideBtns();
 </script>
 </body>
 </html>
