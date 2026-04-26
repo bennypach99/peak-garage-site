@@ -1,1 +1,1217 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Peak Bin Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root {
+    --brown-dark: #1a1108;
+    --brown-mid: #2d1f0e;
+    --brown-warm: #4a3520;
+    --brown-tan: #7a5c3a;
+    --brown-light: #c4a882;
+    --cream: #f5efe6;
+    --cream-dark: #e8ddd0;
+    --orange-accent: #d4521a;
+    --orange-light: #f07340;
+    --text-primary: #1a1108;
+    --text-muted: #6b5540;
+    --text-light: #9a7e63;
+    --border: rgba(74,53,32,0.18);
+    --border-strong: rgba(74,53,32,0.35);
+    --success: #3a7d44;
+    --danger: #c0392b;
+    --shadow: 0 2px 12px rgba(26,17,8,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--brown-dark);
+    padding: 14px 16px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-logo {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--cream);
+    line-height: 1.1;
+  }
+  .header-text p {
+    font-size: 11px;
+    color: var(--brown-light);
+    letter-spacing: 0.04em;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    background: var(--brown-mid);
+    display: flex;
+    padding: 0 8px;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab {
+    background: none;
+    border: none;
+    color: var(--brown-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-tab.active {
+    color: var(--orange-light);
+    border-bottom-color: var(--orange-light);
+  }
+  .nav-tab svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+  /* PAGE SECTIONS */
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* SEARCH */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-light);
+  }
+  .search-input {
+    width: 100%;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 12px 11px 38px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-input:focus { border-color: var(--orange-accent); }
+  .search-input::placeholder { color: var(--text-light); }
+
+  /* SEARCH RESULTS */
+  .search-results { display: none; }
+  .search-results.visible { display: block; }
+  .result-card {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .result-item-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+  .result-location {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--brown-dark);
+    color: var(--cream);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+    margin-top: 4px;
+  }
+  .result-bin-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+  .no-results {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-light);
+    font-size: 14px;
+  }
+
+  /* BIN GRID */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    margin-bottom: 10px;
+  }
+  .bin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .bin-card {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .bin-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--brown-tan);
+  }
+  .bin-card:active { transform: scale(0.97); }
+  .bin-card-id {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--brown-dark);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .bin-card-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .bin-item-count {
+    font-size: 13px;
+    color: var(--text-light);
+  }
+  .bin-item-count span {
+    font-weight: 600;
+    color: var(--orange-accent);
+  }
+  .add-bin-btn {
+    background: var(--cream-dark);
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 14px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--text-light);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 90px;
+    transition: background 0.15s;
+  }
+  .add-bin-btn:active { background: var(--cream); }
+  .add-bin-btn svg { width: 20px; height: 20px; color: var(--brown-tan); }
+
+  /* BIN DETAIL */
+  .back-btn {
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--orange-accent);
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    margin-bottom: 16px;
+  }
+  .bin-detail-header {
+    background: var(--brown-dark);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .bin-detail-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--cream);
+  }
+  .bin-detail-sub {
+    font-size: 12px;
+    color: var(--brown-light);
+    margin-top: 2px;
+  }
+  .bin-detail-count {
+    background: var(--orange-accent);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 11px;
+    border-radius: 20px;
+  }
+
+  /* ITEM LIST */
+  .item-list { margin-bottom: 16px; }
+  .item-row {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .item-row-name {
+    flex: 1;
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+  .item-row-qty {
+    font-size: 13px;
+    color: var(--text-muted);
+    background: var(--cream-dark);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+  .item-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    color: var(--text-light);
+    transition: all 0.15s;
+  }
+  .icon-btn:active { background: var(--cream-dark); }
+  .icon-btn svg { width: 16px; height: 16px; }
+  .icon-btn.danger { color: var(--danger); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-light);
+  }
+  .empty-state svg { width: 44px; height: 44px; margin-bottom: 10px; opacity: 0.4; }
+  .empty-state p { font-size: 14px; }
+
+  /* ADD ITEM FORM */
+  .add-item-form {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .form-row { margin-bottom: 12px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .form-input {
+    width: 100%;
+    background: var(--cream);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus { border-color: var(--orange-accent); background: white; }
+  .form-row-inline {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--orange-accent);
+    color: white;
+  }
+  .btn-primary:active { background: #b8451a; transform: scale(0.98); }
+  .btn-secondary {
+    background: var(--brown-dark);
+    color: var(--cream);
+  }
+  .btn-secondary:active { background: var(--brown-mid); transform: scale(0.98); }
+  .btn-ghost {
+    background: var(--cream-dark);
+    color: var(--text-primary);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:active { background: var(--cream); transform: scale(0.98); }
+  .btn-sm {
+    padding: 9px 14px;
+    font-size: 13px;
+    width: auto;
+    display: inline-block;
+  }
+
+  /* QR SCANNER */
+  .qr-outer {
+    background: var(--brown-dark);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .qr-outer h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--cream);
+    margin-bottom: 6px;
+  }
+  .qr-outer p {
+    font-size: 13px;
+    color: var(--brown-light);
+    margin-bottom: 16px;
+  }
+  #qr-reader {
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  #qr-reader video { border-radius: var(--radius-sm); }
+  .qr-status {
+    font-size: 14px;
+    color: var(--brown-light);
+    text-align: center;
+    padding: 8px;
+  }
+  .qr-result-box {
+    background: var(--success);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 8px;
+    display: none;
+  }
+  .qr-result-box.visible { display: block; }
+
+  /* QR CARD GENERATOR */
+  .qr-gen-section {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .qr-gen-section h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+  }
+  .qr-code-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .qr-code-tile {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .qr-code-tile canvas { display: none; }
+  .qr-code-tile img { width: 80px; height: 80px; }
+  .qr-tile-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 6px;
+  }
+
+  /* MOVE MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,17,8,0.6);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .modal-sheet {
+    background: var(--cream);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px 32px;
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .modal-overlay.open .modal-sheet { transform: translateY(0); }
+  .modal-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border-strong);
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  .modal-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .bin-select-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .bin-select-btn {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 8px;
+    cursor: pointer;
+    text-align: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: all 0.15s;
+  }
+  .bin-select-btn:active, .bin-select-btn.selected {
+    background: var(--brown-dark);
+    color: var(--cream);
+    border-color: var(--brown-dark);
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--brown-dark);
+    color: var(--cream);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 18px;
+    border-radius: 24px;
+    opacity: 0;
+    transition: all 0.25s;
+    z-index: 300;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ADD BIN MODAL */
+  .add-bin-modal .form-row { margin-bottom: 12px; }
+
+  /* UTILITY */
+  .mt8 { margin-top: 8px; }
+  .mt16 { margin-top: 16px; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .tag {
+    display: inline-block;
+    background: var(--cream-dark);
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <svg class="header-logo" viewBox="0 0 32 32" fill="none">
+    <rect width="32" height="32" rx="6" fill="#4a3520"/>
+    <rect x="5" y="18" width="22" height="3" rx="1" fill="#c4a882"/>
+    <rect x="5" y="11" width="22" height="3" rx="1" fill="#c4a882"/>
+    <rect x="5" y="6" width="4" height="20" rx="1" fill="#7a5c3a"/>
+    <rect x="23" y="6" width="4" height="20" rx="1" fill="#7a5c3a"/>
+    <rect x="8" y="14" width="6" height="7" rx="1" fill="#d4521a" opacity="0.9"/>
+    <rect x="16" y="14" width="6" height="7" rx="1" fill="#d4521a" opacity="0.7"/>
+  </svg>
+  <div class="header-text">
+    <h1>Peak Bin Tracker</h1>
+    <p>peakgaragesolutions.ca</p>
+  </div>
+</header>
+
+<nav class="nav-tabs" id="navTabs">
+  <button class="nav-tab active" data-page="search">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+    Search
+  </button>
+  <button class="nav-tab" data-page="bins">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="5" height="5" rx="1"/><rect x="9" y="3" width="5" height="5" rx="1"/><rect x="2" y="10" width="5" height="5" rx="1"/><rect x="9" y="10" width="5" height="5" rx="1"/></svg>
+    Bins
+  </button>
+  <button class="nav-tab" data-page="scanner">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    QR Scan
+  </button>
+  <button class="nav-tab" data-page="labels">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2L14 8L8 14L2 8L8 2Z"/><circle cx="8" cy="8" r="1.5" fill="currentColor" stroke="none"/></svg>
+    Labels
+  </button>
+</nav>
+
+<!-- SEARCH PAGE -->
+<section class="page active" id="page-search">
+  <div class="search-wrap">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+    <input class="search-input" id="searchInput" type="search" placeholder="Search items across all bins…" autocomplete="off">
+  </div>
+
+  <div class="search-results" id="searchResults"></div>
+
+  <div id="searchHome">
+    <div class="section-label">Quick Stats</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+      <div style="background:var(--brown-dark);border-radius:var(--radius);padding:14px;">
+        <div style="font-size:11px;color:var(--brown-light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Total Bins</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--cream);" id="statBins">0</div>
+      </div>
+      <div style="background:var(--brown-dark);border-radius:var(--radius);padding:14px;">
+        <div style="font-size:11px;color:var(--brown-light);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Total Items</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--cream);" id="statItems">0</div>
+      </div>
+    </div>
+
+    <div class="section-label">Recently Added</div>
+    <div id="recentItems">
+      <div class="empty-state">
+        <svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="12" width="28" height="22" rx="2"/><path d="M15 12V9a2 2 0 014 0v3"/><path d="M25 12V9a2 2 0 014 0v3"/><line x1="15" y1="22" x2="29" y2="22"/><line x1="15" y1="28" x2="22" y2="28"/></svg>
+        <p>No items yet. Add bins and start filling them!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BINS PAGE -->
+<section class="page" id="page-bins">
+  <div id="binListView">
+    <div class="flex-between" style="margin-bottom:14px;">
+      <div class="section-label" style="margin:0;">Your Bins</div>
+      <button class="btn btn-primary btn-sm" id="openAddBin">+ New Bin</button>
+    </div>
+    <div class="bin-grid" id="binGrid"></div>
+  </div>
+
+  <div id="binDetailView" style="display:none;">
+    <button class="back-btn" id="backToBins">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8L10 13"/></svg>
+      All Bins
+    </button>
+    <div class="bin-detail-header" id="binDetailHeader"></div>
+
+    <div class="section-label">Items in this bin</div>
+    <div class="item-list" id="binItemList"></div>
+
+    <div class="section-label mt16">Add Item</div>
+    <div class="add-item-form">
+      <div class="form-row">
+        <label class="form-label">Item Name</label>
+        <input class="form-input" id="addItemName" type="text" placeholder="e.g. Winter gloves">
+      </div>
+      <div class="form-row-inline">
+        <div>
+          <label class="form-label">Quantity</label>
+          <input class="form-input" id="addItemQty" type="number" placeholder="1" min="1" value="1">
+        </div>
+        <div>
+          <label class="form-label">Category</label>
+          <input class="form-input" id="addItemCat" type="text" placeholder="e.g. Winter">
+        </div>
+      </div>
+      <button class="btn btn-primary" id="addItemBtn">Add to Bin</button>
+    </div>
+  </div>
+</section>
+
+<!-- QR SCANNER PAGE -->
+<section class="page" id="page-scanner">
+  <div class="qr-outer">
+    <h2>Scan Bin Label</h2>
+    <p>Point camera at a QR code on your tote rack label</p>
+    <div id="qr-reader" style="width:100%;max-width:320px;margin:0 auto 12px;"></div>
+    <div class="qr-status" id="qrStatus">Camera not started</div>
+    <div class="qr-result-box" id="qrResultBox"></div>
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-secondary btn-sm" id="startScanBtn">Start Camera</button>
+      <button class="btn btn-ghost btn-sm" id="stopScanBtn" style="display:none;">Stop</button>
+    </div>
+  </div>
+
+  <div id="qrBinPreview" style="display:none;">
+    <div class="section-label">Scanned Bin Contents</div>
+    <div class="bin-detail-header" id="qrBinHeader"></div>
+    <div class="item-list mt8" id="qrItemList"></div>
+    <button class="btn btn-secondary mt8" id="qrOpenBinBtn">Open Full Bin View</button>
+  </div>
+
+  <div style="margin-top:16px;background:var(--cream-dark);border-radius:var(--radius);padding:14px;">
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-primary);">Manual Bin Lookup</div>
+    <div style="display:flex;gap:8px;">
+      <input class="form-input" id="manualBinInput" placeholder="e.g. C2-R3" style="flex:1;font-size:14px;padding:9px 12px;">
+      <button class="btn btn-primary btn-sm" id="manualLookupBtn">Go</button>
+    </div>
+  </div>
+</section>
+
+<!-- LABELS PAGE -->
+<section class="page" id="page-labels">
+  <div style="background:var(--brown-dark);border-radius:var(--radius);padding:16px;margin-bottom:16px;text-align:center;">
+    <div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--cream);margin-bottom:6px;">QR Label Generator</div>
+    <div style="font-size:13px;color:var(--brown-light);">Print these labels and stick them on your totes. Scanning opens the bin instantly.</div>
+  </div>
+
+  <div class="qr-gen-section">
+    <h3>Your Bin Labels</h3>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Tap a label to download it, or use your browser's print function.</p>
+    <div class="qr-code-grid" id="labelGrid"></div>
+    <div id="labelsEmpty" class="empty-state" style="display:none;">
+      <p>No bins yet. Create bins first to generate QR labels.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MOVE ITEM MODAL -->
+<div class="modal-overlay" id="moveModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Move Item</div>
+    <div class="modal-sub" id="moveModalSub">Select destination bin</div>
+    <div class="bin-select-grid" id="moveBinGrid"></div>
+    <button class="btn btn-primary" id="confirmMoveBtn">Move to Selected Bin</button>
+    <button class="btn btn-ghost mt8" id="cancelMoveBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- ADD BIN MODAL -->
+<div class="modal-overlay" id="addBinModal">
+  <div class="modal-sheet add-bin-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add New Bin</div>
+    <div class="modal-sub">Bins are identified by column (C) and row (R) position on your rack</div>
+    <div class="form-row-inline mt16">
+      <div>
+        <label class="form-label">Column #</label>
+        <input class="form-input" id="newBinCol" type="number" placeholder="1" min="1" max="6">
+      </div>
+      <div>
+        <label class="form-label">Row #</label>
+        <input class="form-input" id="newBinRow" type="number" placeholder="1" min="1" max="6">
+      </div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Bin Label (optional)</label>
+      <input class="form-input" id="newBinLabel" type="text" placeholder="e.g. Winter Gear, Holiday Decor">
+    </div>
+    <button class="btn btn-primary mt8" id="confirmAddBin">Create Bin</button>
+    <button class="btn btn-ghost mt8" id="cancelAddBin">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ===== STATE =====
+let state = {
+  bins: [],
+  currentBin: null,
+  moveItem: null,
+  moveFromBin: null,
+  selectedMoveBin: null,
+  scanner: null,
+  scannerActive: false
+};
+
+function loadState() {
+  const saved = localStorage.getItem('peakBinTracker');
+  if (saved) {
+    try { state.bins = JSON.parse(saved).bins || []; } catch(e) {}
+  }
+}
+function saveState() {
+  localStorage.setItem('peakBinTracker', JSON.stringify({ bins: state.bins }));
+}
+loadState();
+
+// ===== UTILITIES =====
+function binId(col, row) { return `C${col}-R${row}`; }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ===== NAVIGATION =====
+document.getElementById('navTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-tab');
+  if (!btn) return;
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const pageId = 'page-' + btn.dataset.page;
+  document.getElementById(pageId).classList.add('active');
+  if (btn.dataset.page === 'bins') renderBinGrid();
+  if (btn.dataset.page === 'search') renderStats();
+  if (btn.dataset.page === 'labels') renderLabels();
+});
+
+// ===== SEARCH =====
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.trim().toLowerCase();
+  const results = document.getElementById('searchResults');
+  const home = document.getElementById('searchHome');
+  if (!q) {
+    results.classList.remove('visible');
+    home.style.display = '';
+    return;
+  }
+  results.classList.add('visible');
+  home.style.display = 'none';
+  let html = '';
+  let found = 0;
+  state.bins.forEach(bin => {
+    bin.items.forEach(item => {
+      if (item.name.toLowerCase().includes(q) || (item.cat && item.cat.toLowerCase().includes(q))) {
+        found++;
+        html += `<div class="result-card">
+          <div class="result-item-name">${item.name}</div>
+          ${item.cat ? `<div class="tag">${item.cat}</div>` : ''}
+          <div class="result-location">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="12" height="11" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>
+            ${binId(bin.col, bin.row)}${bin.label ? ' · ' + bin.label : ''}
+          </div>
+          <div class="result-bin-label">Qty: ${item.qty} · Column ${bin.col}, Row ${bin.row}</div>
+        </div>`;
+      }
+    });
+  });
+  if (!found) {
+    html = `<div class="no-results"><svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;opacity:0.4;display:block;margin-left:auto;margin-right:auto;"><circle cx="16" cy="16" r="10"/><line x1="23" y1="23" x2="32" y2="32"/><line x1="12" y1="16" x2="20" y2="16"/></svg>No items found for "<strong>${this.value}</strong>"</div>`;
+  }
+  results.innerHTML = html;
+});
+
+function renderStats() {
+  const totalItems = state.bins.reduce((s, b) => s + b.items.length, 0);
+  document.getElementById('statBins').textContent = state.bins.length;
+  document.getElementById('statItems').textContent = totalItems;
+
+  const recent = [];
+  state.bins.forEach(bin => bin.items.forEach(item => recent.push({...item, binId: binId(bin.col, bin.row), binLabel: bin.label})));
+  recent.reverse();
+  const last5 = recent.slice(0, 5);
+  const el = document.getElementById('recentItems');
+  if (!last5.length) {
+    el.innerHTML = `<div class="empty-state"><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="8" y="12" width="28" height="22" rx="2"/><path d="M15 12V9a2 2 0 014 0v3"/><path d="M25 12V9a2 2 0 014 0v3"/><line x1="15" y1="22" x2="29" y2="22"/><line x1="15" y1="28" x2="22" y2="28"/></svg><p>No items yet. Add bins and start filling them!</p></div>`;
+    return;
+  }
+  el.innerHTML = last5.map(item => `
+    <div class="item-row">
+      <div class="item-row-name">${item.name}</div>
+      <div class="result-location" style="font-size:11px;">${item.binId}</div>
+    </div>`).join('');
+}
+
+// ===== BINS =====
+function renderBinGrid() {
+  const grid = document.getElementById('binGrid');
+  let html = state.bins.map(bin => `
+    <div class="bin-card" onclick="openBinDetail('${binId(bin.col, bin.row)}')">
+      <div class="bin-card-id">${binId(bin.col, bin.row)}</div>
+      <div class="bin-card-label">${bin.label || 'No label'}</div>
+      <div class="bin-item-count"><span>${bin.items.length}</span> item${bin.items.length !== 1 ? 's' : ''}</div>
+    </div>`).join('');
+  html += `<button class="add-bin-btn" id="openAddBin2">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="4" x2="10" y2="16"/><line x1="4" y1="10" x2="16" y2="10"/></svg>
+    Add Bin
+  </button>`;
+  grid.innerHTML = html;
+  document.getElementById('openAddBin2').onclick = () => openModal('addBinModal');
+}
+
+function openBinDetail(id) {
+  const bin = state.bins.find(b => binId(b.col, b.row) === id);
+  if (!bin) return;
+  state.currentBin = id;
+  document.getElementById('binListView').style.display = 'none';
+  document.getElementById('binDetailView').style.display = 'block';
+
+  document.getElementById('binDetailHeader').innerHTML = `
+    <div>
+      <div class="bin-detail-title">${id}</div>
+      <div class="bin-detail-sub">${bin.label || 'No label'} · Col ${bin.col}, Row ${bin.row}</div>
+    </div>
+    <div class="bin-detail-count">${bin.items.length}</div>`;
+
+  renderBinItems(bin);
+}
+
+function renderBinItems(bin) {
+  const list = document.getElementById('binItemList');
+  if (!bin.items.length) {
+    list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;width:40px;height:40px;"><rect x="10" y="10" width="24" height="28" rx="2"/><line x1="16" y1="20" x2="28" y2="20"/><line x1="16" y1="26" x2="24" y2="26"/></svg><p>No items yet. Add some below!</p></div>`;
+    return;
+  }
+  list.innerHTML = bin.items.map((item, i) => `
+    <div class="item-row">
+      <div>
+        <div class="item-row-name">${item.name}</div>
+        ${item.cat ? `<div class="tag" style="margin-top:3px;">${item.cat}</div>` : ''}
+      </div>
+      <div class="item-row-qty">×${item.qty}</div>
+      <div class="item-actions">
+        <button class="icon-btn" title="Move item" onclick="initMoveItem('${state.currentBin}',${i})">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8l5 5 5-5"/></svg>
+        </button>
+        <button class="icon-btn danger" title="Remove item" onclick="removeItem('${state.currentBin}',${i})">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+document.getElementById('backToBins').onclick = () => {
+  document.getElementById('binListView').style.display = '';
+  document.getElementById('binDetailView').style.display = 'none';
+  renderBinGrid();
+};
+
+document.getElementById('addItemBtn').onclick = () => {
+  const name = document.getElementById('addItemName').value.trim();
+  if (!name) { showToast('Enter an item name'); return; }
+  const qty = parseInt(document.getElementById('addItemQty').value) || 1;
+  const cat = document.getElementById('addItemCat').value.trim();
+  const bin = state.bins.find(b => binId(b.col, b.row) === state.currentBin);
+  if (!bin) return;
+  bin.items.push({ name, qty, cat, added: Date.now() });
+  saveState();
+  document.getElementById('addItemName').value = '';
+  document.getElementById('addItemQty').value = '1';
+  document.getElementById('addItemCat').value = '';
+  renderBinItems(bin);
+  document.getElementById('binDetailHeader').querySelector('.bin-detail-count').textContent = bin.items.length;
+  showToast(`"${name}" added to ${state.currentBin}`);
+  renderStats();
+};
+
+function removeItem(binId, idx) {
+  const bin = state.bins.find(b => `C${b.col}-R${b.row}` === binId);
+  if (!bin) return;
+  const name = bin.items[idx].name;
+  bin.items.splice(idx, 1);
+  saveState();
+  renderBinItems(bin);
+  document.getElementById('binDetailHeader').querySelector('.bin-detail-count').textContent = bin.items.length;
+  showToast(`"${name}" removed`);
+  renderStats();
+}
+
+// ===== MOVE ITEM =====
+function initMoveItem(fromBinId, itemIdx) {
+  const bin = state.bins.find(b => `C${b.col}-R${b.row}` === fromBinId);
+  if (!bin) return;
+  state.moveItem = itemIdx;
+  state.moveFromBin = fromBinId;
+  state.selectedMoveBin = null;
+  document.getElementById('moveModalSub').textContent = `Moving "${bin.items[itemIdx].name}" from ${fromBinId}`;
+  const grid = document.getElementById('moveBinGrid');
+  grid.innerHTML = state.bins
+    .filter(b => `C${b.col}-R${b.row}` !== fromBinId)
+    .map(b => `<button class="bin-select-btn" onclick="selectMoveBin('${`C${b.col}-R${b.row}`}',this)">${`C${b.col}-R${b.row}`}${b.label ? '<br><span style="font-size:10px;font-weight:400;color:var(--text-muted)">'+b.label+'</span>' : ''}</button>`)
+    .join('');
+  if (!grid.innerHTML) grid.innerHTML = '<p style="font-size:13px;color:var(--text-muted);grid-column:span 3;">No other bins available. Create more bins first.</p>';
+  openModal('moveModal');
+}
+function selectMoveBin(id, el) {
+  document.querySelectorAll('.bin-select-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  state.selectedMoveBin = id;
+}
+document.getElementById('confirmMoveBtn').onclick = () => {
+  if (!state.selectedMoveBin) { showToast('Select a destination bin'); return; }
+  const fromBin = state.bins.find(b => `C${b.col}-R${b.row}` === state.moveFromBin);
+  const toBin = state.bins.find(b => `C${b.col}-R${b.row}` === state.selectedMoveBin);
+  const item = fromBin.items.splice(state.moveItem, 1)[0];
+  toBin.items.push(item);
+  saveState();
+  closeModal('moveModal');
+  renderBinItems(fromBin);
+  document.getElementById('binDetailHeader').querySelector('.bin-detail-count').textContent = fromBin.items.length;
+  showToast(`Moved "${item.name}" to ${state.selectedMoveBin}`);
+  renderStats();
+};
+document.getElementById('cancelMoveBtn').onclick = () => closeModal('moveModal');
+document.getElementById('moveModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('moveModal'); });
+
+// ===== ADD BIN =====
+document.getElementById('openAddBin').onclick = () => openModal('addBinModal');
+document.getElementById('cancelAddBin').onclick = () => closeModal('addBinModal');
+document.getElementById('addBinModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal('addBinModal'); });
+document.getElementById('confirmAddBin').onclick = () => {
+  const col = parseInt(document.getElementById('newBinCol').value);
+  const row = parseInt(document.getElementById('newBinRow').value);
+  const label = document.getElementById('newBinLabel').value.trim();
+  if (!col || !row) { showToast('Enter column and row numbers'); return; }
+  if (col < 1 || col > 6 || row < 1 || row > 6) { showToast('Column and row must be 1–6'); return; }
+  const id = binId(col, row);
+  if (state.bins.find(b => b.col === col && b.row === row)) { showToast(`${id} already exists`); return; }
+  state.bins.push({ col, row, label, items: [] });
+  state.bins.sort((a, b) => a.col !== b.col ? a.col - b.col : a.row - b.row);
+  saveState();
+  closeModal('addBinModal');
+  document.getElementById('newBinCol').value = '';
+  document.getElementById('newBinRow').value = '';
+  document.getElementById('newBinLabel').value = '';
+  renderBinGrid();
+  renderStats();
+  showToast(`${id} created!`);
+};
+
+// ===== QR SCANNER =====
+document.getElementById('startScanBtn').onclick = startScanner;
+document.getElementById('stopScanBtn').onclick = stopScanner;
+
+function startScanner() {
+  if (state.scannerActive) return;
+  const status = document.getElementById('qrStatus');
+  const resultBox = document.getElementById('qrResultBox');
+  resultBox.classList.remove('visible');
+  status.textContent = 'Starting camera…';
+
+  state.scanner = new Html5Qrcode('qr-reader');
+  state.scanner.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 220, height: 220 } },
+    (text) => {
+      stopScanner();
+      handleScan(text);
+    },
+    (err) => {}
+  ).then(() => {
+    state.scannerActive = true;
+    status.textContent = 'Scanning… point at a bin QR code';
+    document.getElementById('startScanBtn').style.display = 'none';
+    document.getElementById('stopScanBtn').style.display = '';
+  }).catch(err => {
+    status.textContent = 'Camera access denied. Use manual lookup below.';
+  });
+}
+
+function stopScanner() {
+  if (state.scanner && state.scannerActive) {
+    state.scanner.stop().catch(() => {});
+    state.scannerActive = false;
+  }
+  document.getElementById('startScanBtn').style.display = '';
+  document.getElementById('stopScanBtn').style.display = 'none';
+  document.getElementById('qrStatus').textContent = 'Camera stopped';
+}
+
+function handleScan(text) {
+  const bin = state.bins.find(b => binId(b.col, b.row) === text || text.includes(binId(b.col, b.row)));
+  const resultBox = document.getElementById('qrResultBox');
+  if (bin) {
+    const id = binId(bin.col, bin.row);
+    resultBox.textContent = `✓ Found bin ${id}${bin.label ? ' — ' + bin.label : ''}`;
+    resultBox.classList.add('visible');
+    showQrBinPreview(bin);
+    showToast(`Bin ${id} loaded!`);
+  } else {
+    resultBox.textContent = `QR scanned: "${text}" — no matching bin found.`;
+    resultBox.classList.add('visible');
+  }
+}
+
+function showQrBinPreview(bin) {
+  const id = binId(bin.col, bin.row);
+  document.getElementById('qrBinPreview').style.display = 'block';
+  document.getElementById('qrBinHeader').innerHTML = `
+    <div>
+      <div class="bin-detail-title">${id}</div>
+      <div class="bin-detail-sub">${bin.label || 'No label'} · Col ${bin.col}, Row ${bin.row}</div>
+    </div>
+    <div class="bin-detail-count">${bin.items.length}</div>`;
+  const list = document.getElementById('qrItemList');
+  list.innerHTML = bin.items.length
+    ? bin.items.map(i => `<div class="item-row"><div class="item-row-name">${i.name}</div><div class="item-row-qty">×${i.qty}</div></div>`).join('')
+    : '<div class="empty-state" style="padding:16px;"><p>This bin is empty.</p></div>';
+  document.getElementById('qrOpenBinBtn').onclick = () => {
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-page="bins"]').classList.add('active');
+    document.getElementById('page-bins').classList.add('active');
+    renderBinGrid();
+    setTimeout(() => openBinDetail(binId(bin.col, bin.row)), 50);
+  };
+}
+
+document.getElementById('manualLookupBtn').onclick = () => {
+  const val = document.getElementById('manualBinInput').value.trim().toUpperCase();
+  const bin = state.bins.find(b => binId(b.col, b.row) === val);
+  if (bin) {
+    handleScan(val);
+    document.getElementById('manualBinInput').value = '';
+  } else {
+    showToast(`No bin found: ${val}`);
+  }
+};
+document.getElementById('manualBinInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('manualLookupBtn').click(); });
+
+// ===== LABELS / QR GENERATOR =====
+function renderLabels() {
+  const grid = document.getElementById('labelGrid');
+  const empty = document.getElementById('labelsEmpty');
+  if (!state.bins.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = state.bins.map(bin => {
+    const id = binId(bin.col, bin.row);
+    return `<div class="qr-code-tile" id="tile-${id.replace('-','_')}">
+      <div id="qrimg-${id.replace('-','_')}"></div>
+      <div class="qr-tile-label">${id}${bin.label ? '<br><span style="font-size:10px;color:var(--text-muted)">'+bin.label+'</span>' : ''}</div>
+    </div>`;
+  }).join('');
+
+  state.bins.forEach(bin => {
+    const id = binId(bin.col, bin.row);
+    const key = id.replace('-', '_');
+    const el = document.getElementById('qrimg-' + key);
+    if (el) {
+      el.innerHTML = '';
+      try {
+        new QRCode(el, {
+          text: id,
+          width: 80,
+          height: 80,
+          colorDark: '#1a1108',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch(e) {}
+    }
+    document.getElementById('tile-' + key).onclick = () => downloadQR(id, key);
+  });
+}
+
+function downloadQR(id, key) {
+  const el = document.getElementById('qrimg-' + key);
+  if (!el) return;
+  const canvas = el.querySelector('canvas');
+  const img = el.querySelector('img');
+  if (canvas) {
+    const a = document.createElement('a');
+    a.download = `peak-bin-${id}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  } else if (img) {
+    const a = document.createElement('a');
+    a.download = `peak-bin-${id}.png`;
+    a.href = img.src;
+    a.click();
+  }
+  showToast(`Label ${id} downloading…`);
+}
+
+// ===== INIT =====
+renderStats();
+renderBinGrid();
+</script>
+</body>
+</html>
