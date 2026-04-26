@@ -255,13 +255,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
         <button class="btn btn-primary btn-sm" id="startQrBtn">Start Camera</button>
         <button class="btn btn-ghost btn-sm" id="stopQrBtn" style="display:none;">Stop</button>
       </div>
-      <div class="qr-manual">
-        <div class="qr-manual-title">Manual Lookup</div>
-        <div style="display:flex;gap:8px;">
-          <input class="form-input" id="manualQrInput" placeholder="e.g. A1, B3" style="flex:1;font-size:.88rem;padding:9px 12px;">
-          <button class="btn btn-primary btn-sm" id="manualQrBtn">Go</button>
-        </div>
-      </div>
+
     </div>
     <button class="btn btn-ghost btn-sm" id="closeQrBtn" style="margin:0 16px 16px;">Close</button>
   </div>
@@ -829,13 +823,7 @@ document.getElementById('closeQrBtn').onclick = closeQrModal;
 document.getElementById('qrModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeQrModal(); });
 document.getElementById('startQrBtn').onclick = startQr;
 document.getElementById('stopQrBtn').onclick = stopQr;
-document.getElementById('manualQrBtn').onclick = () => {
-  const val = document.getElementById('manualQrInput').value.trim().toUpperCase();
-  if (!val) return;
-  document.getElementById('manualQrInput').value = '';
-  handleQrScan(val);
-};
-document.getElementById('manualQrInput').onkeydown = e => { if (e.key === 'Enter') document.getElementById('manualQrBtn').click(); };
+
 
 // ── LABEL PRINT ──
 document.getElementById('printLabelsBtn').onclick = openLabelModal;
@@ -916,8 +904,11 @@ function buildPrintPreview(labels) {
   labels.forEach((lbl, i) => {
     // We'll render a placeholder div; actual QR rendered after iframe loads
     const shelfObj = state.shelves[lbl.si];
-    const qrText = (shelfObj ? shelfObj.area + ' - ' + shelfObj.desc + ' | ' : '') + 'Bin ' + lbl.bin;
-    labelCells += '<div class="qr-label" data-bin="' + lbl.bin + '" data-qrtext="' + qrText.replace(/"/g,"'") + '" data-shelf="' + lbl.shelf.replace(/\n/g,'|') + '">' +
+    const qrUrl = 'https://peakgaragesolutions.ca/bin-tracker.html?si=' + lbl.si +
+      '&bin=' + encodeURIComponent(lbl.bin) +
+      '&area=' + encodeURIComponent(shelfObj ? shelfObj.area : '') +
+      '&desc=' + encodeURIComponent(shelfObj ? shelfObj.desc : '');
+    labelCells += '<div class="qr-label" data-bin="' + lbl.bin + '" data-qrtext="' + qrUrl.replace(/"/g,"'") + '" data-shelf="' + lbl.shelf.replace(/\n/g,'|') + '">' +
       '<div class="qr-img" id="qr_'+i+'"></div>' +
       '<div class="lbl-bin">' + lbl.bin + '</div>' +
     '</div>';
@@ -1012,6 +1003,49 @@ document.getElementById('closePrintPreviewBtn').onclick = function() {
 // ── INIT ──
 renderShelvesPage();
 updateSideBtns();
+
+// Handle incoming QR deep-link: ?si=0&bin=A1&area=Garage&desc=Tools
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const bin  = params.get('bin');
+  const si   = params.get('si');
+  const area = params.get('area');
+  if (!bin) return;
+
+  // Find matching shelf — prefer si param, fall back to area+desc match
+  let targetSi = null;
+  if (si !== null && state.shelves[parseInt(si)]) {
+    targetSi = parseInt(si);
+  } else if (area) {
+    state.shelves.forEach((s, i) => {
+      if (s.area.toLowerCase() === area.toLowerCase()) targetSi = i;
+    });
+  }
+  // Fall back: scan all shelves for the bin label
+  if (targetSi === null) {
+    state.shelves.forEach((s, i) => {
+      for (let r = 0; r < s.rows; r++)
+        for (let c = 0; c < s.cols; c++)
+          if (binLabel(c, r) === bin.toUpperCase()) targetSi = i;
+    });
+  }
+  if (targetSi === null) { showToast('Bin "' + bin + '" not found'); return; }
+
+  renderShelvesPage(targetSi);
+  setTimeout(() => {
+    const ov = document.getElementById('binOverlay');
+    if (!ov) return;
+    ov.querySelectorAll('button').forEach(btn => {
+      if (binLabel(parseInt(btn.dataset.col), parseInt(btn.dataset.row)) === bin.toUpperCase()) {
+        btn.click();
+        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }, 150);
+
+  // Clean URL without reloading
+  window.history.replaceState({}, '', window.location.pathname);
+})();
 </script>
 </body>
 </html>
