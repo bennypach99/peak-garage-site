@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" sizes="64x64" href="/favicon.png">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Peak Garage Solutions – Custom Tote Storage</title>
@@ -713,8 +712,9 @@ function update() {
     document.getElementById('p-break').innerHTML =
       lines.map(l=>`<div class="line"><span>${l.label}</span><span>$${l.val}</span></div>`).join('')+
       `<div class="line" style="border-top:1px solid rgba(201,168,76,.25);margin-top:.4rem;padding-top:.4rem;color:var(--gold-light)"><span>Total</span><span>$${total}</span></div>`;
+    const hInDisplay = hasCasters ? hIn + CASTER_ADD : hIn;
     document.getElementById('pvLabel').innerHTML =
-      duLabel+' High Double Unit: 2+Shelf+2 &nbsp;·&nbsp; '+duSlots+' slots<br>133.5" W &nbsp;×&nbsp; '+hIn+'" H &nbsp;×&nbsp; 28.5" D';
+      duLabel+' High Double Unit: 2+Shelf+2 &nbsp;·&nbsp; '+duSlots+' slots<br>133.5" W &nbsp;×&nbsp; '+hInDisplay+'" H &nbsp;×&nbsp; 28.5" D';
 
     drawPreviewDU();
     return;
@@ -782,6 +782,7 @@ function openModal() {
     const duSlots = is4h ? 16 : is3h ? 12 : 8;
     const hInBase  = is4h ? 68.75 : is3h ? 52.75 : 36.75;
     const hIn      = S.addons.has('basictop') ? hInBase - 0.25 : hInBase;
+    const hInFinal = S.addons.has('casters') ? hIn + CASTER_ADD : hIn;
     const duRows  = is4h ? 4 : is3h ? 3 : 2;
     const duBase  = is4h ? (S.addons.has('basictop') ? 530 : 600) : is3h ? (S.addons.has('basictop') ? 435 : 500) : (S.addons.has('basictop') ? 340 : 400);
     const topName = S.addons.has('basictop') ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
@@ -796,7 +797,7 @@ function openModal() {
     if(S.addons.has('stain') && !S.addons.has('basictop')) total += duStainCost;
     if(S.addons.has('casters')) total += mCasterCost;
     if(S.addons.has('totes'))   total += duSlots*15;
-    summary = duLabel+' High Double Unit (2+Shelf+2) · '+duSlots+' tote slots · 133.5" wide × '+hIn+'" tall × 28.5" deep'
+    summary = duLabel+' High Double Unit (2+Shelf+2) · '+duSlots+' tote slots · 133.5" wide × '+hInFinal+'" tall × 28.5" deep'
       +(names.length?' · Add-ons: '+names.join(', '):'')
       +' · Total: $'+total+' CAD';
   } else {
@@ -852,7 +853,7 @@ function submitQuote() {
     const duLabel = is4h ? '4' : is3h ? '3' : '2';
     const duSlots = is4h ? 16 : is3h ? 12 : 8;
     const duHBase  = is4h ? 68.75 : is3h ? 52.75 : 36.75;
-    const duH      = S.addons.has('basictop') ? duHBase - 0.25 : duHBase;
+    const duH      = (S.addons.has('basictop') ? duHBase - 0.25 : duHBase) + (S.addons.has('casters') ? CASTER_ADD : 0);
     const duRows  = is4h ? 4 : is3h ? 3 : 2;
     const duBase  = is4h ? (S.addons.has('basictop') ? 530 : 600) : is3h ? (S.addons.has('basictop') ? 435 : 500) : (S.addons.has('basictop') ? 340 : 400);
     const topName = S.addons.has('basictop') ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
