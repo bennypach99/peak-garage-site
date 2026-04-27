@@ -206,6 +206,9 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
   <div id="shelfActive" style="display:none;">
     <div class="shelf-controls">
       <select class="shelf-select" id="shelfDropdown"></select>
+      <button class="icon-btn" id="editShelfBtn" title="Edit shelf" style="flex-shrink:0;padding:7px 9px;border:1px solid var(--bstrong);border-radius:var(--radius-sm);color:var(--gold);">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;"><path d="M11 2l3 3-8 8H3v-3l8-8z"/><line x1="9" y1="4" x2="12" y2="7"/></svg>
+      </button>
       <button class="btn btn-secondary btn-sm" id="searchToggleBtn">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>Search
       </button>
@@ -257,6 +260,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
     </div>
     <button class="btn btn-primary mt16" id="confirmAddShelf">Create Shelf</button>
     <button class="btn btn-ghost mt8" id="cancelAddShelf">Cancel</button>
+    <button class="btn mt8" id="deleteShelfBtn" style="display:none;background:transparent;border:1px solid var(--danger);color:var(--danger);">Delete Shelf</button>
   </div>
 </div>
 
@@ -385,15 +389,7 @@ function renderShelfDiagram(idx) {
   const ft=Math.max(3,Math.round(unitW/(cols*7)));
 
   document.getElementById('shelfDisplay').innerHTML =
-    '<div class="shelf-info-card">' +
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">' +
-        '<div>' +
-          '<div class="shelf-info-area">'+s.area+'</div>' +
-          '<div class="shelf-info-desc">'+s.desc+'</div>' +
-        '</div>' +
-        '<div class="shelf-meta-chip" style="flex-shrink:0;">'+(cols*rows)+' Bins</div>' +
-      '</div>' +
-    '</div>' +
+
     '<div class="shelf-diagram-wrap"><div class="shelf-diagram-inner">' +
       '<div class="shelf-col-header-row" id="colHeaders"></div>' +
       '<div class="shelf-body-row">' +
@@ -464,7 +460,7 @@ function renderBinDetail(si, col, row) {
   panel.innerHTML =
     '<div class="sbin-panel">' +
       '<div class="sbin-header">' +
-        '<div class="sbin-title">Bin '+label+'</div>' +
+        '<div class="sbin-title">'+label+'</div>' +
         '<div class="sbin-count">'+items.length+' item'+(items.length!==1?'s':'')+'</div>' +
       '</div>' +
       '<div class="sbin-items">' +
@@ -568,17 +564,44 @@ document.getElementById('searchResults').addEventListener('click', function(e) {
   },80);
 });
 
-// ── ADD SHELF ──
+// ── ADD / EDIT SHELF ──
+let editingShelfIdx = null;
+
 function openAddShelfModal() {
+  editingShelfIdx = null;
   document.getElementById('newShelfArea').value='';
   document.getElementById('newShelfDesc').value='';
   state.addShelfCols=3; state.addShelfRows=4;
   document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===3));
   document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===4));
+  document.querySelector('#addShelfModal .modal-title').textContent='Add New Shelf';
+  document.querySelector('#addShelfModal .modal-sub').textContent='Where is this shelf and what does it hold?';
+  document.getElementById('confirmAddShelf').textContent='Create Shelf';
+  document.getElementById('deleteShelfBtn').style.display='none';
   openModal('addShelfModal');
 }
+
+function openEditShelfModal() {
+  const idx = parseInt(document.getElementById('shelfDropdown').value);
+  const s = state.shelves[idx];
+  if (!s) return;
+  editingShelfIdx = idx;
+  document.getElementById('newShelfArea').value = s.area;
+  document.getElementById('newShelfDesc').value = s.desc;
+  state.addShelfCols = s.cols; state.addShelfRows = s.rows;
+  document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.cols));
+  document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.rows));
+  document.querySelector('#addShelfModal .modal-title').textContent='Edit Shelf';
+  document.querySelector('#addShelfModal .modal-sub').textContent='Update the name, description, or size.';
+  document.getElementById('confirmAddShelf').textContent='Save Changes';
+  document.getElementById('deleteShelfBtn').style.display='block';
+  openModal('addShelfModal');
+}
+
 document.getElementById('addShelfBtnEmpty').onclick = openAddShelfModal;
 document.getElementById('addShelfBtnActive').onclick = openAddShelfModal;
+document.getElementById('editShelfBtn').onclick = openEditShelfModal;
+
 document.getElementById('colBtns').addEventListener('click',e=>{
   const b=e.target.closest('.size-btn'); if(!b)return;
   state.addShelfCols=parseInt(b.dataset.val);
@@ -589,18 +612,60 @@ document.getElementById('rowBtns').addEventListener('click',e=>{
   state.addShelfRows=parseInt(b.dataset.val);
   document.querySelectorAll('#rowBtns .size-btn').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
 });
+
 document.getElementById('confirmAddShelf').onclick = () => {
   const area=document.getElementById('newShelfArea').value.trim();
   const desc=document.getElementById('newShelfDesc').value.trim();
   if (!area) { showToast('Enter an area name'); return; }
   if (!desc) { showToast('Enter a description'); return; }
-  state.shelves.push({area,desc,cols:state.addShelfCols,rows:state.addShelfRows});
-  saveState(); closeModal('addShelfModal');
-  showToast('"'+area+' – '+desc+'" added!');
-  renderShelvesPage(state.shelves.length-1);
+  if (editingShelfIdx !== null) {
+    state.shelves[editingShelfIdx] = {area, desc, cols:state.addShelfCols, rows:state.addShelfRows};
+    saveState(); closeModal('addShelfModal');
+    showToast('Shelf updated');
+    renderShelvesPage(editingShelfIdx);
+  } else {
+    state.shelves.push({area,desc,cols:state.addShelfCols,rows:state.addShelfRows});
+    saveState(); closeModal('addShelfModal');
+    showToast('"'+area+' – '+desc+'" added!');
+    renderShelvesPage(state.shelves.length-1);
+  }
 };
 document.getElementById('cancelAddShelf').onclick = ()=>closeModal('addShelfModal');
 document.getElementById('addShelfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('addShelfModal');});
+
+// ── DELETE SHELF ──
+let deleteConfirmPending = false, deleteConfirmTimer = null;
+document.getElementById('deleteShelfBtn').addEventListener('click', function() {
+  const idx = editingShelfIdx !== null ? editingShelfIdx : parseInt(document.getElementById('shelfDropdown').value);
+  const s = state.shelves[idx];
+  if (!s) return;
+  if (!deleteConfirmPending) {
+    deleteConfirmPending = true;
+    showToast('Tap again to confirm delete');
+    deleteConfirmTimer = setTimeout(() => { deleteConfirmPending = false; }, 3000);
+  } else {
+    clearTimeout(deleteConfirmTimer);
+    deleteConfirmPending = false;
+    const oldBins = state.shelfBins;
+    const newBins = {};
+    Object.keys(oldBins).forEach(k => {
+      if (!k.startsWith('shelf'+idx+'_')) {
+        const match = k.match(/^shelf(\d+)_(.+)$/);
+        if (match && parseInt(match[1]) > idx) {
+          newBins['shelf'+(parseInt(match[1])-1)+'_'+match[2]] = oldBins[k];
+        } else {
+          newBins[k] = oldBins[k];
+        }
+      }
+    });
+    state.shelfBins = newBins;
+    state.shelves.splice(idx, 1);
+    saveState();
+    closeModal('addShelfModal');
+    renderShelvesPage(Math.min(idx, state.shelves.length - 1));
+    showToast('Shelf deleted');
+  }
+});
 
 // ── EXPORT ──
 document.getElementById('exportBtn').addEventListener('click',()=>{
