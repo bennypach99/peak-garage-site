@@ -249,7 +249,6 @@ footer a:hover{color:var(--gold-light);}
   <div class="trust-item"><div class="trust-dot"></div>28.5" deep</div>
   <div class="trust-item"><div class="trust-dot"></div>Optional casters</div>
   <div class="trust-item"><div class="trust-dot"></div>Totes included option</div>
-  <div class="trust-item"><div class="trust-dot"></div>Hand picked</div>
   <div class="trust-item"><div class="trust-dot"></div>Local delivery included</div>
   <div class="trust-item"><div class="trust-dot"></div>Set-up included</div>
 </div>
@@ -469,13 +468,13 @@ footer a:hover{color:var(--gold-light);}
       <span id="modal-config-text">—</span>
     </div>
 
-    <label class="field-label" for="f-name">Full Name *</label>
+    <label class="field-label" for="f-name">Name *</label>
     <input class="field-input" id="f-name" type="text" placeholder="Jane Smith"/>
 
-    <label class="field-label" for="f-phone">Phone Number (optional)</label>
+    <label class="field-label" for="f-phone">Phone Number</label>
     <input class="field-input" id="f-phone" type="tel" placeholder="(416) 555-0123"/>
 
-    <label class="field-label" for="f-email">Email Address *</label>
+    <label class="field-label" for="f-email">Email Address</label>
     <input class="field-input" id="f-email" type="email" placeholder="jane@email.com"/>
 
     <label class="field-label" for="f-notes">Additional Notes (optional)</label>
@@ -816,14 +815,17 @@ function submitQuote() {
   const notes = document.getElementById('f-notes').value.trim();
   const status = document.getElementById('statusMsg');
 
-  if (!name || !email) {
+  if (!name) {
     status.className = 'status-msg error';
-    status.textContent = 'Please fill in your name and email address.';
+    status.textContent = 'Please enter your name.';
     return;
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    status.className = 'status-msg error';
-    status.textContent = 'Please enter a valid email address.';
+  if (!phone && !email) {
+    alert('Please provide at least a phone number or email address so we can reach you.');
+    return;
+  }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert('Please enter a valid email address.');
     return;
   }
   if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
