@@ -884,8 +884,8 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID2, {
         to_email:       'benny@peakgaragesolutions.ca',
         from_name:      name,
-        from_email:     email,
-        phone:          phone,
+        from_email:     email || '(not provided)',
+        phone:          phone || '(not provided)',
         config_cols:    cols + ' wide',
         config_rows:    rows + ' high',
         config_slots:   slots + ' tote slots',
@@ -897,12 +897,14 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         config_summary: summary,
         notes:          notes || 'None'})
        .then(() => {
-        // 2. Send the Auto-Reply to the CUSTOMER
-        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-            to_email:       email,
-            from_name:      name,
-            config_summary: summary
-        });
+        // 2. Send auto-reply to customer only if they provided an email
+        if (email) {
+          return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+              to_email:       email,
+              from_name:      name,
+              config_summary: summary
+          });
+        }
     }).then(() => {
         // SUCCESS: Both emails sent
         status.className = 'status-msg success';
