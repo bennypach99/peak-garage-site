@@ -1,1 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blast Haus Pros | Pressure Washing & Bin Cleaning Mississauga</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;0,900;1,900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --navy:   #0b1e31;
+            --navy2:  #0d2137;
+            --navy3:  #112740;
+            --sky:    #2ab4d8;
+            --sky2:   #1a9bbf;
+            --lime:   #8cc63f;
+            --lime2:  #73a830;
+            --light:  #f0f4f8;
+            --text:   #c8d8e8;
+            --white:  #ffffff;
+            --grad:   linear-gradient(135deg, #0b1e31 0%, #112740 100%);
+        }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'DM Sans', sans-serif; color: var(--navy); background: var(--white); line-height: 1.6; overflow-x: hidden; }
 
+        /* ======================== NAV ======================== */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            height: 80px; display: flex; align-items: center;
+            justify-content: space-between; padding: 0 5%;
+            transition: all 0.4s ease;
+            background: transparent;
+        }
+        nav.scrolled {
+            background: rgba(11,30,49,0.97);
+            backdrop-filter: blur(20px);
+            height: 70px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+        }
+        .nav-logo img {
+            height: 52px; width: auto;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+        }
+        .nav-links {
+            display: flex; align-items: center; gap: 32px;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.8); text-decoration: none;
+            font-weight: 600; font-size: 0.9rem; letter-spacing: 0.5px;
+            text-transform: uppercase; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--lime); }
+        .nav-phone {
+            color: white !important; font-weight: 700 !important;
+            font-size: 1rem !important;
+        }
+        .nav-cta {
+            background: var(--lime); color: var(--navy) !important;
+            padding: 11px 26px; border-radius: 8px;
+            font-weight: 800 !important; transition: all 0.2s !important;
+            text-transform: uppercase !important; letter-spacing: 0.5px !important;
+        }
+        .nav-cta:hover { background: var(--lime2) !important; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(140,198,63,0.35); }
+        .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; }
+        .hamburger span { width: 26px; height: 2px; background: white; border-radius: 2px; transition: 0.3s; }
+        .mobile-menu {
+            display: none; position: fixed; top: 70px; left: 0; right: 0;
+            background: rgba(11,30,49,0.99); padding: 30px 5%;
+            flex-direction: column; gap: 20px; z-index: 999;
+        }
+        .mobile-menu.open { display: flex; }
+        .mobile-menu a { color: white; text-decoration: none; font-weight: 700; font-size: 1.1rem; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+        }
+
+        /* ======================== HERO ======================== */
+        .hero {
+            min-height: auto;
+            background: 
+                linear-gradient(to bottom, rgba(11,30,49,0.72) 0%, rgba(11,30,49,0.55) 40%, rgba(11,30,49,0.85) 75%, rgba(11,30,49,1) 100%),
+                url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/image_jpg_1.jpg') center 25% / cover no-repeat;
+            color: white; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 120px 7% 50px;
+            position: relative; overflow: hidden;
+        }
+        .hero-inner {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 70px;
+            align-items: center;
+            width: 100%;
+            max-width: 1300px;
+        }
+        .hero-logo-col {
+            display: flex; align-items: center; justify-content: center;
+            animation: fadeInUp 0.6s ease both;
+        }
+        .hero-logo-col img {
+            width: 100%; max-width: 420px; height: auto;
+            filter: drop-shadow(0 20px 60px rgba(0,0,0,0.7)) drop-shadow(0 0 50px rgba(42,180,216,0.25));
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-14px); }
+        }
+        .hero-text-col {
+            display: flex; flex-direction: column; align-items: flex-start;
+        }
+        .hero::before {
+            content: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(140,198,63,0.15); border: 1px solid rgba(140,198,63,0.4);
+            color: var(--lime); padding: 8px 18px; border-radius: 50px;
+            font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 28px;
+            animation: fadeInUp 0.6s ease both;
+        }
+        .hero-badge::before { content: '⚡'; }
+        .hero h1 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(72px, 10vw, 130px); font-weight: 900;
+            line-height: 0.9; text-transform: uppercase; margin-bottom: 30px;
+            animation: fadeInUp 0.7s 0.1s ease both;
+        }
+        .hero h1 .sky { color: var(--sky); }
+        .hero h1 .lime { color: var(--lime); }
+        .hero h1 .italic { font-style: italic; }
+        .hero-sub {
+            font-size: 1.25rem; max-width: 520px; margin-bottom: 44px;
+            color: rgba(255,255,255,0.85); line-height: 1.7;
+            animation: fadeInUp 0.7s 0.2s ease both;
+        }
+        .hero-actions {
+            display: flex; gap: 16px; flex-wrap: wrap;
+            animation: fadeInUp 0.7s 0.3s ease both;
+        }
+        .btn-primary {
+            background: var(--lime); color: var(--navy);
+            padding: 20px 46px; border-radius: 10px;
+            font-size: 1.15rem; font-weight: 800; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.25s; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .btn-primary:hover { background: var(--lime2); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(140,198,63,0.4); }
+        .btn-secondary {
+            background: transparent; color: white;
+            padding: 20px 40px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3);
+            font-size: 1.15rem; font-weight: 700; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.25s;
+        }
+        .btn-secondary:hover { border-color: white; background: rgba(255,255,255,0.08); }
+
+        .hero-stats-bar {
+            background: linear-gradient(135deg, #0d2137 0%, #112740 100%);
+            padding: 40px 7%;
+            display: flex;
+            justify-content: center;
+        }
+        .hero-stats-bar .hero-stats {
+            margin-top: 0;
+            animation: none;
+        }
+        .hero-stats {
+            display: flex; gap: 50px; margin-top: 70px; flex-wrap: wrap;
+            animation: fadeInUp 0.7s 0.4s ease both;
+        }
+        .stat { text-align: left; }
+        .stat-num {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 3.2rem; font-weight: 900; line-height: 1;
+            color: var(--lime);
+        }
+        .stat-label { font-size: 0.85rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+        /* ======================== TRUST BAR ======================== */
+        .trust-bar {
+            background: var(--navy); padding: 20px 6%;
+            display: flex; align-items: center; justify-content: center;
+            gap: 50px; flex-wrap: wrap;
+        }
+        .trust-item {
+            display: flex; align-items: center; gap: 10px;
+            color: rgba(255,255,255,0.7); font-size: 0.88rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .trust-item .icon { font-size: 1.3rem; }
+        .trust-item strong { color: var(--lime); }
+
+        /* ======================== SECTIONS ======================== */
+        section { padding: 100px 6%; }
+        .section-label {
+            display: inline-block; color: var(--sky); font-weight: 700;
+            text-transform: uppercase; letter-spacing: 2px; font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 900;
+            text-transform: uppercase; line-height: 1.05; margin-bottom: 16px;
+        }
+        .section-sub { color: #667; font-size: 1.05rem; max-width: 600px; line-height: 1.7; }
+        .text-center { text-align: center; }
+        .text-center .section-sub { margin: 0 auto; }
+
+        /* ======================== PROCESS ======================== */
+        .process-section { background: var(--light); }
+        .steps {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 24px; margin-top: 48px;
+        }
+        .step {
+            background: white; border-radius: 14px; padding: 28px 28px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07); position: relative;
+            border-top: 4px solid transparent;
+            opacity: 0; transform: translateY(30px);
+            transition: all 0.5s ease;
+        }
+        .step.visible { opacity: 1; transform: translateY(0); }
+        .step:hover { box-shadow: 0 10px 32px rgba(0,0,0,0.11); transform: translateY(-3px); }
+        .step:nth-child(1) { border-top-color: var(--lime); transition-delay: 0s; }
+        .step:nth-child(2) { border-top-color: var(--sky); transition-delay: 0.1s; }
+        .step:nth-child(3) { border-top-color: var(--lime); transition-delay: 0.2s; }
+        .step-num { display: none; }
+        .step-icon { display: none; }
+        .step h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 1.4rem; text-transform: uppercase; margin-bottom: 8px; }
+        .step p { color: #667; line-height: 1.7; font-size: 0.95rem; }
+
+        /* ======================== SERVICES ======================== */
+        .services-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px; margin-top: 60px;
+        }
+        .service-card {
+            background: var(--navy); color: white; border-radius: 14px;
+            padding: 26px 24px; position: relative; overflow: hidden;
+            cursor: default; transition: all 0.35s;
+            opacity: 0; transform: translateY(30px);
+        }
+        .service-card.visible { opacity: 1; transform: translateY(0); }
+        .service-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(11,30,49,0.25); }
+        .service-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: var(--lime);
+        }
+        .service-card.sky-card::before { background: var(--sky); }
+        .service-card::after { content: none; }
+        .service-icon { display: none; }
+        .service-card h3 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 1.35rem; text-transform: uppercase; margin-bottom: 8px;
+        }
+        .service-card p { color: var(--text); line-height: 1.65; font-size: 0.9rem; margin-bottom: 16px; }
+        .service-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .tag {
+            background: rgba(255,255,255,0.08); font-size: 0.78rem;
+            padding: 5px 12px; border-radius: 50px; color: rgba(255,255,255,0.7);
+            font-weight: 600;
+        }
+
+        /* ======================== BEFORE/AFTER ======================== */
+        .ba-section { background: var(--navy); color: white; }
+        .ba-section .section-title { color: white; }
+        .ba-section .section-label { color: var(--lime); }
+        .ba-section .section-sub { color: var(--text); }
+        .ba-tabs {
+            display: flex; gap: 12px; margin: 40px 0 30px; flex-wrap: wrap; justify-content: center;
+        }
+        .ba-tab {
+            background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6);
+            border: 1px solid rgba(255,255,255,0.15); padding: 10px 24px;
+            border-radius: 50px; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ba-tab.active, .ba-tab:hover {
+            background: var(--lime); color: var(--navy); border-color: var(--lime);
+        }
+        .slider-wrap {
+            max-width: 900px; margin: 0 auto; position: relative;
+            height: 480px; border-radius: 20px; overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5); user-select: none;
+            cursor: ew-resize;
+        }
+        .ba-img-before, .ba-img-after {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: contain; background-position: center; background-repeat: no-repeat;
+        }
+        .ba-img-before {
+            background-image: url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-before.jpg');
+            filter: grayscale(0.8) brightness(0.75) saturate(0.5);
+        }
+        .ba-img-after-wrap {
+            position: absolute; top: 0; left: 0; height: 100%; width: 50%;
+            overflow: hidden;
+        }
+        .ba-img-after {
+            background-image: url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-after.jpg');
+            width: 900px; max-width: none;
+        }
+        .ba-divider {
+            position: absolute; top: 0; bottom: 0; width: 3px;
+            background: var(--lime); left: 50%; transform: translateX(-50%);
+            z-index: 10;
+        }
+        .ba-handle {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px; height: 48px; background: var(--lime);
+            border-radius: 50%; z-index: 11; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            font-size: 1.1rem; color: var(--navy); font-weight: 900;
+        }
+        .ba-labels {
+            position: absolute; top: 20px; left: 0; right: 0;
+            display: flex; justify-content: space-between; padding: 0 24px; z-index: 5;
+        }
+        .ba-label {
+            background: rgba(0,0,0,0.6); color: white; padding: 6px 16px;
+            border-radius: 6px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .ba-label.after { background: rgba(140,198,63,0.9); color: var(--navy); }
+
+        /* ======================== TESTIMONIALS ======================== */
+        .reviews-section { background: var(--light); }
+        .reviews-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px; margin-top: 60px;
+        }
+        .review-card {
+            background: white; padding: 36px 32px; border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.07); position: relative;
+            opacity: 0; transform: translateY(30px); transition: all 0.5s ease;
+        }
+        .review-card.visible { opacity: 1; transform: translateY(0); }
+        .review-card:nth-child(1) { transition-delay: 0s; }
+        .review-card:nth-child(2) { transition-delay: 0.1s; }
+        .review-card:nth-child(3) { transition-delay: 0.2s; }
+        .review-stars { color: #f5a623; font-size: 1.1rem; margin-bottom: 16px; letter-spacing: 2px; }
+        .review-text { font-size: 1rem; color: #445; line-height: 1.75; margin-bottom: 24px; font-style: italic; }
+        .review-text::before { content: '\201C'; font-size: 2.5rem; color: var(--lime); line-height: 0; vertical-align: -0.5rem; margin-right: 4px; }
+        .reviewer { display: flex; align-items: center; gap: 14px; }
+        .reviewer-avatar {
+            width: 46px; height: 46px; border-radius: 50%;
+            background: var(--navy); display: flex; align-items: center;
+            justify-content: center; font-weight: 800; font-size: 1.1rem; color: var(--lime);
+            flex-shrink: 0;
+        }
+        .reviewer-info strong { display: block; font-weight: 700; color: var(--navy); }
+        .reviewer-info span { font-size: 0.82rem; color: #889; }
+        .reviews-badge {
+            display: flex; align-items: center; justify-content: center;
+            gap: 16px; margin-top: 50px; flex-wrap: wrap;
+        }
+        .reviews-badge-item {
+            display: flex; align-items: center; gap: 10px;
+            background: white; padding: 14px 24px; border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            font-weight: 700; font-size: 0.9rem;
+        }
+
+        /* ======================== SERVICE AREA ======================== */
+        .area-section {
+            background: var(--grad); color: white;
+            text-align: center;
+        }
+        .area-section .section-title { color: white; }
+        .area-section .section-label { color: var(--lime); }
+        .area-section .section-sub { color: var(--text); margin: 0 auto 50px; }
+        .towns-grid {
+            display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+            max-width: 700px; margin: 0 auto;
+        }
+        .town-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.08); color: white;
+            padding: 10px 22px; border-radius: 50px;
+            border: 1px solid rgba(42,180,216,0.3);
+            font-weight: 600; font-size: 0.9rem; transition: all 0.2s;
+        }
+        .town-tag:hover { background: rgba(42,180,216,0.2); border-color: var(--sky); }
+        .town-tag::before { content: '📍'; font-size: 0.9rem; }
+
+        /* ======================== FAQ ======================== */
+        .faq-section { background: white; }
+        .faq-list { max-width: 780px; margin: 60px auto 0; }
+        .faq-item {
+            border-bottom: 1px solid rgba(0,0,0,0.1); overflow: hidden;
+            opacity: 0; transform: translateY(20px); transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .faq-item.visible { opacity: 1; transform: translateY(0); }
+        .faq-q {
+            width: 100%; text-align: left; padding: 22px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 1.05rem; font-weight: 700; color: var(--navy);
+            background: none; border: none; cursor: pointer; gap: 16px;
+            transition: color 0.2s;
+        }
+        .faq-q:hover { color: var(--sky); }
+        .faq-q .arrow {
+            font-size: 0.9rem; transition: transform 0.3s; flex-shrink: 0;
+            color: var(--lime); font-weight: 900;
+        }
+        .faq-a {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+            color: #556; line-height: 1.75; font-size: 0.97rem;
+        }
+        .faq-item.open .faq-q { color: var(--sky); }
+        .faq-item.open .faq-a { max-height: 300px; padding-bottom: 20px; }
+        .faq-item.open .arrow { transform: rotate(90deg); }
+
+        /* ======================== QUOTE FORM ======================== */
+        .quote-section { background: var(--light); }
+        .quote-wrap {
+            max-width: 820px; margin: 0 auto;
+        }
+        .quote-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 50px;
+            margin-top: 60px; align-items: start;
+        }
+        .quote-form-card {
+            background: var(--navy); border-radius: 24px; padding: 50px 44px;
+            box-shadow: 0 20px 60px rgba(11,30,49,0.3);
+        }
+        .quote-form-card h3 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2.2rem; color: white; text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .quote-form-card .sub { color: var(--sky); font-size: 0.9rem; font-weight: 600; margin-bottom: 30px; }
+        .form-field { margin-bottom: 16px; }
+        .form-field input,
+        .form-field select,
+        .form-field textarea {
+            width: 100%; padding: 15px 18px;
+            border: 1.5px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.08);
+            color: white;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .form-field input::placeholder,
+        .form-field textarea::placeholder { color: rgba(255,255,255,0.35); }
+        .form-field select { color: rgba(255,255,255,0.7); }
+        .form-field select option { background: var(--navy2); color: white; }
+        .form-field input:focus,
+        .form-field select:focus,
+        .form-field textarea:focus {
+            border-color: var(--lime);
+            background: rgba(255,255,255,0.12);
+        }
+        .form-field textarea { resize: vertical; min-height: 110px; }
+        .form-submit {
+            width: 100%; padding: 18px; border: none;
+            background: var(--lime); color: var(--navy);
+            border-radius: 10px; font-family: 'DM Sans', sans-serif;
+            font-size: 1.05rem; font-weight: 800; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            transition: all 0.25s; margin-top: 4px;
+        }
+        .form-submit:hover { background: var(--lime2); transform: translateY(-1px); box-shadow: 0 8px 25px rgba(140,198,63,0.35); }
+        .quote-info { padding-top: 10px; }
+        .quote-info h3 {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 2rem; text-transform: uppercase; margin-bottom: 20px;
+        }
+        .contact-item {
+            display: flex; align-items: flex-start; gap: 16px;
+            margin-bottom: 28px; padding: 20px; background: white;
+            border-radius: 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+        }
+        .contact-icon {
+            width: 46px; height: 46px; border-radius: 10px;
+            background: var(--navy); display: flex; align-items: center;
+            justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+        }
+        .contact-item strong { display: block; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+        .contact-item a, .contact-item span { color: var(--sky); font-weight: 600; text-decoration: none; font-size: 1.05rem; }
+        .why-list { margin-top: 32px; }
+        .why-item {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 14px; font-weight: 600; color: #334;
+        }
+        .why-item::before {
+            content: '✓'; width: 26px; height: 26px; border-radius: 50%;
+            background: var(--lime); color: var(--navy); font-weight: 900;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; flex-shrink: 0;
+        }
+
+        /* ======================== FLOATING CTA ======================== */
+        .float-cta {
+            position: fixed; bottom: 28px; right: 28px; z-index: 900;
+            background: var(--lime); color: var(--navy);
+            padding: 16px 28px; border-radius: 50px;
+            font-weight: 800; text-decoration: none;
+            box-shadow: 0 8px 30px rgba(140,198,63,0.5);
+            font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px;
+            transition: all 0.3s;
+            display: flex; align-items: center; gap: 8px;
+            opacity: 0; pointer-events: none;
+            transform: translateY(10px);
+        }
+        .float-cta.show { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .float-cta:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 40px rgba(140,198,63,0.55); }
+
+        /* ======================== FOOTER ======================== */
+        footer {
+            background: #06111d; color: rgba(255,255,255,0.4);
+            padding: 60px 6% 40px;
+        }
+        .footer-top {
+            display: grid; grid-template-columns: 2fr 1fr 1fr;
+            gap: 60px; margin-bottom: 50px; padding-bottom: 50px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .footer-brand .logo {
+            font-family: 'Barlow Condensed', sans-serif; font-size: 2rem;
+            color: white; font-weight: 900; text-transform: uppercase; margin-bottom: 14px;
+        }
+        .footer-brand .logo span { color: var(--lime); }
+        .footer-brand p { line-height: 1.7; font-size: 0.9rem; }
+        .footer-col h4 { color: white; font-weight: 700; margin-bottom: 18px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .footer-col a, .footer-col p {
+            display: block; color: rgba(255,255,255,0.45);
+            text-decoration: none; font-size: 0.9rem; margin-bottom: 10px;
+            transition: color 0.2s;
+        }
+        .footer-col a:hover { color: var(--lime); }
+        .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .footer-bottom p { font-size: 0.85rem; }
+
+        /* ======================== ANIMATIONS ======================== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ======================== RESPONSIVE ======================== */
+        @media (max-width: 900px) {
+            .hero-inner { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+            .hero-text-col { align-items: center; }
+            .hero-logo-col img { max-width: 280px; }
+            .steps { grid-template-columns: 1fr; }
+            .services-grid { grid-template-columns: 1fr; }
+            .quote-grid { grid-template-columns: 1fr; }
+            .footer-top { grid-template-columns: 1fr; gap: 40px; }
+            .hero { padding: 120px 5% 60px; }
+    
+        .hero-stats-bar {
+            background: linear-gradient(135deg, #0d2137 0%, #112740 100%);
+            padding: 40px 7%;
+            display: flex;
+            justify-content: center;
+        }
+        .hero-stats-bar .hero-stats {
+            margin-top: 0;
+            animation: none;
+        }
+        .hero-stats { gap: 30px; justify-content: center; }
+            .hero-actions { justify-content: center; }
+            .slider-wrap { height: 300px; }
+        }
+        @media (max-width: 600px) {
+            section { padding: 70px 5%; }
+            .hero h1 { font-size: 68px; }
+            .slider-wrap { height: 240px; }
+            .quote-form-card { padding: 34px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<nav id="nav">
+    <div class="nav-logo"><img src="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/image_png_1.png" alt="Blast Haus Pros"></div>
+    <div class="nav-links">
+        <a href="#services">Services</a>
+        <a href="#results">Results</a>
+        <a href="#reviews">Reviews</a>
+        <a href="#faq">FAQ</a>
+        <a href="tel:6479691558" class="nav-phone">📞 647-969-1558</a>
+        <a href="#quote" class="nav-cta">Free Quote</a>
+    </div>
+    <div class="hamburger" id="hamburger">
+        <span></span><span></span><span></span>
+    </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+    <a href="#services" onclick="closeMobile()">Services</a>
+    <a href="#results" onclick="closeMobile()">Results</a>
+    <a href="#reviews" onclick="closeMobile()">Reviews</a>
+    <a href="#faq" onclick="closeMobile()">FAQ</a>
+    <a href="tel:6479691558">📞 647-969-1558</a>
+    <a href="#quote" onclick="closeMobile()" style="color: var(--lime);">Get Free Quote →</a>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-logo-col">
+            <img src="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/image_png_2.png" alt="Blast Haus Pros Logo">
+        </div>
+        <div class="hero-text-col">
+            <div class="hero-badge">Mississauga's #1 Rated Pressure Washing Service</div>
+            <h1>BLAST<br><span class="sky italic">IT</span> <span class="lime">CLEAN.</span></h1>
+            <p class="hero-sub">Professional pressure washing & bin sanitizing for homes and businesses across Mississauga, Halton & the GTA. We don't just clean — we restore.</p>
+            <div class="hero-actions">
+                <a href="#quote" class="btn-primary">Get A Free Quote →</a>
+                <a href="tel:6479691558" class="btn-secondary">📞 Call Now</a>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<div class="hero-stats-bar">
+<div class="hero-stats">
+                <div class="stat"><div class="stat-num">500+</div><div class="stat-label">Jobs Completed</div></div>
+                <div class="stat"><div class="stat-num">5★</div><div class="stat-label">Google Rating</div></div>
+                <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Satisfaction Rate</div></div>
+                <div class="stat"><div class="stat-num">6</div><div class="stat-label">Cities Served</div></div>
+            </div>
+</div>
+
+
+<!-- ===================== TRUST BAR ===================== -->
+<div class="trust-bar">
+    <div class="trust-item"><span class="icon">🛡️</span> <strong>Fully Insured</strong></div>
+    <div class="trust-item"><span class="icon">🌱</span> <strong>Eco-Friendly</strong> Solutions</div>
+    <div class="trust-item"><span class="icon">📅</span> Same-Week <strong>Booking</strong></div>
+    <div class="trust-item"><span class="icon">✅</span> <strong>100%</strong> Satisfaction Guarantee</div>
+    <div class="trust-item"><span class="icon">🏠</span> Locally <strong>Owned & Operated</strong></div>
+</div>
+
+<!-- ===================== PROCESS ===================== -->
+<section class="process-section" id="process">
+    <div class="text-center">
+        <span class="section-label">How It Works</span>
+        <h2 class="section-title">Simple. Fast. Spotless.</h2>
+        <p class="section-sub">Three steps from booking to a cleaner property — no hassle, no surprises.</p>
+    </div>
+    <div class="steps">
+        <div class="step reveal">
+            <h3>Request Your Quote</h3>
+            <p>Call <a href="tel:6479691558" style="color: var(--sky); font-weight: 700; text-decoration: none;">647-969-1558</a> or fill out our quick form below. We'll get back to you fast — usually within the hour.</p>
+        </div>
+        <div class="step reveal">
+            <h3>We Come to You</h3>
+            <p>Our certified technicians arrive on time with commercial-grade equipment and eco-friendly cleaning solutions tailored to your surface.</p>
+        </div>
+        <div class="step reveal">
+            <h3>You'll Love the Result</h3>
+            <p>We don't leave until you're thrilled. Your property gets a final inspection and you get a before-and-after photo set.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== SERVICES ===================== -->
+<section id="services" style="background: var(--light);">
+    <div class="text-center">
+        <span class="section-label">What We Do</span>
+        <h2 class="section-title">Our Services</h2>
+        <p class="section-sub">From driveways to wheelie bins, we tackle every job with pro equipment and a satisfaction guarantee.</p>
+    </div>
+    <div class="services-grid">
+        <div class="service-card reveal" data-num="01">
+            <span class="service-icon">🏠</span>
+            <h3>House & Siding Wash</h3>
+            <p>Soft-wash technology removes mold, algae, and years of grime from your siding without damaging paint or surfaces. Your home will look freshly painted.</p>
+            <div class="service-tags">
+                <span class="tag">Vinyl Siding</span>
+                <span class="tag">Brick</span>
+                <span class="tag">Stucco</span>
+                <span class="tag">Soft Wash</span>
+            </div>
+        </div>
+        <div class="service-card sky-card reveal" data-num="02">
+            <span class="service-icon">🚗</span>
+            <h3>Driveway & Patio Cleaning</h3>
+            <p>Deep clean your concrete, interlocking stone, or pavers. We remove oil stains, tire marks, moss, and efflorescence to restore original colour.</p>
+            <div class="service-tags">
+                <span class="tag">Concrete</span>
+                <span class="tag">Interlock</span>
+                <span class="tag">Pavers</span>
+                <span class="tag">Stamped Concrete</span>
+            </div>
+        </div>
+        <div class="service-card reveal" data-num="03">
+            <span class="service-icon">🗑️</span>
+            <h3>Bin Sanitizing</h3>
+            <p>Hot-water high-pressure sanitizing kills 99.9% of bacteria and eliminates odours from your garbage and recycling bins. Schedule recurring service.</p>
+            <div class="service-tags">
+                <span class="tag">Garbage Bins</span>
+                <span class="tag">Recycling</span>
+                <span class="tag">Recurring Plans</span>
+            </div>
+        </div>
+        <div class="service-card sky-card reveal" data-num="04">
+            <span class="service-icon">🏡</span>
+            <h3>Fence & Deck Cleaning</h3>
+            <p>Restore weathered wood, vinyl, and composite decking. Remove black mold, green algae, and UV-grey oxidation to prep for staining or sealing.</p>
+            <div class="service-tags">
+                <span class="tag">Wood Decks</span>
+                <span class="tag">Composite</span>
+                <span class="tag">Vinyl Fencing</span>
+            </div>
+        </div>
+        <div class="service-card reveal" data-num="05">
+            <span class="service-icon">🏢</span>
+            <h3>Commercial Cleaning</h3>
+            <p>Storefronts, parking lots, loading docks — we handle large-scale commercial jobs with minimal disruption to your business operations.</p>
+            <div class="service-tags">
+                <span class="tag">Storefronts</span>
+                <span class="tag">Parking Lots</span>
+                <span class="tag">Industrial</span>
+            </div>
+        </div>
+        <div class="service-card sky-card reveal" data-num="06">
+            <span class="service-icon">🚿</span>
+            <h3>Gutter Cleaning</h3>
+            <p>Full gutter flush and downspout clearing. We clean gutters inside and out so water flows freely and your fascia stays protected year-round.</p>
+            <div class="service-tags">
+                <span class="tag">Interior Flush</span>
+                <span class="tag">Downspouts</span>
+                <span class="tag">Exterior Brightening</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== BEFORE / AFTER ===================== -->
+<section class="ba-section" id="results">
+    <div class="text-center">
+        <span class="section-label">Results Guaranteed</span>
+        <h2 class="section-title" style="color: white;">Seeing Is Believing</h2>
+        <p class="section-sub">Drag the handle to see the transformation. This is what Blast Haus Pros delivers.</p>
+    </div>
+    <div class="ba-tabs">
+        <div class="ba-tab active" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-before.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-after.jpg">Driveway</div>
+        <div class="ba-tab" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/siding-before.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/siding-after.jpg">Siding</div>
+        <div class="ba-tab" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/deck-before.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/deck-after.jpg">Deck</div>
+    </div>
+    <div class="slider-wrap" id="baSlider">
+        <div class="ba-img-before" id="baImgBefore"></div>
+        <div class="ba-img-after-wrap" id="baAfterWrap">
+            <div class="ba-img-after" id="baImgAfter"></div>
+        </div>
+        <div class="ba-divider" id="baDivider"></div>
+        <div class="ba-handle" id="baHandle">↔</div>
+        <div class="ba-labels">
+            <span class="ba-label">Before</span>
+            <span class="ba-label after">After</span>
+        </div>
+    </div>
+    <p style="text-align: center; color: rgba(255,255,255,0.45); font-size: 0.85rem; margin-top: 20px;">← Drag to compare →</p>
+</section>
+
+<!-- ===================== TESTIMONIALS ===================== -->
+<section class="reviews-section" id="reviews">
+    <div class="text-center">
+        <span class="section-label">What Customers Say</span>
+        <h2 class="section-title">Real Reviews from Real Neighbours</h2>
+        <p class="section-sub">Don't just take our word for it. Here's what Mississauga homeowners are saying about Blast Haus Pros.</p>
+    </div>
+    <div class="reviews-grid">
+        <div class="review-card reveal">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">Our driveway had years of black stains and moss that we'd given up on. After Blast Haus came through, it honestly looks like new concrete. The whole street was stopping to ask what we did.</p>
+            <div class="reviewer">
+                <div class="reviewer-avatar">JM</div>
+                <div class="reviewer-info">
+                    <strong>James & Marta D.</strong>
+                    <span>Mississauga, ON — Driveway Cleaning</span>
+                </div>
+            </div>
+        </div>
+        <div class="review-card reveal">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">Signed up for the monthly bin cleaning and I can't believe we waited so long. No more smell, no more fruit flies. Worth every penny and the team is always on time.</p>
+            <div class="reviewer">
+                <div class="reviewer-avatar">SC</div>
+                <div class="reviewer-info">
+                    <strong>Sarah C.</strong>
+                    <span>Oakville, ON — Bin Sanitizing</span>
+                </div>
+            </div>
+        </div>
+        <div class="review-card reveal">
+            <div class="review-stars">★★★★★</div>
+            <p class="review-text">Hired them to do the house siding and back deck before we listed the home. The realtor said the curb appeal added real value. Fast, professional, and the price was very fair.</p>
+            <div class="reviewer">
+                <div class="reviewer-avatar">TP</div>
+                <div class="reviewer-info">
+                    <strong>Tom P.</strong>
+                    <span>Burlington, ON — House Wash + Deck</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="reviews-badge">
+        <div class="reviews-badge-item">⭐ <strong>5.0</strong> on Google</div>
+        <div class="reviews-badge-item">🏆 <strong>Top Rated</strong> in Mississauga</div>
+        <div class="reviews-badge-item">💬 <strong>50+</strong> Reviews</div>
+    </div>
+</section>
+
+<!-- ===================== SERVICE AREA ===================== -->
+<section class="area-section">
+    <span class="section-label" style="display: block;">Where We Work</span>
+    <h2 class="section-title" style="color: white; margin-bottom: 12px;">Our Service Area</h2>
+    <p class="section-sub">Based in Mississauga and proudly serving the Greater Toronto Area. Not sure if we cover your area? Just give us a call.</p>
+    <div class="towns-grid">
+        <span class="town-tag">Mississauga</span>
+        <span class="town-tag">Oakville</span>
+        <span class="town-tag">Burlington</span>
+        <span class="town-tag">Mississauga</span>
+        <span class="town-tag">Georgetown</span>
+        <span class="town-tag">Brampton</span>
+        <span class="town-tag">Hamilton</span>
+        <span class="town-tag">Halton Hills</span>
+        <span class="town-tag">Ancaster</span>
+    </div>
+    <p style="margin-top: 40px; color: rgba(255,255,255,0.5); font-size: 0.9rem;">Not listed? Call us — we likely travel there too.</p>
+</section>
+
+<!-- ===================== FAQ ===================== -->
+<section class="faq-section" id="faq">
+    <div style="max-width: 780px; margin: 0 auto; text-align: center;">
+        <span class="section-label">Common Questions</span>
+        <h2 class="section-title">FAQ</h2>
+        <p class="section-sub">Everything you need to know before booking.</p>
+    </div>
+    <div class="faq-list">
+        <div class="faq-item reveal">
+            <button class="faq-q">How long does a driveway cleaning take? <span class="arrow">›</span></button>
+            <div class="faq-a">Most residential driveways take 45–90 minutes depending on size and level of buildup. We'll give you a more accurate time estimate when you book.</div>
+        </div>
+        <div class="faq-item reveal">
+            <button class="faq-q">Is pressure washing safe for my siding? <span class="arrow">›</span></button>
+            <div class="faq-a">Yes — we use soft-wash techniques on siding and painted surfaces, which uses low pressure and specialized cleaning solutions rather than brute force. This is actually safer and more effective than high-pressure washing for most exterior surfaces.</div>
+        </div>
+        <div class="faq-item reveal">
+            <button class="faq-q">Do you use eco-friendly products? <span class="arrow">›</span></button>
+            <div class="faq-a">Always. We use biodegradable, environmentally safe detergents. We're careful about runoff and take precautions to protect your gardens, grass, and landscaping during every job.</div>
+        </div>
+        <div class="faq-item reveal">
+            <button class="faq-q">How does bin sanitizing work? <span class="arrow">›</span></button>
+            <div class="faq-a">We use a trailer-mounted hot-water system that sprays 200°F pressurized water inside your bins, killing 99.9% of bacteria and eliminating odours at the source. We also apply a deodorizing treatment after. The whole process takes about 5 minutes per bin and we handle the water — no mess for you.</div>
+        </div>
+        <div class="faq-item reveal">
+            <button class="faq-q">Are you insured? <span class="arrow">›</span></button>
+            <div class="faq-a">Yes, Blast Haus Pros is fully insured with liability coverage. You're protected from start to finish.</div>
+        </div>
+        <div class="faq-item reveal">
+            <button class="faq-q">How do I book and what does it cost? <span class="arrow">›</span></button>
+            <div class="faq-a">Call us at 647-969-1558 or fill out the form below for a free, no-obligation quote. Pricing depends on the size of the job and services needed — most residential jobs start around $150.</div>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== QUOTE ===================== -->
+<section class="quote-section" id="quote">
+    <div class="quote-wrap" style="max-width: 1100px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 0;">
+            <span class="section-label">Book Today</span>
+            <h2 class="section-title">Get Your Free Estimate</h2>
+            <p class="section-sub" style="margin: 0 auto;">No obligation, no pressure (well, maybe a little). We'll get back to you within the hour.</p>
+        </div>
+        <div class="quote-grid">
+            <div class="quote-form-card">
+                <h3>Free Estimate</h3>
+                <p class="sub">We respond within 60 minutes</p>
+                <form action="mailto:mikepacheco76@gmail.com" method="post" enctype="text/plain">
+                    <div class="form-field">
+                        <input type="text" name="Name" placeholder="Your Full Name" required>
+                    </div>
+                    <div class="form-field">
+                        <input type="email" name="Email" placeholder="Email Address" required>
+                    </div>
+                    <div class="form-field">
+                        <input type="tel" name="Phone" placeholder="Phone Number">
+                    </div>
+                    <div class="form-field">
+                        <select name="Service">
+                            <option value="" disabled selected>Select a Service</option>
+                            <option>Driveway / Patio Cleaning</option>
+                            <option>House & Siding Wash</option>
+                            <option>Bin Sanitizing</option>
+                            <option>Fence & Deck Cleaning</option>
+                            <option>Commercial Cleaning</option>
+                            <option>Gutter Cleaning</option>
+                            <option>Multiple Services</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <textarea name="Details" placeholder="Your address & any details about the job..."></textarea>
+                    </div>
+                    <button type="submit" class="form-submit">Send Quote Request →</button>
+                </form>
+            </div>
+            <div class="quote-info">
+                <h3>Prefer to Talk?</h3>
+                <div class="contact-item">
+                    <div class="contact-icon">📞</div>
+                    <div>
+                        <strong>Call or Text Us</strong>
+                        <a href="tel:6479691558">647-969-1558</a>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">✉️</div>
+                    <div>
+                        <strong>Email Us</strong>
+                        <a href="mailto:mikepacheco76@gmail.com">mikepacheco76@gmail.com</a>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">📍</div>
+                    <div>
+                        <strong>Service Area</strong>
+                        <span>Mississauga & Greater Toronto Area</span>
+                    </div>
+                </div>
+                <div class="why-list">
+                    <div class="why-item">Free, no-obligation quotes</div>
+                    <div class="why-item">Same-week availability</div>
+                    <div class="why-item">100% satisfaction guarantee</div>
+                    <div class="why-item">Fully insured & certified</div>
+                    <div class="why-item">Before & after photos on every job</div>
+                    <div class="why-item">Eco-friendly solutions used</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+    <div class="footer-top">
+        <div class="footer-brand">
+            <div class="logo"><img src="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/image_png_3.png" alt="Blast Haus Pros" style="height: 70px; width: auto; filter: brightness(1.1); margin-bottom: 14px; display: block;"></div>
+            <p>Mississauga's trusted pressure washing and bin sanitizing professionals. We serve homes and businesses across Halton Region and the Greater Toronto Area.</p>
+        </div>
+        <div class="footer-col">
+            <h4>Services</h4>
+            <a href="#services">House Washing</a>
+            <a href="#services">Driveway Cleaning</a>
+            <a href="#services">Bin Sanitizing</a>
+            <a href="#services">Deck & Fence</a>
+            <a href="#services">Commercial</a>
+            <a href="#services">Gutter Cleaning</a>
+        </div>
+        <div class="footer-col">
+            <h4>Contact</h4>
+            <a href="tel:6479691558">📞 647-969-1558</a>
+            <a href="mailto:mikepacheco76@gmail.com">✉️ Email Us</a>
+            <a href="#quote">📋 Free Quote</a>
+            <p>📍 Mississauga, ON</p>
+            <p style="margin-top: 16px;">Mon–Sat: 7am–7pm</p>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>© 2026 Blast Haus Pros • blasthauspro.ca</p>
+        <p>Fully Insured • Locally Owned & Operated • Serving Mississauga & the GTA</p>
+    </div>
+</footer>
+
+<!-- ===================== FLOATING CTA ===================== -->
+<a href="#quote" class="float-cta" id="floatCta">Get Free Quote →</a>
+
+<script>
+    // Nav scroll behavior
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 60);
+        document.getElementById('floatCta').classList.toggle('show', window.scrollY > 500);
+    });
+
+    // Mobile menu
+    const hamburger = document.getElementById('hamburger');
+    const mobileMenu = document.getElementById('mobileMenu');
+    hamburger.addEventListener('click', () => mobileMenu.classList.toggle('open'));
+    function closeMobile() { mobileMenu.classList.remove('open'); }
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-q').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const item = btn.parentElement;
+            const isOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+            if (!isOpen) item.classList.add('open');
+        });
+    });
+
+    // Before/After Slider
+    const baSlider = document.getElementById('baSlider');
+    const baAfterWrap = document.getElementById('baAfterWrap');
+    const baDivider = document.getElementById('baDivider');
+    const baHandle = document.getElementById('baHandle');
+    const baImgBefore = document.getElementById('baImgBefore');
+    const baImgAfter = document.getElementById('baImgAfter');
+    let isDragging = false;
+    let sliderPos = 50;
+
+    function setSlider(pos) {
+        sliderPos = Math.max(0, Math.min(100, pos));
+        baAfterWrap.style.width = sliderPos + '%';
+        baDivider.style.left = sliderPos + '%';
+        baHandle.style.left = sliderPos + '%';
+    }
+
+    function getPos(e) {
+        const rect = baSlider.getBoundingClientRect();
+        const x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        return ((x - rect.left) / rect.width) * 100;
+    }
+
+    baSlider.addEventListener('mousedown', e => { isDragging = true; setSlider(getPos(e)); });
+    baSlider.addEventListener('touchstart', e => { isDragging = true; setSlider(getPos(e)); }, { passive: true });
+    window.addEventListener('mousemove', e => { if (isDragging) setSlider(getPos(e)); });
+    window.addEventListener('touchmove', e => { if (isDragging) setSlider(getPos(e)); }, { passive: true });
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('touchend', () => isDragging = false);
+
+    // BA tabs
+    const tabs = document.querySelectorAll('.ba-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            baImgBefore.style.backgroundImage = `url('${tab.dataset.before}')`;
+            baImgAfter.style.backgroundImage = `url('${tab.dataset.after}')`;
+            setSlider(50);
+        });
+    });
+
+    // Init BA images from first tab
+    const firstTab = document.querySelector('.ba-tab.active');
+    baImgBefore.style.backgroundImage = `url('${firstTab.dataset.before}')`;
+    baImgAfter.style.backgroundImage = `url('${firstTab.dataset.after}')`;
+</script>
+</body>
+</html>
