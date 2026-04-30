@@ -298,12 +298,13 @@
 
         }
         .ba-img-after-wrap {
-            position: absolute; top: 0; left: 0; height: 100%; width: 50%;
+            position: absolute; top: 0; right: 0; height: 100%; width: 50%;
             overflow: hidden;
         }
         .ba-img-after {
             background-image: url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-after.jpg');
-            width: 900px; max-width: none;
+            position: absolute; top: 0; right: 0; width: 100%; height: 100%;
+            background-size: contain; background-position: center; background-repeat: no-repeat;
         }
         .ba-divider {
             position: absolute; top: 0; bottom: 0; width: 3px;
@@ -1025,7 +1026,7 @@
 
     function setSlider(pos) {
         sliderPos = Math.max(0, Math.min(100, pos));
-        baAfterWrap.style.width = sliderPos + '%';
+        baAfterWrap.style.width = (100 - sliderPos) + '%';
         baDivider.style.left = sliderPos + '%';
         baHandle.style.left = sliderPos + '%';
     }
