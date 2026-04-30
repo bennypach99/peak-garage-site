@@ -294,17 +294,16 @@
             background-size: contain; background-position: center; background-repeat: no-repeat;
         }
         .ba-img-before {
-            background-image: url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-before.jpg');
+            background-image: url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-after.jpg');
 
         }
         .ba-img-after-wrap {
-            position: absolute; top: 0; right: 0; height: 100%; width: 50%;
+            position: absolute; top: 0; left: 0; height: 100%; width: 50%;
             overflow: hidden;
         }
         .ba-img-after {
-            background-image: url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-after.jpg');
-            position: absolute; top: 0; right: 0; width: 100%; height: 100%;
-            background-size: contain; background-position: center; background-repeat: no-repeat;
+            background-image: url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-before.jpg');
+            width: 900px; max-width: none;
         }
         .ba-divider {
             position: absolute; top: 0; bottom: 0; width: 3px;
@@ -751,9 +750,9 @@
         <p class="section-sub">Drag the handle to see the transformation. This is what Blast Haus Pros delivers.</p>
     </div>
     <div class="ba-tabs">
-        <div class="ba-tab active" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-before.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-after.jpg">Driveway</div>
-        <div class="ba-tab" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/siding-before.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/siding-after.jpg">Siding</div>
-        <div class="ba-tab" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/deck-before.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/deck-after.jpg">Deck</div>
+        <div class="ba-tab active" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-after.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/driveway-before.jpg">Driveway</div>
+        <div class="ba-tab" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/siding-after.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/siding-before.jpg">Siding</div>
+        <div class="ba-tab" data-before="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/deck-after.jpg" data-after="https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/deck-before.jpg">Deck</div>
     </div>
     <div class="slider-wrap" id="baSlider">
         <div class="ba-img-before" id="baImgBefore"></div>
@@ -1026,7 +1025,7 @@
 
     function setSlider(pos) {
         sliderPos = Math.max(0, Math.min(100, pos));
-        baAfterWrap.style.width = (100 - sliderPos) + '%';
+        baAfterWrap.style.width = sliderPos + '%';
         baDivider.style.left = sliderPos + '%';
         baHandle.style.left = sliderPos + '%';
     }
