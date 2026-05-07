@@ -396,7 +396,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 </div>
 
 <!-- Sync status indicator -->
-<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.3.0</div>
+<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.4.0</div>
 <div id="syncStatus" style="position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;transition:all .3s;">
   <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;"></span>
   <span id="syncLabel">Connecting…</span>
@@ -1010,8 +1010,8 @@ document.getElementById('previewLabelsBtn').onclick=function(){const selected=[.
 
 function buildPrintPDF(labels,qrUrls){
   const PT=72,pageW=8.5*PT,pageH=11*PT;
-  const marginTop=0.43*PT,marginLeft=0.735*PT;
-  const D=1.5*PT,colGap=0.337*PT,rowGap=0.23*PT;
+  const marginTop=0.41*PT,marginLeft=0.735*PT;
+  const D=1.5*PT,colGap=0.337*PT,rowGap=0.24*PT;
   const cols=4,rows=6,perPage=24,QR_PX=108;
   const PGS_URL='https://peakgaragesolutions.ca';
   const allLabels=[...labels],allUrls=[...qrUrls];
