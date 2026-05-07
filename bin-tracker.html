@@ -16,6 +16,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -395,7 +396,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 </div>
 
 <!-- Sync status indicator -->
-<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.0.0</div>
+<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.1.0</div>
 <div id="syncStatus" style="position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;transition:all .3s;">
   <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;"></span>
   <span id="syncLabel">Connecting…</span>
@@ -1011,74 +1012,74 @@ function buildPrintPDF(labels,qrUrls){
   const PT=72,pageW=8.5*PT,pageH=11*PT;
   const marginTop=0.45*PT,marginLeft=0.735*PT;
   const D=1.5*PT,colGap=0.337*PT,rowGap=0.22*PT;
-  const cols=4,rows=6,perPage=24,QR_SIZE=108;
+  const cols=4,rows=6,perPage=24,QR_PX=108;
   const PGS_URL='https://peakgaragesolutions.ca';
   const allLabels=[...labels],allUrls=[...qrUrls];
   const rem=allLabels.length%perPage;
   const blanks=rem?perPage-rem:0;
   for(let i=0;i<blanks;i++){allLabels.push({bin:'',si:null,shelfName:'Peak Garage Solutions',filler:true});allUrls.push(PGS_URL);}
-  showToast('Generating labels…');
-  const qrDataUrls=[];
-  const qrContainer=document.createElement('div');
-  qrContainer.style.cssText='position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
-  document.body.appendChild(qrContainer);
-  function generateQR(i){
-    if(i>=allUrls.length){document.body.removeChild(qrContainer);assemblePDF(qrDataUrls);return;}
-    const div=document.createElement('div');
-    qrContainer.appendChild(div);
+  showToast('Building PDF…');
+
+  // Generate all QR codes synchronously using qrcode-generator library
+  function makeQRDataUrl(text){
     try{
-      new QRCode(div,{text:allUrls[i],width:QR_SIZE,height:QR_SIZE,colorDark:'#1a1a1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-      // Wait for the img to fully load — QRCode.js renders to canvas then copies to img
-      function tryExtract(attempts){
-        const cvs=div.querySelector('canvas');
-        const img=div.querySelector('img');
-        // Canvas is the most reliable source
-        if(cvs && cvs.width > 0){
-          qrDataUrls[i]=cvs.toDataURL('image/png');
-          qrContainer.removeChild(div);generateQR(i+1);
-        } else if(img && img.complete && img.src && img.src.indexOf('data:')===0){
-          qrDataUrls[i]=img.src;
-          qrContainer.removeChild(div);generateQR(i+1);
-        } else if(attempts>0){
-          setTimeout(function(){tryExtract(attempts-1);},50);
-        } else {
-          qrDataUrls[i]=null;qrContainer.removeChild(div);generateQR(i+1);
+      var qr=qrcode(0,'M');
+      qr.addData(text);
+      qr.make();
+      // Draw to canvas
+      var cvs=document.createElement('canvas');
+      var size=QR_PX;
+      cvs.width=size;cvs.height=size;
+      var ctx=cvs.getContext('2d');
+      var modules=qr.getModuleCount();
+      var cell=size/modules;
+      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);
+      ctx.fillStyle='#1a1a1a';
+      for(var r=0;r<modules;r++){
+        for(var c=0;c<modules;c++){
+          if(qr.isDark(r,c)){
+            ctx.fillRect(Math.floor(c*cell),Math.floor(r*cell),Math.ceil(cell),Math.ceil(cell));
+          }
         }
       }
-      setTimeout(function(){tryExtract(20);},80);
-    }catch(e){qrDataUrls[i]=null;qrContainer.removeChild(div);generateQR(i+1);}
+      return cvs.toDataURL('image/png');
+    }catch(e){console.error('QR error',e);return null;}
   }
-  generateQR(0);
 
-  function assemblePDF(qrImgs){
-    showToast('Building PDF…');
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF({unit:'pt',format:[pageW,pageH],orientation:'portrait'});
-    const totalPages=Math.ceil(allLabels.length/perPage);
-    for(let pg=0;pg<totalPages;pg++){
-      if(pg>0)doc.addPage([pageW,pageH],'portrait');
-      allLabels.slice(pg*perPage,(pg+1)*perPage).forEach(function(lbl,idx){
-        const col=idx%cols,row=Math.floor(idx/cols);
-        const x=marginLeft+col*(D+colGap),y=marginTop+row*(D+rowGap);
-        doc.setDrawColor(200,200,200);doc.setLineWidth(0.5);
-        doc.roundedRect(x,y,D,D,3,3,'S');
-        const imgSize=D*0.72,imgX=x+(D-imgSize)/2,imgY=y+4;
-        const qi=pg*perPage+idx;
-        if(qrImgs[qi])doc.addImage(qrImgs[qi],'PNG',imgX,imgY,imgSize,imgSize);
-        const txtY=imgY+imgSize+3;
-        if(lbl.filler){doc.setFontSize(5.5);doc.setTextColor(160,160,160);doc.text('Peak Garage Solutions',x+D/2,txtY+4,{align:'center'});}
-        else{doc.setFontSize(7);doc.setTextColor(26,26,26);doc.setFont('helvetica','bold');doc.text(lbl.shelfName+' '+lbl.bin,x+D/2,txtY+4,{align:'center'});}
-        doc.setFont('helvetica','normal');
-      });
-    }
-    const pdfBlob=doc.output('blob');
-    const pdfUrl=URL.createObjectURL(pdfBlob);
-    // Open in browser tab on all devices — no download forced
-    window.open(pdfUrl,'_blank');
-    showToast('PDF opened — use browser print (⋮ or share → print)');
-    // Clean up blob URL after a delay
-    setTimeout(function(){URL.revokeObjectURL(pdfUrl);},60000);
+  // Generate all QR data URLs synchronously
+  var qrImgs=allUrls.map(function(url){return makeQRDataUrl(url);});
+
+  // Build PDF
+  var {jsPDF}=window.jspdf;
+  var doc=new jsPDF({unit:'pt',format:[pageW,pageH],orientation:'portrait'});
+  var totalPages=Math.ceil(allLabels.length/perPage);
+  for(var pg=0;pg<totalPages;pg++){
+    if(pg>0)doc.addPage([pageW,pageH],'portrait');
+    allLabels.slice(pg*perPage,(pg+1)*perPage).forEach(function(lbl,idx){
+      var col=idx%cols,row=Math.floor(idx/cols);
+      var x=marginLeft+col*(D+colGap),y=marginTop+row*(D+rowGap);
+      doc.setDrawColor(200,200,200);doc.setLineWidth(0.5);
+      doc.roundedRect(x,y,D,D,3,3,'S');
+      var imgSize=D*0.72,imgX=x+(D-imgSize)/2,imgY=y+4;
+      var qi=pg*perPage+idx;
+      if(qrImgs[qi])doc.addImage(qrImgs[qi],'PNG',imgX,imgY,imgSize,imgSize);
+      var txtY=imgY+imgSize+3;
+      if(lbl.filler){
+        doc.setFontSize(5.5);doc.setTextColor(160,160,160);
+        doc.text('Peak Garage Solutions',x+D/2,txtY+4,{align:'center'});
+      }else{
+        doc.setFontSize(7);doc.setTextColor(26,26,26);doc.setFont('helvetica','bold');
+        doc.text(lbl.shelfName+' '+lbl.bin,x+D/2,txtY+4,{align:'center'});
+      }
+      doc.setFont('helvetica','normal');
+    });
   }
+
+  var pdfBlob=doc.output('blob');
+  var pdfUrl=URL.createObjectURL(pdfBlob);
+  window.open(pdfUrl,'_blank');
+  showToast('PDF opened — tap menu → Print');
+  setTimeout(function(){URL.revokeObjectURL(pdfUrl);},60000);
 }
 
 document.getElementById('doPrintBtn').onclick=function(){const f=document.getElementById('printFrame');if(f.contentWindow)f.contentWindow.print();};
