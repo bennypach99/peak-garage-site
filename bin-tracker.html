@@ -395,6 +395,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 </div>
 
 <!-- Sync status indicator -->
+<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.0.0</div>
 <div id="syncStatus" style="position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;transition:all .3s;">
   <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;"></span>
   <span id="syncLabel">Connecting…</span>
@@ -1027,13 +1028,24 @@ function buildPrintPDF(labels,qrUrls){
     qrContainer.appendChild(div);
     try{
       new QRCode(div,{text:allUrls[i],width:QR_SIZE,height:QR_SIZE,colorDark:'#1a1a1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
-      setTimeout(function(){
-        const cvs=div.querySelector('canvas'),img=div.querySelector('img');
-        if(cvs)qrDataUrls[i]=cvs.toDataURL('image/png');
-        else if(img&&img.src)qrDataUrls[i]=img.src;
-        else qrDataUrls[i]=null;
-        qrContainer.removeChild(div);generateQR(i+1);
-      },30);
+      // Wait for the img to fully load — QRCode.js renders to canvas then copies to img
+      function tryExtract(attempts){
+        const cvs=div.querySelector('canvas');
+        const img=div.querySelector('img');
+        // Canvas is the most reliable source
+        if(cvs && cvs.width > 0){
+          qrDataUrls[i]=cvs.toDataURL('image/png');
+          qrContainer.removeChild(div);generateQR(i+1);
+        } else if(img && img.complete && img.src && img.src.indexOf('data:')===0){
+          qrDataUrls[i]=img.src;
+          qrContainer.removeChild(div);generateQR(i+1);
+        } else if(attempts>0){
+          setTimeout(function(){tryExtract(attempts-1);},50);
+        } else {
+          qrDataUrls[i]=null;qrContainer.removeChild(div);generateQR(i+1);
+        }
+      }
+      setTimeout(function(){tryExtract(20);},80);
     }catch(e){qrDataUrls[i]=null;qrContainer.removeChild(div);generateQR(i+1);}
   }
   generateQR(0);
