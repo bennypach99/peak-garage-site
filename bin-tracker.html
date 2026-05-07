@@ -396,7 +396,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 </div>
 
 <!-- Sync status indicator -->
-<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.1.0</div>
+<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.3.0</div>
 <div id="syncStatus" style="position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;transition:all .3s;">
   <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;"></span>
   <span id="syncLabel">Connecting…</span>
@@ -1010,8 +1010,8 @@ document.getElementById('previewLabelsBtn').onclick=function(){const selected=[.
 
 function buildPrintPDF(labels,qrUrls){
   const PT=72,pageW=8.5*PT,pageH=11*PT;
-  const marginTop=0.45*PT,marginLeft=0.735*PT;
-  const D=1.5*PT,colGap=0.337*PT,rowGap=0.22*PT;
+  const marginTop=0.43*PT,marginLeft=0.735*PT;
+  const D=1.5*PT,colGap=0.337*PT,rowGap=0.23*PT;
   const cols=4,rows=6,perPage=24,QR_PX=108;
   const PGS_URL='https://peakgaragesolutions.ca';
   const allLabels=[...labels],allUrls=[...qrUrls];
@@ -1060,16 +1060,20 @@ function buildPrintPDF(labels,qrUrls){
       var x=marginLeft+col*(D+colGap),y=marginTop+row*(D+rowGap);
       doc.setDrawColor(200,200,200);doc.setLineWidth(0.5);
       doc.roundedRect(x,y,D,D,3,3,'S');
-      var imgSize=D*0.72,imgX=x+(D-imgSize)/2,imgY=y+4;
+      // Reserve space for text at bottom, center QR in remaining space
+      var txtH=10; // points reserved for label text
+      var imgSize=D*0.72;
+      var imgX=x+(D-imgSize)/2;
+      var imgY=y+(D-txtH-imgSize)/2; // vertically centered in label minus text area
       var qi=pg*perPage+idx;
       if(qrImgs[qi])doc.addImage(qrImgs[qi],'PNG',imgX,imgY,imgSize,imgSize);
-      var txtY=imgY+imgSize+3;
+      var txtY=y+D-txtH+4; // text sits at bottom of label
       if(lbl.filler){
         doc.setFontSize(5.5);doc.setTextColor(160,160,160);
-        doc.text('Peak Garage Solutions',x+D/2,txtY+4,{align:'center'});
+        doc.text('Peak Garage Solutions',x+D/2,txtY,{align:'center'});
       }else{
         doc.setFontSize(7);doc.setTextColor(26,26,26);doc.setFont('helvetica','bold');
-        doc.text(lbl.shelfName+' '+lbl.bin,x+D/2,txtY+4,{align:'center'});
+        doc.text(lbl.shelfName+' '+lbl.bin,x+D/2,txtY,{align:'center'});
       }
       doc.setFont('helvetica','normal');
     });
