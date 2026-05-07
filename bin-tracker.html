@@ -186,25 +186,10 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 .hw-badge-dot{width:7px;height:7px;border-radius:50%;background:#4caf7d;flex-shrink:0;}
 .hw-badge-code{font-family:'Rajdhani',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* ── MOVE BIN ── */
-.move-btn{background:transparent;border:1px solid var(--bstrong);border-radius:20px;color:var(--gold);font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;}
-.move-btn:hover{background:rgba(201,168,76,.15);border-color:var(--gold-light);}
-.move-btn svg{width:11px;height:11px;}
-.move-mode-banner{background:rgba(201,168,76,.12);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.05em;color:var(--gold-light);}
-.move-mode-banner button{margin-left:auto;background:transparent;border:1px solid var(--border);border-radius:20px;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;cursor:pointer;transition:all .15s;}
-.move-mode-banner button:hover{border-color:var(--danger);color:var(--danger);}
+.move-bin-btn{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;border-radius:var(--radius-sm);font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+.move-bin-btn:hover{opacity:.88;}
 .bin-move-target{animation:movePulse 1.4s ease-in-out infinite;}
 @keyframes movePulse{0%,100%{border-color:rgba(201,168,76,.4);}50%{border-color:#E8C96A;background:rgba(201,168,76,.1);}}
-/* Move option modal */
-.move-opts-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:400;display:flex;align-items:flex-end;justify-content:center;}
-.move-opts-sheet{background:var(--ch2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--bstrong);border-bottom:none;padding:20px 18px 32px;width:100%;max-width:480px;}
-.move-opts-title{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-light);margin-bottom:4px;}
-.move-opts-sub{font-size:.8rem;color:var(--muted);margin-bottom:18px;line-height:1.5;}
-.move-opt-btn{width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;}
-.move-opt-btn:hover{background:rgba(201,168,76,.1);border-color:var(--gold);}
-.move-opt-title{font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;}
-.move-opt-desc{font-size:.77rem;color:var(--muted);line-height:1.4;}
-.move-opts-cancel{width:100%;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-top:2px;transition:all .15s;}
-.move-opts-cancel:hover{border-color:var(--danger);color:var(--danger);}
 /* ── PRINT ── */
 @media print{body>*{display:none!important;}}
 </style>
@@ -616,7 +601,6 @@ function renderShelvesPage(selectIdx) {
 }
 
 document.getElementById('shelfDropdown').addEventListener('change', function() {
-  if (_moveMode) cancelMoveMode();
   _openShelfIdx = parseInt(this.value); _openBinCol=null; _openBinRow=null;
   renderShelfDiagram(_openShelfIdx);
 });
@@ -672,14 +656,6 @@ function renderShelfDiagram(idx) {
     btn.addEventListener('mouseleave',function(){if(!this.classList.contains('sel')){this.style.background='transparent';this.style.borderColor='transparent';}});
     btn.addEventListener('click',function(){
       const col=parseInt(this.dataset.col),row=parseInt(this.dataset.row);
-      // Move mode: picking a destination
-      if (_moveMode) {
-        if (col === _moveSrcCol && row === _moveSrcRow && idx === _moveSrcSi) {
-          cancelMoveMode(); return;
-        }
-        showMoveOptions(idx, col, row);
-        return;
-      }
       ov.querySelectorAll('button').forEach(b=>{b.classList.remove('sel');b.style.background='transparent';b.style.borderColor='transparent';});
       this.classList.add('sel');this.style.background='rgba(201,168,76,.25)';this.style.borderColor='#E8C96A';
       _openBinCol=col;_openBinRow=row;
@@ -697,11 +673,11 @@ function renderBinDetail(si, col, row) {
   const panel=document.getElementById('binDetailPanel');
   panel.innerHTML =
     '<div class="sbin-panel">' +
-      '<div class="sbin-header"><div class="sbin-title">'+label+'</div><div style="display:flex;align-items:center;gap:8px;"><div class="sbin-count">'+items.length+' item'+(items.length!==1?'s':'')+'</div><button class="move-btn" id="moveBinBtn" title="Move bin to another location"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="5,3 10,8 5,13"/></svg>Move</button></div></div>' +
+      '<div class="sbin-header"><div class="sbin-title">'+label+'</div><div class="sbin-count">'+items.length+' item'+(items.length!==1?'s':'')+'</div></div>' +
       '<div class="sbin-items">' +
         (items.length ? items.map((item,i)=>'<div class="sbin-item-row"><div class="sbin-item-name">'+item.name+'</div>'+(item.qty>1?'<div class="sbin-item-qty">×'+item.qty+'</div>':'')+'<button class="icon-btn danger" data-key="'+key+'" data-idx="'+i+'" data-si="'+si+'" data-col="'+col+'" data-row="'+row+'" onclick="window._removeItem(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button></div>').join('') : '<div class="sbin-empty">Empty</div>') +
       '</div>' +
-      '<div class="sbin-add-row"><input class="form-input" id="newItemName" placeholder="Add item…" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;"><input class="form-input" id="newItemQty" type="number" min="1" value="1" style="width:64px;font-size:.88rem;padding:9px 8px;"><button class="btn btn-primary btn-sm" id="addItemBtn">Add</button></div>' +
+      '<div class="sbin-add-row"><button class="move-bin-btn" id="moveBinBtn">Move Bin</button><input class="form-input" id="newItemName" placeholder="Add item…" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;"><input class="form-input" id="newItemQty" type="number" min="1" value="1" style="width:64px;font-size:.88rem;padding:9px 8px;"><button class="btn btn-primary btn-sm" id="addItemBtn">Add</button></div>' +
     '</div>';
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
   document.getElementById('moveBinBtn').onclick = function() {
@@ -726,114 +702,183 @@ let _moveSrcSi = null, _moveSrcCol = null, _moveSrcRow = null;
 
 function enterMoveMode(si, col, row) {
   _moveMode = true; _moveSrcSi = si; _moveSrcCol = col; _moveSrcRow = row;
-  showMoveBanner(si, col, row);
-  highlightBinsForMove(si, col, row);
+  showMovePicker(si, col, row);
 }
 
 function cancelMoveMode() {
   _moveMode = false; _moveSrcSi = null; _moveSrcCol = null; _moveSrcRow = null;
-  const banner = document.getElementById('moveBanner');
-  if (banner) banner.remove();
-  document.querySelectorAll('#binOverlay button').forEach(b => {
-    b.classList.remove('bin-move-target');
-    if (b.classList.contains('sel')) { b.style.background='rgba(201,168,76,.25)'; b.style.borderColor='#E8C96A'; b.style.border='2px solid #E8C96A'; }
-    else { b.style.background='transparent'; b.style.border='2px solid transparent'; }
-  });
 }
 
-function showMoveBanner(si, col, row) {
-  const old = document.getElementById('moveBanner');
+// ── MOVE PICKER MODAL ──
+// Step 1: pick a shelf. Step 2: pick a bin on that shelf. Step 3: pick action.
+function showMovePicker(srcSi, srcCol, srcRow) {
+  const srcLabel = binLabel(srcCol, srcRow);
+  const srcShelf = state.shelves[srcSi];
+
+  // Remove any existing move overlay
+  const old = document.getElementById('movePickerOverlay');
   if (old) old.remove();
-  const label = binLabel(col, row);
-  const banner = document.createElement('div');
-  banner.id = 'moveBanner';
-  banner.className = 'move-mode-banner';
-  banner.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0;"><polyline points="5,3 10,8 5,13"/><polyline points="1,3 6,8 1,13" opacity=".35"/></svg>Moving <strong style="color:var(--gold);margin:0 3px;">' + label + '</strong> \u2014 tap a destination bin<button id="cancelMoveBtn">Cancel</button>';
-  const sd = document.getElementById('shelfDisplay');
-  sd.parentNode.insertBefore(banner, sd);
-  document.getElementById('cancelMoveBtn').onclick = cancelMoveMode;
-}
-
-function highlightBinsForMove(srcSi, srcCol, srcRow) {
-  const ov = document.getElementById('binOverlay');
-  if (!ov) return;
-  ov.querySelectorAll('button').forEach(b => {
-    const c = parseInt(b.dataset.col), r = parseInt(b.dataset.row);
-    const isSrc = (c === srcCol && r === srcRow);
-    if (!isSrc) {
-      b.classList.add('bin-move-target');
-      b.style.border = '2px dashed rgba(201,168,76,.55)';
-      b.style.background = 'rgba(201,168,76,.05)';
-    } else {
-      b.style.border = '2px solid #E8C96A';
-      b.style.background = 'rgba(201,168,76,.25)';
-    }
-  });
-}
-
-function showMoveOptions(destSi, destCol, destRow) {
-  const srcLabel = binLabel(_moveSrcCol, _moveSrcRow);
-  const destLabel = binLabel(destCol, destRow);
-  const destShelf = state.shelves[destSi];
-  const srcKey = binKey(_moveSrcSi, _moveSrcCol, _moveSrcRow);
-  const destKey = binKey(destSi, destCol, destRow);
-  const srcItems = state.shelfBins[srcKey] || [];
-  const destItems = state.shelfBins[destKey] || [];
-  const destEmpty = destItems.length === 0;
 
   const overlay = document.createElement('div');
-  overlay.className = 'move-opts-overlay';
-  overlay.id = 'moveOptsOverlay';
-
-  let btns = '';
-  if (!destEmpty) {
-    btns = '<button class="move-opt-btn" id="moveOptReplace"><span class="move-opt-title">Replace</span><span class="move-opt-desc">Clear ' + destLabel + ' and fill it with items from ' + srcLabel + '. ' + srcLabel + ' becomes empty.</span></button>' +
-           '<button class="move-opt-btn" id="moveOptMerge"><span class="move-opt-title">Merge</span><span class="move-opt-desc">Add all items from ' + srcLabel + ' into ' + destLabel + '. ' + srcLabel + ' becomes empty.</span></button>' +
-           '<button class="move-opt-btn" id="moveOptSwap"><span class="move-opt-title">Swap</span><span class="move-opt-desc">Exchange contents \u2014 ' + destLabel + ' gets ' + srcLabel + '\u2019s items and vice versa.</span></button>';
-  } else {
-    btns = '<button class="move-opt-btn" id="moveOptReplace"><span class="move-opt-title">Move here</span><span class="move-opt-desc">Move all items from ' + srcLabel + ' into ' + destLabel + '. ' + srcLabel + ' becomes empty.</span></button>';
-  }
-
-  overlay.innerHTML = '<div class="move-opts-sheet"><div class="move-opts-title">Move ' + srcLabel + ' \u2192 ' + destLabel + '</div><div class="move-opts-sub">What should happen to ' + destLabel + '\'s contents?</div>' + btns + '<button class="move-opts-cancel" id="moveOptCancel">Cancel</button></div>';
+  overlay.id = 'movePickerOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:400;display:flex;align-items:flex-end;justify-content:center;';
   document.body.appendChild(overlay);
 
-  const savedSrcSi = _moveSrcSi, savedSrcCol = _moveSrcCol, savedSrcRow = _moveSrcRow;
+  function closeOverlay() { overlay.remove(); cancelMoveMode(); }
 
-  function doMove(mode) {
-    overlay.remove();
-    const sk = binKey(savedSrcSi, savedSrcCol, savedSrcRow);
-    const dk = binKey(destSi, destCol, destRow);
-    const srcArr = JSON.parse(JSON.stringify(state.shelfBins[sk] || []));
-    const dstArr = JSON.parse(JSON.stringify(state.shelfBins[dk] || []));
-    if (mode === 'replace') {
-      state.shelfBins[dk] = srcArr;
-      state.shelfBins[sk] = [];
-    } else if (mode === 'merge') {
-      state.shelfBins[dk] = [...dstArr, ...srcArr];
-      state.shelfBins[sk] = [];
-    } else if (mode === 'swap') {
-      state.shelfBins[dk] = srcArr;
-      state.shelfBins[sk] = dstArr;
-    }
-    cancelMoveMode();
-    saveState();
-    showToast(mode.charAt(0).toUpperCase() + mode.slice(1) + ' complete \u2014 ' + srcLabel + ' \u2192 ' + destLabel);
-    renderShelfDiagram(destSi);
-    setTimeout(() => {
-      const ov2 = document.getElementById('binOverlay');
-      if (ov2) ov2.querySelectorAll('button').forEach(b => {
-        if (parseInt(b.dataset.col) === destCol && parseInt(b.dataset.row) === destRow) b.click();
-      });
-    }, 50);
+  function renderShelfStep() {
+    overlay.innerHTML = `
+      <div style="background:var(--ch2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--bstrong);border-bottom:none;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-light);margin-bottom:4px;">Move Bin ${srcLabel}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;line-height:1.5;">Step 1 of 2 — Select destination shelf</div>
+        ${state.shelves.map((s, i) => `
+          <button class="move-opt-btn" data-shelf-idx="${i}" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;${i===srcSi?'border-color:var(--gold);background:rgba(201,168,76,.08);':''}">
+            <span style="font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">${s.area}</span>
+            <span style="font-size:.77rem;color:var(--muted);">${s.desc} &nbsp;·&nbsp; ${s.cols}×${s.rows} bins${i===srcSi?' &nbsp;<span style="color:var(--gold);">(current)</span>':''}</span>
+          </button>`).join('')}
+        <button style="width:100%;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-top:2px;" id="movePickerCancelBtn">Cancel</button>
+      </div>`;
+    overlay.querySelectorAll('.move-opt-btn[data-shelf-idx]').forEach(btn => {
+      btn.addEventListener('mouseenter', () => { if(btn.style.borderColor !== 'var(--gold)') { btn.style.background='rgba(201,168,76,.1)'; btn.style.borderColor='var(--gold)'; }});
+      btn.addEventListener('mouseleave', () => { const i=parseInt(btn.dataset.shelfIdx); if(i!==srcSi){btn.style.background='var(--ch3)';btn.style.borderColor='var(--bstrong)';} });
+      btn.onclick = () => renderBinStep(parseInt(btn.dataset.shelfIdx));
+    });
+    document.getElementById('movePickerCancelBtn').onclick = closeOverlay;
   }
 
-  const replaceBtn = document.getElementById('moveOptReplace');
-  if (replaceBtn) replaceBtn.onclick = () => doMove('replace');
-  const mergeBtn = document.getElementById('moveOptMerge');
-  if (mergeBtn) mergeBtn.onclick = () => doMove('merge');
-  const swapBtn = document.getElementById('moveOptSwap');
-  if (swapBtn) swapBtn.onclick = () => doMove('swap');
-  document.getElementById('moveOptCancel').onclick = () => { overlay.remove(); };
+  function renderBinStep(destSi) {
+    const destShelf = state.shelves[destSi];
+    const {cols, rows} = destShelf;
+    const COL_LETTERS = ['A','B','C','D','E','F'];
+    const binLabelLocal = (c, r) => COL_LETTERS[c] + (r+1);
+    const binKeyLocal = (si, c, r) => 'shelf'+si+'_'+COL_LETTERS[c]+(r+1);
+
+    // Build grid
+    let gridHTML = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;margin-bottom:16px;">`;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const isSrc = (destSi === srcSi && c === srcCol && r === srcRow);
+        const lbl = binLabelLocal(c, r);
+        const k = binKeyLocal(destSi, c, r);
+        const cnt = (state.shelfBins[k] || []).length;
+        gridHTML += `<button data-dc="${c}" data-dr="${r}" ${isSrc?'disabled':''} style="background:${isSrc?'rgba(201,168,76,.08)':'var(--ch3)'};border:${isSrc?'2px solid var(--gold)':'1px solid var(--bstrong)'};border-radius:var(--radius-sm);padding:10px 6px;cursor:${isSrc?'default':'pointer'};transition:all .15s;text-align:center;opacity:${isSrc?.45:1};">
+          <div style="font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;color:${isSrc?'var(--muted)':'var(--gold)'};letter-spacing:.06em;">${lbl}</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:2px;">${isSrc?'source':cnt?cnt+' item'+(cnt!==1?'s':''):'empty'}</div>
+        </button>`;
+      }
+    }
+    gridHTML += '</div>';
+
+    overlay.innerHTML = `
+      <div style="background:var(--ch2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--bstrong);border-bottom:none;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-light);margin-bottom:4px;">Move Bin ${srcLabel}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Step 2 of 2 — Pick a bin on <strong style="color:var(--gold);">${destShelf.area} – ${destShelf.desc}</strong></div>
+        ${gridHTML}
+        <div style="display:flex;gap:8px;">
+          <button style="flex:1;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:11px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);cursor:pointer;" id="movePickerBackBtn">← Back</button>
+          <button style="flex:1;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;" id="movePickerCancelBtn2">Cancel</button>
+        </div>
+      </div>`;
+
+    overlay.querySelectorAll('button[data-dc]').forEach(btn => {
+      btn.addEventListener('mouseenter', () => { btn.style.background='rgba(201,168,76,.15)'; btn.style.borderColor='var(--gold)'; });
+      btn.addEventListener('mouseleave', () => { btn.style.background='var(--ch3)'; btn.style.borderColor='var(--bstrong)'; });
+      btn.onclick = () => renderActionStep(destSi, parseInt(btn.dataset.dc), parseInt(btn.dataset.dr));
+    });
+    document.getElementById('movePickerBackBtn').onclick = renderShelfStep;
+    document.getElementById('movePickerCancelBtn2').onclick = closeOverlay;
+  }
+
+  function renderActionStep(destSi, destCol, destRow) {
+    const COL_LETTERS = ['A','B','C','D','E','F'];
+    const destLabel = COL_LETTERS[destCol] + (destRow+1);
+    const destShelf = state.shelves[destSi];
+    const sk = binKey(srcSi, srcCol, srcRow);
+    const dk = 'shelf'+destSi+'_'+COL_LETTERS[destCol]+(destRow+1);
+    const destItems = state.shelfBins[dk] || [];
+    const destEmpty = destItems.length === 0;
+
+    let btns = '';
+    if (!destEmpty) {
+      btns = `
+        <button class="move-opt-btn" id="moveOptReplace" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Replace</span>
+          <span style="font-size:.77rem;color:var(--muted);">Clear ${destLabel} and move all items from ${srcLabel} there. ${srcLabel} becomes empty.</span>
+        </button>
+        <button class="move-opt-btn" id="moveOptMerge" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Merge</span>
+          <span style="font-size:.77rem;color:var(--muted);">Add all items from ${srcLabel} into ${destLabel}. ${srcLabel} becomes empty.</span>
+        </button>
+        <button class="move-opt-btn" id="moveOptSwap" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Swap</span>
+          <span style="font-size:.77rem;color:var(--muted);">Exchange contents — ${destLabel} gets ${srcLabel}'s items and vice versa.</span>
+        </button>`;
+    } else {
+      btns = `
+        <button class="move-opt-btn" id="moveOptReplace" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Move Here</span>
+          <span style="font-size:.77rem;color:var(--muted);">Move all items from ${srcLabel} to ${destLabel}. ${srcLabel} becomes empty.</span>
+        </button>`;
+    }
+
+    overlay.innerHTML = `
+      <div style="background:var(--ch2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--bstrong);border-bottom:none;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+        <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-light);margin-bottom:4px;">Move ${srcLabel} → ${destLabel}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">On <strong style="color:var(--gold);">${destShelf.area} – ${destShelf.desc}</strong> — what happens to ${destLabel}'s contents?</div>
+        ${btns}
+        <div style="display:flex;gap:8px;margin-top:2px;">
+          <button style="flex:1;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:11px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);cursor:pointer;" id="moveActionBackBtn">← Back</button>
+          <button style="flex:1;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;" id="moveActionCancelBtn">Cancel</button>
+        </div>
+      </div>`;
+
+    // Hover effects
+    overlay.querySelectorAll('.move-opt-btn').forEach(b => {
+      b.addEventListener('mouseenter', () => { b.style.background='rgba(201,168,76,.1)'; b.style.borderColor='var(--gold)'; });
+      b.addEventListener('mouseleave', () => { b.style.background='var(--ch3)'; b.style.borderColor='var(--bstrong)'; });
+    });
+
+    function doMove(mode) {
+      overlay.remove();
+      const srcArr = JSON.parse(JSON.stringify(state.shelfBins[sk] || []));
+      const dstArr = JSON.parse(JSON.stringify(state.shelfBins[dk] || []));
+      if (mode === 'replace') {
+        state.shelfBins[dk] = srcArr;
+        state.shelfBins[sk] = [];
+      } else if (mode === 'merge') {
+        state.shelfBins[dk] = [...dstArr, ...srcArr];
+        state.shelfBins[sk] = [];
+      } else if (mode === 'swap') {
+        state.shelfBins[dk] = srcArr;
+        state.shelfBins[sk] = dstArr;
+      }
+      cancelMoveMode();
+      saveState();
+      showToast(mode.charAt(0).toUpperCase() + mode.slice(1) + ' complete — ' + srcLabel + ' → ' + destLabel);
+      // Switch to destination shelf and select destination bin
+      const dd = document.getElementById('shelfDropdown');
+      dd.value = destSi;
+      _openShelfIdx = destSi; _openBinCol = destCol; _openBinRow = destRow;
+      renderShelfDiagram(destSi);
+      setTimeout(() => {
+        const ov2 = document.getElementById('binOverlay');
+        if (ov2) ov2.querySelectorAll('button').forEach(b => {
+          if (parseInt(b.dataset.col) === destCol && parseInt(b.dataset.row) === destRow) b.click();
+        });
+      }, 50);
+    }
+
+    const replaceBtn = document.getElementById('moveOptReplace');
+    if (replaceBtn) replaceBtn.onclick = () => doMove('replace');
+    const mergeBtn = document.getElementById('moveOptMerge');
+    if (mergeBtn) mergeBtn.onclick = () => doMove('merge');
+    const swapBtn = document.getElementById('moveOptSwap');
+    if (swapBtn) swapBtn.onclick = () => doMove('swap');
+    document.getElementById('moveActionBackBtn').onclick = () => renderBinStep(destSi);
+    document.getElementById('moveActionCancelBtn').onclick = closeOverlay;
+  }
+
+  renderShelfStep();
 }
 
 // ── SEARCH ──
