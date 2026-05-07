@@ -357,7 +357,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
   <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
     <div class="modal-handle"></div>
     <div class="modal-title">Print Bin Labels</div>
-    <div class="modal-sub">Select shelves to generate Avery 82805 labels (1.5" square, 24 per sheet)</div>
+    <div class="modal-sub">Select shelves to generate Avery 82805 labels (1.5" square, 24 per sheet). <strong style="color:var(--gold);">Mobile:</strong> PDF will download — open in Adobe Acrobat or Files app, then print at 100% scale.</div>
     <div class="label-shelf-list" id="labelShelfList"></div>
     <div style="display:flex;gap:8px;margin-bottom:8px;">
       <button class="btn btn-ghost btn-sm" id="selectAllLabels">Select All</button>
@@ -1127,9 +1127,15 @@ function buildPrintPDF(labels,qrUrls){
 
     const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if(isMobile){
-      // On mobile, open PDF directly - browser will handle print natively
-      window.open(pdfUrl,'_blank');
-      showToast('PDF opened — use share/print to print');
+      // On mobile, force download so OS opens in a real PDF app (not browser viewer)
+      // This ensures 100% scale printing via Adobe Acrobat, Files, etc.
+      const a=document.createElement('a');
+      a.href=pdfUrl;
+      a.download='bin-labels.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('PDF downloaded — open in your PDF app to print');
     } else {
       const overlay=document.getElementById('printPreviewOverlay');
       const frame=document.getElementById('printFrame');
