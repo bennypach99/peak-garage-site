@@ -15,8 +15,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -1004,162 +1004,73 @@ function openLabelModal(){const list=document.getElementById('labelShelfList');l
 document.getElementById('printLabelsBtn').onclick=openLabelModal;document.getElementById('closeLabelBtn').onclick=()=>closeModal('labelModal');document.getElementById('labelModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('labelModal');});
 document.getElementById('selectAllLabels').onclick=()=>{document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.add('sel');el.querySelector('input').checked=true;});};
 document.getElementById('deselectAllLabels').onclick=()=>{document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false;});};
-document.getElementById('previewLabelsBtn').onclick=function(){
-  const selected=[...document.querySelectorAll('#labelShelfList input:checked')].map(i=>parseInt(i.value));
-  if(!selected.length){showToast('Select at least one shelf');return;}
-  const labels=[],qrUrls=[];
-  selected.forEach(si=>{
-    const s=state.shelves[si];
-    for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++){
-      labels.push({bin:binLabel(c,r),si,shelfName:s.area});
-      qrUrls.push('https://peakgaragesolutions.ca/bin-tracker.html?si='+si+'&bin='+encodeURIComponent(binLabel(c,r))+'&area='+encodeURIComponent(s.area)+'&desc='+encodeURIComponent(s.desc));
-    }
-  });
-  closeModal('labelModal');
-  buildPrintPDF(labels,qrUrls);
-};
+document.getElementById('previewLabelsBtn').onclick=function(){const selected=[...document.querySelectorAll('#labelShelfList input:checked')].map(i=>parseInt(i.value));if(!selected.length){showToast('Select at least one shelf');return;}const labels=[],qrUrls=[];selected.forEach(si=>{const s=state.shelves[si];for(let r=0;r<s.rows;r++)for(let c=0;c<s.cols;c++){labels.push({bin:binLabel(c,r),si,shelfName:s.area});qrUrls.push('https://peakgaragesolutions.ca/bin-tracker.html?si='+si+'&bin='+encodeURIComponent(binLabel(c,r))+'&area='+encodeURIComponent(s.area)+'&desc='+encodeURIComponent(s.desc));}});closeModal('labelModal');buildPrintPDF(labels,qrUrls);};
 
 function buildPrintPDF(labels,qrUrls){
-  // Layout constants (in points: 1in = 72pt)
-  const PT=72;
-  const pageW=8.5*PT, pageH=11*PT;
-  const marginTop=0.45*PT, marginLeft=0.735*PT;
-  const D=1.5*PT, colGap=0.337*PT, rowGap=0.22*PT;
-  const cols=4, rows=6, perPage=24;
+  const PT=72,pageW=8.5*PT,pageH=11*PT;
+  const marginTop=0.45*PT,marginLeft=0.735*PT;
+  const D=1.5*PT,colGap=0.337*PT,rowGap=0.22*PT;
+  const cols=4,rows=6,perPage=24,QR_SIZE=108;
   const PGS_URL='https://peakgaragesolutions.ca';
-  const QR_SIZE=72; // px for QR generation canvas
-
-  // Fill blanks with PGS filler
-  const allLabels=[...labels];
-  const allUrls=[...qrUrls];
+  const allLabels=[...labels],allUrls=[...qrUrls];
   const rem=allLabels.length%perPage;
   const blanks=rem?perPage-rem:0;
-  for(let i=0;i<blanks;i++){
-    allLabels.push({bin:'',si:null,shelfName:'Peak Garage Solutions',filler:true});
-    allUrls.push(PGS_URL);
-  }
-
-  // Generate all QR codes as data URLs first, then build PDF
+  for(let i=0;i<blanks;i++){allLabels.push({bin:'',si:null,shelfName:'Peak Garage Solutions',filler:true});allUrls.push(PGS_URL);}
+  showToast('Generating labels…');
   const qrDataUrls=[];
-  let pending=allUrls.length;
-  if(pending===0){assemblePDF([]);return;}
-
-  showToast('Generating QR codes…');
-
-  // QRCode.js renders into a div as an img element - use hidden container
   const qrContainer=document.createElement('div');
   qrContainer.style.cssText='position:fixed;left:-9999px;top:-9999px;visibility:hidden;';
   document.body.appendChild(qrContainer);
-
   function generateQR(i){
     if(i>=allUrls.length){document.body.removeChild(qrContainer);assemblePDF(qrDataUrls);return;}
     const div=document.createElement('div');
     qrContainer.appendChild(div);
     try{
-      const qr=new QRCode(div,{text:allUrls[i],width:QR_SIZE,height:QR_SIZE,colorDark:'#1a1a1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(div,{text:allUrls[i],width:QR_SIZE,height:QR_SIZE,colorDark:'#1a1a1a',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
       setTimeout(function(){
-        const img=div.querySelector('img');
-        const cvs=div.querySelector('canvas');
-        if(cvs) qrDataUrls[i]=cvs.toDataURL('image/png');
-        else if(img && img.src) qrDataUrls[i]=img.src;
+        const cvs=div.querySelector('canvas'),img=div.querySelector('img');
+        if(cvs)qrDataUrls[i]=cvs.toDataURL('image/png');
+        else if(img&&img.src)qrDataUrls[i]=img.src;
         else qrDataUrls[i]=null;
-        qrContainer.removeChild(div);
-        generateQR(i+1);
+        qrContainer.removeChild(div);generateQR(i+1);
       },30);
-    }catch(e){
-      qrDataUrls[i]=null;
-      qrContainer.removeChild(div);
-      generateQR(i+1);
-    }
+    }catch(e){qrDataUrls[i]=null;qrContainer.removeChild(div);generateQR(i+1);}
   }
   generateQR(0);
 
   function assemblePDF(qrImgs){
     showToast('Building PDF…');
-    // Use jsPDF
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'pt',format:[pageW,pageH],orientation:'portrait'});
-
     const totalPages=Math.ceil(allLabels.length/perPage);
     for(let pg=0;pg<totalPages;pg++){
-      if(pg>0) doc.addPage([pageW,pageH],'portrait');
-      const pageLabels=allLabels.slice(pg*perPage,(pg+1)*perPage);
-      const pageImgs=qrImgs.slice(pg*perPage,(pg+1)*perPage);
-
-      pageLabels.forEach(function(lbl,idx){
-        const col=idx%cols, row=Math.floor(idx/cols);
-        const x=marginLeft+col*(D+colGap);
-        const y=marginTop+row*(D+rowGap);
-
-        // Label border
-        doc.setDrawColor(200,200,200);
-        doc.setLineWidth(0.5);
+      if(pg>0)doc.addPage([pageW,pageH],'portrait');
+      allLabels.slice(pg*perPage,(pg+1)*perPage).forEach(function(lbl,idx){
+        const col=idx%cols,row=Math.floor(idx/cols);
+        const x=marginLeft+col*(D+colGap),y=marginTop+row*(D+rowGap);
+        doc.setDrawColor(200,200,200);doc.setLineWidth(0.5);
         doc.roundedRect(x,y,D,D,3,3,'S');
-
-        // QR image centered in label
-        const imgSize=D*0.72; // 72% of label
-        const imgX=x+(D-imgSize)/2;
-        const imgY=y+(D-imgSize)/2-4;
-        if(pageImgs[idx]){
-          doc.addImage(pageImgs[idx],'PNG',imgX,imgY,imgSize,imgSize);
-        }
-
-        // Label text below QR
-        const txtY=imgY+imgSize+2;
-        if(lbl.filler){
-          doc.setFontSize(5.5);
-          doc.setTextColor(160,160,160);
-          doc.text('Peak Garage Solutions',x+D/2,txtY+5,{align:'center'});
-        } else {
-          doc.setFontSize(7);
-          doc.setTextColor(26,26,26);
-          doc.setFont('helvetica','bold');
-          doc.text(lbl.shelfName+' '+lbl.bin,x+D/2,txtY+5,{align:'center'});
-        }
-        doc.setTextColor(26,26,26);
+        const imgSize=D*0.72,imgX=x+(D-imgSize)/2,imgY=y+4;
+        const qi=pg*perPage+idx;
+        if(qrImgs[qi])doc.addImage(qrImgs[qi],'PNG',imgX,imgY,imgSize,imgSize);
+        const txtY=imgY+imgSize+3;
+        if(lbl.filler){doc.setFontSize(5.5);doc.setTextColor(160,160,160);doc.text('Peak Garage Solutions',x+D/2,txtY+4,{align:'center'});}
+        else{doc.setFontSize(7);doc.setTextColor(26,26,26);doc.setFont('helvetica','bold');doc.text(lbl.shelfName+' '+lbl.bin,x+D/2,txtY+4,{align:'center'});}
         doc.setFont('helvetica','normal');
       });
     }
-
-    // Open PDF blob in preview iframe for desktop, direct download trigger for mobile
     const pdfBlob=doc.output('blob');
     const pdfUrl=URL.createObjectURL(pdfBlob);
-
-    const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if(isMobile){
-      // On mobile, force download so OS opens in a real PDF app (not browser viewer)
-      // This ensures 100% scale printing via Adobe Acrobat, Files, etc.
-      const a=document.createElement('a');
-      a.href=pdfUrl;
-      a.download='bin-labels.pdf';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      showToast('PDF downloaded — open in your PDF app to print');
-    } else {
-      const overlay=document.getElementById('printPreviewOverlay');
-      const frame=document.getElementById('printFrame');
-      overlay.style.display='flex';
-      frame.src=pdfUrl;
-      showToast('Preview ready — click Print');
-      // Store url for cleanup
-      frame._pdfUrl=pdfUrl;
-    }
+    // Open in browser tab on all devices — no download forced
+    window.open(pdfUrl,'_blank');
+    showToast('PDF opened — use browser print (⋮ or share → print)');
+    // Clean up blob URL after a delay
+    setTimeout(function(){URL.revokeObjectURL(pdfUrl);},60000);
   }
 }
 
-document.getElementById('doPrintBtn').onclick=function(){
-  const f=document.getElementById('printFrame');
-  if(f.contentWindow) f.contentWindow.print();
-  else if(f.src) window.open(f.src,'_blank');
-};
-document.getElementById('closePrintPreviewBtn').onclick=function(){
-  const overlay=document.getElementById('printPreviewOverlay');
-  overlay.style.display='none';
-  const f=document.getElementById('printFrame');
-  if(f._pdfUrl){URL.revokeObjectURL(f._pdfUrl);f._pdfUrl=null;}
-  f.src='about:blank';
-};
+document.getElementById('doPrintBtn').onclick=function(){const f=document.getElementById('printFrame');if(f.contentWindow)f.contentWindow.print();};
+document.getElementById('closePrintPreviewBtn').onclick=function(){document.getElementById('printPreviewOverlay').style.display='none';const f=document.getElementById('printFrame');const d=f.contentDocument||f.contentWindow.document;d.open();d.write('');d.close();};
 
 // ── INIT ──
 renderShelvesPage();
