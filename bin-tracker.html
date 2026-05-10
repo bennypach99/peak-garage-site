@@ -396,7 +396,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 </div>
 
 <!-- Sync status indicator -->
-<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.4.0</div>
+<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.5.0</div>
 <div id="syncStatus" style="position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;transition:all .3s;">
   <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;"></span>
   <span id="syncLabel">Connecting…</span>
@@ -678,10 +678,11 @@ function renderBinDetail(si, col, row) {
   panel.innerHTML =
     '<div class="sbin-panel">' +
       '<div class="sbin-header"><div class="sbin-title">'+label+'</div><div class="sbin-count">'+items.length+' item'+(items.length!==1?'s':'')+'</div></div>' +
+      '<div class="sbin-add-row" style="border-top:none;border-bottom:1px solid var(--border);padding:8px 12px;"><input class="form-input" id="newItemName" placeholder="Add item…" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;"><input class="form-input" id="newItemQty" type="number" min="1" value="1" style="width:64px;font-size:.88rem;padding:9px 8px;"><button class="btn btn-primary btn-sm" id="addItemBtn">Add</button></div>' +
       '<div class="sbin-items">' +
         (items.length ? items.map((item,i)=>'<div class="sbin-item-row"><div class="sbin-item-name">'+item.name+'</div>'+(item.qty>1?'<div class="sbin-item-qty">×'+item.qty+'</div>':'')+'<button class="icon-btn danger" data-key="'+key+'" data-idx="'+i+'" data-si="'+si+'" data-col="'+col+'" data-row="'+row+'" onclick="window._removeItem(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button></div>').join('') : '<div class="sbin-empty">Empty</div>') +
       '</div>' +
-      '<div class="sbin-add-row"><button class="move-bin-btn" id="moveBinBtn">Move Bin</button><input class="form-input" id="newItemName" placeholder="Add item…" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;"><input class="form-input" id="newItemQty" type="number" min="1" value="1" style="width:64px;font-size:.88rem;padding:9px 8px;"><button class="btn btn-primary btn-sm" id="addItemBtn">Add</button></div>' +
+      '<div class="sbin-add-row"><button class="move-bin-btn" id="moveBinBtn">Move Bin</button></div>' +
     '</div>';
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
   document.getElementById('moveBinBtn').onclick = function() {
