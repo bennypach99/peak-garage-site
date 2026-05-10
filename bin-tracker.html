@@ -54,8 +54,14 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 /* ── SHELF CONTROLS ── */
 .shelf-controls{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
 .shelf-controls-row{display:flex;align-items:center;gap:8px;width:100%;}
-.shelf-select{flex:1;min-width:0;background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:9px 32px 9px 12px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:600;letter-spacing:.04em;color:var(--gold);outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .65rem center;text-transform:uppercase;}
-.shelf-select option{background:var(--ch2);color:var(--text);}
+.shelf-chips-row{display:flex;align-items:flex-start;gap:8px;}
+.shelf-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0;}
+.shelf-chip{background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:6px 12px;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.shelf-chip:hover{border-color:var(--gold);color:var(--gold);}
+.shelf-chip.active{background:rgba(201,168,76,.18);border-color:var(--gold);color:var(--gold-light);}
+.edit-shelf-btn{background:transparent;border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:6px 11px;font-family:'Rajdhani',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap;}
+.edit-shelf-btn:hover{background:rgba(201,168,76,.1);border-color:var(--gold);}
+.shelf-select{display:none;}
 
 /* ── SHELF INFO CARD ── */
 .shelf-info-card{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;}
@@ -277,11 +283,9 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
         </button>
         <button class="btn btn-primary btn-sm" id="addShelfBtnActive" style="flex:1;">+ Add New Shelf</button>
       </div>
-      <div class="shelf-controls-row">
-        <select class="shelf-select" id="shelfDropdown"></select>
-        <button class="icon-btn" id="editShelfBtn" title="Edit shelf" style="flex-shrink:0;padding:7px 9px;border:1px solid var(--bstrong);border-radius:var(--radius-sm);color:var(--gold);">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px;"><path d="M11 2l3 3-8 8H3v-3l8-8z"/><line x1="9" y1="4" x2="12" y2="7"/></svg>
-        </button>
+      <div class="shelf-chips-row">
+        <div class="shelf-chips" id="shelfChips"></div>
+        <button class="edit-shelf-btn" id="editShelfBtn">Edit Shelf</button>
       </div>
     </div>
     <div id="searchPanel" style="display:none;margin-bottom:14px;">
@@ -396,7 +400,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 </div>
 
 <!-- Sync status indicator -->
-<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.6.0</div>
+<div style="position:fixed;bottom:16px;left:16px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.7.0</div>
 <div id="syncStatus" style="position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:5px 12px;font-family:'Rajdhani',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;transition:all .3s;">
   <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;"></span>
   <span id="syncLabel">Connecting…</span>
@@ -593,21 +597,33 @@ function renderShelvesPage(selectIdx) {
   const empty = document.getElementById('shelfEmpty'), active = document.getElementById('shelfActive');
   if (!state.shelves.length) { empty.style.display='flex'; active.style.display='none'; updateSideBtns(); return; }
   empty.style.display='none'; active.style.display='block'; updateSideBtns();
-  const dd = document.getElementById('shelfDropdown');
-  const prev = dd.value;
-  dd.innerHTML = state.shelves.map((s,i)=>`<option value="${i}">${s.area} – ${s.desc}</option>`).join('');
-  if (selectIdx !== undefined) dd.value = selectIdx;
-  else if (prev !== '' && parseInt(prev) < state.shelves.length) dd.value = prev;
-  else dd.value = state.shelves.length - 1;
-  const idx = parseInt(dd.value);
+
+  // Determine which shelf to select
+  let idx;
+  if (selectIdx !== undefined) idx = selectIdx;
+  else if (_openShelfIdx !== null && _openShelfIdx < state.shelves.length) idx = _openShelfIdx;
+  else idx = state.shelves.length - 1;
   _openShelfIdx = idx;
+
+  renderShelfChips(idx);
   renderShelfDiagram(idx);
 }
 
-document.getElementById('shelfDropdown').addEventListener('change', function() {
-  _openShelfIdx = parseInt(this.value); _openBinCol=null; _openBinRow=null;
-  renderShelfDiagram(_openShelfIdx);
-});
+function renderShelfChips(activeIdx) {
+  const container = document.getElementById('shelfChips');
+  container.innerHTML = '';
+  state.shelves.forEach((s, i) => {
+    const chip = document.createElement('button');
+    chip.className = 'shelf-chip' + (i === activeIdx ? ' active' : '');
+    chip.textContent = s.area + ' – ' + s.desc;
+    chip.addEventListener('click', function() {
+      _openShelfIdx = i; _openBinCol = null; _openBinRow = null;
+      renderShelfChips(i);
+      renderShelfDiagram(i);
+    });
+    container.appendChild(chip);
+  });
+}
 
 // ── SHELF DIAGRAM ──
 function renderShelfDiagram(idx) {
@@ -861,7 +877,7 @@ function showMovePicker(srcSi, srcCol, srcRow) {
       saveState();
       showToast(mode.charAt(0).toUpperCase() + mode.slice(1) + ' complete — ' + srcLabel + ' → ' + destLabel);
       // Switch to destination shelf and select destination bin
-      const dd = document.getElementById('shelfDropdown');
+      const dd = {value: _openShelfIdx}; // chip-based: use _openShelfIdx
       dd.value = destSi;
       _openShelfIdx = destSi; _openBinCol = destCol; _openBinRow = destRow;
       renderShelfDiagram(destSi);
@@ -921,7 +937,7 @@ document.getElementById('searchResults').addEventListener('click', function(e) {
 // ── ADD/EDIT SHELF ──
 let editingShelfIdx=null;
 function openAddShelfModal(){editingShelfIdx=null;document.getElementById('newShelfArea').value='';document.getElementById('newShelfDesc').value='';state.addShelfCols=3;state.addShelfRows=4;document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===3));document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===4));document.querySelector('#addShelfModal .modal-title').textContent='Add New Shelf';document.querySelector('#addShelfModal .modal-sub').textContent='Where is this shelf and what does it hold?';document.getElementById('confirmAddShelf').textContent='Create Shelf';document.getElementById('deleteShelfBtn').style.display='none';openModal('addShelfModal');}
-function openEditShelfModal(){const idx=parseInt(document.getElementById('shelfDropdown').value);const s=state.shelves[idx];if(!s)return;editingShelfIdx=idx;document.getElementById('newShelfArea').value=s.area;document.getElementById('newShelfDesc').value=s.desc;state.addShelfCols=s.cols;state.addShelfRows=s.rows;document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.cols));document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.rows));document.querySelector('#addShelfModal .modal-title').textContent='Edit Shelf';document.querySelector('#addShelfModal .modal-sub').textContent='Update the name, description, or size.';document.getElementById('confirmAddShelf').textContent='Save Changes';document.getElementById('deleteShelfBtn').style.display='block';openModal('addShelfModal');}
+function openEditShelfModal(){const idx=_openShelfIdx;const s=state.shelves[idx];if(!s)return;editingShelfIdx=idx;document.getElementById('newShelfArea').value=s.area;document.getElementById('newShelfDesc').value=s.desc;state.addShelfCols=s.cols;state.addShelfRows=s.rows;document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.cols));document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.rows));document.querySelector('#addShelfModal .modal-title').textContent='Edit Shelf';document.querySelector('#addShelfModal .modal-sub').textContent='Update the name, description, or size.';document.getElementById('confirmAddShelf').textContent='Save Changes';document.getElementById('deleteShelfBtn').style.display='block';openModal('addShelfModal');}
 document.getElementById('addShelfBtnEmpty').onclick=openAddShelfModal;
 document.getElementById('addShelfBtnActive').onclick=openAddShelfModal;
 document.getElementById('editShelfBtn').onclick=openEditShelfModal;
@@ -939,7 +955,7 @@ document.getElementById('addShelfModal').addEventListener('click',e=>{if(e.targe
 // ── DELETE SHELF ──
 let deleteConfirmPending=false,deleteConfirmTimer=null;
 document.getElementById('deleteShelfBtn').addEventListener('click',function(){
-  const idx=editingShelfIdx!==null?editingShelfIdx:parseInt(document.getElementById('shelfDropdown').value);
+  const idx=editingShelfIdx!==null?editingShelfIdx:_openShelfIdx;
   const s=state.shelves[idx]; if(!s)return;
   if(!deleteConfirmPending){deleteConfirmPending=true;showToast('Tap again to confirm delete');deleteConfirmTimer=setTimeout(()=>{deleteConfirmPending=false;},3000);}
   else{
@@ -1003,7 +1019,7 @@ function handleQrScan(text){const raw=text.trim();let targetSi=null,targetLabel=
 document.getElementById('qrScanBtn').onclick=openQrModal;document.getElementById('closeQrBtn').onclick=closeQrModal;document.getElementById('qrModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQrModal();});document.getElementById('startQrBtn').onclick=startQr;document.getElementById('stopQrBtn').onclick=stopQr;
 
 // ── LABEL PRINT ──
-function openLabelModal(){const list=document.getElementById('labelShelfList');list.innerHTML='';state.shelves.forEach((s,i)=>{const lbl=document.createElement('label');lbl.className='label-shelf-item';lbl.id='lsi_'+i;const cb=document.createElement('input');cb.type='checkbox';cb.value=i;cb.addEventListener('change',function(){lbl.classList.toggle('sel',this.checked);});const info=document.createElement('div');info.innerHTML='<div class="label-shelf-name">'+s.area+' – '+s.desc+'</div><div class="label-shelf-sub">'+s.cols+' wide × '+s.rows+' high · '+(s.cols*s.rows)+' labels</div>';lbl.appendChild(cb);lbl.appendChild(info);list.appendChild(lbl);});const idx=parseInt(document.getElementById('shelfDropdown').value);const el=document.getElementById('lsi_'+idx);if(el){el.classList.add('sel');el.querySelector('input').checked=true;}openModal('labelModal');}
+function openLabelModal(){const list=document.getElementById('labelShelfList');list.innerHTML='';state.shelves.forEach((s,i)=>{const lbl=document.createElement('label');lbl.className='label-shelf-item';lbl.id='lsi_'+i;const cb=document.createElement('input');cb.type='checkbox';cb.value=i;cb.addEventListener('change',function(){lbl.classList.toggle('sel',this.checked);});const info=document.createElement('div');info.innerHTML='<div class="label-shelf-name">'+s.area+' – '+s.desc+'</div><div class="label-shelf-sub">'+s.cols+' wide × '+s.rows+' high · '+(s.cols*s.rows)+' labels</div>';lbl.appendChild(cb);lbl.appendChild(info);list.appendChild(lbl);});const idx=_openShelfIdx;const el=document.getElementById('lsi_'+idx);if(el){el.classList.add('sel');el.querySelector('input').checked=true;}openModal('labelModal');}
 document.getElementById('printLabelsBtn').onclick=openLabelModal;document.getElementById('closeLabelBtn').onclick=()=>closeModal('labelModal');document.getElementById('labelModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('labelModal');});
 document.getElementById('selectAllLabels').onclick=()=>{document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.add('sel');el.querySelector('input').checked=true;});};
 document.getElementById('deselectAllLabels').onclick=()=>{document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false;});};
