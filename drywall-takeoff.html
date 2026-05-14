@@ -600,48 +600,8 @@ const ROXUL_RVALS = [
 
 /* ── Pricing data (labour $/ft², material $/ft², WSIB rate) ── */
 // Union rate dates for Local 675
-const RATE_DATES = ['May 2024', 'May 2025', 'May 2026'];
+const RATE_DATES = ['May 2025', 'May 2026', 'May 2027'];
 // Labour rates: [may2024, may2025, may2026]
-const LABOUR_RATES = {
-  ins_house:          [0.554, 0.576, 0.598],
-  ins_garage:         [0.511, 0.533, 0.555],
-  ins_roxul:          [0.532, 0.554, 0.576],
-  ins_roxul_prem:     [0.063, 0.065, 0.067],
-  blown_r60_house:    [1.59,  1.65,  1.71],
-  blown_r50_house:    [1.35,  1.40,  1.45],
-  blown_r40_house:    [1.21,  1.26,  1.31],
-  blown_r60_garage:   [1.59,  1.65,  1.71],
-  blown_r50_garage:   [1.35,  1.40,  1.45],
-  blown_r40_garage:   [1.21,  1.26,  1.31],
-  blanket_r20:        [1.61,  1.67,  1.73],
-  foam_half_lb:       [3.34,  3.47,  3.60],
-  foam_2lb:           [6.04,  6.28,  6.51],
-  foam_2lb_r20:       [4.11,  4.27,  4.43],
-  board_upper:        [0.336, 0.349, 0.362],
-  board_main:         [0.379, 0.394, 0.409],
-  board_basement:     [0.317, 0.329, 0.341],
-  board_garage:       [0.481, 0.500, 0.519],
-  board_58_extra:     [0.094, 0.098, 0.102],
-  board_windows:      [14.42, 14.98, 15.54],
-  board_res_angle:    [0.324, 0.337, 0.350],
-  steel_upper:        [0.770, 0.800, 0.830],
-  steel_main:         [0.770, 0.800, 0.830],
-  steel_basement:     [0.770, 0.800, 0.830],
-  steel_bulkheads:    [0.770, 0.800, 0.830],
-  local675_dues:      [0.255, 0.265, 0.275],
-  tape_upper:         [0.352, 0.366, 0.380],
-  tape_main:          [0.352, 0.366, 0.380],
-  tape_basement:      [0.336, 0.349, 0.362],
-  tape_garage:        [0.818, 0.850, 0.882],
-  texture_ww:         [0.130, 0.135, 0.140],
-  cor_bds_windows:    [1.44,  1.50,  1.56],
-  cor_bds_sure:       [0.923, 0.960, 0.997],
-  tapers_union:       [0.221, 0.230, 0.239],
-  pot_lights:         [7.69,  8.00,  8.31],
-  scaffolding:        [100.0, 100.0, 100.0],
-  cleaning:           [300.0, 300.0, 300.0],
-  tpy_flat:           [280.0, 280.0, 280.0],
-};
 // Material rates $/ft² or $/unit (fixed, not union-tied)
 const MAT_RATES = {
   ins_r8:       0.29,
@@ -681,11 +641,132 @@ const MAT_RATES = {
 const WSIB_RATE = 0.0617; // 6.17%
 const DEFAULT_PROFIT_PCT = 15;
 
-/* ── Default prices (cloned from LABOUR_RATES using index 1 = May 2025) ── */
+
+/* ══════════════════════════════════════════════════════════════════
+   LOCAL 675 RESIDENTIAL COLLECTIVE AGREEMENT 2025-2028
+   Rates per ft² (converted from per-1000-sqft in CBA)
+   Rate dates: [May 4 2025, May 3 2026, May 2 2027]
+   ══════════════════════════════════════════════════════════════════ */
+const RATE_DATES_CBA = ['May 2025', 'May 2026', 'May 2027'];
+
+const BOARD_LR_RATES = {
+  h8:  { label: "Up to 8'",   rates: [0.352, 0.359, 0.366] },
+  h9:  { label: "8' – 9'",    rates: [0.373, 0.381, 0.388] },
+  h10: { label: "9' – 10'",   rates: [0.422, 0.431, 0.439] },
+  h11: { label: "10' – 11'",  rates: [0.451, 0.460, 0.469] },
+  h12: { label: "11' – 12'",  rates: [0.466, 0.475, 0.485] },
+};
+const BOARD_HR_RATES = {
+  h9:  { label: "8' – 9'",    rates: [0.377, 0.385, 0.393] },
+  h10: { label: "9' – 10'",   rates: [0.397, 0.405, 0.413] },
+  h11: { label: "10' – 11'",  rates: [0.416, 0.424, 0.433] },
+  h12: { label: "11' – 12'",  rates: [0.434, 0.442, 0.451] },
+};
+const STEEL_HR_RATES = {
+  h8:  { label: "Up to 8'",   rates: [0.343, 0.349, 0.357] },
+  h9:  { label: "8' – 9'",    rates: [0.361, 0.368, 0.376] },
+  h10: { label: "9' – 10'",   rates: [0.384, 0.391, 0.399] },
+  h11: { label: "10' – 11'",  rates: [0.405, 0.413, 0.421] },
+  h12: { label: "11' – 12'",  rates: [0.427, 0.436, 0.444] },
+};
+const STEEL_HOUSE_RATES      = [0.405, 0.413, 0.421];
+const SUSPENDED_CEIL_RATES   = [0.66,  0.68,  0.69];
+const SUSPENDED_CEIL_ISO_RATES=[0.71,  0.73,  0.74];
+const INS_LR_RATES           = [0.617, 0.629, 0.642];
+const INS_HR_INT_RATES       = [0.328, 0.335, 0.342];
+const INS_HR_EXT_RATES       = [0.389, 0.396, 0.404];
+const INS_R24_PREMIUM_RATES  = [0.060, 0.061, 0.063];
+const INS_ROCKWOOL_PREMIUM_RATES=[0.079,0.080, 0.082];
+const INS_ENERGY_STAR_RATES  = [0.079, 0.080, 0.082];
+const BLANKET_R12_RATES      = [0.2142,0.2184,0.2227];
+const BLANKET_R20_RATES      = [0.2416,0.2464,0.2513];
+const BLANKET_HIGHWALL_RATES = [24.70, 25.19, 25.69];
+const CORNER_BEAD_LF_RATES   = [0.285, 0.290, 0.295];
+const CORNER_BEAD_BULL_RATES = [0.443, 0.451, 0.460];
+const DUROCK_RATES           = [0.60,  0.61,  0.63];
+const EXTRAS_RATES = {
+  skylight_2x4:      [82.00,  83.00,  85.00],
+  skylight_4x4:      [174.00, 178.00, 181.00],
+  tray_waffle_ceil:  [84.00,  85.00,  87.00],
+  ota_cathedral:     [213.00, 217.00, 222.00],
+  open_round_stairs: [161.00, 164.00, 168.00],
+  pot_lights:        [4.28,   4.37,   4.46],
+  townhouse_premium: [14.02,  14.30,  14.60],
+  stack_townhouse:   [40.80,  41.60,  42.40],
+  entry_door_single: [87.00,  87.00,  87.00],
+  entry_door_double: [174.00, 174.00, 174.00],
+  fivc_premium:      [105.00, 107.00, 109.00],
+};
+
+function detectRateIdx() {
+  const today = new Date();
+  const cuts = [new Date('2025-05-04'), new Date('2026-05-03'), new Date('2027-05-02')];
+  let idx = 0;
+  for (let i = cuts.length-1; i>=0; i--) { if(today>=cuts[i]){ idx=i; break; } }
+  return idx;
+}
+
+
 function defaultPrices() {
-  const p = {};
-  Object.keys(LABOUR_RATES).forEach(k => { p[k] = LABOUR_RATES[k][1]; });
-  return p;
+  // Returns a flat key→value map of all editable prices at current rates
+  const idx = detectRateIdx();
+  return {
+    // Boarding LR by height
+    board_lr_h8:  BOARD_LR_RATES.h8.rates[idx],
+    board_lr_h9:  BOARD_LR_RATES.h9.rates[idx],
+    board_lr_h10: BOARD_LR_RATES.h10.rates[idx],
+    board_lr_h11: BOARD_LR_RATES.h11.rates[idx],
+    board_lr_h12: BOARD_LR_RATES.h12.rates[idx],
+    // Boarding HR by height
+    board_hr_h9:  BOARD_HR_RATES.h9.rates[idx],
+    board_hr_h10: BOARD_HR_RATES.h10.rates[idx],
+    board_hr_h11: BOARD_HR_RATES.h11.rates[idx],
+    board_hr_h12: BOARD_HR_RATES.h12.rates[idx],
+    // Steel HR by height
+    steel_hr_h8:  STEEL_HR_RATES.h8.rates[idx],
+    steel_hr_h9:  STEEL_HR_RATES.h9.rates[idx],
+    steel_hr_h10: STEEL_HR_RATES.h10.rates[idx],
+    steel_hr_h11: STEEL_HR_RATES.h11.rates[idx],
+    steel_hr_h12: STEEL_HR_RATES.h12.rates[idx],
+    // Steel LR house
+    steel_lr_house: STEEL_HOUSE_RATES[idx],
+    // Suspended ceilings
+    suspended_ceil:     SUSPENDED_CEIL_RATES[idx],
+    suspended_ceil_iso: SUSPENDED_CEIL_ISO_RATES[idx],
+    // Insulation
+    ins_lr:       INS_LR_RATES[idx],
+    ins_hr_int:   INS_HR_INT_RATES[idx],
+    ins_hr_ext:   INS_HR_EXT_RATES[idx],
+    ins_r24_prem: INS_R24_PREMIUM_RATES[idx],
+    ins_rockwool_prem: INS_ROCKWOOL_PREMIUM_RATES[idx],
+    ins_energy_star:   INS_ENERGY_STAR_RATES[idx],
+    blanket_r12:  BLANKET_R12_RATES[idx],
+    blanket_r20:  BLANKET_R20_RATES[idx],
+    blanket_highwall: BLANKET_HIGHWALL_RATES[idx],
+    // Extras
+    skylight_2x4:      EXTRAS_RATES.skylight_2x4[idx],
+    skylight_4x4:      EXTRAS_RATES.skylight_4x4[idx],
+    tray_waffle_ceil:  EXTRAS_RATES.tray_waffle_ceil[idx],
+    ota_cathedral:     EXTRAS_RATES.ota_cathedral[idx],
+    open_round_stairs: EXTRAS_RATES.open_round_stairs[idx],
+    pot_lights:        EXTRAS_RATES.pot_lights[idx],
+    townhouse_premium: EXTRAS_RATES.townhouse_premium[idx],
+    stack_townhouse:   EXTRAS_RATES.stack_townhouse[idx],
+    entry_door_single: EXTRAS_RATES.entry_door_single[idx],
+    entry_door_double: EXTRAS_RATES.entry_door_double[idx],
+    fivc_premium:      EXTRAS_RATES.fivc_premium[idx],
+    // Corner beads
+    corner_bead_lf:    CORNER_BEAD_LF_RATES[idx],
+    corner_bead_bull:  CORNER_BEAD_BULL_RATES[idx],
+    // Durock
+    durock_rate:  DUROCK_RATES[idx],
+    // Job costs
+    scaffolding:  100.0,
+    cleaning:     300.0,
+    tpy_flat:     280.0,
+    local675_dues: 0.0,   // % entered manually
+    tapers_union:  0.0,
+  };
 }
 
 /* ── My Info defaults ── */
@@ -710,7 +791,7 @@ async function loadProfitPct() {
 let gPrices = defaultPrices();
 let gMyInfo = defaultMyInfo();
 let gProfitPct = DEFAULT_PROFIT_PCT;
-let gRateIdx = 1; // active rate date index
+let gRateIdx = 1; // active rate date index — will be set by detectRateIdx() on init
 let fbUser = null; // Firebase Auth user
 let db = null;     // Firestore instance
 
@@ -2119,7 +2200,7 @@ function showReport() {
       jobCostsEntries.forEach(item=>{
         const qty=a.counts['jobCosts'][item];
         const rk=JOB_COSTS_RATE_MAP[item]||'scaffolding';
-        const rate=gPrices[rk]||LABOUR_RATES[rk]?.[1]||0;
+        const rate=gPrices[rk]||0;
         const amt=qty*rate;
         const fmt2=v=>'$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
         html+=`<div class="modal-row"><span>${item}</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt2(amt)}</span></div>`;
@@ -2161,16 +2242,23 @@ function showReport() {
       });
     });
 
-    // Labour cost — for now we just sum all boarding sqft × labour rates
-    // Use total drywall sqft to compute labour (simplified: total sheets × avg area × rate)
-    // Better: use sqft per area type per floor if area names hint at floor
-    // Since we don't track floors separately per-area in this version, sum all sqft and apply main floor rate
+    // Labour cost — ceiling-height based boarding rates per Local 675 CBA
     let labourCost = 0;
     j.areas.forEach(a => {
-      // Boarding labour
+      // Boarding labour: use area ceiling height to look up correct rate bracket
+      const ceilH = a.height || "9'";
+      const isHR = a.isHighrise || false;
+      const boardRate = (() => {
+        const map = isHR ? BOARD_HR_RATES : BOARD_LR_RATES;
+        const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
+        const key = hMap[ceilH] || 'h9';
+        const bracket = map[key] || map['h9'] || map['h8'];
+        // Use saved gPrices if available, otherwise CBA rate
+        const priceKey = (isHR ? 'board_hr_' : 'board_lr_') + key;
+        return gPrices[priceKey] || (bracket ? bracket.rates[gRateIdx] : 0.39);
+      })();
       const totalSqft = DRYWALL_TYPES.filter(t=>!t.isItems).reduce((s,t) =>
         s + t.lengths.reduce((s2,l) => s2 + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0), 0);
-      const boardRate = gPrices['board_main'] || LABOUR_RATES['board_main'][1];
       labourCost += totalSqft * boardRate;
       // Insulation labour
       INSULATION_TYPES.forEach(t => {
@@ -2181,23 +2269,32 @@ function showReport() {
             if(rv.sqft[si]===null) return;
             const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
             if(!cell) return;
-            const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
-            const insRate = t.key==='roxul' ? (gPrices['ins_roxul']||LABOUR_RATES['ins_roxul'][1]) :
-                            (gPrices['ins_house']||LABOUR_RATES['ins_house'][1]);
-            labourCost += totalSqft * insRate;
+            const sf=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const insRate = t.key==='roxul'
+              ? (gPrices['ins_rockwool_prem']||INS_ROCKWOOL_PREMIUM_RATES[gRateIdx])
+              : (gPrices['ins_lr']||INS_LR_RATES[gRateIdx]);
+            labourCost += sf * insRate;
           });
         });
       });
-      // Pot lights
+      // Add-Ons labour (pot lights, skylights etc)
       const potLights = a.counts['jobExtras']?.['Pot Lights'] || 0;
-      labourCost += potLights * (gPrices['pot_lights'] || LABOUR_RATES['pot_lights'][1]);
+      labourCost += potLights * (gPrices['pot_lights'] || EXTRAS_RATES.pot_lights[gRateIdx]);
+      const sky24 = a.counts['jobExtras']?.["2' × 4' Skylight"] || 0;
+      labourCost += sky24 * (gPrices['skylight_2x4'] || EXTRAS_RATES.skylight_2x4[gRateIdx]);
+      const sky44 = a.counts['jobExtras']?.["4' × 4' Skylight"] || 0;
+      labourCost += sky44 * (gPrices['skylight_4x4'] || EXTRAS_RATES.skylight_4x4[gRateIdx]);
+      const ota = (a.counts['jobExtras']?.["OTA <64'"]||0) + (a.counts['jobExtras']?.["OTA >64'"]||0);
+      labourCost += ota * (gPrices['ota_cathedral'] || EXTRAS_RATES.ota_cathedral[gRateIdx]);
       // Job Costs (fixed amounts)
+      const JC_MAP = {
+        'Scaffolding':'scaffolding','Cleaning':'cleaning',
+        'Local 675 Union Dues':'local675_dues','Tapers Union Dues':'tapers_union',
+        'Touchup & Year End Service Calls':'tpy_flat'
+      };
       JOB_COSTS_ITEMS.forEach(item => {
         const qty = a.counts['jobCosts']?.[item] || 0;
-        const rateKey = item==='Scaffolding'?'scaffolding':item==='Cleaning'?'cleaning':
-                        item.includes('675')?'local675_dues':item.includes('Tapers')?'tapers_union':
-                        item.includes('Touchup')?'tpy_flat':'pot_lights';
-        labourCost += qty * (gPrices[rateKey] || 0);
+        labourCost += qty * (gPrices[JC_MAP[item]] || 0);
       });
     });
 
@@ -2424,49 +2521,63 @@ function handleSheetTap(e, overlayId) { if(e.target===document.getElementById(ov
 
 // ── Prices Sheet ──
 const PRICE_FIELD_DEFS = [
-  { section:'Labour — Insulation ($/ft²)' },
-  { key:'ins_house',       label:'House' },
-  { key:'ins_garage',      label:'Garage' },
-  { key:'ins_roxul',       label:'Roxul' },
-  { key:'ins_roxul_prem',  label:'Roxul Premium add-on' },
-  { key:'blanket_r20',     label:'Blanket R20' },
-  { key:'blown_r40_house', label:'Blown R40 House' },
-  { key:'blown_r50_house', label:'Blown R50 House' },
-  { key:'blown_r60_house', label:'Blown R60 House' },
-  { key:'blown_r40_garage',label:'Blown R40 Garage' },
-  { key:'blown_r50_garage',label:'Blown R50 Garage' },
-  { key:'blown_r60_garage',label:'Blown R60 Garage' },
-  { key:'foam_half_lb',    label:'Foam ½ lb' },
-  { key:'foam_2lb',        label:'Foam 2 lb' },
-  { key:'foam_2lb_r20',    label:'Foam 2 lb R20' },
-  { section:'Labour — Boarding ($/ft²)' },
-  { key:'board_upper',     label:'Upper Floor' },
-  { key:'board_main',      label:'Main Floor' },
-  { key:'board_basement',  label:'Basement' },
-  { key:'board_garage',    label:'Garage' },
-  { key:'board_58_extra',  label:'⅝" Extra' },
-  { key:'board_windows',   label:'Windows ($/each)' },
-  { key:'board_res_angle', label:'Resilient/Angle/Furr.' },
-  { section:'Labour — Steel Framing ($/ft²)' },
-  { key:'steel_upper',     label:'Upper Floor' },
-  { key:'steel_main',      label:'Main Floor' },
-  { key:'steel_basement',  label:'Basement' },
-  { key:'steel_bulkheads', label:'Bulkheads' },
-  { section:'Labour — Taping ($/ft²)' },
-  { key:'tape_upper',      label:'Upper Floor' },
-  { key:'tape_main',       label:'Main Floor' },
-  { key:'tape_basement',   label:'Basement' },
-  { key:'tape_garage',     label:'Garage' },
-  { key:'texture_ww',      label:'Texture w/w' },
-  { key:'cor_bds_windows', label:'Corner Beads — Windows' },
-  { key:'cor_bds_sure',    label:'Corner Beads / Surecorner' },
-  { section:'Labour — Union & Extras' },
-  { key:'local675_dues',   label:'Local 675 Union Dues' },
-  { key:'tapers_union',    label:'Tapers Union Dues' },
-  { key:'pot_lights',      label:'Pot Lights ($/each)' },
-  { key:'scaffolding',     label:'Scaffolding ($/job)' },
-  { key:'cleaning',        label:'Cleaning ($/job)' },
-  { key:'tpy_flat',         label:'Touchup & Year End (flat $)' },
+  { section:'Boarding — Low-Rise ($/ft² by ceiling height)' },
+  { key:'board_lr_h8',  label:"Up to 8'" },
+  { key:'board_lr_h9',  label:"8' – 9'" },
+  { key:'board_lr_h10', label:"9' – 10'" },
+  { key:'board_lr_h11', label:"10' – 11'" },
+  { key:'board_lr_h12', label:"11' – 12'" },
+  { section:'Boarding — High-Rise ($/ft² by ceiling height)' },
+  { key:'board_hr_h9',  label:"8' – 9'" },
+  { key:'board_hr_h10', label:"9' – 10'" },
+  { key:'board_hr_h11', label:"10' – 11'" },
+  { key:'board_hr_h12', label:"11' – 12'" },
+  { section:'Steel Studs — High-Rise ($/lf by height)' },
+  { key:'steel_hr_h8',  label:"Up to 8'" },
+  { key:'steel_hr_h9',  label:"8' – 9'" },
+  { key:'steel_hr_h10', label:"9' – 10'" },
+  { key:'steel_hr_h11', label:"10' – 11'" },
+  { key:'steel_hr_h12', label:"11' – 12'" },
+  { section:'Steel — Low-Rise House ($/ft²)' },
+  { key:'steel_lr_house', label:'Steel Framed House' },
+  { section:'Suspended Ceilings ($/ft²)' },
+  { key:'suspended_ceil',     label:'Standard (hanger wire + channel)' },
+  { key:'suspended_ceil_iso', label:'With Isolator Hangers' },
+  { section:'Insulation — Low-Rise all-in (labour + material, $/ft²)' },
+  { key:'ins_lr',       label:'All Insulation LR' },
+  { key:'ins_r24_prem', label:'R24 Premium add-on ($/ft²)' },
+  { key:'ins_rockwool_prem', label:'Rockwool Premium add-on ($/ft²)' },
+  { key:'ins_energy_star',   label:'Energy Star Premium ($/ft²)' },
+  { section:'Insulation — High-Rise labour only ($/ft²)' },
+  { key:'ins_hr_int',   label:'Interior Walls' },
+  { key:'ins_hr_ext',   label:'Exterior Walls' },
+  { section:'Blanket Insulation ($/ft²)' },
+  { key:'blanket_r12',      label:'R12' },
+  { key:'blanket_r20',      label:'R20' },
+  { key:'blanket_highwall', label:'High Walls over 8.5ft ($/wall)' },
+  { section:'Extras & Premiums (flat $ per unit)' },
+  { key:'skylight_2x4',      label:"Skylight 2×4" },
+  { key:'skylight_4x4',      label:"Skylight 4×4" },
+  { key:'tray_waffle_ceil',  label:'Tray / Waffle Ceiling' },
+  { key:'ota_cathedral',     label:'OTA / Cathedral (≥64sqft & 10ft)' },
+  { key:'open_round_stairs', label:'Open Round Stairs to Basement' },
+  { key:'pot_lights',        label:'Pot Lights ($/each, after 5)' },
+  { key:'entry_door_single', label:'Entry Door Frame — Single ($)' },
+  { key:'entry_door_double', label:'Entry Door Frame — Double ($)' },
+  { key:'fivc_premium',      label:'⅝" Fire Code Type C premium ($/1000sqft)' },
+  { key:'townhouse_premium', label:'Townhouse Premium ($/1000sqft)' },
+  { key:'stack_townhouse',   label:'Stack/Back-to-Back Townhouse ($/1000sqft)' },
+  { section:'Corner Beads ($/linear ft)' },
+  { key:'corner_bead_lf',   label:'Regular' },
+  { key:'corner_bead_bull', label:'Bull-nose' },
+  { section:'Durock ($/ft²)' },
+  { key:'durock_rate', label:'Durock install' },
+  { section:'Job Costs (flat rate)' },
+  { key:'scaffolding',  label:'Scaffolding ($/job)' },
+  { key:'cleaning',     label:'Cleaning ($/job)' },
+  { key:'tpy_flat',     label:'Touchup & Year End ($/flat)' },
+  { key:'local675_dues', label:'Local 675 Union Dues (enter $)' },
+  { key:'tapers_union',  label:'Tapers Union Dues (enter $)' },
 ];
 
 function openPricesSheet() {
@@ -2495,7 +2606,7 @@ function openPricesSheet() {
       html += `<div class="price-section-label">${f.section}</div>`;
       lastWasSection = true;
     } else {
-      const val = gPrices[f.key] !== undefined ? gPrices[f.key] : (LABOUR_RATES[f.key]?.[1] || 0);
+      const defaults2 = defaultPrices(); const val = gPrices[f.key] !== undefined ? gPrices[f.key] : (defaults2[f.key] || 0);
       html += `<div class="price-row"><span class="price-row-label">${f.label}</span>
         <input class="price-row-input" type="number" id="pf-${f.key}" step="0.001" min="0" value="${val.toFixed(3)}"></div>`;
     }
@@ -2507,13 +2618,12 @@ function openPricesSheet() {
 
 function applyRateYear(idx) {
   gRateIdx = idx;
+  // Re-compute defaults for this rate year and fill inputs
+  const defaults = defaultPrices();
   PRICE_FIELD_DEFS.forEach(f => {
     if(!f.key) return;
-    const rates = LABOUR_RATES[f.key];
-    if(rates && rates[idx] !== undefined) {
-      const el = document.getElementById('pf-'+f.key);
-      if(el) el.value = rates[idx].toFixed(3);
-    }
+    const el = document.getElementById('pf-'+f.key);
+    if(el && defaults[f.key] !== undefined) el.value = defaults[f.key].toFixed(3);
   });
   document.querySelectorAll('.year-btn').forEach((b,i) => {
     b.className = 'year-btn ' + (i===idx?'active':'inactive');
