@@ -377,7 +377,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v9 · May 2025</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v10 · May 2025</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -728,65 +728,11 @@ function detectRateIdx() {
 
 
 function defaultPrices() {
-  // Returns a flat key→value map of all editable prices at current rates
+  if (typeof PRICE_FIELDS === 'undefined') return {};
   const idx = detectRateIdx();
-  return {
-    // Boarding LR by height
-    board_lr_h8:  BOARD_LR_RATES.h8.rates[idx],
-    board_lr_h9:  BOARD_LR_RATES.h9.rates[idx],
-    board_lr_h10: BOARD_LR_RATES.h10.rates[idx],
-    board_lr_h11: BOARD_LR_RATES.h11.rates[idx],
-    board_lr_h12: BOARD_LR_RATES.h12.rates[idx],
-    // Boarding HR by height
-    board_hr_h9:  BOARD_HR_RATES.h9.rates[idx],
-    board_hr_h10: BOARD_HR_RATES.h10.rates[idx],
-    board_hr_h11: BOARD_HR_RATES.h11.rates[idx],
-    board_hr_h12: BOARD_HR_RATES.h12.rates[idx],
-    // Steel HR by height
-    steel_hr_h8:  STEEL_HR_RATES.h8.rates[idx],
-    steel_hr_h9:  STEEL_HR_RATES.h9.rates[idx],
-    steel_hr_h10: STEEL_HR_RATES.h10.rates[idx],
-    steel_hr_h11: STEEL_HR_RATES.h11.rates[idx],
-    steel_hr_h12: STEEL_HR_RATES.h12.rates[idx],
-    // Steel LR house
-    steel_lr_house: STEEL_HOUSE_RATES[idx],
-    // Suspended ceilings
-    suspended_ceil:     SUSPENDED_CEIL_RATES[idx],
-    suspended_ceil_iso: SUSPENDED_CEIL_ISO_RATES[idx],
-    // Insulation
-    ins_lr:       INS_LR_RATES[idx],
-    ins_hr_int:   INS_HR_INT_RATES[idx],
-    ins_hr_ext:   INS_HR_EXT_RATES[idx],
-    ins_r24_prem: INS_R24_PREMIUM_RATES[idx],
-    ins_rockwool_prem: INS_ROCKWOOL_PREMIUM_RATES[idx],
-    ins_energy_star:   INS_ENERGY_STAR_RATES[idx],
-    blanket_r12:  BLANKET_R12_RATES[idx],
-    blanket_r20:  BLANKET_R20_RATES[idx],
-    blanket_highwall: BLANKET_HIGHWALL_RATES[idx],
-    // Extras
-    skylight_2x4:      EXTRAS_RATES.skylight_2x4[idx],
-    skylight_4x4:      EXTRAS_RATES.skylight_4x4[idx],
-    tray_waffle_ceil:  EXTRAS_RATES.tray_waffle_ceil[idx],
-    ota_cathedral:     EXTRAS_RATES.ota_cathedral[idx],
-    open_round_stairs: EXTRAS_RATES.open_round_stairs[idx],
-    pot_lights:        EXTRAS_RATES.pot_lights[idx],
-    townhouse_premium: EXTRAS_RATES.townhouse_premium[idx],
-    stack_townhouse:   EXTRAS_RATES.stack_townhouse[idx],
-    entry_door_single: EXTRAS_RATES.entry_door_single[idx],
-    entry_door_double: EXTRAS_RATES.entry_door_double[idx],
-    fivc_premium:      EXTRAS_RATES.fivc_premium[idx],
-    // Corner beads
-    corner_bead_lf:    CORNER_BEAD_LF_RATES[idx],
-    corner_bead_bull:  CORNER_BEAD_BULL_RATES[idx],
-    // Durock
-    durock_rate:  DUROCK_RATES[idx],
-    // Job costs
-    scaffolding:  100.0,
-    cleaning:     300.0,
-    tpy_flat:     280.0,
-    local675_dues: 0.0,   // % entered manually
-    tapers_union:  0.0,
-  };
+  const p = {};
+  PRICE_FIELDS.forEach(f => { p[f.key] = f.rates[idx]; });
+  return p;
 }
 
 /* ── My Info defaults ── */
@@ -808,7 +754,7 @@ async function loadProfitPct() {
   try { const r = await storageGet('profit'); return r ? parseFloat(r) : DEFAULT_PROFIT_PCT; } catch(e) { return DEFAULT_PROFIT_PCT; }
 }
 
-let gPrices = defaultPrices();
+let gPrices = {}; // filled after PRICE_FIELDS loads
 let gMyInfo = defaultMyInfo();
 let gProfitPct = DEFAULT_PROFIT_PCT;
 let gRateIdx = 1; // active rate date index — will be set by detectRateIdx() on init
@@ -900,7 +846,7 @@ function makeJob(name, id) {
   const now = new Date().toISOString();
   return {
     id, name, areas: [], areaCounter: 0,
-    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, notes:'' },
+    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, notes:'', rate:'lowrise' },
     createdAt: now, modifiedAt: now
   };
 }
@@ -1100,8 +1046,9 @@ function renderJobDetailsBar() {
   if (d.contactName) parts.push(chip('Contact', d.contactName));
   if (d.contactPhone)parts.push(chip('Phone', d.contactPhone));
   if (d.lockbox)     parts.push(chip('Lockbox', d.lockbox));
+  const rate = d.rate || 'lowrise';
+  parts.push(chip('Rate', rate === 'highrise' ? 'High-Rise' : 'Low-Rise'));
   if (d.energyStar)  parts.push(chip('Energy Star', '✓'));
-  if (parts.length === 0) { bar.style.display='none'; return; }
   bar.style.display='';
   chips.innerHTML = parts.join('');
 }
@@ -1110,22 +1057,62 @@ function renderAreaInfoBar() {
   const bar = document.getElementById('area-info-bar');
   if (!A()) { bar.innerHTML=''; return; }
   const chips = [];
-  if (A().height)  chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${A().height}</span></div>`);
-  if (A().texture) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Texture</span><span class="area-info-chip-val">${A().texture}</span></div>`);
-  const halfPlainSqft = ['pl48','pl54'].reduce((s,k) =>
-    s + Object.entries(A().counts[k]||{}).reduce((s2,[l,q]) => s2 + sheetSqft(k, Number(l)) * q, 0), 0);
-  if (halfPlainSqft > 0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">½" Plain</span><span class="area-info-chip-val">${halfPlainSqft} ft²</span></div>`);
-  const ceilingSqft = Object.entries(A().counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
-  if (ceilingSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${ceilingSqft} ft²</span></div>`);
-  const doubleSqft = Object.entries(A().counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
-  if (doubleSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Double</span><span class="area-info-chip-val">${doubleSqft} ft²</span></div>`);
-  const potLights = A().counts['jobExtras']?.['Pot Lights'] || 0;
-  if (potLights>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Pot Lights</span><span class="area-info-chip-val">${potLights}</span></div>`);
-  const greenGlue = A().counts['extras']?.['Green Glue'] || 0;
-  if (greenGlue>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Green Glue</span><span class="area-info-chip-val">${greenGlue}</span></div>`);
+  const chip = (label, val) => `<div class="area-info-chip"><span class="area-info-chip-label">${label}</span><span class="area-info-chip-val">${val}</span></div>`;
+  const sqftOf = (keys) => (Array.isArray(keys)?keys:[keys]).reduce((s,k)=>
+    s+Object.entries(A().counts[k]||{}).reduce((s2,[l,q])=>s2+sheetSqft(k,Number(l))*q,0),0);
+
+  if (A().height)  chips.push(chip('Ceiling', A().height));
+  if (A().texture) chips.push(chip('Texture', A().texture));
+
+  const halfPlain = sqftOf(['pl48','pl54']);
+  if (halfPlain>0) chips.push(chip('½" Plain', halfPlain+' ft²'));
+  const ceilSqft = sqftOf('cd48');
+  if (ceilSqft>0) chips.push(chip('Ceiling DW', ceilSqft+' ft²'));
+  const dblSqft = sqftOf('dl48');
+  if (dblSqft>0) chips.push(chip('Double', dblSqft+' ft²'));
+  const fivetSqft = sqftOf(['fg48','fg54']);
+  if (fivetSqft>0) chips.push(chip('⅝"', fivetSqft+' ft²'));
+  const durockSqft = sqftOf('durock48');
+  if (durockSqft>0) chips.push(chip('Durock', durockSqft+' ft²'));
+  const specSqft = sqftOf(['wr48','dens48','flex48']);
+  if (specSqft>0) chips.push(chip('Spec', specSqft+' ft²'));
+
+  INSULATION_TYPES.forEach(t => {
+    let total=0;
+    if (t.kind==='blown') {
+      total=BLOWN_RVALS.reduce((s,r)=>s+((A().counts['insulation']?.[t.key]?.[r])||[]).reduce((x,m)=>x+m.l*m.w,0),0);
+    } else if (t.kind==='foam') {
+      total=FOAM_RVALS.reduce((s,r)=>{const f=A().counts['insulation']?.[t.key]?.[r]||{};return s+((f.half||[]).reduce((x,m)=>x+m.l*m.w,0))+((f.two||[]).reduce((x,m)=>x+m.l*m.w,0));},0);
+    } else {
+      const rvals=t.rvals||INSULATION_RVALS;
+      rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{
+        if(rv.sqft[si]===null)return;
+        const cell=A().counts['insulation']?.[t.key]?.[rv.r]?.[si];
+        if(cell)total+=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+      }));
+    }
+    if(total>0) chips.push(chip(t.label, Math.round(total)+' ft²'));
+  });
+
+  STEEL_SUBTABS.forEach(st=>{
+    const count=st.items.reduce((s,item)=>s+(A().counts[st.key]?.[item]||0),0);
+    if(count>0) chips.push(chip('Steel '+st.label, count));
+  });
+  const steelExtCount=STEEL_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['steelExtras']?.[item]||0),0);
+  if(steelExtCount>0) chips.push(chip('Steel Extras', steelExtCount));
+
+  const cbCount=CORNER_BEAD_ITEMS.reduce((s,item)=>s+(A().counts['cornerBead']?.[item]||0),0);
+  if(cbCount>0) chips.push(chip('Corner Bead', cbCount));
+
+  JOB_EXTRAS_ITEMS.forEach(item=>{
+    const v=A().counts['jobExtras']?.[item]||0;
+    if(v>0) chips.push(chip(item===('Pot Lights')?'Pot Lights':item, v));
+  });
+  const greenGlue=A().counts['extras']?.['Green Glue']||0;
+  if(greenGlue>0) chips.push(chip('Green Glue', greenGlue));
+
   bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
 }
-
 /* ── Type tabs (drywall + insulation) ── */
 function renderTypeTabs() {
   const wrap = document.getElementById('type-bar-wrap');
@@ -1254,16 +1241,32 @@ function renderTally() {
     if (t && t.combined) {
       const sub48 = t.lengths.reduce((s,l)=>s+sheetSqft(t.key,l)*(A().counts[t.key][l]||0),0);
       const sub54 = t.combinedLengths.reduce((s,l)=>s+sheetSqft(t.combinedKey,l)*(A().counts[t.combinedKey][l]||0),0);
-      const mkCards = (key, lengths) => lengths.map(l => {
+      const mkCards = (key, lengths) => lengths.map((l,li) => {
         const q = A().counts[key][l]||0;
-        return `<div class="tally-card"><div class="tally-label">${l}'</div><div class="tally-count" style="color:${col}">${q}</div><div class="tally-btns"><button class="tally-btn minus" onclick="sub('${key}',${l})">−</button><button class="tally-btn plus" onclick="add('${key}',${l})">+</button></div></div>`;
+        return `<div class="sheet-card" style="border-color:${col}22">
+          <div class="sheet-card-top" style="background:${col}12">
+            <div class="sheet-ft" style="color:${col}99">${l}'</div>
+            <div class="sheet-count" style="color:${col}" id="cnt-${key}-${l}" onclick="editCount('${key}',${l})">${q}</div>
+          </div>
+          <div class="sheet-card-controls" style="border-top-color:${col}22">
+            <button class="ctrl" style="--add-color:${col}" onclick="sub('${key}',${l})">−</button>
+            <div class="ctrl-divider" style="background:${col}22"></div>
+            <button class="ctrl add" style="--add-color:${col}" onclick="add('${key}',${l})">+</button>
+          </div>
+        </div>`;
       }).join('');
       area.innerHTML =
-        `<div class="type-group-title">48" × ½" Plain <span style="font-weight:500;color:${col};margin-left:8px">${sub48} ft²</span></div>` +
-        `<div class="tally-grid">${mkCards(t.key, t.lengths)}</div>` +
-        `<div class="type-group-divider"></div>` +
-        `<div class="type-group-title" style="padding-top:6px">54" × ½" Plain <span style="font-weight:500;color:${col};margin-left:8px">${sub54} ft²</span></div>` +
-        `<div class="tally-grid">${mkCards(t.combinedKey, t.combinedLengths)}</div>`;
+        `<div class="tally-header">
+          <div class="tally-type-label" style="color:${col}">48" × ½" Plain</div>
+          <div class="tally-subtotal">Subtotal: <strong>${sub48} ft²</strong></div>
+        </div>
+        <div class="sheet-grid">${mkCards(t.key, t.lengths)}</div>
+        <div class="type-group-divider" style="margin:8px 0 4px"></div>
+        <div class="tally-header">
+          <div class="tally-type-label" style="color:${col}">54" × ½" Plain</div>
+          <div class="tally-subtotal">Subtotal: <strong>${sub54} ft²</strong></div>
+        </div>
+        <div class="sheet-grid">${mkCards(t.combinedKey, t.combinedLengths)}</div>`;
       return;
     }
 
@@ -1978,6 +1981,14 @@ function fmtDate(iso) {
   if(!iso)return'—';
   return new Date(iso).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 }
+function setRateBtn(r) {
+  document.getElementById('df-rate-lr').style.background = r==='lowrise' ? 'var(--accent)' : '';
+  document.getElementById('df-rate-lr').style.color = r==='lowrise' ? '#fff' : '';
+  document.getElementById('df-rate-hr').style.background = r==='highrise' ? 'var(--accent)' : '';
+  document.getElementById('df-rate-hr').style.color = r==='highrise' ? '#fff' : '';
+  document.getElementById('df-rate-lr').dataset.selected = r==='lowrise' ? '1' : '';
+  document.getElementById('df-rate-hr').dataset.selected = r==='highrise' ? '1' : '';
+}
 function openDetails() {
   const j=J(),d=j.details;
   document.getElementById('details-body').innerHTML=`
@@ -1991,6 +2002,11 @@ function openDetails() {
     <div class="field-divider"></div>
     <div class="field-group"><div class="field-label">Lockbox Code</div><input class="field-input" id="df-lockbox" type="text" value="${d.lockbox}" placeholder="Code"/></div>
     <div class="field-divider"></div>
+    <div class="field-group"><div class="field-label">Rate Type</div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button id="df-rate-lr" onclick="setRateBtn('lowrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">Low-Rise</button>
+      <button id="df-rate-hr" onclick="setRateBtn('highrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">High-Rise</button>
+    </div></div>
     <div class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="field-divider"></div>
     <div class="field-group"><div class="field-label">Notes</div><textarea class="field-input" id="df-notes" rows="3" placeholder="Notes…" style="resize:none;line-height:1.5">${d.notes}</textarea></div>
@@ -1999,6 +2015,7 @@ function openDetails() {
     <div class="field-group"><div class="field-label">Last Modified</div><div class="field-readonly">${fmtDate(j.modifiedAt)}</div></div>
   `;
   document.getElementById('details-overlay').classList.add('open');
+  setTimeout(()=>setRateBtn(J().details.rate||'lowrise'),10);
 }
 function saveDetails() {
   const j=J();
@@ -2010,6 +2027,7 @@ function saveDetails() {
   j.details.contactEmail=document.getElementById('df-cemail').value.trim();
   j.details.lockbox=document.getElementById('df-lockbox').value.trim();
   j.details.energyStar=document.getElementById('df-energystar').checked;
+  j.details.rate = document.getElementById('df-rate-hr').dataset.selected ? 'highrise' : 'lowrise';
   j.details.notes=document.getElementById('df-notes').value.trim();
   j.modifiedAt=new Date().toISOString();
   document.getElementById('job-name-display').textContent=j.name;
@@ -2327,7 +2345,7 @@ function showReport() {
     j.areas.forEach(a => {
       // Boarding labour: use area ceiling height to look up correct rate bracket
       const ceilH = a.height || "9'";
-      const isHR = a.isHighrise || false;
+      const isHR = (J()?.details?.rate || 'lowrise') === 'highrise';
       const boardRate = (() => {
         const map = isHR ? BOARD_HR_RATES : BOARD_LR_RATES;
         const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
@@ -2600,110 +2618,131 @@ function exportToSheets() {
 function handleSheetTap(e, overlayId) { if(e.target===document.getElementById(overlayId)) document.getElementById(overlayId).classList.remove('open'); }
 
 // ── Prices Sheet ──
-const PRICE_FIELD_DEFS = [
-  { section:'Boarding — Low-Rise ($/ft² by ceiling height)' },
-  { key:'board_lr_h8',  label:"Up to 8'" },
-  { key:'board_lr_h9',  label:"8' – 9'" },
-  { key:'board_lr_h10', label:"9' – 10'" },
-  { key:'board_lr_h11', label:"10' – 11'" },
-  { key:'board_lr_h12', label:"11' – 12'" },
-  { section:'Boarding — High-Rise ($/ft² by ceiling height)' },
-  { key:'board_hr_h9',  label:"8' – 9'" },
-  { key:'board_hr_h10', label:"9' – 10'" },
-  { key:'board_hr_h11', label:"10' – 11'" },
-  { key:'board_hr_h12', label:"11' – 12'" },
-  { section:'Steel Studs — High-Rise ($/lf by height)' },
-  { key:'steel_hr_h8',  label:"Up to 8'" },
-  { key:'steel_hr_h9',  label:"8' – 9'" },
-  { key:'steel_hr_h10', label:"9' – 10'" },
-  { key:'steel_hr_h11', label:"10' – 11'" },
-  { key:'steel_hr_h12', label:"11' – 12'" },
-  { section:'Steel — Low-Rise House ($/ft²)' },
-  { key:'steel_lr_house', label:'Steel Framed House' },
-  { section:'Suspended Ceilings ($/ft²)' },
-  { key:'suspended_ceil',     label:'Standard (hanger wire + channel)' },
-  { key:'suspended_ceil_iso', label:'With Isolator Hangers' },
-  { section:'Insulation — Low-Rise all-in (labour + material, $/ft²)' },
-  { key:'ins_lr',       label:'All Insulation LR' },
-  { key:'ins_r24_prem', label:'R24 Premium add-on ($/ft²)' },
-  { key:'ins_rockwool_prem', label:'Rockwool Premium add-on ($/ft²)' },
-  { key:'ins_energy_star',   label:'Energy Star Premium ($/ft²)' },
-  { section:'Insulation — High-Rise labour only ($/ft²)' },
-  { key:'ins_hr_int',   label:'Interior Walls' },
-  { key:'ins_hr_ext',   label:'Exterior Walls' },
-  { section:'Blanket Insulation ($/ft²)' },
-  { key:'blanket_r12',      label:'R12' },
-  { key:'blanket_r20',      label:'R20' },
-  { key:'blanket_highwall', label:'High Walls over 8.5ft ($/wall)' },
-  { section:'Extras & Premiums (flat $ per unit)' },
-  { key:'skylight_2x4',      label:"Skylight 2×4" },
-  { key:'skylight_4x4',      label:"Skylight 4×4" },
-  { key:'tray_waffle_ceil',  label:'Tray / Waffle Ceiling' },
-  { key:'ota_cathedral',     label:'OTA / Cathedral (≥64sqft & 10ft)' },
-  { key:'open_round_stairs', label:'Open Round Stairs to Basement' },
-  { key:'pot_lights',        label:'Pot Lights ($/each, after 5)' },
-  { key:'entry_door_single', label:'Entry Door Frame — Single ($)' },
-  { key:'entry_door_double', label:'Entry Door Frame — Double ($)' },
-  { key:'fivc_premium',      label:'⅝" Fire Code Type C premium ($/1000sqft)' },
-  { key:'townhouse_premium', label:'Townhouse Premium ($/1000sqft)' },
-  { key:'stack_townhouse',   label:'Stack/Back-to-Back Townhouse ($/1000sqft)' },
-  { section:'Corner Beads ($/linear ft)' },
-  { key:'corner_bead_lf',   label:'Regular' },
-  { key:'corner_bead_bull', label:'Bull-nose' },
-  { section:'Durock ($/ft²)' },
-  { key:'durock_rate', label:'Durock install' },
-  { section:'Job Costs (flat rate)' },
-  { key:'scaffolding',  label:'Scaffolding ($/job)' },
-  { key:'cleaning',     label:'Cleaning ($/job)' },
-  { key:'tpy_flat',     label:'Touchup & Year End ($/flat)' },
-  { key:'local675_dues', label:'Local 675 Union Dues (enter $)' },
-  { key:'tapers_union',  label:'Tapers Union Dues (enter $)' },
+const PRICE_FIELDS = [
+  // ── Boarding LR ──
+  { key:'board_lr_h8',  label:"≤8'",          rates:[0.352,0.359,0.366], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
+  { key:'board_lr_h9',  label:">8' to ≤9'",   rates:[0.373,0.381,0.388], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
+  { key:'board_lr_h10', label:">9' to ≤10'",  rates:[0.422,0.431,0.439], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
+  { key:'board_lr_h11', label:">10' to ≤11'", rates:[0.451,0.460,0.469], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
+  { key:'board_lr_h12', label:">11' to ≤12'", rates:[0.466,0.475,0.485], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
+  // ── Boarding HR ──
+  { key:'board_hr_h9',  label:">8' to ≤9'",   rates:[0.377,0.385,0.393], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
+  { key:'board_hr_h10', label:">9' to ≤10'",  rates:[0.397,0.405,0.413], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
+  { key:'board_hr_h11', label:">10' to ≤11'", rates:[0.416,0.424,0.433], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
+  { key:'board_hr_h12', label:">11' to ≤12'", rates:[0.434,0.442,0.451], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
+  // ── Steel HR ──
+  { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
+  { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
+  { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
+  { key:'steel_hr_h11', label:">10' to ≤11'", rates:[0.405,0.413,0.421], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
+  { key:'steel_hr_h12', label:">11' to ≤12'", rates:[0.427,0.436,0.444], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
+  { key:'steel_lr_house',label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)' },
+  { key:'suspended_ceil',    label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings' },
+  { key:'suspended_ceil_iso',label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings' },
+  // ── Insulation LR all-in ──
+  { key:'ins_lr',        label:'All Insulation ($/ft²)',  rates:[0.617,0.629,0.642], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
+  { key:'ins_r24_prem',  label:'R24 Premium ($/ft²)',     rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
+  { key:'ins_rockwool_prem',label:'Rockwool Premium ($/ft²)',rates:[0.079,0.080,0.082],col:'lr',group:'Insulation',sub:'Low-Rise all-in'},
+  { key:'ins_energy_star',label:'Energy Star Premium ($/ft²)',rates:[0.079,0.080,0.082],col:'lr',group:'Insulation',sub:'Low-Rise all-in'},
+  // ── Insulation HR ──
+  { key:'ins_hr_int',    label:'Interior Walls ($/ft²)',  rates:[0.328,0.335,0.342], col:'hr', group:'Insulation', sub:'High-Rise labour' },
+  { key:'ins_hr_ext',    label:'Exterior Walls ($/ft²)',  rates:[0.389,0.396,0.404], col:'hr', group:'Insulation', sub:'High-Rise labour' },
+  // ── Blanket ──
+  { key:'blanket_r12',   label:'Blanket R12 ($/ft²)',     rates:[0.2142,0.2184,0.2227], col:'lr', group:'Insulation', sub:'Blanket' },
+  { key:'blanket_r20',   label:'Blanket R20 ($/ft²)',     rates:[0.2416,0.2464,0.2513], col:'lr', group:'Insulation', sub:'Blanket' },
+  { key:'blanket_highwall',label:'High Walls >8.5ft ($/wall)',rates:[24.70,25.19,25.69],col:'lr',group:'Insulation',sub:'Blanket'},
+  // ── Extras ──
+  { key:'skylight_2x4',    label:"Skylight 2×4 ($)",          rates:[82.00,83.00,85.00],   col:'lr', group:'Extras' },
+  { key:'skylight_4x4',    label:"Skylight 4×4 ($)",          rates:[174.00,178.00,181.00],col:'lr', group:'Extras' },
+  { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',   rates:[84.00,85.00,87.00],   col:'lr', group:'Extras' },
+  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',         rates:[213.00,217.00,222.00],col:'lr', group:'Extras' },
+  { key:'open_round_stairs',label:'Open Round Stairs ($)',    rates:[161.00,164.00,168.00],col:'lr', group:'Extras' },
+  { key:'pot_lights',      label:'Pot Lights/each ($)',       rates:[4.28,4.37,4.46],      col:'lr', group:'Extras' },
+  { key:'entry_door_single',label:'Door Frame Single ($)',    rates:[87.00,87.00,87.00],   col:'hr', group:'Extras' },
+  { key:'entry_door_double',label:'Door Frame Double ($)',    rates:[174.00,174.00,174.00],col:'hr', group:'Extras' },
+  { key:'fivc_premium',    label:'⅝" Fire Code C ($/1000ft²)',rates:[105.00,107.00,109.00],col:'lr', group:'Extras' },
+  { key:'townhouse_premium',label:'Townhouse ($/1000ft²)',    rates:[14.02,14.30,14.60],   col:'lr', group:'Extras' },
+  { key:'stack_townhouse', label:'Stack/B2B Townhouse ($/1000ft²)',rates:[40.80,41.60,42.40],col:'lr',group:'Extras'},
+  // ── Corner Beads ──
+  { key:'corner_bead_lf',  label:'Regular ($/lf)',           rates:[0.285,0.290,0.295],   col:'lr', group:'Corner Beads' },
+  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',          rates:[0.443,0.451,0.460],   col:'lr', group:'Corner Beads' },
+  // ── Durock ──
+  { key:'durock_rate',     label:'Durock ($/ft²)',            rates:[0.60,0.61,0.63],      col:'lr', group:'Durock' },
+  // ── Job Costs ──
+  { key:'scaffolding',     label:'Scaffolding ($)',           rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs' },
+  { key:'cleaning',        label:'Cleaning ($)',              rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs' },
+  { key:'tpy_flat',        label:'Touchup & Year End ($)',    rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs' },
+  { key:'local675_dues',   label:'Local 675 Union Dues ($)',  rates:[0,0,0],               col:'lr', group:'Job Costs' },
+  { key:'tapers_union',    label:'Tapers Union Dues ($)',     rates:[0,0,0],               col:'lr', group:'Job Costs' },
 ];
+// Keep PRICE_FIELD_DEFS as alias for backward compat
+const PRICE_FIELD_DEFS = PRICE_FIELDS;
+// Now that PRICE_FIELDS is defined, populate gPrices defaults
+gPrices = defaultPrices();
 
 function openPricesSheet() {
+  if(gRateIdx===null) gRateIdx = detectRateIdx();
   const body = document.getElementById('prices-body');
-  // Detect active rate index based on today's date
-  const today = new Date();
-  const rateCutoffs = [new Date('2024-05-01'), new Date('2025-05-01'), new Date('2026-05-01')];
-  let detected = 0;
-  for (let i = rateCutoffs.length-1; i >= 0; i--) { if(today >= rateCutoffs[i]){ detected=i; break; } }
-  if(gRateIdx===null) gRateIdx = detected;
 
-  let html = `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:4px">
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Union Rate Year</div>
+  // ── Year selector ──
+  let out = `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Union Rate Year</div>
     <div class="year-btn-row">`;
   RATE_DATES.forEach((d,i) => {
-    html += `<button class="year-btn ${i===gRateIdx?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
+    out += `<button class="year-btn ${i===gRateIdx?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
   });
-  html += `</div><div class="year-hint">Tap a date to auto-fill all labour fields. You can still edit any field manually.</div></div>`;
+  out += `</div><div class="year-hint">Tap a date to auto-fill all labour fields from the CBA.</div></div>`;
 
-  html += `<div class="price-row" style="padding-top:12px"><span class="price-row-label" style="font-weight:600">Profit %</span>
+  // ── Profit % ──
+  out += `<div class="price-row" style="padding-top:12px"><span class="price-row-label" style="font-weight:600">Profit %</span>
     <input class="profit-input" type="number" id="pf-profit" min="0" max="100" step="0.5" value="${gProfitPct}"></div>`;
 
-  let lastWasSection = false;
-  PRICE_FIELD_DEFS.forEach(f => {
-    if(f.section) {
-      html += `<div class="price-section-label">${f.section}</div>`;
-      lastWasSection = true;
+  // ── Two-column sections by group ──
+  const groups = [...new Set(PRICE_FIELDS.map(f=>f.group))];
+  groups.forEach(group => {
+    const fields = PRICE_FIELDS.filter(f=>f.group===group);
+    const lrFields = fields.filter(f=>f.col==='lr');
+    const hrFields = fields.filter(f=>f.col==='hr');
+
+    out += `<div class="price-section-label">${group}</div>`;
+
+    if (lrFields.length && hrFields.length) {
+      // Two-column layout
+      const lrSub = lrFields[0]?.sub || 'Low-Rise';
+      const hrSub = hrFields[0]?.sub || 'High-Rise';
+      out += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+        <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding:0 2px">${lrSub}</div>
+        <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding:0 2px">${hrSub}</div>
+      </div>`;
+      const maxRows = Math.max(lrFields.length, hrFields.length);
+      for (let i=0; i<maxRows; i++) {
+        const lf = lrFields[i], rf = hrFields[i];
+        out += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">`;
+        if (lf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lf.label}</div><input class="price-row-input" style="width:100%" type="number" id="pf-${lf.key}" step="0.001" min="0" value="${(gPrices[lf.key]??lf.rates[gRateIdx]).toFixed(3)}"></div>`;
+        else out += `<div></div>`;
+        if (rf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${rf.label}</div><input class="price-row-input" style="width:100%" type="number" id="pf-${rf.key}" step="0.001" min="0" value="${(gPrices[rf.key]??rf.rates[gRateIdx]).toFixed(3)}"></div>`;
+        else out += `<div></div>`;
+        out += `</div>`;
+      }
     } else {
-      const defaults2 = defaultPrices(); const val = gPrices[f.key] !== undefined ? gPrices[f.key] : (defaults2[f.key] || 0);
-      html += `<div class="price-row"><span class="price-row-label">${f.label}</span>
-        <input class="price-row-input" type="number" id="pf-${f.key}" step="0.001" min="0" value="${val.toFixed(3)}"></div>`;
+      // Single-column
+      fields.forEach(f => {
+        out += `<div class="price-row"><span class="price-row-label">${f.label}</span>
+          <input class="price-row-input" type="number" id="pf-${f.key}" step="0.001" min="0" value="${(gPrices[f.key]??f.rates[gRateIdx]).toFixed(3)}"></div>`;
+      });
     }
   });
 
-  body.innerHTML = html;
+  body.innerHTML = out;
   document.getElementById('prices-overlay').classList.add('open');
 }
 
+
 function applyRateYear(idx) {
   gRateIdx = idx;
-  // Re-compute defaults for this rate year and fill inputs
-  const defaults = defaultPrices();
-  PRICE_FIELD_DEFS.forEach(f => {
-    if(!f.key) return;
+  PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
-    if(el && defaults[f.key] !== undefined) el.value = defaults[f.key].toFixed(3);
+    if (el) el.value = f.rates[idx].toFixed(3);
   });
   document.querySelectorAll('.year-btn').forEach((b,i) => {
     b.className = 'year-btn ' + (i===idx?'active':'inactive');
@@ -2711,13 +2750,12 @@ function applyRateYear(idx) {
 }
 
 function savePricesSheet() {
-  PRICE_FIELD_DEFS.forEach(f => {
-    if(!f.key) return;
+  PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
-    if(el) gPrices[f.key] = parseFloat(el.value)||0;
+    if (el) gPrices[f.key] = parseFloat(el.value)||0;
   });
   const pp = document.getElementById('pf-profit');
-  if(pp) gProfitPct = parseFloat(pp.value)||DEFAULT_PROFIT_PCT;
+  if (pp) gProfitPct = parseFloat(pp.value)||DEFAULT_PROFIT_PCT;
   savePrices(gPrices);
   saveProfitPct(gProfitPct);
   closePricesSheet();
