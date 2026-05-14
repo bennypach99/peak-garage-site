@@ -245,7 +245,7 @@
 <body>
 
 
-<div id="auth-screen" style="display:none">
+<div id="auth-screen" style="display:none" data-checking="false">
   <div class="auth-logo">
     <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
       <rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.9"/>
@@ -2834,7 +2834,20 @@ async function initFirebase() {
     db = firebase.firestore();
     useFirebase = true;
 
-    firebase.auth().onAuthStateChanged(async user => {
+    // Keep user signed in across page refreshes
+  firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {});
+
+  // Show "Restoring session…" while Firebase checks saved login
+  const authScreen = document.getElementById('auth-screen');
+  const signInBtn = authScreen.querySelector('.google-sign-in-btn');
+  const authSub = authScreen.querySelector('.auth-sub');
+  authScreen.style.display = 'flex';
+  signInBtn.style.display = 'none';
+  authSub.textContent = 'Restoring session…';
+
+  firebase.auth().onAuthStateChanged(async user => {
+    signInBtn.style.display = '';
+    authSub.textContent = 'Sign in to sync your jobs across all your devices.';
       if (user) {
         fbUser = user;
         const name = user.displayName || user.email || '?';
