@@ -1121,7 +1121,7 @@ function renderTypeTabs() {
     const visibleTypes = DRYWALL_TYPES.filter(t=>!t.hidden);
     const curVisIdx = visibleTypes.indexOf(DRYWALL_TYPES[curType]);
     document.getElementById('type-tabs').innerHTML = visibleTypes.map((t,i) => {
-      const active = i===curType;
+      const active = i===curVisIdx;
       return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchType(${i})">${t.label}</button>`;
     }).join('');
   } else if (curCat === 'insulation') {
