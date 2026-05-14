@@ -178,6 +178,21 @@
     .meas-x { font-size: 16px; color: var(--muted); font-weight: 500; flex-shrink: 0; }
     .meas-add-btn { height: 44px; padding: 0 16px; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; font-weight: 600; color: #fff; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
     .meas-section-divider { height: 1px; background: var(--border); margin: 14px 0; }
+    .job-details-bar { background: #f8f7f5; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .job-details-bar::-webkit-scrollbar { display: none; }
+    .job-details-chips { display: flex; gap: 6px; padding: 7px 14px; width: max-content; min-width: 100%; }
+    .job-chip { display: flex; align-items: center; gap: 5px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; white-space: nowrap; flex-shrink: 0; cursor: pointer; }
+    .job-chip:active { background: #ede9fe; }
+    .job-chip-label { font-size: 10px; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 0.06em; }
+    .job-chip-val { font-size: 12px; font-weight: 500; color: var(--text); }
+    .area-bar-row { display: flex; align-items: center; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .area-bar-row .area-scroll { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; padding: 8px 10px 8px 14px; gap: 6px; }
+    .area-bar-row .area-scroll::-webkit-scrollbar { display: none; }
+    .area-add-inline { flex-shrink: 0; padding: 6px 8px 6px 0; }
+    .area-add-inline button { background: var(--purple); color: #fff; border: none; border-radius: 8px; padding: 7px 11px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .type-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding: 12px 14px 6px; }
+    .type-group-divider { height: 1px; background: var(--border); margin: 4px 14px 10px; }
+
     /* ── Auth screen ── */
     #auth-screen { position:fixed; inset:0; background:#1a1f2e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:999; padding:32px; }
     .auth-logo { width:72px; height:72px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); border-radius:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 32px rgba(124,58,237,0.4); }
@@ -287,14 +302,18 @@
         </svg>
       </div>
     </div>
-    <div class="topbar-right">
-      <button class="add-area-btn" onclick="openAreaForm(null)">+ Add Area</button>
-    </div>
+    <div class="topbar-right"></div>
   </div>
 
-  <!-- Area tabs -->
-  <div class="area-bar">
+  <!-- Job details chips bar -->
+  <div class="job-details-bar" id="job-details-bar" style="display:none">
+    <div class="job-details-chips" id="job-details-chips"></div>
+  </div>
+
+  <!-- Area tabs + inline Add Area -->
+  <div class="area-bar-row">
     <div class="area-scroll" id="area-tabs"></div>
+    <div class="area-add-inline"><button onclick="openAreaForm(null)">+ Area</button></div>
   </div>
 
   <!-- Area info strip -->
@@ -349,7 +368,7 @@
       </svg>
     </button>
   </div>
-  <div class="drawer-title" style="margin-top:4px">
+  <div class="drawer-title" style="margin-top:4px; position:relative">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
       <rect x="1" y="1" width="6" height="9" rx="1" fill="white" fill-opacity="0.7"/>
       <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity="0.7"/>
@@ -358,6 +377,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v9 · May 2025</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -483,8 +503,8 @@ const CATS = [
 
 /* ── Drywall sub-types ── */
 const DRYWALL_TYPES = [
-  { label: '48" × ½" PL',     fullName: '48" × ½" Plain',           key: 'pl48',     lengths: [7,8,9,10,12], color: '#2563eb' },
-  { label: '54" × ½" PL',     fullName: '54" × ½" Plain',           key: 'pl54',     lengths: [8,10,12],     color: '#2563eb' },
+  { label: '½" Plain',         fullName: '½" Plain (48" & 54")',     key: 'pl48',     lengths: [7,8,9,10,12], color: '#2563eb', combined: true, combinedKey: 'pl54', combinedLengths: [8,10,12] },
+  { label: '54" × ½" PL',     fullName: '54" × ½" Plain',           key: 'pl54',     lengths: [8,10,12],     color: '#2563eb', hidden: true },
   { label: '48" × ½" CD',     fullName: '48" × ½" Ceiling Drywall', key: 'cd48',     lengths: [8,10,12],     color: '#7c3aed' },
   { label: '48" × ½" Dens',   fullName: '48" × ½" Denshield',       key: 'dens48',   lengths: [5,8],         color: '#6b7280' },
   { label: '48" × ½" W/R',    fullName: '48" × ½" Water Resistant', key: 'wr48',     lengths: [8,10,12],     color: '#ca8a04' },
@@ -1066,12 +1086,35 @@ function renderAreaTabs() {
 function switchArea(id) { curAreaId=id; renderAll(); }
 
 /* ── Area info bar ── */
+
+function renderJobDetailsBar() {
+  const bar = document.getElementById('job-details-bar');
+  const chips = document.getElementById('job-details-chips');
+  if (!J()) { bar.style.display='none'; return; }
+  const d = J().details;
+  const chip = (label, val) =>
+    `<div class="job-chip" onclick="openDetails()"><span class="job-chip-label">${label}</span><span class="job-chip-val">${val}</span></div>`;
+  const parts = [];
+  if (d.customer)    parts.push(chip('Customer', d.customer));
+  if (d.site)        parts.push(chip('Site', d.site));
+  if (d.contactName) parts.push(chip('Contact', d.contactName));
+  if (d.contactPhone)parts.push(chip('Phone', d.contactPhone));
+  if (d.lockbox)     parts.push(chip('Lockbox', d.lockbox));
+  if (d.energyStar)  parts.push(chip('Energy Star', '✓'));
+  if (parts.length === 0) { bar.style.display='none'; return; }
+  bar.style.display='';
+  chips.innerHTML = parts.join('');
+}
+
 function renderAreaInfoBar() {
   const bar = document.getElementById('area-info-bar');
   if (!A()) { bar.innerHTML=''; return; }
   const chips = [];
   if (A().height)  chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${A().height}</span></div>`);
   if (A().texture) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Texture</span><span class="area-info-chip-val">${A().texture}</span></div>`);
+  const halfPlainSqft = ['pl48','pl54'].reduce((s,k) =>
+    s + Object.entries(A().counts[k]||{}).reduce((s2,[l,q]) => s2 + sheetSqft(k, Number(l)) * q, 0), 0);
+  if (halfPlainSqft > 0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">½" Plain</span><span class="area-info-chip-val">${halfPlainSqft} ft²</span></div>`);
   const ceilingSqft = Object.entries(A().counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
   if (ceilingSqft>0) chips.push(`<div class="area-info-chip"><span class="area-info-chip-label">Ceiling</span><span class="area-info-chip-val">${ceilingSqft} ft²</span></div>`);
   const doubleSqft = Object.entries(A().counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
@@ -1088,7 +1131,9 @@ function renderTypeTabs() {
   const wrap = document.getElementById('type-bar-wrap');
   if (curCat === 'drywall') {
     wrap.style.display = '';
-    document.getElementById('type-tabs').innerHTML = DRYWALL_TYPES.map((t,i) => {
+    const visibleTypes = DRYWALL_TYPES.filter(t=>!t.hidden);
+    const curVisIdx = visibleTypes.indexOf(DRYWALL_TYPES[curType]);
+    document.getElementById('type-tabs').innerHTML = visibleTypes.map((t,i) => {
       const active = i===curType;
       return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchType(${i})">${t.label}</button>`;
     }).join('');
@@ -1127,7 +1172,11 @@ function renderInsTypeTabs() {
     `<button class="type-tab" style="${curInsSubTab===1?`border-bottom-color:${insCol};color:${insCol}`:''}" onclick="switchInsSubTab(1)">Extras</button>`;
 }
 function switchInsSubTab(n) { curInsSubTab=n; renderInsTypeTabs(); renderInsulation(); }
-function switchType(n) { curType=n; renderTypeTabs(); renderTally(); }
+function switchType(visIdx) {
+  const visible = DRYWALL_TYPES.filter(t=>!t.hidden);
+  curType = visible[visIdx] ? DRYWALL_TYPES.indexOf(visible[visIdx]) : 0;
+  renderTypeTabs(); renderTally();
+}
 function switchInsType(n) { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
 function switchSteelSubTab(n) { curSteelSubTab=n; renderTypeTabs(); renderTally(); }
 function switchMudSubTab(n) { curMudSubTab=n; renderTypeTabs(); renderTally(); }
@@ -1201,6 +1250,22 @@ function renderTally() {
     document.getElementById('type-bar-wrap').style.display='';
     const t = DRYWALL_TYPES[curType];
     const col = t.color;
+
+    if (t && t.combined) {
+      const sub48 = t.lengths.reduce((s,l)=>s+sheetSqft(t.key,l)*(A().counts[t.key][l]||0),0);
+      const sub54 = t.combinedLengths.reduce((s,l)=>s+sheetSqft(t.combinedKey,l)*(A().counts[t.combinedKey][l]||0),0);
+      const mkCards = (key, lengths) => lengths.map(l => {
+        const q = A().counts[key][l]||0;
+        return `<div class="tally-card"><div class="tally-label">${l}'</div><div class="tally-count" style="color:${col}">${q}</div><div class="tally-btns"><button class="tally-btn minus" onclick="sub('${key}',${l})">−</button><button class="tally-btn plus" onclick="add('${key}',${l})">+</button></div></div>`;
+      }).join('');
+      area.innerHTML =
+        `<div class="type-group-title">48" × ½" Plain <span style="font-weight:500;color:${col};margin-left:8px">${sub48} ft²</span></div>` +
+        `<div class="tally-grid">${mkCards(t.key, t.lengths)}</div>` +
+        `<div class="type-group-divider"></div>` +
+        `<div class="type-group-title" style="padding-top:6px">54" × ½" Plain <span style="font-weight:500;color:${col};margin-left:8px">${sub54} ft²</span></div>` +
+        `<div class="tally-grid">${mkCards(t.combinedKey, t.combinedLengths)}</div>`;
+      return;
+    }
 
     if (t.isItems) {
       const items = getItemsForKey(t.key);
@@ -1824,6 +1889,7 @@ function renderStrip() {
 }
 
 function renderAll() {
+  renderJobDetailsBar();
   renderCatTabs();
   renderAreaTabs();
   renderAreaInfoBar();
@@ -1948,6 +2014,7 @@ function saveDetails() {
   j.modifiedAt=new Date().toISOString();
   document.getElementById('job-name-display').textContent=j.name;
   renderDrawerList(null);
+  renderJobDetailsBar();
   closeDetails();
 }
 function closeDetails() { document.getElementById('details-overlay').classList.remove('open'); }
@@ -2181,11 +2248,24 @@ function showReport() {
       html+=`<div style="height:8px"></div>`;
     }
 
-    // Add-Ons (jobExtras)
+    // Add-Ons (jobExtras) — show dollar amount
+    const ADDON_RATE_MAP = {
+      "2' × 4' Skylight": 'skylight_2x4', "4' × 4' Skylight": 'skylight_4x4',
+      'Peak': 'tray_waffle_ceil', 'Niche': 'tray_waffle_ceil',
+      "OTA <64'": 'ota_cathedral', "OTA >64'": 'ota_cathedral',
+      'Pot Lights': 'pot_lights',
+    };
     const jobExtrasEntries=JOB_EXTRAS_ITEMS.filter(item=>(a.counts['jobExtras']?.[item]||0)>0);
     if(jobExtrasEntries.length){
       html+=`<div class="modal-type-head" style="color:#0891b2">Add-Ons</div>`;
-      jobExtrasEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['jobExtras'][item]}</span></div>`;});
+      jobExtrasEntries.forEach(item=>{
+        const qty=a.counts['jobExtras'][item];
+        const rk=ADDON_RATE_MAP[item];
+        const rate=rk?(gPrices[rk]||EXTRAS_RATES[rk]?.[gRateIdx]||0):0;
+        const amt=qty*rate;
+        const fmtA=v=>'$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+        html+=`<div class="modal-row"><span>${item} <span style="font-size:11px;color:var(--muted)">(×${qty})</span></span><span style="font-family:'DM Mono',monospace;font-weight:500">${amt>0?fmtA(amt):qty}</span></div>`;
+      });
       html+=`<div style="height:8px"></div>`;
     }
 
@@ -2845,33 +2925,48 @@ async function initFirebase() {
   signInBtn.style.display = 'none';
   authSub.textContent = 'Restoring session…';
 
+  let authInitialized = false;
   firebase.auth().onAuthStateChanged(async user => {
     signInBtn.style.display = '';
     authSub.textContent = 'Sign in to sync your jobs across all your devices.';
-      if (user) {
-        fbUser = user;
-        const name = user.displayName || user.email || '?';
-        document.getElementById('drawer-user-name').textContent = name;
-        document.getElementById('drawer-user-email').textContent = user.email;
-        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-        document.getElementById('drawer-user-initials').textContent = initials;
-        const photo = document.getElementById('drawer-user-photo');
-        if (user.photoURL) {
-          photo.src = user.photoURL;
-          photo.style.display = 'block';
-          document.getElementById('drawer-user-initials').style.display = 'none';
-        } else {
-          photo.style.display = 'none';
-          document.getElementById('drawer-user-initials').style.display = '';
-        }
-        showAppScreen();
-        await loadUserData();
+    if (user) {
+      authInitialized = true;
+      fbUser = user;
+      const name = user.displayName || user.email || '?';
+      document.getElementById('drawer-user-name').textContent = name;
+      document.getElementById('drawer-user-email').textContent = user.email;
+      const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      document.getElementById('drawer-user-initials').textContent = initials;
+      const photo = document.getElementById('drawer-user-photo');
+      if (user.photoURL) {
+        photo.src = user.photoURL;
+        photo.style.display = 'block';
+        document.getElementById('drawer-user-initials').style.display = 'none';
       } else {
-        fbUser = null;
+        photo.style.display = 'none';
+        document.getElementById('drawer-user-initials').style.display = '';
+      }
+      showAppScreen();
+      await loadUserData();
+    } else {
+      fbUser = null;
+      // Only clear state and show auth screen if this is NOT the initial load
+      // (Firebase fires null briefly on refresh before restoring the session)
+      if (authInitialized) {
         clearLocalState();
         showAuthScreen();
+      } else {
+        // First auth check — wait 2s for session restore before giving up
+        setTimeout(() => {
+          if (!fbUser) {
+            clearLocalState();
+            showAuthScreen();
+          }
+        }, 2000);
+        authInitialized = true;
       }
-    });
+    }
+  });
   } catch(e) {
     // Firebase blocked (e.g. claude.ai sandbox) — fall back silently
     console.log('Firebase unavailable, using local storage.');
