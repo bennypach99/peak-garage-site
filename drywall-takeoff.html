@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Drywall Tally</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -176,10 +178,97 @@
     .meas-x { font-size: 16px; color: var(--muted); font-weight: 500; flex-shrink: 0; }
     .meas-add-btn { height: 44px; padding: 0 16px; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; font-weight: 600; color: #fff; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
     .meas-section-divider { height: 1px; background: var(--border); margin: 14px 0; }
+    /* ── Auth screen ── */
+    #auth-screen { position:fixed; inset:0; background:#1a1f2e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; z-index:999; padding:32px; }
+    .auth-logo { width:72px; height:72px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); border-radius:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 32px rgba(124,58,237,0.4); }
+    .auth-title { font-size:26px; font-weight:700; color:#fff; letter-spacing:-0.02em; }
+    .auth-sub { font-size:14px; color:rgba(255,255,255,0.45); text-align:center; max-width:260px; line-height:1.6; }
+    .google-sign-in-btn { display:flex; align-items:center; gap:12px; background:#fff; color:#111; border:none; border-radius:12px; padding:14px 24px; font-size:15px; font-family:inherit; font-weight:600; cursor:pointer; box-shadow:0 2px 16px rgba(0,0,0,0.35); width:100%; max-width:280px; justify-content:center; transition:transform 0.12s, box-shadow 0.12s; }
+    .google-sign-in-btn:hover { transform:translateY(-1px); box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+    .google-sign-in-btn:active { transform:scale(0.97); }
+    .auth-error { font-size:12px; color:#f87171; text-align:center; max-width:260px; min-height:18px; }
+    .auth-terms { font-size:11px; color:rgba(255,255,255,0.25); text-align:center; max-width:240px; line-height:1.5; }
+    /* ── Drawer user profile ── */
+    .drawer-user-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(255,255,255,0.07); border-radius:10px; margin-bottom:10px; }
+    .drawer-user-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; overflow:hidden; }
+    .drawer-user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    .drawer-user-info { flex:1; min-width:0; }
+    .drawer-user-name { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drawer-user-email { font-size:11px; color:rgba(255,255,255,0.4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drawer-sign-out-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.1); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.12s; }
+    .drawer-sign-out-btn:hover { background:rgba(255,255,255,0.18); }
+
+    /* ── Auth screen ── */
+    #auth-screen { position:fixed; inset:0; background:#1a1f2e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; z-index:999; padding:32px; }
+    .auth-logo { width:64px; height:64px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); border-radius:18px; display:flex; align-items:center; justify-content:center; }
+    .auth-title { font-size:24px; font-weight:700; color:#fff; text-align:center; }
+    .auth-sub { font-size:14px; color:rgba(255,255,255,0.5); text-align:center; max-width:260px; line-height:1.6; }
+    .google-sign-in-btn { display:flex; align-items:center; gap:12px; background:#fff; color:#111; border:none; border-radius:12px; padding:14px 24px; font-size:15px; font-family:inherit; font-weight:600; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,0.3); width:100%; max-width:280px; justify-content:center; transition:transform 0.1s,box-shadow 0.1s; }
+    .google-sign-in-btn:active { transform:scale(0.98); box-shadow:0 1px 6px rgba(0,0,0,0.2); }
+    .auth-terms { font-size:11px; color:rgba(255,255,255,0.3); text-align:center; max-width:240px; line-height:1.5; }
+    /* ── Drawer user profile ── */
+    .drawer-user-row { display:flex; align-items:center; gap:10px; padding:12px; background:rgba(255,255,255,0.07); border-radius:10px; margin-bottom:8px; }
+    .drawer-user-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; overflow:hidden; }
+    .drawer-user-avatar img { width:100%; height:100%; object-fit:cover; }
+    .drawer-user-info { flex:1; min-width:0; }
+    .drawer-user-name { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drawer-user-email { font-size:11px; color:rgba(255,255,255,0.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drawer-sign-out-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.1); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+    /* ── Drawer action buttons ── */
+    .drawer-action-btn { width:100%; padding:12px 14px; border:none; border-radius:var(--radius-sm); font-size:14px; font-family:inherit; font-weight:500; cursor:pointer; text-align:left; display:flex; align-items:center; gap:10px; }
+    .drawer-action-btn.green  { background:#15803d; color:#fff; }
+    .drawer-action-btn.blue   { background:var(--accent); color:#fff; }
+    .drawer-action-btn.purple { background:var(--purple); color:#fff; }
+
+    /* ── Price fields ── */
+    .price-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent); margin:18px 0 8px; }
+    .price-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); gap:10px; }
+    .price-row:last-child { border-bottom:none; }
+    .price-row-label { font-size:13px; color:var(--text); flex:1; line-height:1.3; }
+    .price-row-input { font-family:'DM Mono',monospace; font-size:14px; font-weight:500; width:80px; height:36px; border:1.5px solid var(--border-md); border-radius:8px; text-align:right; padding:0 8px; outline:none; background:var(--surface); -moz-appearance:textfield; }
+    .price-row-input::-webkit-inner-spin-button, .price-row-input::-webkit-outer-spin-button { -webkit-appearance:none; }
+    .price-row-input:focus { border-color:var(--accent); }
+    .year-btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+    .year-btn { flex:1; min-width:70px; padding:8px 4px; border-radius:8px; font-size:12px; font-family:inherit; font-weight:600; cursor:pointer; border:none; text-align:center; }
+    .year-btn.active { background:var(--accent); color:#fff; }
+    .year-btn.inactive { background:#eff6ff; color:var(--accent); }
+    .year-hint { font-size:10px; color:var(--muted); margin-bottom:8px; }
+    .profit-row { display:flex; align-items:center; gap:10px; padding:8px 0; }
+    .profit-label { font-size:13px; color:var(--text); flex:1; }
+    .profit-input { font-family:'DM Mono',monospace; font-size:14px; font-weight:500; width:70px; height:36px; border:1.5px solid var(--border-md); border-radius:8px; text-align:right; padding:0 8px; outline:none; background:var(--surface); -moz-appearance:textfield; }
+    .profit-input::-webkit-inner-spin-button,.profit-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+    .profit-input:focus{border-color:var(--accent);}
+
   </style>
 </head>
 <body>
-<div class="app">
+
+
+<div id="auth-screen" style="display:none">
+  <div class="auth-logo">
+    <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+      <rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.9"/>
+      <rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.9"/>
+      <rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/>
+    </svg>
+  </div>
+  <div class="auth-title">Drywall Tally</div>
+  <div class="auth-sub">Sign in to sync your jobs across all your devices.</div>
+  <button class="google-sign-in-btn" onclick="signInWithGoogle()">
+    <svg width="20" height="20" viewBox="0 0 48 48">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    Continue with Google
+  </button>
+  <div class="auth-error" id="auth-error"></div>
+  <div class="auth-terms">Your data is stored privately in Firebase under your Google account. No one else can access it.</div>
+</div>
+
+<div class="app" id="app" style="display:none">
 
   <div class="topbar">
     <div class="topbar-left">
@@ -244,7 +333,23 @@
 <!-- Drawer -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
-  <div class="drawer-title">
+  <div class="drawer-user-row">
+    <div class="drawer-user-avatar">
+      <img id="drawer-user-photo" src="" style="display:none" alt=""/>
+      <span id="drawer-user-initials">?</span>
+    </div>
+    <div class="drawer-user-info">
+      <div class="drawer-user-name" id="drawer-user-name">—</div>
+      <div class="drawer-user-email" id="drawer-user-email">—</div>
+    </div>
+    <button class="drawer-sign-out-btn" onclick="signOut()" title="Sign out">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M9 10l3-3-3-3M12 7H5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="drawer-title" style="margin-top:4px">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
       <rect x="1" y="1" width="6" height="9" rx="1" fill="white" fill-opacity="0.7"/>
       <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity="0.7"/>
@@ -255,6 +360,16 @@
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
+    <button class="drawer-action-btn green" onclick="openPricesSheet();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="white" stroke-width="1.5"/><path d="M7.5 4V7.5L9.5 9.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Prices
+    </button>
+    <button class="drawer-action-btn blue" onclick="openMyInfoSheet();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="white" stroke-width="1.5"/><path d="M2.5 13.5C2.5 11 4.5 9.5 7.5 9.5C10.5 9.5 12.5 11 12.5 13.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      My Info
+    </button>
+  </div>
 </div>
 
 <!-- Area Form -->
@@ -316,16 +431,42 @@
     </div>
     <div class="sheet-body" id="modal-body" style="gap:0"></div>
     <div class="sheet-footer">
-      <button class="sheet-save-btn" style="background:#15803d;display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportToSheets()">
+      <button class="sheet-save-btn" style="background:#dc2626;display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportToPDF()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <rect x="3" y="3" width="18" height="18" rx="2" fill="white" fill-opacity="0.2"/>
-          <path d="M8 8h8M8 12h8M8 16h5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-          <rect x="14" y="13" width="7" height="7" rx="1.5" fill="white"/>
-          <path d="M17.5 15v4M15.5 17h4" stroke="#15803d" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M7 7h6M7 11h10M7 15h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M16 3v4h4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Export to Google Sheets
+        Export as PDF
       </button>
     </div>
+  </div>
+</div>
+
+
+<!-- Prices Sheet -->
+<div class="sheet-overlay" id="prices-overlay" onclick="handleSheetTap(event,'prices-overlay')">
+  <div class="bottom-sheet" style="max-height:95vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Prices</h3>
+      <button class="sheet-close" onclick="closePricesSheet()">✕</button>
+    </div>
+    <div class="sheet-body" id="prices-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" onclick="savePricesSheet()">Save Prices</button></div>
+  </div>
+</div>
+
+<!-- My Info Sheet -->
+<div class="sheet-overlay" id="myinfo-overlay" onclick="handleSheetTap(event,'myinfo-overlay')">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>My Info</h3>
+      <button class="sheet-close" onclick="closeMyInfoSheet()">✕</button>
+    </div>
+    <div class="sheet-body" id="myinfo-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveMyInfoSheet()">Save</button></div>
   </div>
 </div>
 
@@ -336,7 +477,8 @@ const CATS = [
   { label: 'Insulation', key: 'insulation' },
   { label: 'Steel',      key: 'steel' },
   { label: 'Mud',        key: 'mud' },
-  { label: 'Extras',     key: 'jobExtras' },
+  { label: 'Add-Ons',    key: 'jobExtras' },
+  { label: 'Job Extras', key: 'jobCosts' },
 ];
 
 /* ── Drywall sub-types ── */
@@ -368,6 +510,8 @@ function sheetSqft(typeKey, lengthFt) {
 
 // Extras category items
 const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights'];
+// Job Costs — items contractor pays installer but doesn't purchase material
+const JOB_COSTS_ITEMS = ['Scaffolding', 'Cleaning', 'Local 675 Union Dues', 'Tapers Union Dues', 'Touchup & Year End Service Calls'];
 
 function getItemsForKey(key) {
   if (key === 'extras') return EXTRAS_ITEMS;
@@ -452,6 +596,124 @@ const ROXUL_RVALS = [
   { r: 'R24',    sqft: [29.4,  null, 29.7, null ], pcs: [6,    null, 4,    null] },
 ];
 
+
+
+/* ── Pricing data (labour $/ft², material $/ft², WSIB rate) ── */
+// Union rate dates for Local 675
+const RATE_DATES = ['May 2024', 'May 2025', 'May 2026'];
+// Labour rates: [may2024, may2025, may2026]
+const LABOUR_RATES = {
+  ins_house:          [0.554, 0.576, 0.598],
+  ins_garage:         [0.511, 0.533, 0.555],
+  ins_roxul:          [0.532, 0.554, 0.576],
+  ins_roxul_prem:     [0.063, 0.065, 0.067],
+  blown_r60_house:    [1.59,  1.65,  1.71],
+  blown_r50_house:    [1.35,  1.40,  1.45],
+  blown_r40_house:    [1.21,  1.26,  1.31],
+  blown_r60_garage:   [1.59,  1.65,  1.71],
+  blown_r50_garage:   [1.35,  1.40,  1.45],
+  blown_r40_garage:   [1.21,  1.26,  1.31],
+  blanket_r20:        [1.61,  1.67,  1.73],
+  foam_half_lb:       [3.34,  3.47,  3.60],
+  foam_2lb:           [6.04,  6.28,  6.51],
+  foam_2lb_r20:       [4.11,  4.27,  4.43],
+  board_upper:        [0.336, 0.349, 0.362],
+  board_main:         [0.379, 0.394, 0.409],
+  board_basement:     [0.317, 0.329, 0.341],
+  board_garage:       [0.481, 0.500, 0.519],
+  board_58_extra:     [0.094, 0.098, 0.102],
+  board_windows:      [14.42, 14.98, 15.54],
+  board_res_angle:    [0.324, 0.337, 0.350],
+  steel_upper:        [0.770, 0.800, 0.830],
+  steel_main:         [0.770, 0.800, 0.830],
+  steel_basement:     [0.770, 0.800, 0.830],
+  steel_bulkheads:    [0.770, 0.800, 0.830],
+  local675_dues:      [0.255, 0.265, 0.275],
+  tape_upper:         [0.352, 0.366, 0.380],
+  tape_main:          [0.352, 0.366, 0.380],
+  tape_basement:      [0.336, 0.349, 0.362],
+  tape_garage:        [0.818, 0.850, 0.882],
+  texture_ww:         [0.130, 0.135, 0.140],
+  cor_bds_windows:    [1.44,  1.50,  1.56],
+  cor_bds_sure:       [0.923, 0.960, 0.997],
+  tapers_union:       [0.221, 0.230, 0.239],
+  pot_lights:         [7.69,  8.00,  8.31],
+  scaffolding:        [100.0, 100.0, 100.0],
+  cleaning:           [300.0, 300.0, 300.0],
+  tpy_flat:           [280.0, 280.0, 280.0],
+};
+// Material rates $/ft² or $/unit (fixed, not union-tied)
+const MAT_RATES = {
+  ins_r8:       0.29,
+  ins_r12:      0.418,
+  ins_r14:      0.624,
+  ins_r20:      0.695,
+  ins_r22:      0.911,
+  ins_r24:      1.528,
+  ins_r28:      0.933,
+  ins_r31:      1.017,
+  ins_r40:      1.454,
+  roxul_3sound: 1.17,
+  roxul_r14:    1.17,
+  roxul_r22:    1.794,
+  roxul_r24:    2.938,
+  dw_half_pl:   0.555,
+  dw_54_half:   0.729,
+  dw_half_cd:   0.671,
+  dw_half_dens: 1.83,
+  dw_half_wr:   1.024,
+  dw_58_fg:     0.678,
+  dw_58_54:     0.881,
+  dw_cement:    2.119,
+  dw_flex:      0.724,
+  st_furring:   0.582,
+  st_resilient: 0.475,
+  st_angle:     0.442,
+  st_158_track: 0.533,
+  st_158_stud:  0.587,
+  st_212_track: 0.636,
+  st_212_stud:  0.678,
+  st_358_track: 0.757,
+  st_358_stud:  0.799,
+  cb_regular:   0.45,
+  cb_sure:      0.495,
+};
+const WSIB_RATE = 0.0617; // 6.17%
+const DEFAULT_PROFIT_PCT = 15;
+
+/* ── Default prices (cloned from LABOUR_RATES using index 1 = May 2025) ── */
+function defaultPrices() {
+  const p = {};
+  Object.keys(LABOUR_RATES).forEach(k => { p[k] = LABOUR_RATES[k][1]; });
+  return p;
+}
+
+/* ── My Info defaults ── */
+function defaultMyInfo() {
+  return { name:'', company:'', hst:'', email:'', phone:'' };
+}
+
+/* ── Price / MyInfo persistence ── */
+function savePrices(p) { storageSet('prices', p); }
+function saveMyInfo(m) { storageSet('myinfo', m); }
+function saveProfitPct(v) { storageSet('profit', v); }
+async function loadPrices() {
+  try { const r = await storageGet('prices'); return r || defaultPrices(); } catch(e) { return defaultPrices(); }
+}
+async function loadMyInfo() {
+  try { const r = await storageGet('myinfo'); return r || defaultMyInfo(); } catch(e) { return defaultMyInfo(); }
+}
+async function loadProfitPct() {
+  try { const r = await storageGet('profit'); return r ? parseFloat(r) : DEFAULT_PROFIT_PCT; } catch(e) { return DEFAULT_PROFIT_PCT; }
+}
+
+let gPrices = defaultPrices();
+let gMyInfo = defaultMyInfo();
+let gProfitPct = DEFAULT_PROFIT_PCT;
+let gRateIdx = 1; // active rate date index
+let fbUser = null; // Firebase Auth user
+let db = null;     // Firestore instance
+
 // Blown-In R-values (sqft only — no bags)
 const BLOWN_RVALS = ['R20', 'R32', 'R40', 'R60'];
 
@@ -514,9 +776,12 @@ function blankCounts() {
   // Insulation extras counts
   c['insExtras'] = {};
   INSULATION_EXTRAS_ITEMS.forEach(item => c['insExtras'][item] = 0);
-  // Job Extras category counts
+  // Job Extras (Add-Ons) category counts
   c['jobExtras'] = {};
   JOB_EXTRAS_ITEMS.forEach(item => c['jobExtras'][item] = 0);
+  // Job Costs category counts (scaffolding, cleaning, union dues, etc.)
+  c['jobCosts'] = {};
+  JOB_COSTS_ITEMS.forEach(item => c['jobCosts'][item] = 0);
   // Mud category counts
   c['mud'] = {};
   MUD_ITEMS.forEach(item => c['mud'][item] = 0);
@@ -541,16 +806,13 @@ function makeJob(name, id) {
 
 /* ── Persistence ── */
 function saveState() {
-  try {
-    window.storage.set('drywall-tally', JSON.stringify({ jobs, jobCounter, curJobId }));
-  } catch(e) {}
+  storageSet('appState', { jobs, jobCounter, curJobId }).catch(e => console.warn('saveState', e));
 }
 
 async function loadState() {
   try {
-    const result = await window.storage.get('drywall-tally');
-    if (!result) return false;
-    const s = JSON.parse(result.value);
+    const s = await storageGet('appState');
+    if (!s) return false;
     if (!s.jobs || !s.jobs.length) return false;
     // Migrate each area's counts to ensure new keys are present
     s.jobs.forEach(j => j.areas.forEach(a => {
@@ -930,7 +1192,8 @@ function renderTally() {
     renderCatItems('mudExtras', MUD_EXTRAS_ITEMS, '#92400e', 'Extras');
     return;
   }
-  if (curCat === 'jobExtras') { renderCatItems('jobExtras', JOB_EXTRAS_ITEMS, '#0891b2', 'Extras'); return; }
+  if (curCat === 'jobExtras') { renderCatItems('jobExtras', JOB_EXTRAS_ITEMS, '#0891b2', 'Add-Ons'); return; }
+  if (curCat === 'jobCosts')  { renderCatItems('jobCosts',  JOB_COSTS_ITEMS,  '#b45309', 'Job Extras'); return; }
   document.getElementById('type-bar-wrap').style.display='none';
 }
 
@@ -1036,6 +1299,7 @@ function catItemsForKey(key) {
   if (key==='cornerBead')  return CORNER_BEAD_ITEMS;
   if (key==='mudExtras')   return MUD_EXTRAS_ITEMS;
   if (key==='jobExtras')   return JOB_EXTRAS_ITEMS;
+  if (key==='jobCosts')    return JOB_COSTS_ITEMS;
   return [];
 }
 function catAddItem(countKey,idx) {
@@ -1411,7 +1675,13 @@ function renderStrip() {
   if (curCat === 'jobExtras') {
     const total = A() ? JOB_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['jobExtras']?.[item]||0),0) : 0;
     document.getElementById('totals-strip').innerHTML=
-      `<div class="strip-total">Extras <span>${total}</span></div>`;
+      `<div class="strip-total">Add-Ons <span>${total}</span></div>`;
+    return;
+  }
+  if (curCat === 'jobCosts') {
+    const total = A() ? JOB_COSTS_ITEMS.reduce((s,item)=>s+(A().counts['jobCosts']?.[item]||0),0) : 0;
+    document.getElementById('totals-strip').innerHTML=
+      `<div class="strip-total">Job Extras <span>${total}</span></div>`;
     return;
   }
   if (curCat === 'insulation') {
@@ -1608,6 +1878,18 @@ function showReport() {
   document.getElementById('modal-title').textContent=j.name+' — Report';
   const d=j.details;
 
+  // My Info header
+  let html = '';
+  if (gMyInfo.name||gMyInfo.company) {
+    html += `<div style="background:#f0f9ff;border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid #bae6fd">`;
+    if(gMyInfo.name)    html+=`<div style="font-size:14px;font-weight:600;color:#0369a1">${gMyInfo.name}</div>`;
+    if(gMyInfo.company) html+=`<div style="font-size:13px;color:#0369a1;opacity:0.85">${gMyInfo.company}</div>`;
+    if(gMyInfo.hst)     html+=`<div style="font-size:12px;color:var(--muted);margin-top:2px">HST: ${gMyInfo.hst}</div>`;
+    if(gMyInfo.email)   html+=`<div style="font-size:12px;color:var(--muted)">${gMyInfo.email}</div>`;
+    if(gMyInfo.phone)   html+=`<div style="font-size:12px;color:var(--muted)">${gMyInfo.phone}</div>`;
+    html += `</div>`;
+  }
+
   // Job details block
   const detailRows = [
     d.customer    ? ['Customer',      d.customer]    : null,
@@ -1622,7 +1904,6 @@ function showReport() {
     ['Modified',    fmtDate(j.modifiedAt)],
   ].filter(Boolean);
 
-  let html = '';
   if (detailRows.length) {
     html += `<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1.5px solid var(--border-md)">`;
     html += detailRows.map(([label,val])=>`
@@ -1633,15 +1914,17 @@ function showReport() {
     html += `</div>`;
   }
 
+  // ── Per-area tally ──
+  let totalLabour = 0;
+  let totalMaterial = 0;
   let hasAny=false;
+
   j.areas.forEach(a=>{
     let aHas=false;
-    // Check drywall
     DRYWALL_TYPES.forEach(t=>{
       if(t.isItems){ if(getItemsForKey(t.key).some(item=>a.counts[t.key][item]>0))aHas=true; }
       else { if(t.lengths.some(l=>a.counts[t.key][l]>0))aHas=true; }
     });
-    // Check insulation
     INSULATION_TYPES.forEach(t=>{
       if(t.kind==='blown'){ if(BLOWN_RVALS.some(r=>(a.counts['insulation'][t.key][r]||[]).length>0))aHas=true; }
       else if(t.kind==='foam'){ if(FOAM_RVALS.some(r=>((a.counts['insulation'][t.key][r]||{}).half||[]).length>0||((a.counts['insulation'][t.key][r]||{}).two||[]).length>0))aHas=true; }
@@ -1653,21 +1936,17 @@ function showReport() {
         }));
       }
     });
-    // Check steel category
     STEEL_SUBTABS.forEach(st=>{ if(st.items.some(item=>(a.counts[st.key]?.[item]||0)>0))aHas=true; });
     if(STEEL_EXTRAS_ITEMS.some(item=>(a.counts['steelExtras']?.[item]||0)>0))aHas=true;
-    // Check insulation extras
     if(INSULATION_EXTRAS_ITEMS.some(item=>(a.counts['insExtras']?.[item]||0)>0))aHas=true;
-    // Check mud
     if(MUD_ITEMS.some(item=>(a.counts['mud']?.[item]||0)>0))aHas=true;
     if(CORNER_BEAD_ITEMS.some(item=>(a.counts['cornerBead']?.[item]||0)>0))aHas=true;
     if(MUD_EXTRAS_ITEMS.some(item=>(a.counts['mudExtras']?.[item]||0)>0))aHas=true;
-    // Check job extras
     if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
+    if(JOB_COSTS_ITEMS.some(item=>(a.counts['jobCosts']?.[item]||0)>0))aHas=true;
     if(!aHas)return;
     hasAny=true;
 
-    // Area header
     const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
     const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
     const metaParts=[a.height,a.texture].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${s}</span>`);
@@ -1675,55 +1954,59 @@ function showReport() {
       ceilingSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${ceilingSqft} ft² ceiling</span>`:'',
       doubleSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${doubleSqft} ft² double</span>`:'',
     ].filter(Boolean);
-    html+=`<div class="modal-area-head">Area - ${a.name} ${metaParts.join(' · ')} <span style="font-weight:400;font-size:12px;color:var(--muted)">${areaTotal(a)} sheets</span> ${sqftParts.join(' ')}</div>`;
+    html+=`<div class="modal-area-head" style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+      <span>Area - ${a.name}</span>
+      ${metaParts.map(p=>`<span style="font-size:14px;font-weight:600;color:var(--purple)">${p.replace(/<[^>]*>/g,'').trim()}</span>`).join('<span style="color:var(--purple);opacity:0.4">·</span>')}
+      ${sqftParts.map(p=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${p.replace(/<[^>]*>/g,'').trim()}</span>`).join('')}
+    </div>`;
 
-    // Drywall types (non-item) — each gets Sheets/Sq Ft header + rows + Totals
+    // Drywall
     DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
       const entries=t.lengths.filter(l=>a.counts[t.key][l]>0);
       if(!entries.length)return;
-
-      // Type header row with column labels
+      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex'};
+      const matRate2 = MAT_RATES[matKeyMap2[t.key]] || 0;
+      const fmtMat=v=>'$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
       html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
         <span>${t.fullName}</span>
-        <span style="display:flex;gap:32px">
+        <span style="display:flex;gap:16px">
           <span style="min-width:32px;text-align:right">Sheets</span>
           <span style="min-width:48px;text-align:right">Sq Ft</span>
+          <span style="min-width:64px;text-align:right">Mat. Cost</span>
         </span>
       </div>`;
-
-      let typeSheets=0,typeSqft=0;
+      let typeSheets=0,typeSqft=0,typeMat=0;
       entries.forEach(l=>{
         const li=t.lengths.indexOf(l);
         const lLabel = t.labels ? t.labels[li] : l+"' sheets";
         const qty=a.counts[t.key][l];
         const sf=sheetSqft(t.key,l)*qty;
-        typeSheets+=qty; typeSqft+=sf;
-        html+=`<div class="modal-row">
-          <span>${lLabel}</span>
-          <span style="display:flex;gap:32px">
+        const mc=sf*matRate2;
+        typeSheets+=qty; typeSqft+=sf; typeMat+=mc;
+        html+=`<div class="modal-row"><span>${lLabel}</span>
+          <span style="display:flex;gap:16px">
             <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${qty}</span>
             <span style="min-width:48px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${sf>0?sf:''}</span>
+            <span style="min-width:64px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc>0?fmtMat(mc):''}</span>
           </span>
         </div>`;
       });
-      // Totals row
       html+=`<div class="modal-row" style="font-weight:500;color:var(--text);border-bottom:1.5px solid var(--border-md)">
         <span>Totals</span>
-        <span style="display:flex;gap:32px">
+        <span style="display:flex;gap:16px">
           <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSheets}</span>
           <span style="min-width:48px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSqft>0?typeSqft:''}</span>
+          <span style="min-width:64px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${typeMat>0?fmtMat(typeMat):''}</span>
         </span>
       </div>`;
       html+=`<div style="height:8px"></div>`;
     });
 
-    // Extras items
+    // Extras items (drywall)
     const extrasEntries=EXTRAS_ITEMS.filter(item=>a.counts['extras'][item]>0);
     if(extrasEntries.length){
       html+=`<div class="modal-type-head" style="color:#0891b2">Extras</div>`;
-      extrasEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['extras'][item]}</span></div>`;
-      });
+      extrasEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['extras'][item]}</span></div>`;});
       html+=`<div style="height:8px"></div>`;
     }
 
@@ -1764,37 +2047,28 @@ function showReport() {
             const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
             const bags=rv.sqft[si]>0?totalSqft/rv.sqft[si]:0;
             const pcs=rv.pcs[si]>0?Math.round(bags*rv.pcs[si]):0;
-            if(bags>0){
-              typeBags+=bags;
-              insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft)+' ft²', pcs+' pcs', bags.toFixed(1)+' bags']);
-            }
+            if(bags>0){typeBags+=bags;insRows.push([`${rv.r} ${sz}`, Math.round(totalSqft)+' ft²', pcs+' pcs', bags.toFixed(1)+' bags']);}
           });
         });
         if(!insRows.length)return;
         html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px"><span>${t.fullName}</span><span style="font-weight:500">${typeBags.toFixed(1)} bags</span></div>`;
-        insRows.forEach(([label,sqft,pcs,bags])=>{
-          html+=`<div class="modal-row"><span>${label}</span><span style="display:flex;gap:12px"><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${sqft}</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${pcs}</span><span>${bags}</span></span></div>`;
-        });
+        insRows.forEach(([label,sqft,pcs,bags])=>{html+=`<div class="modal-row"><span>${label}</span><span style="display:flex;gap:12px"><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${sqft}</span><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${pcs}</span><span>${bags}</span></span></div>`;});
         html+=`<div style="height:8px"></div>`;
       }
     });
 
-    // Steel category items
+    // Steel
     STEEL_SUBTABS.forEach(st=>{
       const entries=st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0);
       if(!entries.length)return;
       html+=`<div class="modal-type-head" style="color:#475569">Steel ${st.label}</div>`;
-      entries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts[st.key][item]}</span></div>`;
-      });
+      entries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts[st.key][item]}</span></div>`;});
       html+=`<div style="height:8px"></div>`;
     });
     const steelExtrasEntries=STEEL_EXTRAS_ITEMS.filter(item=>(a.counts['steelExtras']?.[item]||0)>0);
     if(steelExtrasEntries.length){
       html+=`<div class="modal-type-head" style="color:#475569">Steel Extras</div>`;
-      steelExtrasEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['steelExtras'][item]}</span></div>`;
-      });
+      steelExtrasEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['steelExtras'][item]}</span></div>`;});
       html+=`<div style="height:8px"></div>`;
     }
 
@@ -1802,54 +2076,159 @@ function showReport() {
     const insExtrasEntries=INSULATION_EXTRAS_ITEMS.filter(item=>(a.counts['insExtras']?.[item]||0)>0);
     if(insExtrasEntries.length){
       html+=`<div class="modal-type-head" style="color:#db2777">Insulation Extras</div>`;
-      insExtrasEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['insExtras'][item]}</span></div>`;
-      });
+      insExtrasEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['insExtras'][item]}</span></div>`;});
       html+=`<div style="height:8px"></div>`;
     }
 
-    // Mud items
+    // Mud
     const mudEntries=MUD_ITEMS.filter(item=>(a.counts['mud']?.[item]||0)>0);
     if(mudEntries.length){
       html+=`<div class="modal-type-head" style="color:#92400e">Mud</div>`;
-      mudEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['mud'][item]}</span></div>`;
-      });
+      mudEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['mud'][item]}</span></div>`;});
       html+=`<div style="height:8px"></div>`;
     }
     const cbEntries=CORNER_BEAD_ITEMS.filter(item=>(a.counts['cornerBead']?.[item]||0)>0);
     if(cbEntries.length){
       html+=`<div class="modal-type-head" style="color:#92400e">Corner Bead</div>`;
-      cbEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['cornerBead'][item]}</span></div>`;
-      });
+      cbEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['cornerBead'][item]}</span></div>`;});
       html+=`<div style="height:8px"></div>`;
     }
     const mudExtrasEntries=MUD_EXTRAS_ITEMS.filter(item=>(a.counts['mudExtras']?.[item]||0)>0);
     if(mudExtrasEntries.length){
       html+=`<div class="modal-type-head" style="color:#92400e">Mud Extras</div>`;
-      mudExtrasEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['mudExtras'][item]}</span></div>`;
-      });
+      mudExtrasEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['mudExtras'][item]}</span></div>`;});
       html+=`<div style="height:8px"></div>`;
     }
 
-    // Job Extras
+    // Add-Ons (jobExtras)
     const jobExtrasEntries=JOB_EXTRAS_ITEMS.filter(item=>(a.counts['jobExtras']?.[item]||0)>0);
     if(jobExtrasEntries.length){
-      html+=`<div class="modal-type-head" style="color:#0891b2">Extras</div>`;
-      jobExtrasEntries.forEach(item=>{
-        html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['jobExtras'][item]}</span></div>`;
+      html+=`<div class="modal-type-head" style="color:#0891b2">Add-Ons</div>`;
+      jobExtrasEntries.forEach(item=>{html+=`<div class="modal-row"><span>${item}</span><span>${a.counts['jobExtras'][item]}</span></div>`;});
+      html+=`<div style="height:8px"></div>`;
+    }
+
+    // Job Extras (jobCosts) — show dollar value not count
+    const JOB_COSTS_RATE_MAP = {
+      'Scaffolding':'scaffolding','Cleaning':'cleaning','Local 675 Union Dues':'local675_dues',
+      'Tapers Union Dues':'tapers_union','Touchup & Year End Service Calls':'tpy_flat'
+    };
+    const jobCostsEntries=JOB_COSTS_ITEMS.filter(item=>(a.counts['jobCosts']?.[item]||0)>0);
+    if(jobCostsEntries.length){
+      html+=`<div class="modal-type-head" style="color:#b45309">Job Extras</div>`;
+      jobCostsEntries.forEach(item=>{
+        const qty=a.counts['jobCosts'][item];
+        const rk=JOB_COSTS_RATE_MAP[item]||'scaffolding';
+        const rate=gPrices[rk]||LABOUR_RATES[rk]?.[1]||0;
+        const amt=qty*rate;
+        const fmt2=v=>'$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+        html+=`<div class="modal-row"><span>${item}</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt2(amt)}</span></div>`;
       });
       html+=`<div style="height:8px"></div>`;
     }
   });
 
-  if(!hasAny) html=`<div class="empty-msg">No sheets tallied yet.</div>`;
-  else html+=`<div class="modal-grand"><span>Total Sheets</span><span>${jobTotal()}</span></div>`;
+  if(!hasAny) { html+=`<div class="empty-msg">No sheets tallied yet.</div>`; }
+  else {
+    // ── Financial Summary ──
+    // Calculate material cost from drywall sq ft tallied
+    // Use total sqft per drywall type × material rate
+    let matCost = 0;
+    j.areas.forEach(a => {
+      // Drywall material
+      const matKeyMap = { pl48:'dw_half_pl', pl54:'dw_54_half', cd48:'dw_half_cd', dens48:'dw_half_dens', wr48:'dw_half_wr', fg48:'dw_58_fg', dl48:'dw_58_fg', fg54:'dw_58_54', durock48:'dw_cement', flex48:'dw_flex' };
+      DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t => {
+        const rate = MAT_RATES[matKeyMap[t.key]] || 0;
+        const sf = t.lengths.reduce((s,l) => s + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0);
+        matCost += sf * rate;
+      });
+      // Insulation material — use sqft tallied
+      INSULATION_TYPES.forEach(t => {
+        if(t.kind==='blown'||t.kind==='foam') return; // sqft-based, skip material for now
+        const rvals = t.rvals || INSULATION_RVALS;
+        const rateMap = {'R8':'ins_r8','R12':'ins_r12','R14':'ins_r14','R20':'ins_r20','R22':'ins_r22','R24':'ins_r24','R28':'ins_r28','R31':'ins_r31','R40':'ins_r40',
+                         '1½" QZ':'ins_r12','3" QZ':'ins_r12','R22.5':'ins_r22'};
+        rvals.forEach(rv => {
+          INSULATION_SIZES.forEach((_,si) => {
+            if(rv.sqft[si]===null) return;
+            const cell = a.counts['insulation'][t.key]?.[rv.r]?.[si];
+            if(!cell) return;
+            const totalSqft = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
+            const rate = MAT_RATES[rateMap[rv.r]] || 0;
+            matCost += totalSqft * rate;
+          });
+        });
+      });
+    });
+
+    // Labour cost — for now we just sum all boarding sqft × labour rates
+    // Use total drywall sqft to compute labour (simplified: total sheets × avg area × rate)
+    // Better: use sqft per area type per floor if area names hint at floor
+    // Since we don't track floors separately per-area in this version, sum all sqft and apply main floor rate
+    let labourCost = 0;
+    j.areas.forEach(a => {
+      // Boarding labour
+      const totalSqft = DRYWALL_TYPES.filter(t=>!t.isItems).reduce((s,t) =>
+        s + t.lengths.reduce((s2,l) => s2 + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0), 0);
+      const boardRate = gPrices['board_main'] || LABOUR_RATES['board_main'][1];
+      labourCost += totalSqft * boardRate;
+      // Insulation labour
+      INSULATION_TYPES.forEach(t => {
+        if(t.kind==='blown'||t.kind==='foam') return;
+        const rvals=t.rvals||INSULATION_RVALS;
+        rvals.forEach(rv => {
+          INSULATION_SIZES.forEach((_,si) => {
+            if(rv.sqft[si]===null) return;
+            const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
+            if(!cell) return;
+            const totalSqft=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const insRate = t.key==='roxul' ? (gPrices['ins_roxul']||LABOUR_RATES['ins_roxul'][1]) :
+                            (gPrices['ins_house']||LABOUR_RATES['ins_house'][1]);
+            labourCost += totalSqft * insRate;
+          });
+        });
+      });
+      // Pot lights
+      const potLights = a.counts['jobExtras']?.['Pot Lights'] || 0;
+      labourCost += potLights * (gPrices['pot_lights'] || LABOUR_RATES['pot_lights'][1]);
+      // Job Costs (fixed amounts)
+      JOB_COSTS_ITEMS.forEach(item => {
+        const qty = a.counts['jobCosts']?.[item] || 0;
+        const rateKey = item==='Scaffolding'?'scaffolding':item==='Cleaning'?'cleaning':
+                        item.includes('675')?'local675_dues':item.includes('Tapers')?'tapers_union':
+                        item.includes('Touchup')?'tpy_flat':'pot_lights';
+        labourCost += qty * (gPrices[rateKey] || 0);
+      });
+    });
+
+    totalLabour = labourCost;
+    totalMaterial = matCost;
+    const wsib = totalLabour * WSIB_RATE;
+    const subtotalLM = totalLabour + totalMaterial + wsib;
+    const profit = subtotalLM * (gProfitPct/100);
+    const subtotal = subtotalLM + profit;
+    const hst = subtotal * 0.13;
+    const total = subtotal + hst;
+
+    const fmt = v => '$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+
+    html += `<div style="margin-top:16px;border-top:2px solid var(--border-md);padding-top:16px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
+
+    html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
+    html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalLabour)}</span></div>`;
+    html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
+    html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal Labour + Material</span><span style="font-family:'DM Mono',monospace">${fmt(subtotalLM)}</span></div>`;
+    html += `<div class="modal-row"><span>Profit (${gProfitPct}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(profit)}</span></div>`;
+    html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal</span><span style="font-family:'DM Mono',monospace">${fmt(subtotal)}</span></div>`;
+    html += `<div class="modal-grand" style="margin-top:8px"><span>Total (incl. HST 13%)</span><span>${fmt(total)}</span></div>`;
+    html += `</div>`;
+  }
+
   document.getElementById('modal-body').innerHTML=html;
   document.getElementById('modal-overlay').classList.add('open');
 }
+
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 function handleModalTap(e) { if(e.target===document.getElementById('modal-overlay'))closeModal(); }
 
@@ -2039,17 +2418,346 @@ function exportToSheets() {
   URL.revokeObjectURL(url);
 }
 
+
+/* ── Prices / My Info sheets ── */
+function handleSheetTap(e, overlayId) { if(e.target===document.getElementById(overlayId)) document.getElementById(overlayId).classList.remove('open'); }
+
+// ── Prices Sheet ──
+const PRICE_FIELD_DEFS = [
+  { section:'Labour — Insulation ($/ft²)' },
+  { key:'ins_house',       label:'House' },
+  { key:'ins_garage',      label:'Garage' },
+  { key:'ins_roxul',       label:'Roxul' },
+  { key:'ins_roxul_prem',  label:'Roxul Premium add-on' },
+  { key:'blanket_r20',     label:'Blanket R20' },
+  { key:'blown_r40_house', label:'Blown R40 House' },
+  { key:'blown_r50_house', label:'Blown R50 House' },
+  { key:'blown_r60_house', label:'Blown R60 House' },
+  { key:'blown_r40_garage',label:'Blown R40 Garage' },
+  { key:'blown_r50_garage',label:'Blown R50 Garage' },
+  { key:'blown_r60_garage',label:'Blown R60 Garage' },
+  { key:'foam_half_lb',    label:'Foam ½ lb' },
+  { key:'foam_2lb',        label:'Foam 2 lb' },
+  { key:'foam_2lb_r20',    label:'Foam 2 lb R20' },
+  { section:'Labour — Boarding ($/ft²)' },
+  { key:'board_upper',     label:'Upper Floor' },
+  { key:'board_main',      label:'Main Floor' },
+  { key:'board_basement',  label:'Basement' },
+  { key:'board_garage',    label:'Garage' },
+  { key:'board_58_extra',  label:'⅝" Extra' },
+  { key:'board_windows',   label:'Windows ($/each)' },
+  { key:'board_res_angle', label:'Resilient/Angle/Furr.' },
+  { section:'Labour — Steel Framing ($/ft²)' },
+  { key:'steel_upper',     label:'Upper Floor' },
+  { key:'steel_main',      label:'Main Floor' },
+  { key:'steel_basement',  label:'Basement' },
+  { key:'steel_bulkheads', label:'Bulkheads' },
+  { section:'Labour — Taping ($/ft²)' },
+  { key:'tape_upper',      label:'Upper Floor' },
+  { key:'tape_main',       label:'Main Floor' },
+  { key:'tape_basement',   label:'Basement' },
+  { key:'tape_garage',     label:'Garage' },
+  { key:'texture_ww',      label:'Texture w/w' },
+  { key:'cor_bds_windows', label:'Corner Beads — Windows' },
+  { key:'cor_bds_sure',    label:'Corner Beads / Surecorner' },
+  { section:'Labour — Union & Extras' },
+  { key:'local675_dues',   label:'Local 675 Union Dues' },
+  { key:'tapers_union',    label:'Tapers Union Dues' },
+  { key:'pot_lights',      label:'Pot Lights ($/each)' },
+  { key:'scaffolding',     label:'Scaffolding ($/job)' },
+  { key:'cleaning',        label:'Cleaning ($/job)' },
+  { key:'tpy_flat',         label:'Touchup & Year End (flat $)' },
+];
+
+function openPricesSheet() {
+  const body = document.getElementById('prices-body');
+  // Detect active rate index based on today's date
+  const today = new Date();
+  const rateCutoffs = [new Date('2024-05-01'), new Date('2025-05-01'), new Date('2026-05-01')];
+  let detected = 0;
+  for (let i = rateCutoffs.length-1; i >= 0; i--) { if(today >= rateCutoffs[i]){ detected=i; break; } }
+  if(gRateIdx===null) gRateIdx = detected;
+
+  let html = `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:4px">
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Union Rate Year</div>
+    <div class="year-btn-row">`;
+  RATE_DATES.forEach((d,i) => {
+    html += `<button class="year-btn ${i===gRateIdx?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
+  });
+  html += `</div><div class="year-hint">Tap a date to auto-fill all labour fields. You can still edit any field manually.</div></div>`;
+
+  html += `<div class="price-row" style="padding-top:12px"><span class="price-row-label" style="font-weight:600">Profit %</span>
+    <input class="profit-input" type="number" id="pf-profit" min="0" max="100" step="0.5" value="${gProfitPct}"></div>`;
+
+  let lastWasSection = false;
+  PRICE_FIELD_DEFS.forEach(f => {
+    if(f.section) {
+      html += `<div class="price-section-label">${f.section}</div>`;
+      lastWasSection = true;
+    } else {
+      const val = gPrices[f.key] !== undefined ? gPrices[f.key] : (LABOUR_RATES[f.key]?.[1] || 0);
+      html += `<div class="price-row"><span class="price-row-label">${f.label}</span>
+        <input class="price-row-input" type="number" id="pf-${f.key}" step="0.001" min="0" value="${val.toFixed(3)}"></div>`;
+    }
+  });
+
+  body.innerHTML = html;
+  document.getElementById('prices-overlay').classList.add('open');
+}
+
+function applyRateYear(idx) {
+  gRateIdx = idx;
+  PRICE_FIELD_DEFS.forEach(f => {
+    if(!f.key) return;
+    const rates = LABOUR_RATES[f.key];
+    if(rates && rates[idx] !== undefined) {
+      const el = document.getElementById('pf-'+f.key);
+      if(el) el.value = rates[idx].toFixed(3);
+    }
+  });
+  document.querySelectorAll('.year-btn').forEach((b,i) => {
+    b.className = 'year-btn ' + (i===idx?'active':'inactive');
+  });
+}
+
+function savePricesSheet() {
+  PRICE_FIELD_DEFS.forEach(f => {
+    if(!f.key) return;
+    const el = document.getElementById('pf-'+f.key);
+    if(el) gPrices[f.key] = parseFloat(el.value)||0;
+  });
+  const pp = document.getElementById('pf-profit');
+  if(pp) gProfitPct = parseFloat(pp.value)||DEFAULT_PROFIT_PCT;
+  savePrices(gPrices);
+  saveProfitPct(gProfitPct);
+  closePricesSheet();
+}
+
+function closePricesSheet() { document.getElementById('prices-overlay').classList.remove('open'); }
+
+// ── My Info Sheet ──
+function openMyInfoSheet() {
+  const m = gMyInfo;
+  document.getElementById('myinfo-body').innerHTML = `
+    <div class="field-group"><div class="field-label">Name</div><input class="field-input" id="mi-name" type="text" value="${m.name}" placeholder="Your name"/></div>
+    <div class="field-group"><div class="field-label">Company</div><input class="field-input" id="mi-company" type="text" value="${m.company}" placeholder="Company name"/></div>
+    <div class="field-group"><div class="field-label">HST Number</div><input class="field-input" id="mi-hst" type="text" value="${m.hst}" placeholder="123456789 RT0001"/></div>
+    <div class="field-group"><div class="field-label">Email</div><input class="field-input" id="mi-email" type="email" value="${m.email}" placeholder="email@example.com"/></div>
+    <div class="field-group"><div class="field-label">Phone</div><input class="field-input" id="mi-phone" type="tel" value="${m.phone}" placeholder="(416) 555-0000"/></div>
+  `;
+  document.getElementById('myinfo-overlay').classList.add('open');
+}
+
+function saveMyInfoSheet() {
+  gMyInfo = {
+    name:    document.getElementById('mi-name').value.trim(),
+    company: document.getElementById('mi-company').value.trim(),
+    hst:     document.getElementById('mi-hst').value.trim(),
+    email:   document.getElementById('mi-email').value.trim(),
+    phone:   document.getElementById('mi-phone').value.trim(),
+  };
+  saveMyInfo(gMyInfo);
+  closeMyInfoSheet();
+}
+
+function closeMyInfoSheet() { document.getElementById('myinfo-overlay').classList.remove('open'); }
+
+
+/* ── Export to PDF ── */
+function exportToPDF() {
+  const j = J();
+  const reportBody = document.getElementById('modal-body').innerHTML;
+  const title = j.name + ' \u2014 Report';
+
+  const css = [
+    '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }',
+    ':root { --bg: #f0ede8; --surface: #fff; --border: rgba(0,0,0,0.09); --border-md: rgba(0,0,0,0.15); --text: #111; --muted: #777; --accent: #1d4ed8; --purple: #7c3aed; --green: #15803d; }',
+    'body { font-family: "DM Sans", sans-serif; background: #fff; color: #111; padding: 24px; max-width: 720px; margin: 0 auto; }',
+    'h1 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: #111; }',
+    '.modal-area-head { font-size: 14px; font-weight: 600; color: #7c3aed; margin: 18px 0 6px; padding-bottom: 6px; border-bottom: 1.5px solid #ede9fe; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }',
+    '.modal-type-head { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin: 10px 0 4px; display:flex; justify-content:space-between; padding-right:4px; }',
+    '.modal-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,0.09); font-size: 14px; color: #777; }',
+    '.modal-row:last-of-type { border-bottom: none; }',
+    '.modal-row span:last-child { font-family: "DM Mono", monospace; font-weight: 500; color: #111; }',
+    '.modal-grand { background: #f0ede8; border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }',
+    '.modal-grand span:first-child { font-size: 14px; font-weight: 500; }',
+    '.modal-grand span:last-child { font-family: "DM Mono", monospace; font-size: 22px; font-weight: 500; }',
+    '@media print { body { padding: 0; } @page { margin: 18mm 14mm; } }',
+  ].join('\n');
+
+  const pw = window.open('', '_blank');
+  if (!pw) { alert('Please allow pop-ups to export as PDF.'); return; }
+
+  pw.document.open();
+  pw.document.write('<!DOCTYPE html><html><head>');
+  pw.document.write('<meta charset="UTF-8">');
+  pw.document.write('<title>' + title + '</title>');
+  pw.document.write('<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">');
+  pw.document.write('<style>' + css + '</style>');
+  pw.document.write('</head><body>');
+  pw.document.write('<h1>' + title + '</h1>');
+  pw.document.write(reportBody);
+  pw.document.write('<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},500);}<\/scr' + 'ipt>');
+  pw.document.write('</body></html>');
+  pw.document.close();
+}
+
 /* ── Init ── */
-async function init() {
-  const loaded = await loadState();
-  if (!loaded) {
-    jobs = [makeJob('Job 1', 1)];
-    jobCounter = 1;
-    curJobId = 1;
-  }
+function showAppScreen() {
+  document.getElementById('app').style.display = 'flex';
+}
+
+function showAuthScreen() {
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+function showAppScreen() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+function clearLocalState() {
+  jobs = []; jobCounter = 0; curJobId = null; curAreaId = null;
+  gPrices = defaultPrices(); gMyInfo = defaultMyInfo(); gProfitPct = DEFAULT_PROFIT_PCT;
+}
+async function loadUserData() {
+  const [loaded, prices, myinfo, profit] = await Promise.all([
+    loadState(), loadPrices(), loadMyInfo(), loadProfitPct()
+  ]);
+  gPrices = prices; gMyInfo = myinfo; gProfitPct = profit;
+  if (!loaded) { jobs = [makeJob('Job 1', 1)]; jobCounter = 1; curJobId = 1; }
   curAreaId = J()?.areas[0]?.id || null;
-  saveState();
   renderAll();
+}
+
+/* ── Auth functions ── */
+function signInWithGoogle() {
+  document.getElementById('auth-error').textContent = '';
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider).catch(err => {
+    document.getElementById('auth-error').textContent = 'Sign-in failed: ' + err.message;
+  });
+}
+function signOut() {
+  if (!confirm('Sign out? Your data is saved to the cloud.')) return;
+  firebase.auth().signOut().then(() => {
+    clearLocalState();
+    closeDrawer();
+    document.getElementById('job-name-display').textContent = '';
+    document.getElementById('area-tabs').innerHTML = '';
+    document.getElementById('area-info-bar').innerHTML = '';
+    document.getElementById('cat-tabs').innerHTML = '';
+    document.getElementById('type-tabs').innerHTML = '';
+    document.getElementById('tally-area').innerHTML = '';
+    document.getElementById('totals-strip').innerHTML = '';
+  });
+}
+
+/* ── Firebase config ── */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAzIrZvh7F2_JRMTPrinNDlU_3L7ZCqiY4",
+  authDomain: "job-take-off.firebaseapp.com",
+  projectId: "job-take-off",
+  storageBucket: "job-take-off.firebasestorage.app",
+  messagingSenderId: "1049901070098",
+  appId: "1:1049901070098:web:e7027c2f4b0bb84f4025cb"
+};
+
+/* ── Storage abstraction — Firebase when available, window.storage fallback ── */
+let useFirebase = false;
+
+async function storageSet(key, value) {
+  if (useFirebase && fbUser) {
+    return db.collection('users').doc(fbUser.uid).collection('data').doc(key)
+      .set({ json: JSON.stringify(value), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  }
+  try { await window.storage.set('drywall-' + key, JSON.stringify(value)); } catch(e) {}
+}
+
+async function storageGet(key) {
+  if (useFirebase && fbUser) {
+    const doc = await db.collection('users').doc(fbUser.uid).collection('data').doc(key).get();
+    return (doc.exists && doc.data().json) ? JSON.parse(doc.data().json) : null;
+  }
+  try {
+    const r = await window.storage.get('drywall-' + key);
+    return r ? JSON.parse(r.value) : null;
+  } catch(e) { return null; }
+}
+
+/* ── Fallback: run app without Firebase ── */
+async function initFallback() {
+  useFirebase = false;
+  // Hide auth screen, show app, load from window.storage
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  // Update drawer to show "Local Mode"
+  document.getElementById('drawer-user-name').textContent = 'Local Mode';
+  document.getElementById('drawer-user-email').textContent = 'Data saved on this device';
+  document.getElementById('drawer-user-initials').textContent = '✓';
+  // Hide sign-out button in local mode
+  const soBtn = document.querySelector('.drawer-sign-out-btn');
+  if (soBtn) soBtn.style.display = 'none';
+  await loadUserData();
+}
+
+/* ── Load Firebase SDKs dynamically, then init auth ── */
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function initFirebase() {
+  try {
+    await Promise.all([
+      loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'),
+      loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js'),
+      loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js'),
+    ]);
+    // SDKs loaded — init Firebase
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    useFirebase = true;
+
+    firebase.auth().onAuthStateChanged(async user => {
+      if (user) {
+        fbUser = user;
+        const name = user.displayName || user.email || '?';
+        document.getElementById('drawer-user-name').textContent = name;
+        document.getElementById('drawer-user-email').textContent = user.email;
+        const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        document.getElementById('drawer-user-initials').textContent = initials;
+        const photo = document.getElementById('drawer-user-photo');
+        if (user.photoURL) {
+          photo.src = user.photoURL;
+          photo.style.display = 'block';
+          document.getElementById('drawer-user-initials').style.display = 'none';
+        } else {
+          photo.style.display = 'none';
+          document.getElementById('drawer-user-initials').style.display = '';
+        }
+        showAppScreen();
+        await loadUserData();
+      } else {
+        fbUser = null;
+        clearLocalState();
+        showAuthScreen();
+      }
+    });
+  } catch(e) {
+    // Firebase blocked (e.g. claude.ai sandbox) — fall back silently
+    console.log('Firebase unavailable, using local storage.');
+    initFallback();
+  }
+}
+
+function init() {
+  // Show a brief loading state then attempt Firebase
+  initFirebase();
 }
 init();
 </script>
