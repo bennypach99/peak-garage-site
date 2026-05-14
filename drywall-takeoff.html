@@ -190,6 +190,11 @@
     .area-bar-row .area-scroll::-webkit-scrollbar { display: none; }
     .area-add-inline { flex-shrink: 0; padding: 6px 8px 6px 0; }
     .area-add-inline button { background: var(--purple); color: #fff; border: none; border-radius: 8px; padding: 7px 11px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+
+    /* ── Drywall group top-tabs ── */
+    .dw-group-bar { background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; }
+    .dw-group-tab { flex: 1; padding: 10px 4px; font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: var(--muted); text-align: center; transition: color 0.12s; }
+    .dw-group-tab.active { color: var(--text); border-bottom-color: var(--accent); }
     .type-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding: 12px 14px 6px; }
     .type-group-divider { height: 1px; background: var(--border); margin: 4px 14px 10px; }
 
@@ -324,7 +329,15 @@
     <div class="cat-scroll" id="cat-tabs"></div>
   </div>
 
-  <!-- Type tabs (drywall sub-types, hidden for other cats) -->
+  <!-- Drywall group top-tabs: Regular / Fireguard / Special / Extras -->
+  <div class="dw-group-bar" id="dw-group-bar" style="display:none">
+    <button class="dw-group-tab active" onclick="switchDwGroup('Regular')">Regular</button>
+    <button class="dw-group-tab" onclick="switchDwGroup('Fireguard')">Fireguard</button>
+    <button class="dw-group-tab" onclick="switchDwGroup('Special')">Special</button>
+    <button class="dw-group-tab" onclick="switchDwGroup('Extras')">Extras</button>
+  </div>
+
+  <!-- Type sub-tabs (drywall sub-types, hidden for other cats) -->
   <div class="type-bar" id="type-bar-wrap">
     <div class="type-scroll" id="type-tabs"></div>
   </div>
@@ -377,7 +390,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v10 · May 2025</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v11 · May 2025</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -502,18 +515,25 @@ const CATS = [
 ];
 
 /* ── Drywall sub-types ── */
+const DW_GROUPS = ['Regular', 'Fireguard', 'Special', 'Extras'];
 const DRYWALL_TYPES = [
-  { label: '½" Plain',         fullName: '½" Plain (48" & 54")',     key: 'pl48',     lengths: [7,8,9,10,12], color: '#2563eb', combined: true, combinedKey: 'pl54', combinedLengths: [8,10,12] },
-  { label: '54" × ½" PL',     fullName: '54" × ½" Plain',           key: 'pl54',     lengths: [8,10,12],     color: '#2563eb', hidden: true },
-  { label: '48" × ½" CD',     fullName: '48" × ½" Ceiling Drywall', key: 'cd48',     lengths: [8,10,12],     color: '#7c3aed' },
-  { label: '48" × ½" Dens',   fullName: '48" × ½" Denshield',       key: 'dens48',   lengths: [5,8],         color: '#6b7280' },
-  { label: '48" × ½" W/R',    fullName: '48" × ½" Water Resistant', key: 'wr48',     lengths: [8,10,12],     color: '#ca8a04' },
-  { label: '48" × ⅝" FG',    fullName: '48" × ⅝" Fire Guard',     key: 'fg48',     lengths: [8,9,10,12],   color: '#dc2626' },
-  { label: '48" × ⅝" DL',    fullName: '48" × ⅝" Double Layer',   key: 'dl48',     lengths: [8,9,10,12],   color: '#dc2626' },
-  { label: '54" × ⅝" FG',    fullName: '54" × ⅝" Fire Guard',     key: 'fg54',     lengths: [8,10,12],     color: '#dc2626' },
-  { label: '½" Durock',       fullName: '½" Durock',               key: 'durock48', lengths: [5,8],         labels: ["3' × 5'", "4' × 8'"], color: '#111111' },
-  { label: '48" × ¼" Flex',   fullName: '48" × ¼" Flex',           key: 'flex48',   lengths: [8,10,12],     color: '#ea580c' },
-  { label: 'Extras',           fullName: 'Extras',                   key: 'extras',   lengths: [], color: '#0891b2', isItems: true },
+  // ── Regular ──
+  { label: '½" Plain',     fullName: '½" Plain (48" & 54")',     key: 'pl48',     lengths: [7,8,9,10,12], color: '#2563eb', group: 'Regular',   combined: true, combinedKey: 'pl54', combinedLengths: [8,10,12] },
+  { label: '54" × ½" PL', fullName: '54" × ½" Plain',           key: 'pl54',     lengths: [8,10,12],     color: '#2563eb', group: 'Regular',   hidden: true },
+  { label: '½" CD',        fullName: '48" × ½" Ceiling Drywall', key: 'cd48',     lengths: [8,10,12],     color: '#7c3aed', group: 'Regular' },
+  // ── Fireguard ──
+  { label: '⅝" Type X',       fullName: '⅝" Type X (48" & 54")',key: 'fg48',     lengths: [8,9,10,12],   color: '#dc2626', group: 'Fireguard', combined: true, combinedKey: 'fg54', combinedLengths: [8,10,12] },
+  { label: '54" × ⅝" Type X', fullName: '54" × ⅝" Type X',     key: 'fg54',     lengths: [8,10,12],     color: '#dc2626', group: 'Fireguard', hidden: true },
+  { label: '⅝" DL',       fullName: '48" × ⅝" Double Layer',   key: 'dl48',     lengths: [8,9,10,12],   color: '#dc2626', group: 'Fireguard' },
+  { label: '½" Type C',    fullName: '48" × ½" Type C',           key: 'tc48',     lengths: [8,9,10,12],   color: '#b45309', group: 'Fireguard' },
+  { label: '½" DL',        fullName: '48" × ½" Double Layer',     key: 'hdl48',    lengths: [8,9,10,12],   color: '#b45309', group: 'Fireguard' },
+  // ── Special ──
+  { label: 'Durock',        fullName: '½" Durock',                 key: 'durock48', lengths: [5,8],         color: '#111111', group: 'Special',   labels: ["3' × 5'", "4' × 8'"] },
+  { label: 'Denshield',     fullName: '48" × ½" Denshield',       key: 'dens48',   lengths: [5,8],         color: '#6b7280', group: 'Special' },
+  { label: 'W/R',           fullName: '48" × ½" Water Resistant', key: 'wr48',     lengths: [8,10,12],     color: '#ca8a04', group: 'Special' },
+  { label: '¼" Flex',      fullName: '48" × ¼" Flex',           key: 'flex48',   lengths: [8,10,12],     color: '#ea580c', group: 'Special' },
+  // ── Extras ──
+  { label: 'Extras',        fullName: 'Extras',                     key: 'extras',   lengths: [],            color: '#0891b2', group: 'Extras',    isItems: true },
 ];
 
 const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)'];
@@ -907,6 +927,7 @@ let jobs, jobCounter, curJobId;
 let curAreaId = null;
 let curCat    = 'drywall';
 let curType   = 0;
+let curDwGroup = 'Regular'; // active drywall top-tab group
 let areaFormEditId = null;
 
 const J = () => jobs.find(j => j.id === curJobId);
@@ -926,6 +947,10 @@ function renderCatTabs() {
 }
 function switchCat(key) {
   curCat = key;
+  if (key !== 'drywall') {
+    const gb = document.getElementById('dw-group-bar');
+    if (gb) gb.style.display = 'none';
+  }
   renderCatTabs();
   renderTypeTabs();
   renderTally();
@@ -1066,6 +1091,10 @@ function renderAreaInfoBar() {
 
   const halfPlain = sqftOf(['pl48','pl54']);
   if (halfPlain>0) chips.push(chip('½" Plain', halfPlain+' ft²'));
+  const tcSqft = sqftOf('tc48');
+  if (tcSqft>0) chips.push(chip('½" Type C', tcSqft+' ft²'));
+  const hdlSqft = sqftOf('hdl48');
+  if (hdlSqft>0) chips.push(chip('½" DL', hdlSqft+' ft²'));
   const ceilSqft = sqftOf('cd48');
   if (ceilSqft>0) chips.push(chip('Ceiling DW', ceilSqft+' ft²'));
   const dblSqft = sqftOf('dl48');
@@ -1117,13 +1146,24 @@ function renderAreaInfoBar() {
 function renderTypeTabs() {
   const wrap = document.getElementById('type-bar-wrap');
   if (curCat === 'drywall') {
-    wrap.style.display = '';
-    const visibleTypes = DRYWALL_TYPES.filter(t=>!t.hidden);
-    const curVisIdx = visibleTypes.indexOf(DRYWALL_TYPES[curType]);
-    document.getElementById('type-tabs').innerHTML = visibleTypes.map((t,i) => {
-      const active = i===curVisIdx;
-      return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchType(${i})">${t.label}</button>`;
-    }).join('');
+    // Show group bar, hide regular type-bar when Extras (no sub-tabs needed)
+    document.getElementById('dw-group-bar').style.display = '';
+    // Update group tab active states
+    document.querySelectorAll('.dw-group-tab').forEach(b => {
+      b.classList.toggle('active', b.textContent === curDwGroup);
+    });
+    // Sub-tabs: types within current group (excluding hidden)
+    const groupTypes = DRYWALL_TYPES.filter(t => t.group === curDwGroup && !t.hidden);
+    if (curDwGroup === 'Extras' || groupTypes.length === 0) {
+      wrap.style.display = 'none';
+    } else {
+      wrap.style.display = '';
+      const curVisIdx = groupTypes.indexOf(DRYWALL_TYPES[curType]);
+      document.getElementById('type-tabs').innerHTML = groupTypes.map((t,i) => {
+        const active = i === curVisIdx;
+        return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchDwType(${i})">${t.label}</button>`;
+      }).join('');
+    }
   } else if (curCat === 'insulation') {
     wrap.style.display = '';
     renderInsTypeTabs();
@@ -1159,11 +1199,28 @@ function renderInsTypeTabs() {
     `<button class="type-tab" style="${curInsSubTab===1?`border-bottom-color:${insCol};color:${insCol}`:''}" onclick="switchInsSubTab(1)">Extras</button>`;
 }
 function switchInsSubTab(n) { curInsSubTab=n; renderInsTypeTabs(); renderInsulation(); }
-function switchType(visIdx) {
-  const visible = DRYWALL_TYPES.filter(t=>!t.hidden);
-  curType = visible[visIdx] ? DRYWALL_TYPES.indexOf(visible[visIdx]) : 0;
-  renderTypeTabs(); renderTally();
+
+function switchDwGroup(group) {
+  curDwGroup = group;
+  // Select first visible type in the new group
+  if (group === 'Extras') {
+    curType = DRYWALL_TYPES.findIndex(t => t.group === 'Extras');
+  } else {
+    const firstInGroup = DRYWALL_TYPES.findIndex(t => t.group === group && !t.hidden);
+    if (firstInGroup >= 0) curType = firstInGroup;
+  }
+  renderTypeTabs();
+  renderTally();
 }
+
+function switchDwType(visIdx) {
+  const groupTypes = DRYWALL_TYPES.filter(t => t.group === curDwGroup && !t.hidden);
+  curType = groupTypes[visIdx] ? DRYWALL_TYPES.indexOf(groupTypes[visIdx]) : curType;
+  renderTypeTabs();
+  renderTally();
+}
+
+
 function switchInsType(n) { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
 function switchSteelSubTab(n) { curSteelSubTab=n; renderTypeTabs(); renderTally(); }
 function switchMudSubTab(n) { curMudSubTab=n; renderTypeTabs(); renderTally(); }
@@ -1257,13 +1314,13 @@ function renderTally() {
       }).join('');
       area.innerHTML =
         `<div class="tally-header">
-          <div class="tally-type-label" style="color:${col}">48" × ½" Plain</div>
+          <div class="tally-type-label" style="color:${col}">48" × ${t.fullName.includes('Type X') ? '⅝" Type X' : '½" Plain'}</div>
           <div class="tally-subtotal">Subtotal: <strong>${sub48} ft²</strong></div>
         </div>
         <div class="sheet-grid">${mkCards(t.key, t.lengths)}</div>
         <div class="type-group-divider" style="margin:8px 0 4px"></div>
         <div class="tally-header">
-          <div class="tally-type-label" style="color:${col}">54" × ½" Plain</div>
+          <div class="tally-type-label" style="color:${col}">54" × ${t.fullName.includes('Type X') ? '⅝" Type X' : '½" Plain'}</div>
           <div class="tally-subtotal">Subtotal: <strong>${sub54} ft²</strong></div>
         </div>
         <div class="sheet-grid">${mkCards(t.combinedKey, t.combinedLengths)}</div>`;
@@ -1953,7 +2010,7 @@ function commitDrawerRename(id) {
 function openDrawer()  { renderDrawerList(null); document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
 function closeDrawer() { const i=document.getElementById('drawer-rename'); if(i)i.blur(); document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
 function selectJob(id) {
-  curJobId=id; curAreaId=J().areas[0]?.id||null; curType=0; curCat='drywall';
+  curJobId=id; curAreaId=J().areas[0]?.id||null; curType=0; curCat='drywall'; curDwGroup='Regular';
   document.getElementById('job-name-display').textContent=J().name;
   saveState(); closeDrawer(); renderAll();
 }
@@ -1967,7 +2024,7 @@ function newJob() {
   while (usedNums.has(n)) n++;
   jobCounter = Math.max(jobCounter, n);
   jobs.push(makeJob('Job '+n, ++jobCounter));
-  curJobId=jobCounter; curAreaId=null; curType=0; curCat='drywall';
+  curJobId=jobCounter; curAreaId=null; curType=0; curCat='drywall'; curDwGroup='Regular';
   saveState();
   document.getElementById('job-name-display').textContent=J().name;
   renderAll();
@@ -2130,7 +2187,7 @@ function showReport() {
     DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
       const entries=t.lengths.filter(l=>a.counts[t.key][l]>0);
       if(!entries.length)return;
-      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex'};
+      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex',tc48:'dw_half_pl',hdl48:'dw_half_pl'};
       const matRate2 = MAT_RATES[matKeyMap2[t.key]] || 0;
       const fmtMat=v=>'$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
       html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
@@ -2355,9 +2412,24 @@ function showReport() {
         const priceKey = (isHR ? 'board_hr_' : 'board_lr_') + key;
         return gPrices[priceKey] || (bracket ? bracket.rates[gRateIdx] : 0.39);
       })();
-      const totalSqft = DRYWALL_TYPES.filter(t=>!t.isItems).reduce((s,t) =>
-        s + t.lengths.reduce((s2,l) => s2 + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0), 0);
-      labourCost += totalSqft * boardRate;
+      // Split sqft by regular vs fireguard — each uses different rate
+      const FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48']);
+      let plainSqft = 0, fivetSqft2 = 0;
+      DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t => {
+        const sf = t.lengths.reduce((s,l) => s + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0);
+        if (FIVET_KEYS.has(t.key)) fivetSqft2 += sf;
+        else plainSqft += sf;
+      });
+      const fivetRate = (() => {
+        const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
+        const hKey = hMap[ceilH] || (isHR ? 'h9' : 'h8');
+        const priceKey = (isHR ? 'fivet_hr_' : 'fivet_lr_') + hKey;
+        if (gPrices[priceKey] !== undefined) return gPrices[priceKey];
+        // Fallback: ½" rate + $0.105 premium per CBA
+        return boardRate + 0.105;
+      })();
+      labourCost += plainSqft * boardRate;
+      labourCost += fivetSqft2 * fivetRate;
       // Insulation labour
       INSULATION_TYPES.forEach(t => {
         if(t.kind==='blown'||t.kind==='foam') return;
@@ -2411,7 +2483,7 @@ function showReport() {
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
 
     html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
-    html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalLabour)}</span></div>`;
+    html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabour)}</span></div>`;
     html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
     html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal Labour + Material</span><span style="font-family:'DM Mono',monospace">${fmt(subtotalLM)}</span></div>`;
     html += `<div class="modal-row"><span>Profit (${gProfitPct}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(profit)}</span></div>`;
@@ -2625,12 +2697,23 @@ const PRICE_FIELDS = [
   { key:'board_lr_h10', label:">9' to ≤10'",  rates:[0.422,0.431,0.439], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
   { key:'board_lr_h11', label:">10' to ≤11'", rates:[0.451,0.460,0.469], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
   { key:'board_lr_h12', label:">11' to ≤12'", rates:[0.466,0.475,0.485], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
+  // ── Boarding LR — ⅝" / Type C / DL (½" + $0.105 premium) ──
+  { key:'fivet_lr_h8',  label:"≤8'",          rates:[0.457,0.464,0.471], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h9',  label:">8' to ≤9'",   rates:[0.478,0.486,0.493], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h10', label:">9' to ≤10'",  rates:[0.527,0.536,0.544], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h11', label:">10' to ≤11'", rates:[0.556,0.565,0.574], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h12', label:">11' to ≤12'", rates:[0.571,0.580,0.590], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
   // ── Boarding HR ──
   { key:'board_hr_h9',  label:">8' to ≤9'",   rates:[0.377,0.385,0.393], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
   { key:'board_hr_h10', label:">9' to ≤10'",  rates:[0.397,0.405,0.413], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
   { key:'board_hr_h11', label:">10' to ≤11'", rates:[0.416,0.424,0.433], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
   { key:'board_hr_h12', label:">11' to ≤12'", rates:[0.434,0.442,0.451], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
   // ── Steel HR ──
+  // ── Boarding HR — ⅝" / Type C / DL ──
+  { key:'fivet_hr_h9',  label:">8' to ≤9'",   rates:[0.482,0.490,0.498], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_hr_h10', label:">9' to ≤10'",  rates:[0.502,0.510,0.518], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_hr_h11', label:">10' to ≤11'", rates:[0.521,0.529,0.538], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_hr_h12', label:">11' to ≤12'", rates:[0.539,0.547,0.556], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
   { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
   { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
   { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
