@@ -394,7 +394,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-8 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-10 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -420,7 +420,7 @@
     <div class="sheet-body">
       <div class="field-group">
         <div class="field-label">Area Name</div>
-        <input class="field-input" id="af-name" type="text" placeholder="e.g. Main Floor, Basement…"/>
+        <input class="field-input" id="af-name" type="text" placeholder="e.g. Main Floor, Basement…" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"/>
       </div>
       <div class="field-group">
         <div class="field-label">Ceiling Height <span style="color:#dc2626">*</span></div>
@@ -2257,17 +2257,17 @@ function openDetails(forceRequired) {
     ${req ? `<div id="df-req-banner" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#dc2626;font-weight:500">
       Complete the required fields before continuing.
     </div>` : ''}
-    <div class="field-group"><div class="field-label">Job Name</div><input class="field-input" id="df-name" type="text" value="${j.name}" placeholder="Job name"/></div>
-    <div class="field-group"><div class="field-label">Customer</div><input class="field-input" id="df-customer" type="text" value="${d.customer}" placeholder="Customer name"/></div>
-    <div class="field-group"><div class="field-label">Site</div><input class="field-input" id="df-site" type="text" value="${d.site}" placeholder="Site address"/></div>
+    <div class="field-group"><div class="field-label">Job Name</div><input class="field-input" id="df-name" type="text" value="${j.name}" placeholder="Job name" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('df-customer').focus();}"/></div>
+    <div class="field-group"><div class="field-label">Customer</div><input class="field-input" id="df-customer" type="text" value="${d.customer}" placeholder="Customer name" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('df-site').focus();}"/></div>
+    <div class="field-group"><div class="field-label">Site</div><input class="field-input" id="df-site" type="text" value="${d.site}" placeholder="Site address" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('df-cname').focus();}"/></div>
     <div class="field-divider"></div>
-    <div class="field-group"><div class="field-label">Site Contact Name</div><input class="field-input" id="df-cname" type="text" value="${d.contactName}" placeholder="Contact name"/></div>
-    <div class="field-group"><div class="field-label">Site Contact Number</div><input class="field-input" id="df-cphone" type="tel" value="${d.contactPhone}" placeholder="Phone number"/></div>
-    <div class="field-group"><div class="field-label">Site Contact Email</div><input class="field-input" id="df-cemail" type="email" value="${d.contactEmail}" placeholder="Email address"/></div>
+    <div class="field-group"><div class="field-label">Site Contact Name</div><input class="field-input" id="df-cname" type="text" value="${d.contactName}" placeholder="Contact name" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('df-cphone').focus();}"/></div>
+    <div class="field-group"><div class="field-label">Site Contact Number</div><input class="field-input" id="df-cphone" type="tel" value="${d.contactPhone}" placeholder="Phone number" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('df-cemail').focus();}"/></div>
+    <div class="field-group"><div class="field-label">Site Contact Email</div><input class="field-input" id="df-cemail" type="email" value="${d.contactEmail}" placeholder="Email address" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('df-lockbox').focus();}"/></div>
     <div class="field-divider"></div>
-    <div class="field-group"><div class="field-label">Lockbox Code</div><input class="field-input" id="df-lockbox" type="text" value="${d.lockbox}" placeholder="Code"/></div>
+    <div class="field-group"><div class="field-label">Lockbox Code</div><input class="field-input" id="df-lockbox" type="text" value="${d.lockbox}" placeholder="Code" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"/></div>
     <div class="field-divider"></div>
-    <div class="field-group"><div class="field-label">Rate Type${reqStar}</div>
+    <div class="field-group"><div class="field-label">Rate Type${reqStar} <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— please select one</span></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button id="df-rate-lr" onclick="setRateBtn('lowrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">Low-Rise</button>
       <button id="df-rate-hr" onclick="setRateBtn('highrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">High-Rise</button>
@@ -2276,7 +2276,7 @@ function openDetails(forceRequired) {
     </div>
     <div id="df-housetype-row" style="margin-top:12px">
       <div class="field-group">
-        <div class="field-label">Building Type${reqStar}</div>
+        <div class="field-label">Building Type${reqStar} <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— please select one</span></div>
         <select class="field-select" id="df-housetype" style="margin-top:4px;color:${ht==='select'?'var(--muted)':'var(--text)'}">
           ${htOptions}
         </select>
@@ -2285,7 +2285,7 @@ function openDetails(forceRequired) {
     </div>
     <div class="field-divider" style="margin-top:14px"></div>
     <div class="field-group" style="margin-top:4px">
-      <div class="field-label" style="margin-bottom:8px">Tasks on this Job${reqStar}</div>
+      <div class="field-label" style="margin-bottom:8px">Tasks on this Job${reqStar} <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— select at least one</span></div>
       <div id="df-err-tasks" style="display:none;font-size:11px;color:#dc2626;margin-bottom:6px">Select at least one task.</div>
       ${['insulation','drywall','taping'].map(task => `
       <div class="toggle-row" style="padding:6px 0;border-bottom:1px solid var(--border)">
@@ -3441,11 +3441,11 @@ function closePricesSheet() { document.getElementById('prices-overlay').classLis
 function openMyInfoSheet() {
   const m = gMyInfo;
   document.getElementById('myinfo-body').innerHTML = `
-    <div class="field-group"><div class="field-label">Name</div><input class="field-input" id="mi-name" type="text" value="${m.name}" placeholder="Your name"/></div>
-    <div class="field-group"><div class="field-label">Company</div><input class="field-input" id="mi-company" type="text" value="${m.company}" placeholder="Company name"/></div>
-    <div class="field-group"><div class="field-label">HST Number</div><input class="field-input" id="mi-hst" type="text" value="${m.hst}" placeholder="123456789 RT0001"/></div>
-    <div class="field-group"><div class="field-label">Email</div><input class="field-input" id="mi-email" type="email" value="${m.email}" placeholder="email@example.com"/></div>
-    <div class="field-group"><div class="field-label">Phone</div><input class="field-input" id="mi-phone" type="tel" value="${m.phone}" placeholder="(416) 555-0000"/></div>
+    <div class="field-group"><div class="field-label">Name</div><input class="field-input" id="mi-name" type="text" value="${m.name}" placeholder="Your name" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('mi-company').focus();}"/></div>
+    <div class="field-group"><div class="field-label">Company</div><input class="field-input" id="mi-company" type="text" value="${m.company}" placeholder="Company name" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('mi-hst').focus();}"/></div>
+    <div class="field-group"><div class="field-label">HST Number</div><input class="field-input" id="mi-hst" type="text" value="${m.hst}" placeholder="123456789 RT0001" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('mi-email').focus();}"/></div>
+    <div class="field-group"><div class="field-label">Email</div><input class="field-input" id="mi-email" type="email" value="${m.email}" placeholder="email@example.com" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('mi-phone').focus();}"/></div>
+    <div class="field-group"><div class="field-label">Phone</div><input class="field-input" id="mi-phone" type="tel" value="${m.phone}" placeholder="(416) 555-0000" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"/></div>
   `;
   document.getElementById('myinfo-overlay').classList.add('open');
 }
