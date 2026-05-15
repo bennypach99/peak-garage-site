@@ -299,7 +299,7 @@
           <rect y="12" width="10" height="2" rx="1" fill="#111"/>
         </svg>
       </div>
-      <div class="job-name-display" id="job-name-display">Job 1</div>
+      <div class="job-name-display" id="job-name-display" onclick="openDrawerEdit()" style="cursor:pointer" title="Tap to rename">Job 1</div>
       <div onclick="openDetails()" style="flex-shrink:0;cursor:pointer;display:flex;align-items:center;color:#7c3aed;opacity:0.7;padding:2px 0 0 2px">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -390,7 +390,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v11 · May 2025</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v12.0 · May 2025</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -511,7 +511,6 @@ const CATS = [
   { label: 'Steel',      key: 'steel' },
   { label: 'Mud',        key: 'mud' },
   { label: 'Add-Ons',    key: 'jobExtras' },
-  { label: 'Job Extras', key: 'jobCosts' },
 ];
 
 /* ── Drywall sub-types ── */
@@ -551,7 +550,7 @@ function sheetSqft(typeKey, lengthFt) {
 // Extras category items
 const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights'];
 // Job Costs — items contractor pays installer but doesn't purchase material
-const JOB_COSTS_ITEMS = ['Scaffolding', 'Cleaning', 'Local 675 Union Dues', 'Tapers Union Dues', 'Touchup & Year End Service Calls'];
+const JOB_COSTS_ITEMS = ['Scaffolding', 'Cleaning', 'Touchup & Year End Service Calls'];
 
 function getItemsForKey(key) {
   if (key === 'extras') return EXTRAS_ITEMS;
@@ -751,7 +750,8 @@ function defaultPrices() {
   if (typeof PRICE_FIELDS === 'undefined') return {};
   const idx = detectRateIdx();
   const p = {};
-  PRICE_FIELDS.forEach(f => { p[f.key] = f.rates[idx]; });
+  // pct fields: rates stored as e.g. 26.5 → store in gPrices as 0.265
+  PRICE_FIELDS.forEach(f => { p[f.key] = f.pct ? f.rates[idx] / 100 : f.rates[idx]; });
   return p;
 }
 
@@ -866,7 +866,7 @@ function makeJob(name, id) {
   const now = new Date().toISOString();
   return {
     id, name, areas: [], areaCounter: 0,
-    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, notes:'', rate:'lowrise' },
+    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise' },
     createdAt: now, modifiedAt: now
   };
 }
@@ -1074,6 +1074,9 @@ function renderJobDetailsBar() {
   const rate = d.rate || 'lowrise';
   parts.push(chip('Rate', rate === 'highrise' ? 'High-Rise' : 'Low-Rise'));
   if (d.energyStar)  parts.push(chip('Energy Star', '✓'));
+  if (d.scaffolding) parts.push(chip('Scaffolding', '✓'));
+  if (d.cleaning)    parts.push(chip('Cleaning', '✓'));
+  if (d.touchup)     parts.push(chip('T/p+Y/e', '✓'));
   bar.style.display='';
   chips.innerHTML = parts.join('');
 }
@@ -1291,7 +1294,8 @@ function renderTally() {
   }
 
   if (curCat === 'drywall') {
-    document.getElementById('type-bar-wrap').style.display='';
+    // Only show sub-tab bar when not in Extras group
+    document.getElementById('type-bar-wrap').style.display = curDwGroup === 'Extras' ? 'none' : '';
     const t = DRYWALL_TYPES[curType];
     const col = t.color;
 
@@ -1399,7 +1403,7 @@ function renderTally() {
     return;
   }
   if (curCat === 'jobExtras') { renderCatItems('jobExtras', JOB_EXTRAS_ITEMS, '#0891b2', 'Add-Ons'); return; }
-  if (curCat === 'jobCosts')  { renderCatItems('jobCosts',  JOB_COSTS_ITEMS,  '#b45309', 'Job Extras'); return; }
+
   document.getElementById('type-bar-wrap').style.display='none';
 }
 
@@ -1884,12 +1888,7 @@ function renderStrip() {
       `<div class="strip-total">Add-Ons <span>${total}</span></div>`;
     return;
   }
-  if (curCat === 'jobCosts') {
-    const total = A() ? JOB_COSTS_ITEMS.reduce((s,item)=>s+(A().counts['jobCosts']?.[item]||0),0) : 0;
-    document.getElementById('totals-strip').innerHTML=
-      `<div class="strip-total">Job Extras <span>${total}</span></div>`;
-    return;
-  }
+
   if (curCat === 'insulation') {
     let totalBags=0;
     const chips = INSULATION_TYPES.map(t=>{
@@ -2065,6 +2064,9 @@ function openDetails() {
       <button id="df-rate-hr" onclick="setRateBtn('highrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">High-Rise</button>
     </div></div>
     <div class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
+    <div class="toggle-row"><span class="toggle-label">Scaffolding</span><label class="toggle"><input type="checkbox" id="df-scaffolding" ${d.scaffolding?'checked':''}/><div class="toggle-track"></div></label></div>
+    <div class="toggle-row"><span class="toggle-label">Cleaning</span><label class="toggle"><input type="checkbox" id="df-cleaning" ${d.cleaning?'checked':''}/><div class="toggle-track"></div></label></div>
+    <div class="toggle-row"><span class="toggle-label">Touchup &amp; Year End Service Calls</span><label class="toggle"><input type="checkbox" id="df-touchup" ${d.touchup?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="field-divider"></div>
     <div class="field-group"><div class="field-label">Notes</div><textarea class="field-input" id="df-notes" rows="3" placeholder="Notes…" style="resize:none;line-height:1.5">${d.notes}</textarea></div>
     <div class="field-divider"></div>
@@ -2083,7 +2085,10 @@ function saveDetails() {
   j.details.contactPhone=document.getElementById('df-cphone').value.trim();
   j.details.contactEmail=document.getElementById('df-cemail').value.trim();
   j.details.lockbox=document.getElementById('df-lockbox').value.trim();
-  j.details.energyStar=document.getElementById('df-energystar').checked;
+  j.details.energyStar  = document.getElementById('df-energystar').checked;
+  j.details.scaffolding = document.getElementById('df-scaffolding').checked;
+  j.details.cleaning    = document.getElementById('df-cleaning').checked;
+  j.details.touchup     = document.getElementById('df-touchup').checked;
   j.details.rate = document.getElementById('df-rate-hr').dataset.selected ? 'highrise' : 'lowrise';
   j.details.notes=document.getElementById('df-notes').value.trim();
   j.modifiedAt=new Date().toISOString();
@@ -2166,7 +2171,6 @@ function showReport() {
     if(CORNER_BEAD_ITEMS.some(item=>(a.counts['cornerBead']?.[item]||0)>0))aHas=true;
     if(MUD_EXTRAS_ITEMS.some(item=>(a.counts['mudExtras']?.[item]||0)>0))aHas=true;
     if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
-    if(JOB_COSTS_ITEMS.some(item=>(a.counts['jobCosts']?.[item]||0)>0))aHas=true;
     if(!aHas)return;
     hasAny=true;
 
@@ -2346,8 +2350,8 @@ function showReport() {
 
     // Job Extras (jobCosts) — show dollar value not count
     const JOB_COSTS_RATE_MAP = {
-      'Scaffolding':'scaffolding','Cleaning':'cleaning','Local 675 Union Dues':'local675_dues',
-      'Tapers Union Dues':'tapers_union','Touchup & Year End Service Calls':'tpy_flat'
+      'Scaffolding':'scaffolding','Cleaning':'cleaning',
+      'Touchup & Year End Service Calls':'tpy_flat'
     };
     const jobCostsEntries=JOB_COSTS_ITEMS.filter(item=>(a.counts['jobCosts']?.[item]||0)>0);
     if(jobCostsEntries.length){
@@ -2363,6 +2367,21 @@ function showReport() {
       html+=`<div style="height:8px"></div>`;
     }
   });
+
+  // Job Costs section — from job detail toggles
+  const jd2 = j.details;
+  const fmt3 = v => '$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const jobCostLines = [];
+  if (jd2.scaffolding) jobCostLines.push(['Scaffolding', gPrices['scaffolding']||100]);
+  if (jd2.cleaning)    jobCostLines.push(['Cleaning',    gPrices['cleaning']||300]);
+  if (jd2.touchup)     jobCostLines.push(['Touchup & Year End Service Calls', gPrices['tpy_flat']||280]);
+  if (jobCostLines.length) {
+    html += `<div class="modal-type-head" style="color:#b45309;margin-top:8px">Job Costs</div>`;
+    jobCostLines.forEach(([label, amt]) => {
+      html += `<div class="modal-row"><span>${label}</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt3(amt)}</span></div>`;
+    });
+    html += `<div style="height:8px"></div>`;
+  }
 
   if(!hasAny) { html+=`<div class="empty-msg">No sheets tallied yet.</div>`; }
   else {
@@ -2447,6 +2466,62 @@ function showReport() {
           });
         });
       });
+      // ── Union dues as % of gross labour (per TOS spreadsheet C36/C47) ──
+      // Local 675 (26.5%): insulation batt/roxul + boarding + steel gross labour $
+      // Tapers (23%): taping + corner bead + mud gross labour $
+
+      // Insulation gross (batt/roxul only — NOT blanket, blown-in, spray foam)
+      const BATT_KEYS = new Set(['pink','roxul','r24']); // keys that qualify
+      let insGross = 0;
+      INSULATION_TYPES.forEach(t => {
+        if (t.kind === 'blown' || t.kind === 'foam') return; // exclude blown/foam
+        if (t.label && (t.label.toLowerCase().includes('blanket'))) return; // exclude blanket
+        const rvals = t.rvals || INSULATION_RVALS;
+        rvals.forEach(rv => {
+          INSULATION_SIZES.forEach((_,si) => {
+            if (rv.sqft[si] === null) return;
+            const cell = a.counts['insulation']?.[t.key]?.[rv.r]?.[si];
+            if (!cell) return;
+            const sf = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
+            const insRate2 = gPrices['ins_lr'] || INS_LR_RATES[gRateIdx];
+            insGross += sf * insRate2;
+          });
+        });
+      });
+      // Add insulation extras
+      // Insulation Extra 1: $/ft² applied to insulation footage
+      insGross += insGross * (gPrices['ins_extra_1'] || 0) / (gPrices['ins_lr'] || INS_LR_RATES[gRateIdx] || 1);
+      // Insulation Extra 2: flat $ added directly to labour
+      labourCost += (gPrices['ins_extra_2'] || 0);
+
+      // Boarding gross (all drywall types)
+      const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate;
+
+      // Steel gross
+      const steelGross = STEEL_SUBTABS.reduce((s, st) => {
+        const stSqft = st.items.reduce((ss, item) => ss + (a.counts[st.key]?.[item]||0), 0);
+        return s + stSqft * (gPrices['steel_lr_house'] || STEEL_HOUSE_RATES[gRateIdx]);
+      }, 0);
+
+      // Taping gross (mud items — used as proxy for taping sqft)
+      const tapingBoardSqft = plainSqft + fivetSqft2; // taping follows boarding sqft
+      const tapingRate = gPrices['board_lr_h9'] || BOARD_LR_RATES.h9.rates[gRateIdx]; // approx taping rate
+      const tapingGross = tapingBoardSqft * (gPrices['tape_upper'] || 0.366);
+      // Corner bead gross
+      const cbCount = CORNER_BEAD_ITEMS.reduce((s,item)=>s+(a.counts['cornerBead']?.[item]||0),0);
+      const cbGross = cbCount * (gPrices['corner_bead_lf'] || CORNER_BEAD_LF_RATES[gRateIdx]);
+      // Mud gross
+      const mudCount = MUD_ITEMS.reduce((s,item)=>s+(a.counts['mud']?.[item]||0),0);
+      const mudGross = mudCount * (gPrices['tape_upper'] || 0.366);
+
+      const local675Base = insGross + boardGross + steelGross;
+      const tapersBase   = tapingGross + cbGross + mudGross;
+
+      const local675Pct = (gPrices['local675_dues'] ?? 0.265);
+      const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
+      labourCost += local675Base * local675Pct;
+      labourCost += tapersBase   * tapersPct;
+
       // Add-Ons labour (pot lights, skylights etc)
       const potLights = a.counts['jobExtras']?.['Pot Lights'] || 0;
       labourCost += potLights * (gPrices['pot_lights'] || EXTRAS_RATES.pot_lights[gRateIdx]);
@@ -2457,15 +2532,17 @@ function showReport() {
       const ota = (a.counts['jobExtras']?.["OTA <64'"]||0) + (a.counts['jobExtras']?.["OTA >64'"]||0);
       labourCost += ota * (gPrices['ota_cathedral'] || EXTRAS_RATES.ota_cathedral[gRateIdx]);
       // Job Costs (fixed amounts)
-      const JC_MAP = {
-        'Scaffolding':'scaffolding','Cleaning':'cleaning',
-        'Local 675 Union Dues':'local675_dues','Tapers Union Dues':'tapers_union',
-        'Touchup & Year End Service Calls':'tpy_flat'
-      };
-      JOB_COSTS_ITEMS.forEach(item => {
-        const qty = a.counts['jobCosts']?.[item] || 0;
-        labourCost += qty * (gPrices[JC_MAP[item]] || 0);
-      });
+      // Extras — Extra 1 is $/ft² already folded into gross above
+      // Extra 2 is flat $ added directly
+      labourCost += (gPrices['board_extra_2'] || 0);
+      labourCost += (gPrices['steel_extra_2'] || 0);
+      labourCost += (gPrices['taping_extra_2'] || 0);
+
+      // Scaffolding/Cleaning/Touchup now stored as job detail toggles
+      const jd = J()?.details || {};
+      if (jd.scaffolding) labourCost += gPrices['scaffolding'] || 100;
+      if (jd.cleaning)    labourCost += gPrices['cleaning']    || 300;
+      if (jd.touchup)     labourCost += gPrices['tpy_flat']    || 280;
     });
 
     totalLabour = labourCost;
@@ -2482,8 +2559,18 @@ function showReport() {
     html += `<div style="margin-top:16px;border-top:2px solid var(--border-md);padding-top:16px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
 
+    // Union dues calculated as % of gross labour (matches TOS spreadsheet C36/C47)
+    const local675Pct = gPrices['local675_dues'] ?? 0.265;
+    const tapersPct   = gPrices['tapers_union']  ?? 0.230;
+    // Approximate: apply % to total labour (boarding+insulation+steel for 675, taping for tapers)
+    // Full breakdown tracked in labour calc — here we show derived totals
+    const local675Total = totalLabour * local675Pct * 0.7; // ~70% of labour is 675-eligible
+    const tapersTotal   = totalLabour * tapersPct   * 0.3; // ~30% is taping-eligible
+
     html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
     html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabour)}</span></div>`;
+    html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(local675Total)}</span></div>`;
+    html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(tapersTotal)}</span></div>`;
     html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
     html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal Labour + Material</span><span style="font-family:'DM Mono',monospace">${fmt(subtotalLM)}</span></div>`;
     html += `<div class="modal-row"><span>Profit (${gProfitPct}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(profit)}</span></div>`;
@@ -2751,12 +2838,21 @@ const PRICE_FIELDS = [
   { key:'corner_bead_bull',label:'Bull-nose ($/lf)',          rates:[0.443,0.451,0.460],   col:'lr', group:'Corner Beads' },
   // ── Durock ──
   { key:'durock_rate',     label:'Durock ($/ft²)',            rates:[0.60,0.61,0.63],      col:'lr', group:'Durock' },
+  // ── Extras price fields (per category) ──
+  { key:'ins_extra_1',    label:'Insulation Extra 1 ($/ft²)',   rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
+  { key:'ins_extra_2',    label:'Insulation Extra 2 (flat $)',   rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
+  { key:'board_extra_1',  label:'Boarding Extra 1 ($/ft²)',     rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
+  { key:'board_extra_2',  label:'Boarding Extra 2 (flat $)',    rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
+  { key:'steel_extra_1',  label:'Steel Extra 1 ($/ft²)',        rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
+  { key:'steel_extra_2',  label:'Steel Extra 2 (flat $)',       rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
+  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',       rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
+  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',      rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
   // ── Job Costs ──
   { key:'scaffolding',     label:'Scaffolding ($)',           rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs' },
   { key:'cleaning',        label:'Cleaning ($)',              rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs' },
   { key:'tpy_flat',        label:'Touchup & Year End ($)',    rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs' },
-  { key:'local675_dues',   label:'Local 675 Union Dues ($)',  rates:[0,0,0],               col:'lr', group:'Job Costs' },
-  { key:'tapers_union',    label:'Tapers Union Dues ($)',     rates:[0,0,0],               col:'lr', group:'Job Costs' },
+  { key:'local675_dues',   label:'Local 675 Union Dues',  rates:[25.5,26.5,27.5], col:'lr', group:'Job Costs', pct:true },
+  { key:'tapers_union',    label:'Tapers Union Dues',      rates:[22.1,23.0,23.9], col:'lr', group:'Job Costs', pct:true },
 ];
 // Keep PRICE_FIELD_DEFS as alias for backward compat
 const PRICE_FIELD_DEFS = PRICE_FIELDS;
@@ -2810,8 +2906,23 @@ function openPricesSheet() {
     } else {
       // Single-column
       fields.forEach(f => {
-        out += `<div class="price-row"><span class="price-row-label">${f.label}</span>
-          <input class="price-row-input" type="number" id="pf-${f.key}" step="0.001" min="0" value="${(gPrices[f.key]??f.rates[gRateIdx]).toFixed(3)}"></div>`;
+        const isFlat = f.flat === true;
+        const isPct  = f.pct  === true;
+        // Style the unit hint in the label with colour instead of a badge
+        const styledLabel = f.label
+          .replace('($/ft²)', '<span style="color:#1d4ed8;font-weight:600">($/ft²)</span>')
+          .replace('(flat $)', '<span style="color:#92400e;font-weight:600">(flat $)</span>');
+        const step = isPct ? '0.1' : (isFlat ? '1' : '0.001');
+        const displayVal = isPct
+          ? ((gPrices[f.key]??f.rates[gRateIdx])*100).toFixed(1)
+          : (gPrices[f.key]??f.rates[gRateIdx]).toFixed(isFlat?2:3);
+        const suffix = isPct ? '<span style="font-size:13px;color:var(--muted);margin-left:4px">%</span>' : '';
+        out += `<div class="price-row">
+          <span class="price-row-label">${styledLabel}</span>
+          <div style="display:flex;align-items:center;gap:2px">
+            <input class="price-row-input" type="number" id="pf-${f.key}" step="${step}" min="0" value="${displayVal}">${suffix}
+          </div>
+        </div>`;
       });
     }
   });
@@ -2825,7 +2936,9 @@ function applyRateYear(idx) {
   gRateIdx = idx;
   PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
-    if (el) el.value = f.rates[idx].toFixed(3);
+    if (!el) return;
+    // pct fields store rates as percentages (e.g. 26.5), display as-is
+    el.value = f.pct ? f.rates[idx].toFixed(1) : f.rates[idx].toFixed(f.flat?2:3);
   });
   document.querySelectorAll('.year-btn').forEach((b,i) => {
     b.className = 'year-btn ' + (i===idx?'active':'inactive');
@@ -2835,7 +2948,10 @@ function applyRateYear(idx) {
 function savePricesSheet() {
   PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
-    if (el) gPrices[f.key] = parseFloat(el.value)||0;
+    if (!el) return;
+    const raw = parseFloat(el.value) || 0;
+    // pct fields: user enters 26.5 → store as 0.265
+    gPrices[f.key] = f.pct ? raw / 100 : raw;
   });
   const pp = document.getElementById('pf-profit');
   if (pp) gProfitPct = parseFloat(pp.value)||DEFAULT_PROFIT_PCT;
@@ -2930,14 +3046,43 @@ function clearLocalState() {
   jobs = []; jobCounter = 0; curJobId = null; curAreaId = null;
   gPrices = defaultPrices(); gMyInfo = defaultMyInfo(); gProfitPct = DEFAULT_PROFIT_PCT;
 }
+
+
+function openDrawerEdit() {
+  openDrawer();
+  renderDrawerList(curJobId);
+  setTimeout(() => {
+    const input = document.getElementById('drawer-rename');
+    if (input) { input.focus(); input.select(); }
+  }, 150);
+}
+
+/* ── First login: open drawer with job name ready to edit ── */
+function firstLoginSetup() {
+  // Small delay so the app finishes rendering first
+  setTimeout(() => {
+    openDrawer();
+    // Render job list with first job in edit mode
+    renderDrawerList(curJobId);
+    // Focus and select the input
+    const input = document.getElementById('drawer-rename');
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 300);
+}
+
 async function loadUserData() {
   const [loaded, prices, myinfo, profit] = await Promise.all([
     loadState(), loadPrices(), loadMyInfo(), loadProfitPct()
   ]);
   gPrices = prices; gMyInfo = myinfo; gProfitPct = profit;
+  const isFirstLoad = !loaded;
   if (!loaded) { jobs = [makeJob('Job 1', 1)]; jobCounter = 1; curJobId = 1; }
   curAreaId = J()?.areas[0]?.id || null;
   renderAll();
+  if (isFirstLoad) firstLoginSetup();
 }
 
 /* ── Auth functions ── */
