@@ -35,9 +35,9 @@
 
     /* ── Category tabs (Drywall / Insulation / Steel / Mud / Extras) ── */
     .cat-bar { background: #1a1f2e; flex-shrink: 0; }
-    .cat-scroll { display: flex; overflow-x: auto; padding: 0 12px; gap: 2px; scrollbar-width: none; }
+    .cat-scroll { display: flex; overflow-x: auto; padding: 0 6px; gap: 0px; scrollbar-width: none; }
     .cat-scroll::-webkit-scrollbar { display: none; }
-    .cat-tab { padding: 11px 16px; font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: rgba(255,255,255,0.45); white-space: nowrap; transition: color 0.12s; letter-spacing: 0.02em; }
+    .cat-tab { padding: 10px 11px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: rgba(255,255,255,0.45); white-space: nowrap; transition: color 0.12s; letter-spacing: 0em; }
     .cat-tab.active { color: #fff; border-bottom-color: #fff; }
 
     /* ── Area tabs ── */
@@ -340,6 +340,10 @@
   <!-- Type sub-tabs (drywall sub-types, hidden for other cats) -->
   <div class="type-bar" id="type-bar-wrap">
     <div class="type-scroll" id="type-tabs"></div>
+  </div>
+  <!-- R-value sub-tab row — only visible for Pink/Roxul insulation -->
+  <div class="type-bar" id="ins-rval-bar" style="display:none;border-top:1px solid var(--border)">
+    <div class="type-scroll" id="ins-rval-tabs"></div>
   </div>
 
   <div class="tally-area" id="tally-area"></div>
@@ -821,6 +825,7 @@ const INSULATION_TYPES = [
 
 let curInsType = 0; // active insulation type index
 let curInsSubTab = 0; // 0 = insulation types, 1 = extras
+let curInsRvalIdx = {}; // active R-value sub-tab per type index, e.g. {0: 2, 1: 0}
 let curSteelSubTab = 0; // 0 = Steel, 1 = Extras
 let curMudSubTab = 0; // 0 = Mud, 1 = Extras
 let curCbSubTab  = 0; // 0=Vinyl, 1=Metal, 2=Bullnose, 3=Misc
@@ -1183,6 +1188,9 @@ function renderAreaInfoBar() {
 /* ── Type tabs (drywall + insulation) ── */
 function renderTypeTabs() {
   const wrap = document.getElementById('type-bar-wrap');
+  // Always hide rval bar unless insulation batt — renderInsTypeTabs will show it if needed
+  const rvalBar = document.getElementById('ins-rval-bar');
+  if (curCat !== 'insulation' && rvalBar) rvalBar.style.display = 'none';
   if (curCat === 'drywall') {
     // Show group bar, hide regular type-bar when Extras (no sub-tabs needed)
     document.getElementById('dw-group-bar').style.display = '';
@@ -1242,9 +1250,28 @@ function renderInsTypeTabs() {
       return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchInsType(${i})">${t.label}</button>`;
     }).join('') +
     `<button class="type-tab" style="${curInsSubTab===1?`border-bottom-color:${insCol};color:${insCol}`:''}" onclick="switchInsSubTab(1)">Extras</button>`;
+
+  // R-value sub-tabs: only for batt types (Pink / Roxul) when not on Extras
+  const rvalBar = document.getElementById('ins-rval-bar');
+  const rvalTabs = document.getElementById('ins-rval-tabs');
+  const t = INSULATION_TYPES[curInsType];
+  if (curInsSubTab === 0 && t && t.kind === 'batt') {
+    const rvals = t.rvals || INSULATION_RVALS;
+    const activeRv = curInsRvalIdx[curInsType] ?? 0;
+    const col = t.color;
+    rvalTabs.innerHTML = rvals.map((rv, ri) => {
+      const active = ri === activeRv;
+      return `<button class="type-tab" style="font-size:12px;padding:8px 12px;${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchInsRval(${ri})">${rv.r}</button>`;
+    }).join('');
+    rvalBar.style.display = '';
+  } else {
+    rvalTabs.innerHTML = '';
+    rvalBar.style.display = 'none';
+  }
 }
 function switchInsSubTab(n) { curInsSubTab=n; renderInsTypeTabs(); renderInsulation(); }
-
+function switchInsType(n)   { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
+function switchInsRval(ri)  { curInsRvalIdx[curInsType]=ri; renderInsTypeTabs(); renderInsulation(); }
 function switchDwGroup(group) {
   curDwGroup = group;
   // Select first visible type in the new group
@@ -1266,7 +1293,6 @@ function switchDwType(visIdx) {
 }
 
 
-function switchInsType(n) { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
 function switchSteelSubTab(n) { curSteelSubTab=n; renderTypeTabs(); renderTally(); }
 function switchMudSubTab(n) { curMudSubTab=n; renderTypeTabs(); renderTally(); }
 function switchCbSubTab(n)  { curCbSubTab=n;  renderTypeTabs(); renderTally(); renderStrip(); }
@@ -1635,13 +1661,15 @@ function renderInsulation() {
     </div>`;
 
   const ti = curInsType;
-  // One section per R-value that has available sizes
-  rvals.forEach((rv, ri) => {
+  const activeRvi = curInsRvalIdx[ti] ?? 0;
+  // Only render the active R-value section
+  const filteredRvals = rvals.filter((_, ri) => ri === activeRvi);
+  filteredRvals.forEach((rv, _) => {
+    const ri = rvals.indexOf(rv);
     const availableSizes = INSULATION_SIZES.map((sz,si)=>({sz,si})).filter(({si})=>rv.sqft[si]!==null);
     if(!availableSizes.length) return;
 
     html += `<div style="margin-bottom:18px">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin-bottom:10px">${rv.r}</div>
       <div class="sheet-grid">`;
 
     availableSizes.forEach(({sz, si}) => {
