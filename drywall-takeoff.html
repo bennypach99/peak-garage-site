@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.4</title>
+  <title>Drywall Tally v14.5</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -366,6 +366,70 @@
     .tut-list-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
     .tut-list-desc { font-size: 12px; color: var(--muted); }
     .tut-list-arrow { color: var(--muted); font-size: 16px; }
+
+    /* ── Welcome Modal ── */
+    #welcome-overlay {
+      position: fixed; inset: 0; z-index: 400;
+      background: #0f1624;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      overflow-y: auto; padding: 0 0 40px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #welcome-overlay.open { opacity: 1; pointer-events: all; }
+    .wlc-header {
+      width: 100%; padding: 52px 28px 24px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .wlc-logo {
+      width: 82px; height: 82px; border-radius: 22px;
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 40px rgba(124,58,237,0.5);
+      font-size: 38px; flex-shrink: 0;
+    }
+    .wlc-from { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-top: 2px; }
+    .wlc-title { font-size: 26px; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; letter-spacing: -0.02em; margin: 0; }
+    .wlc-sub { font-size: 14px; color: rgba(255,255,255,0.48); text-align: center; max-width: 290px; line-height: 1.65; margin: 0; }
+    .wlc-divider { width: 40px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 4px 0; }
+    .wlc-steps {
+      width: 100%; max-width: 440px; padding: 4px 18px 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .wlc-step {
+      background: rgba(255,255,255,0.055); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 16px; padding: 15px 16px;
+      display: flex; align-items: flex-start; gap: 13px;
+    }
+    .wlc-step-icon {
+      width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .wlc-step-icon.c1 { background: rgba(29,78,216,0.35); }
+    .wlc-step-icon.c2 { background: rgba(124,58,237,0.35); }
+    .wlc-step-icon.c3 { background: rgba(8,145,178,0.35); }
+    .wlc-step-body { flex: 1; min-width: 0; }
+    .wlc-step-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 3px; }
+    .wlc-step-desc { font-size: 12px; color: rgba(255,255,255,0.42); line-height: 1.55; }
+    .wlc-actions {
+      width: 100%; max-width: 440px; padding: 18px 18px 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .wlc-btn-primary {
+      width: 100%; padding: 16px; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      color: #fff; font-size: 16px; font-family: inherit; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.01em;
+      box-shadow: 0 4px 28px rgba(124,58,237,0.45);
+      transition: transform 0.12s, box-shadow 0.12s;
+    }
+    .wlc-btn-primary:active { transform: scale(0.98); }
+    .wlc-btn-skip {
+      width: 100%; padding: 12px; border: none; border-radius: 14px;
+      background: transparent; color: rgba(255,255,255,0.28);
+      font-size: 13px; font-family: inherit; cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -500,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.4 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.5 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -643,6 +707,48 @@
     </div>
     <div class="sheet-body" id="myinfo-body"></div>
     <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveMyInfoSheet()">Save</button></div>
+  </div>
+</div>
+
+<!-- Welcome Modal — shown on first launch only -->
+<div id="welcome-overlay">
+  <div class="wlc-header">
+    <div class="wlc-logo">🏗️</div>
+    <div class="wlc-from">Peak Garage Solutions</div>
+    <h2 class="wlc-title">Welcome to<br>Drywall Tally</h2>
+    <div class="wlc-divider"></div>
+    <p class="wlc-sub">Your job site companion for counting sheets, tracking materials, and generating quotes — fast.</p>
+  </div>
+  <div class="wlc-steps">
+    <div class="wlc-step">
+      <div class="wlc-step-icon c1">📋</div>
+      <div class="wlc-step-body">
+        <div class="wlc-step-title">Set up your first job</div>
+        <div class="wlc-step-desc">Start by filling in the job details — rate type, building type, and which tasks are on the job.</div>
+      </div>
+    </div>
+    <div class="wlc-step">
+      <div class="wlc-step-icon c2">🔢</div>
+      <div class="wlc-step-body">
+        <div class="wlc-step-title">Add areas and count sheets</div>
+        <div class="wlc-step-desc">Create areas for each floor or zone, then tap + to tally sheets by length and type as you walk the job.</div>
+      </div>
+    </div>
+    <div class="wlc-step">
+      <div class="wlc-step-icon c3">📄</div>
+      <div class="wlc-step-body">
+        <div class="wlc-step-title">Generate a report</div>
+        <div class="wlc-step-desc">Tap Report to see a full breakdown of materials and labour cost, then export it as a PDF quote.</div>
+      </div>
+    </div>
+  </div>
+  <div class="wlc-actions">
+    <button class="wlc-btn-primary" onclick="dismissWelcome(true)">
+      Show me around ›
+    </button>
+    <button class="wlc-btn-skip" onclick="dismissWelcome(false)">
+      Skip — I'll figure it out
+    </button>
   </div>
 </div>
 
@@ -2935,6 +3041,8 @@ function saveDetails() {
   renderJobDetailsBar();
   saveState();
   closeDetails();
+  // If first-time welcome flow is pending, kick off the basics tutorial
+  checkPendingWelcomeTutorial();
 }
 
 function closeDetails() {
@@ -4569,15 +4677,46 @@ function openDrawerEdit() {
   }, 150);
 }
 
-/* ── First login: open drawer with job name ready to edit ── */
-function firstLoginSetup() {
+/* ── Welcome modal — shown once on first ever launch ── */
+function showWelcome() {
+  const overlay = document.getElementById('welcome-overlay');
+  overlay.classList.add('open');
+}
+
+function dismissWelcome(startTutorial) {
+  const overlay = document.getElementById('welcome-overlay');
+  overlay.style.transition = 'opacity 0.3s ease';
+  overlay.style.opacity = '0';
   setTimeout(() => {
+    overlay.classList.remove('open');
+    overlay.style.opacity = '';
+    // Open job details form so they fill in required fields
     openDetails(true);
     setTimeout(() => {
       const input = document.getElementById('df-name');
       if (input) { input.focus(); input.select(); }
     }, 80);
+    // After details are saved, kick off the App Basics tutorial
+    if (startTutorial) {
+      // Hook into the details close — start tutorial after form is dismissed
+      window._pendingWelcomeTutorial = true;
+    }
   }, 300);
+}
+
+/* ── First login: show welcome modal instead of jumping straight to details ── */
+function firstLoginSetup() {
+  setTimeout(() => {
+    showWelcome();
+  }, 400);
+}
+
+/* ── Called when job details are saved — start pending welcome tutorial ── */
+function checkPendingWelcomeTutorial() {
+  if (window._pendingWelcomeTutorial) {
+    window._pendingWelcomeTutorial = false;
+    setTimeout(() => startTutorial('basics'), 500);
+  }
 }
 
 async function loadUserData() {
