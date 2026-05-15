@@ -394,7 +394,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-10 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-11 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -2324,7 +2324,8 @@ function saveDetails() {
   const req = j._requireSetup;
 
   const rateSelected = !!(document.getElementById('df-rate-lr').dataset.selected || document.getElementById('df-rate-hr').dataset.selected);
-  const htVal = document.getElementById('df-housetype').value;
+  const isHighRise = !!document.getElementById('df-rate-hr').dataset.selected;
+  const htVal = isHighRise ? 'house' : document.getElementById('df-housetype').value;
   const anyTask = ['insulation','drywall','taping'].some(t => document.getElementById('df-task-'+t).checked);
   let valid = true;
 
@@ -2379,7 +2380,7 @@ function saveDetails() {
   d.touchup     = document.getElementById('df-touchup').checked;
   d.rate        = document.getElementById('df-rate-hr').dataset.selected ? 'highrise' : 'lowrise';
   d.rateSelected = true;
-  d.houseType   = htVal;
+  d.houseType = isHighRise ? 'house' : htVal;
   d.tasks = {
     insulation: document.getElementById('df-task-insulation').checked,
     drywall:    document.getElementById('df-task-drywall').checked,
