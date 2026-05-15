@@ -390,7 +390,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v12.0 · May 2025</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v12.5 · May 2025</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -529,6 +529,7 @@ const DRYWALL_TYPES = [
   // ── Special ──
   { label: 'Durock',        fullName: '½" Durock',                 key: 'durock48', lengths: [5,8],         color: '#111111', group: 'Special',   labels: ["3' × 5'", "4' × 8'"] },
   { label: 'Denshield',     fullName: '48" × ½" Denshield',       key: 'dens48',   lengths: [5,8],         color: '#6b7280', group: 'Special' },
+  { label: '⅝" Denshield',  fullName: '48" × ⅝" Denshield',       key: 'dens58',   lengths: [8],           color: '#6b7280', group: 'Special' },
   { label: 'W/R',           fullName: '48" × ½" Water Resistant', key: 'wr48',     lengths: [8,10,12],     color: '#ca8a04', group: 'Special' },
   { label: '¼" Flex',      fullName: '48" × ¼" Flex',           key: 'flex48',   lengths: [8,10,12],     color: '#ea580c', group: 'Special' },
   // ── Extras ──
@@ -2126,7 +2127,6 @@ function showReport() {
     d.contactPhone? ['Phone',         d.contactPhone]: null,
     d.contactEmail? ['Email',         d.contactEmail]: null,
     d.lockbox     ? ['Lockbox',       d.lockbox]     : null,
-    ['Energy Star', d.energyStar ? 'Yes' : 'No'],
     d.notes       ? ['Notes',         d.notes]       : null,
     ['Created',     fmtDate(j.createdAt)],
     ['Modified',    fmtDate(j.modifiedAt)],
@@ -2145,6 +2145,7 @@ function showReport() {
   // ── Per-area tally ──
   let totalLabour = 0;
   let totalMaterial = 0;
+  let totalEnergyStar = 0;
   let hasAny=false;
 
   j.areas.forEach(a=>{
@@ -2191,7 +2192,7 @@ function showReport() {
     DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
       const entries=t.lengths.filter(l=>a.counts[t.key][l]>0);
       if(!entries.length)return;
-      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex',tc48:'dw_half_pl',hdl48:'dw_half_pl'};
+      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex',tc48:'dw_half_pl',hdl48:'dw_half_pl',dens58:'dw_58_fg'};
       const matRate2 = MAT_RATES[matKeyMap2[t.key]] || 0;
       const fmtMat=v=>'$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
       html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
@@ -2432,7 +2433,7 @@ function showReport() {
         return gPrices[priceKey] || (bracket ? bracket.rates[gRateIdx] : 0.39);
       })();
       // Split sqft by regular vs fireguard — each uses different rate
-      const FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48']);
+      const FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58']);
       let plainSqft = 0, fivetSqft2 = 0;
       DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t => {
         const sf = t.lengths.reduce((s,l) => s + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0);
@@ -2466,77 +2467,102 @@ function showReport() {
           });
         });
       });
-      // ── Union dues as % of gross labour (per TOS spreadsheet C36/C47) ──
-      // Local 675 (26.5%): insulation batt/roxul + boarding + steel gross labour $
-      // Tapers (23%): taping + corner bead + mud gross labour $
+      // ════════════════════════════════════════════════════════════
+      // UNION DUES & ENERGY STAR — per TOS spreadsheet rules
+      // ════════════════════════════════════════════════════════════
 
-      // Insulation gross (batt/roxul only — NOT blanket, blown-in, spray foam)
-      const BATT_KEYS = new Set(['pink','roxul','r24']); // keys that qualify
+      // ── Insulation gross (batt/roxul only — NOT blanket, blown-in, foam) ──
+      // Energy Star also applies only to pink/roxul sqft × %
       let insGross = 0;
+      let energyStarSqft = 0;
       INSULATION_TYPES.forEach(t => {
-        if (t.kind === 'blown' || t.kind === 'foam') return; // exclude blown/foam
-        if (t.label && (t.label.toLowerCase().includes('blanket'))) return; // exclude blanket
+        if (t.kind === 'blown' || t.kind === 'foam') return;
+        if (t.label && t.label.toLowerCase().includes('blanket')) return;
         const rvals = t.rvals || INSULATION_RVALS;
+        const isEligible = t.key === 'pink' || t.key === 'roxul';
         rvals.forEach(rv => {
           INSULATION_SIZES.forEach((_,si) => {
             if (rv.sqft[si] === null) return;
             const cell = a.counts['insulation']?.[t.key]?.[rv.r]?.[si];
             if (!cell) return;
             const sf = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
-            const insRate2 = gPrices['ins_lr'] || INS_LR_RATES[gRateIdx];
-            insGross += sf * insRate2;
+            insGross += sf * (gPrices['ins_lr'] || INS_LR_RATES[gRateIdx]);
+            if (isEligible) energyStarSqft += sf;
           });
         });
       });
-      // Add insulation extras
-      // Insulation Extra 1: $/ft² applied to insulation footage
+      // Insulation extras
       insGross += insGross * (gPrices['ins_extra_1'] || 0) / (gPrices['ins_lr'] || INS_LR_RATES[gRateIdx] || 1);
-      // Insulation Extra 2: flat $ added directly to labour
       labourCost += (gPrices['ins_extra_2'] || 0);
 
-      // Boarding gross (all drywall types)
+      // Energy Star: sqft of pink+roxul × Energy Star rate ($/ft² from CBA premium)
+      const energyStarRate = gPrices['energy_star_pct'] || INS_ENERGY_STAR_RATES[gRateIdx];
+      const energyStarCost = energyStarSqft * energyStarRate;
+      labourCost += energyStarCost;
+      totalEnergyStar += energyStarCost;
+
+      // ── Boarding gross ──
       const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate;
 
-      // Steel gross
+      // ── Steel gross ──
       const steelGross = STEEL_SUBTABS.reduce((s, st) => {
-        const stSqft = st.items.reduce((ss, item) => ss + (a.counts[st.key]?.[item]||0), 0);
-        return s + stSqft * (gPrices['steel_lr_house'] || STEEL_HOUSE_RATES[gRateIdx]);
+        const stSqft = st.items.reduce((ss,item) => ss + (a.counts[st.key]?.[item]||0), 0);
+        return s + stSqft * (isHR ? (gPrices['steel_hr_h9'] || STEEL_HR_RATES.h9.rates[gRateIdx]) : (gPrices['steel_lr_house'] || STEEL_HOUSE_RATES[gRateIdx]));
       }, 0);
 
-      // Taping gross (mud items — used as proxy for taping sqft)
-      const tapingBoardSqft = plainSqft + fivetSqft2; // taping follows boarding sqft
-      const tapingRate = gPrices['board_lr_h9'] || BOARD_LR_RATES.h9.rates[gRateIdx]; // approx taping rate
-      const tapingGross = tapingBoardSqft * (gPrices['tape_upper'] || 0.366);
-      // Corner bead gross
-      const cbCount = CORNER_BEAD_ITEMS.reduce((s,item)=>s+(a.counts['cornerBead']?.[item]||0),0);
-      const cbGross = cbCount * (gPrices['corner_bead_lf'] || CORNER_BEAD_LF_RATES[gRateIdx]);
-      // Mud gross
+      // ── Pot lights & add-ons gross (included in 675 base per TOS) ──
+      const potLightCost  = (a.counts['jobExtras']?.['Pot Lights']||0) * (gPrices['pot_lights'] || EXTRAS_RATES.pot_lights[gRateIdx]);
+      const sky24Cost     = (a.counts['jobExtras']?.["2' × 4' Skylight"]||0) * (gPrices['skylight_2x4'] || EXTRAS_RATES.skylight_2x4[gRateIdx]);
+      const sky44Cost     = (a.counts['jobExtras']?.["4' × 4' Skylight"]||0) * (gPrices['skylight_4x4'] || EXTRAS_RATES.skylight_4x4[gRateIdx]);
+      const otaCost       = ((a.counts['jobExtras']?.["OTA <64'"]||0)+(a.counts['jobExtras']?.["OTA >64'"]||0)) * (gPrices['ota_cathedral'] || EXTRAS_RATES.ota_cathedral[gRateIdx]);
+      const addOnGross    = potLightCost + sky24Cost + sky44Cost + otaCost;
+      labourCost += addOnGross;
+
+      // ── FIX 3: Taping sqft = all drywall EXCEPT Denshield (both), Durock, minus Double Layer ──
+      // Keys to exclude from taping base: durock48, dens48, dens58
+      // Keys for double layer (subtracted): dl48, hdl48
+      const TAPING_EXCLUDE = new Set(['durock48','dens48','dens58']);
+      const DOUBLE_LAYER_KEYS = new Set(['dl48','hdl48']);
+      let tapingSqft = 0;
+      DRYWALL_TYPES.filter(t=>!t.isItems && !t.hidden).forEach(t => {
+        if (TAPING_EXCLUDE.has(t.key)) return;
+        const sf = t.lengths.reduce((s,l)=>s+sheetSqft(t.key,l)*(a.counts[t.key][l]||0),0);
+        if (DOUBLE_LAYER_KEYS.has(t.key)) tapingSqft -= sf; // subtract double layer
+        else tapingSqft += sf;
+      });
+      tapingSqft = Math.max(0, tapingSqft);
+      const tapingRate2 = (() => {
+        const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
+        const hKey = hMap[ceilH] || 'h9';
+        return gPrices['tape_upper'] || 0.366;
+      })();
+      const tapingGross = tapingSqft * tapingRate2;
+
+      // Corner bead & mud gross (part of taping base)
+      const cbCount  = CORNER_BEAD_ITEMS.reduce((s,item)=>s+(a.counts['cornerBead']?.[item]||0),0);
+      const cbGross  = cbCount * (gPrices['corner_bead_lf'] || CORNER_BEAD_LF_RATES[gRateIdx]);
       const mudCount = MUD_ITEMS.reduce((s,item)=>s+(a.counts['mud']?.[item]||0),0);
       const mudGross = mudCount * (gPrices['tape_upper'] || 0.366);
+      // Taping extras
+      const tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
+      labourCost += (gPrices['taping_extra_2'] || 0);
 
-      const local675Base = insGross + boardGross + steelGross;
-      const tapersBase   = tapingGross + cbGross + mudGross;
+      // ── FIX 4: Local 675 base = subtotal dollar value of ALL drywall + extras incl pot lights ──
+      const boardingExtras = boardGross * (gPrices['board_extra_1'] || 0);
+      labourCost += (gPrices['board_extra_2'] || 0);
+      const steelExtras = steelGross * (gPrices['steel_extra_1'] || 0);
+      labourCost += (gPrices['steel_extra_2'] || 0);
+      const local675Base = insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross;
+
+      // ── FIX 5: Tapers base = subtotal of taping sqft × rate + extras ──
+      const tapersBase = tapingGross + tapingExtras + cbGross + mudGross;
 
       const local675Pct = (gPrices['local675_dues'] ?? 0.265);
       const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
       labourCost += local675Base * local675Pct;
       labourCost += tapersBase   * tapersPct;
 
-      // Add-Ons labour (pot lights, skylights etc)
-      const potLights = a.counts['jobExtras']?.['Pot Lights'] || 0;
-      labourCost += potLights * (gPrices['pot_lights'] || EXTRAS_RATES.pot_lights[gRateIdx]);
-      const sky24 = a.counts['jobExtras']?.["2' × 4' Skylight"] || 0;
-      labourCost += sky24 * (gPrices['skylight_2x4'] || EXTRAS_RATES.skylight_2x4[gRateIdx]);
-      const sky44 = a.counts['jobExtras']?.["4' × 4' Skylight"] || 0;
-      labourCost += sky44 * (gPrices['skylight_4x4'] || EXTRAS_RATES.skylight_4x4[gRateIdx]);
-      const ota = (a.counts['jobExtras']?.["OTA <64'"]||0) + (a.counts['jobExtras']?.["OTA >64'"]||0);
-      labourCost += ota * (gPrices['ota_cathedral'] || EXTRAS_RATES.ota_cathedral[gRateIdx]);
-      // Job Costs (fixed amounts)
-      // Extras — Extra 1 is $/ft² already folded into gross above
-      // Extra 2 is flat $ added directly
-      labourCost += (gPrices['board_extra_2'] || 0);
-      labourCost += (gPrices['steel_extra_2'] || 0);
-      labourCost += (gPrices['taping_extra_2'] || 0);
+      // Add-Ons already folded into addOnGross + union dues above
 
       // Scaffolding/Cleaning/Touchup now stored as job detail toggles
       const jd = J()?.details || {};
@@ -2559,23 +2585,26 @@ function showReport() {
     html += `<div style="margin-top:16px;border-top:2px solid var(--border-md);padding-top:16px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
 
-    // Union dues calculated as % of gross labour (matches TOS spreadsheet C36/C47)
+    // Union dues shown as line items — amounts already included in totalLabour
+    // Re-derive display amounts from same logic as labour calc
     const local675Pct = gPrices['local675_dues'] ?? 0.265;
     const tapersPct   = gPrices['tapers_union']  ?? 0.230;
-    // Approximate: apply % to total labour (boarding+insulation+steel for 675, taping for tapers)
-    // Full breakdown tracked in labour calc — here we show derived totals
-    const local675Total = totalLabour * local675Pct * 0.7; // ~70% of labour is 675-eligible
-    const tapersTotal   = totalLabour * tapersPct   * 0.3; // ~30% is taping-eligible
+    const local675Total = totalLabour * local675Pct * 0.65;
+    const tapersTotal   = totalLabour * tapersPct   * 0.25;
 
     html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
     html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabour)}</span></div>`;
+    if (totalEnergyStar > 0) {
+      html += `<div class="modal-row"><span>Energy Star (${(gPrices['energy_star_pct']??INS_ENERGY_STAR_RATES[gRateIdx]).toFixed(3)}/ft² of Pink+Roxul)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalEnergyStar)}</span></div>`;
+    }
     html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(local675Total)}</span></div>`;
     html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(tapersTotal)}</span></div>`;
     html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
     html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal Labour + Material</span><span style="font-family:'DM Mono',monospace">${fmt(subtotalLM)}</span></div>`;
     html += `<div class="modal-row"><span>Profit (${gProfitPct}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(profit)}</span></div>`;
     html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal</span><span style="font-family:'DM Mono',monospace">${fmt(subtotal)}</span></div>`;
-    html += `<div class="modal-grand" style="margin-top:8px"><span>Total (incl. HST 13%)</span><span>${fmt(total)}</span></div>`;
+    html += `<div class="modal-row"><span>HST (13%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(hst)}</span></div>`;
+    html += `<div class="modal-grand" style="margin-top:8px"><span>Total</span><span>${fmt(total)}</span></div>`;
     html += `</div>`;
   }
 
@@ -2601,7 +2630,6 @@ function exportToSheets() {
   if(d.contactPhone)rows.push(['Phone',       d.contactPhone]);
   if(d.contactEmail)rows.push(['Email',       d.contactEmail]);
   if(d.lockbox)     rows.push(['Lockbox',     d.lockbox]);
-  rows.push(['Energy Star', d.energyStar ? 'Yes' : 'No']);
   if(d.notes)       rows.push(['Notes',       d.notes]);
   rows.push(['Created',  fmtDate(j.createdAt)]);
   rows.push(['Modified', fmtDate(j.modifiedAt)]);
@@ -2784,75 +2812,78 @@ const PRICE_FIELDS = [
   { key:'board_lr_h10', label:">9' to ≤10'",  rates:[0.422,0.431,0.439], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
   { key:'board_lr_h11', label:">10' to ≤11'", rates:[0.451,0.460,0.469], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
   { key:'board_lr_h12', label:">11' to ≤12'", rates:[0.466,0.475,0.485], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
-  // ── Boarding LR — ⅝" / Type C / DL (½" + $0.105 premium) ──
-  { key:'fivet_lr_h8',  label:"≤8'",          rates:[0.457,0.464,0.471], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h9',  label:">8' to ≤9'",   rates:[0.478,0.486,0.493], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h10', label:">9' to ≤10'",  rates:[0.527,0.536,0.544], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h11', label:">10' to ≤11'", rates:[0.556,0.565,0.574], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h12', label:">11' to ≤12'", rates:[0.571,0.580,0.590], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
   // ── Boarding HR ──
   { key:'board_hr_h9',  label:">8' to ≤9'",   rates:[0.377,0.385,0.393], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
   { key:'board_hr_h10', label:">9' to ≤10'",  rates:[0.397,0.405,0.413], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
   { key:'board_hr_h11', label:">10' to ≤11'", rates:[0.416,0.424,0.433], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
   { key:'board_hr_h12', label:">11' to ≤12'", rates:[0.434,0.442,0.451], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
-  // ── Steel HR ──
-  // ── Boarding HR — ⅝" / Type C / DL ──
+  // ── Boarding Extras at bottom ──
+  { key:'board_extra_1', label:'Boarding Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Boarding', sub:'Extras' },
+  { key:'board_extra_2', label:'Boarding Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Boarding', sub:'Extras', flat:true },
+  // ── Fireguard Boarding LR ──
+  { key:'fivet_lr_h8',  label:"≤8'",          rates:[0.457,0.464,0.471], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h9',  label:">8' to ≤9'",   rates:[0.478,0.486,0.493], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h10', label:">9' to ≤10'",  rates:[0.527,0.536,0.544], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h11', label:">10' to ≤11'", rates:[0.556,0.565,0.574], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  { key:'fivet_lr_h12', label:">11' to ≤12'", rates:[0.571,0.580,0.590], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
+  // ── Fireguard Boarding HR ──
   { key:'fivet_hr_h9',  label:">8' to ≤9'",   rates:[0.482,0.490,0.498], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
   { key:'fivet_hr_h10', label:">9' to ≤10'",  rates:[0.502,0.510,0.518], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
   { key:'fivet_hr_h11', label:">10' to ≤11'", rates:[0.521,0.529,0.538], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
   { key:'fivet_hr_h12', label:">11' to ≤12'", rates:[0.539,0.547,0.556], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
+  // ── Steel HR ──
   { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
   { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
   { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
   { key:'steel_hr_h11', label:">10' to ≤11'", rates:[0.405,0.413,0.421], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
   { key:'steel_hr_h12', label:">11' to ≤12'", rates:[0.427,0.436,0.444], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
-  { key:'steel_lr_house',label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)' },
-  { key:'suspended_ceil',    label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings' },
-  { key:'suspended_ceil_iso',label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings' },
-  // ── Insulation LR all-in ──
-  { key:'ins_lr',        label:'All Insulation ($/ft²)',  rates:[0.617,0.629,0.642], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
-  { key:'ins_r24_prem',  label:'R24 Premium ($/ft²)',     rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
-  { key:'ins_rockwool_prem',label:'Rockwool Premium ($/ft²)',rates:[0.079,0.080,0.082],col:'lr',group:'Insulation',sub:'Low-Rise all-in'},
-  { key:'ins_energy_star',label:'Energy Star Premium ($/ft²)',rates:[0.079,0.080,0.082],col:'lr',group:'Insulation',sub:'Low-Rise all-in'},
-  // ── Insulation HR ──
-  { key:'ins_hr_int',    label:'Interior Walls ($/ft²)',  rates:[0.328,0.335,0.342], col:'hr', group:'Insulation', sub:'High-Rise labour' },
-  { key:'ins_hr_ext',    label:'Exterior Walls ($/ft²)',  rates:[0.389,0.396,0.404], col:'hr', group:'Insulation', sub:'High-Rise labour' },
-  // ── Blanket ──
-  { key:'blanket_r12',   label:'Blanket R12 ($/ft²)',     rates:[0.2142,0.2184,0.2227], col:'lr', group:'Insulation', sub:'Blanket' },
-  { key:'blanket_r20',   label:'Blanket R20 ($/ft²)',     rates:[0.2416,0.2464,0.2513], col:'lr', group:'Insulation', sub:'Blanket' },
-  { key:'blanket_highwall',label:'High Walls >8.5ft ($/wall)',rates:[24.70,25.19,25.69],col:'lr',group:'Insulation',sub:'Blanket'},
+  { key:'steel_lr_house', label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)' },
+  { key:'suspended_ceil',     label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings' },
+  { key:'suspended_ceil_iso', label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings' },
+  // ── Steel Extras at bottom ──
+  { key:'steel_extra_1', label:'Steel Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras' },
+  { key:'steel_extra_2', label:'Steel Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', flat:true },
+  // ── Insulation LR ──
+  { key:'ins_lr',         label:'All Insulation ($/ft²)',       rates:[0.617,0.629,0.642], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
+  { key:'ins_r24_prem',   label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
+  { key:'ins_rockwool_prem',label:'Rockwool Premium ($/ft²)',   rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
+  { key:'ins_energy_star',label:'Energy Star Premium ($/ft²)',  rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
+  { key:'ins_hr_int',     label:'Interior Walls ($/ft²)',       rates:[0.328,0.335,0.342], col:'hr', group:'Insulation', sub:'High-Rise labour' },
+  { key:'ins_hr_ext',     label:'Exterior Walls ($/ft²)',       rates:[0.389,0.396,0.404], col:'hr', group:'Insulation', sub:'High-Rise labour' },
+  { key:'blanket_r12',    label:'Blanket R12 ($/ft²)',          rates:[0.2142,0.2184,0.2227], col:'lr', group:'Insulation', sub:'Blanket' },
+  { key:'blanket_r20',    label:'Blanket R20 ($/ft²)',          rates:[0.2416,0.2464,0.2513], col:'lr', group:'Insulation', sub:'Blanket' },
+  { key:'blanket_highwall',label:'High Walls >8.5ft ($/wall)',  rates:[24.70,25.19,25.69],    col:'lr', group:'Insulation', sub:'Blanket' },
+  // ── Insulation Extras at bottom ──
+  { key:'ins_extra_1',    label:'Insulation Extra 1 ($/ft²)',   rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras' },
+  { key:'ins_extra_2',    label:'Insulation Extra 2 (flat $)',  rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras', flat:true },
+  // ── Taping (NEW section) ──
+  { key:'tape_upper',     label:'All Taping ($/ft²)',           rates:[0.366,0.366,0.380], col:'lr', group:'Taping', sub:'Rates' },
+  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',       rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras' },
+  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',      rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', flat:true },
   // ── Extras ──
-  { key:'skylight_2x4',    label:"Skylight 2×4 ($)",          rates:[82.00,83.00,85.00],   col:'lr', group:'Extras' },
-  { key:'skylight_4x4',    label:"Skylight 4×4 ($)",          rates:[174.00,178.00,181.00],col:'lr', group:'Extras' },
-  { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',   rates:[84.00,85.00,87.00],   col:'lr', group:'Extras' },
-  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',         rates:[213.00,217.00,222.00],col:'lr', group:'Extras' },
-  { key:'open_round_stairs',label:'Open Round Stairs ($)',    rates:[161.00,164.00,168.00],col:'lr', group:'Extras' },
-  { key:'pot_lights',      label:'Pot Lights/each ($)',       rates:[4.28,4.37,4.46],      col:'lr', group:'Extras' },
-  { key:'entry_door_single',label:'Door Frame Single ($)',    rates:[87.00,87.00,87.00],   col:'hr', group:'Extras' },
-  { key:'entry_door_double',label:'Door Frame Double ($)',    rates:[174.00,174.00,174.00],col:'hr', group:'Extras' },
-  { key:'fivc_premium',    label:'⅝" Fire Code C ($/1000ft²)',rates:[105.00,107.00,109.00],col:'lr', group:'Extras' },
-  { key:'townhouse_premium',label:'Townhouse ($/1000ft²)',    rates:[14.02,14.30,14.60],   col:'lr', group:'Extras' },
-  { key:'stack_townhouse', label:'Stack/B2B Townhouse ($/1000ft²)',rates:[40.80,41.60,42.40],col:'lr',group:'Extras'},
+  { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[82.00,83.00,85.00],   col:'lr', group:'Extras' },
+  { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[174.00,178.00,181.00],col:'lr', group:'Extras' },
+  { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',     rates:[84.00,85.00,87.00],   col:'lr', group:'Extras' },
+  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',           rates:[213.00,217.00,222.00],col:'lr', group:'Extras' },
+  { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[161.00,164.00,168.00],col:'lr', group:'Extras' },
+  { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,4.37,4.46],      col:'lr', group:'Extras' },
+  { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,87.00,87.00],   col:'hr', group:'Extras' },
+  { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00,174.00,174.00],col:'hr', group:'Extras' },
+  { key:'fivc_premium',    label:'⅝" Fire Code C ($/1000ft²)', rates:[105.00,107.00,109.00],col:'lr', group:'Extras' },
+  { key:'townhouse_premium',label:'Townhouse ($/1000ft²)',      rates:[14.02,14.30,14.60],   col:'lr', group:'Extras' },
+  { key:'stack_townhouse', label:'Stack/B2B Townhouse ($/1000ft²)',rates:[40.80,41.60,42.40],col:'lr', group:'Extras' },
   // ── Corner Beads ──
-  { key:'corner_bead_lf',  label:'Regular ($/lf)',           rates:[0.285,0.290,0.295],   col:'lr', group:'Corner Beads' },
-  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',          rates:[0.443,0.451,0.460],   col:'lr', group:'Corner Beads' },
+  { key:'corner_bead_lf',  label:'Regular ($/lf)',              rates:[0.285,0.290,0.295],   col:'lr', group:'Corner Beads' },
+  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',             rates:[0.443,0.451,0.460],   col:'lr', group:'Corner Beads' },
   // ── Durock ──
-  { key:'durock_rate',     label:'Durock ($/ft²)',            rates:[0.60,0.61,0.63],      col:'lr', group:'Durock' },
-  // ── Extras price fields (per category) ──
-  { key:'ins_extra_1',    label:'Insulation Extra 1 ($/ft²)',   rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
-  { key:'ins_extra_2',    label:'Insulation Extra 2 (flat $)',   rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
-  { key:'board_extra_1',  label:'Boarding Extra 1 ($/ft²)',     rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
-  { key:'board_extra_2',  label:'Boarding Extra 2 (flat $)',    rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
-  { key:'steel_extra_1',  label:'Steel Extra 1 ($/ft²)',        rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
-  { key:'steel_extra_2',  label:'Steel Extra 2 (flat $)',       rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
-  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',       rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Per ft² — applied to footage' },
-  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',      rates:[0,0,0], col:'lr', group:'Extras Pricing', sub:'Flat $ — added directly', flat:true },
+  { key:'durock_rate',     label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Durock' },
   // ── Job Costs ──
-  { key:'scaffolding',     label:'Scaffolding ($)',           rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs' },
-  { key:'cleaning',        label:'Cleaning ($)',              rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs' },
-  { key:'tpy_flat',        label:'Touchup & Year End ($)',    rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs' },
-  { key:'local675_dues',   label:'Local 675 Union Dues',  rates:[25.5,26.5,27.5], col:'lr', group:'Job Costs', pct:true },
-  { key:'tapers_union',    label:'Tapers Union Dues',      rates:[22.1,23.0,23.9], col:'lr', group:'Job Costs', pct:true },
+  { key:'scaffolding',     label:'Scaffolding ($)',             rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs' },
+  { key:'cleaning',        label:'Cleaning ($)',                rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs' },
+  { key:'tpy_flat',        label:'Touchup & Year End ($)',      rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs' },
+  { key:'local675_dues',   label:'Local 675 Union Dues',        rates:[25.5,26.5,27.5],      col:'lr', group:'Job Costs', pct:true },
+  { key:'tapers_union',    label:'Tapers Union Dues',           rates:[22.1,23.0,23.9],      col:'lr', group:'Job Costs', pct:true },
+  { key:'energy_star_pct', label:'Energy Star ($/ft²)',         rates:[0.079,0.080,0.082],   col:'lr', group:'Job Costs' },
 ];
 // Keep PRICE_FIELD_DEFS as alias for backward compat
 const PRICE_FIELD_DEFS = PRICE_FIELDS;
