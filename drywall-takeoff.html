@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally</title>
+  <title>Drywall Tally v14</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -260,6 +260,112 @@
     .profit-input::-webkit-inner-spin-button,.profit-input::-webkit-outer-spin-button{-webkit-appearance:none;}
     .profit-input:focus{border-color:var(--accent);}
 
+    /* ── Tutorial System ── */
+    .tut-screen-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      z-index: 300; pointer-events: all;
+    }
+    .tut-bubble {
+      position: fixed; z-index: 302;
+      background: #00b4ff; border-radius: 16px;
+      padding: 16px 18px 14px;
+      width: min(300px, calc(100vw - 32px));
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      pointer-events: all;
+      animation: tutPop 0.22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes tutPop {
+      from { opacity:0; transform: scale(0.85); }
+      to   { opacity:1; transform: scale(1); }
+    }
+    .tut-bubble-title {
+      font-size: 15px; font-weight: 700; color: #000; margin-bottom: 5px; line-height: 1.3;
+    }
+    .tut-bubble-body {
+      font-size: 13px; color: #000; line-height: 1.5; margin-bottom: 12px;
+    }
+    .tut-bubble-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .tut-dots {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .tut-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: rgba(0,0,0,0.3); transition: background 0.15s;
+    }
+    .tut-dot.active { background: #000; }
+    .tut-next-btn {
+      background: #000; color: #00b4ff; border: none;
+      border-radius: 10px; padding: 8px 18px;
+      font-size: 13px; font-weight: 700; font-family: inherit;
+      cursor: pointer; white-space: nowrap;
+    }
+    /* Arrow pointing DOWN from bubble */
+    .tut-arrow-down::after {
+      content: ''; position: absolute; bottom: -11px;
+      left: var(--arrow-x, 50%); transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 11px solid transparent;
+      border-right: 11px solid transparent;
+      border-top: 12px solid #00b4ff;
+    }
+    /* Arrow pointing UP from bubble */
+    .tut-arrow-up::before {
+      content: ''; position: absolute; top: -11px;
+      left: var(--arrow-x, 50%); transform: translateX(-50%);
+      width: 0; height: 0;
+      border-left: 11px solid transparent;
+      border-right: 11px solid transparent;
+      border-bottom: 12px solid #00b4ff;
+    }
+    /* Highlight ring */
+    .tut-highlight {
+      position: fixed; z-index: 301; pointer-events: none;
+      border-radius: 10px;
+      box-shadow: 0 0 0 4px #00b4ff, 0 0 0 5000px rgba(0,0,0,0.55);
+      transition: all 0.3s ease;
+    }
+    /* Tutorial list modal */
+    .tut-list-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      z-index: 310; display: flex; align-items: flex-end;
+      opacity: 0; pointer-events: none; transition: opacity 0.22s;
+    }
+    .tut-list-overlay.open { opacity: 1; pointer-events: all; }
+    .tut-list-sheet {
+      background: var(--surface); border-radius: 20px 20px 0 0;
+      width: 100%; padding-bottom: calc(20px + var(--safe-bottom));
+      transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    .tut-list-overlay.open .tut-list-sheet { transform: translateY(0); }
+    .tut-list-header {
+      padding: 14px 20px 10px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .tut-list-header h3 { font-size: 16px; font-weight: 700; color: var(--text); }
+    .tut-list-close {
+      width: 30px; height: 30px; border-radius: 50%; background: var(--bg);
+      border: none; font-size: 15px; color: var(--muted); cursor: pointer;
+    }
+    .tut-list-items { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .tut-list-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 16px; cursor: pointer;
+      transition: background 0.12s;
+    }
+    .tut-list-item:active { background: #e0f2ff; }
+    .tut-list-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: #00b4ff; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+      font-size: 18px;
+    }
+    .tut-list-info { flex: 1; min-width: 0; }
+    .tut-list-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .tut-list-desc { font-size: 12px; color: var(--muted); }
+    .tut-list-arrow { color: var(--muted); font-size: 16px; }
   </style>
 </head>
 <body>
@@ -394,7 +500,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-19 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -410,7 +516,12 @@
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="white" stroke-width="1.5"/><path d="M2.5 13.5C2.5 11 4.5 9.5 7.5 9.5C10.5 9.5 12.5 11 12.5 13.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       My Info
     </button>
+    <button class="drawer-action-btn" style="background:#00b4ff;color:#000;" onclick="openTutorialList();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="#000" stroke-width="1.5"/><path d="M7.5 5v.5M7.5 7.5v3" stroke="#000" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Tutorials
+    </button>
   </div>
+</div>
 </div>
 
 <!-- Area Form -->
@@ -507,6 +618,11 @@
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <h3>Material Prices</h3>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;border:1px solid var(--color-border-tertiary);white-space:nowrap" title="Import prices from JSON file">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 1v8M4 6l3 3 3-3M2 10v1.5A1.5 1.5 0 003.5 13h7A1.5 1.5 0 0012 11.5V10"/></svg>
+        Import
+        <input type="file" accept=".json" style="display:none" onchange="importMatPrices(this)">
+      </label>
       <button class="sheet-close" onclick="closeMatPricesSheet()">✕</button>
     </div>
     <div class="sheet-body" id="matprices-body"></div>
@@ -526,6 +642,354 @@
     <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveMyInfoSheet()">Save</button></div>
   </div>
 </div>
+
+<!-- Tutorial List Sheet -->
+<div class="tut-list-overlay" id="tut-list-overlay" onclick="if(event.target===this)closeTutorialList()">
+  <div class="tut-list-sheet">
+    <div class="tut-list-header">
+      <h3>📚 Tutorials</h3>
+      <button class="tut-list-close" onclick="closeTutorialList()">✕</button>
+    </div>
+    <div class="tut-list-items" id="tut-list-items"></div>
+  </div>
+</div>
+
+<!-- Tutorial Bubble (dynamically positioned) -->
+<div id="tut-highlight" class="tut-highlight" style="display:none"></div>
+<div id="tut-bubble" class="tut-bubble" style="display:none">
+  <div class="tut-bubble-title" id="tut-title"></div>
+  <div class="tut-bubble-body" id="tut-body"></div>
+  <div class="tut-bubble-footer">
+    <div class="tut-dots" id="tut-dots"></div>
+    <button class="tut-next-btn" id="tut-next-btn" onclick="tutNext()">Next</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   TUTORIAL ENGINE — v14
+   ══════════════════════════════════════════════════════════════ */
+
+const TUTORIALS = [
+  {
+    id: 'basics',
+    name: 'App Basics',
+    desc: 'Learn the core layout and navigation',
+    icon: '🏠',
+    steps: [
+      {
+        title: 'Menu / Job Switcher',
+        body: 'Tap the hamburger menu (☰) to open the side drawer. From here you can switch jobs, create new ones, and access settings.',
+        target: '.menu-btn',
+        arrow: 'down',
+      },
+      {
+        title: 'Job Name',
+        body: 'Your current job name is shown here. Tap it to rename the job directly.',
+        target: '#job-name-display',
+        arrow: 'down',
+      },
+      {
+        title: 'Add Area',
+        body: 'Tap "+ Area" to add a new area (e.g. Main Floor, Basement). Each area tracks its own counts separately.',
+        target: '.area-add-inline button',
+        arrow: 'down',
+      },
+      {
+        title: 'Category Tabs',
+        body: 'Switch between Drywall, Insulation, Steel, Mud, Corner Bead, and Add-Ons using these dark tabs.',
+        target: '.cat-bar',
+        arrow: 'up',
+      },
+      {
+        title: 'Report & Export',
+        body: 'When you\'re done tallying, tap "Report" to see a full summary and export it as a PDF.',
+        target: '.report-btn',
+        arrow: 'up',
+      },
+    ]
+  },
+  {
+    id: 'drywall',
+    name: 'Counting Drywall',
+    desc: 'How to tally sheets by length and type',
+    icon: '📋',
+    steps: [
+      {
+        title: 'Drywall Tab',
+        body: 'Make sure you\'re on the Drywall category. The dark tab bar shows which category is active.',
+        target: '.cat-bar',
+        arrow: 'up',
+        action: () => { if(typeof switchCat==='function') switchCat('drywall'); }
+      },
+      {
+        title: 'Drywall Groups',
+        body: 'Choose between Regular, Fireguard, Special, and Extras using these group tabs.',
+        target: '#dw-group-bar',
+        arrow: 'up',
+      },
+      {
+        title: 'Sheet Length Cards',
+        body: 'Each card represents one sheet length (7\', 8\', 9\'…). The big blue number is your count for that length.',
+        target: '.sheet-card',
+        arrow: 'up',
+        scrollTo: '.tally-area',
+      },
+      {
+        title: 'Tap to Count',
+        body: 'Tap "−" to remove a sheet, "+" to add one. You can also tap the big number directly to type in an exact count.',
+        target: '.sheet-card-controls',
+        arrow: 'up',
+        scrollTo: '.tally-area',
+      },
+      {
+        title: 'Subtotal',
+        body: 'The subtotal in the top right shows the total sq ft for the current drywall type in this area.',
+        target: '.tally-header',
+        arrow: 'down',
+        scrollTo: '.tally-area',
+      },
+    ]
+  },
+  {
+    id: 'areas',
+    name: 'Managing Areas',
+    desc: 'Add, rename, and configure job areas',
+    icon: '🏗️',
+    steps: [
+      {
+        title: 'Add an Area',
+        body: 'Tap "+ Area" to create a new area. Give it a name like "Main Floor" or "Basement".',
+        target: '.area-add-inline button',
+        arrow: 'down',
+      },
+      {
+        title: 'Switch Areas',
+        body: 'Tap any area tab to switch to it. The purple underline shows the active area.',
+        target: '#area-tabs',
+        arrow: 'down',
+      },
+      {
+        title: 'Rename an Area',
+        body: 'Tap the pencil ✏️ icon next to the area name in the tab to rename it.',
+        target: '#area-tabs',
+        arrow: 'down',
+      },
+      {
+        title: 'Area Details Strip',
+        body: 'The chips below the area tabs show the ceiling height and texture for that area. Tap any chip to edit the job details.',
+        target: '#job-details-bar',
+        arrow: 'down',
+      },
+    ]
+  },
+  {
+    id: 'report',
+    name: 'Generating a Report',
+    desc: 'View totals and export a PDF quote',
+    icon: '📄',
+    steps: [
+      {
+        title: 'Totals Strip',
+        body: 'The bottom bar shows a live running total of all sheets tallied across all areas.',
+        target: '.totals-strip',
+        arrow: 'up',
+      },
+      {
+        title: 'Open Report',
+        body: 'Tap "Report" to open the full summary sheet with all materials broken down by area and type.',
+        target: '.report-btn',
+        arrow: 'up',
+      },
+      {
+        title: 'Set Your Prices First',
+        body: 'Before exporting, open the Menu → Labor Prices and Material Prices to set your rates. These fill in the report automatically.',
+        target: '.menu-btn',
+        arrow: 'down',
+      },
+    ]
+  },
+];
+
+let tutActive = false;
+let tutSteps = [];
+let tutStep = 0;
+
+function openTutorialList() {
+  const overlay = document.getElementById('tut-list-overlay');
+  const list = document.getElementById('tut-list-items');
+  list.innerHTML = TUTORIALS.map(t => `
+    <div class="tut-list-item" onclick="startTutorial('${t.id}')">
+      <div class="tut-list-icon">${t.icon}</div>
+      <div class="tut-list-info">
+        <div class="tut-list-name">${t.name}</div>
+        <div class="tut-list-desc">${t.desc} · ${t.steps.length} steps</div>
+      </div>
+      <div class="tut-list-arrow">›</div>
+    </div>
+  `).join('');
+  overlay.classList.add('open');
+}
+
+function closeTutorialList() {
+  document.getElementById('tut-list-overlay').classList.remove('open');
+}
+
+function startTutorial(id) {
+  closeTutorialList();
+  const tut = TUTORIALS.find(t => t.id === id);
+  if (!tut) return;
+  tutSteps = tut.steps;
+  tutStep = 0;
+  tutActive = true;
+  showTutStep();
+}
+
+function showTutStep() {
+  const step = tutSteps[tutStep];
+  if (!step) { endTutorial(); return; }
+
+  // Run any setup action (e.g. switch tab)
+  if (step.action) {
+    try { step.action(); } catch(e) {}
+  }
+
+  // Scroll into view if needed
+  if (step.scrollTo) {
+    const scrollEl = document.querySelector(step.scrollTo);
+    if (scrollEl) scrollEl.scrollTop = 0;
+  }
+
+  // Wait a tick for layout to settle after any tab switches
+  requestAnimationFrame(() => {
+    setTimeout(() => positionBubble(step), 120);
+  });
+}
+
+function positionBubble(step) {
+  const bubble = document.getElementById('tut-bubble');
+  const highlight = document.getElementById('tut-highlight');
+  const titleEl = document.getElementById('tut-title');
+  const bodyEl = document.getElementById('tut-body');
+  const dotsEl = document.getElementById('tut-dots');
+  const nextBtn = document.getElementById('tut-next-btn');
+
+  titleEl.textContent = step.title;
+  bodyEl.textContent = step.body;
+
+  // Dots
+  dotsEl.innerHTML = tutSteps.map((_, i) =>
+    `<div class="tut-dot ${i === tutStep ? 'active' : ''}"></div>`
+  ).join('');
+
+  // Next/Done button
+  nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
+
+  // Find target element
+  const target = step.target ? document.querySelector(step.target) : null;
+
+  // Reset bubble classes
+  bubble.className = 'tut-bubble';
+  bubble.style.cssText = 'display:block';
+
+  if (target) {
+    const rect = target.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const bw = Math.min(300, vw - 32);
+    const bh = 160; // estimated bubble height
+
+    // Show highlight ring
+    highlight.style.cssText = `
+      display:block;
+      left:${rect.left - 4}px;
+      top:${rect.top - 4}px;
+      width:${rect.width + 8}px;
+      height:${rect.height + 8}px;
+      border-radius:${rect.height < 40 ? '8px' : '12px'};
+    `;
+
+    // Arrow x offset relative to bubble left
+    const targetCenterX = rect.left + rect.width / 2;
+
+    // Try to place bubble below target first, else above
+    const spaceBelow = vh - rect.bottom;
+    const spaceAbove = rect.top;
+    let bubbleTop, arrowDir;
+
+    if (step.arrow === 'up' || (step.arrow !== 'down' && spaceBelow < bh + 30)) {
+      // Bubble ABOVE target, arrow points DOWN
+      bubbleTop = rect.top - bh - 18;
+      arrowDir = 'down';
+      if (bubbleTop < 10) { bubbleTop = 10; }
+    } else {
+      // Bubble BELOW target, arrow points UP
+      bubbleTop = rect.bottom + 14;
+      arrowDir = 'up';
+      if (bubbleTop + bh > vh - 10) { bubbleTop = vh - bh - 10; }
+    }
+
+    // Horizontal: center on target, clamp to viewport
+    let bubbleLeft = targetCenterX - bw / 2;
+    bubbleLeft = Math.max(16, Math.min(vw - bw - 16, bubbleLeft));
+
+    // Arrow offset within bubble
+    const arrowX = targetCenterX - bubbleLeft;
+    const arrowXClamped = Math.max(22, Math.min(bw - 22, arrowX));
+
+    bubble.style.left = bubbleLeft + 'px';
+    bubble.style.top = bubbleTop + 'px';
+    bubble.style.width = bw + 'px';
+    bubble.style.setProperty('--arrow-x', arrowXClamped + 'px');
+
+    if (arrowDir === 'down') {
+      bubble.classList.add('tut-arrow-down');
+    } else {
+      bubble.classList.add('tut-arrow-up');
+    }
+  } else {
+    // No target — center on screen
+    highlight.style.display = 'none';
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const bw = Math.min(300, vw - 32);
+    bubble.style.left = ((vw - bw) / 2) + 'px';
+    bubble.style.top = ((vh / 2) - 80) + 'px';
+    bubble.style.width = bw + 'px';
+  }
+}
+
+function tutNext() {
+  tutStep++;
+  if (tutStep >= tutSteps.length) {
+    endTutorial();
+  } else {
+    // Animate out then in
+    const bubble = document.getElementById('tut-bubble');
+    bubble.style.animation = 'none';
+    bubble.style.opacity = '0';
+    bubble.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+      bubble.style.animation = '';
+      showTutStep();
+    }, 120);
+  }
+}
+
+function endTutorial() {
+  tutActive = false;
+  document.getElementById('tut-bubble').style.display = 'none';
+  document.getElementById('tut-highlight').style.display = 'none';
+}
+
+// Close tutorial on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (tutActive) endTutorial();
+    else if (document.getElementById('tut-list-overlay').classList.contains('open')) closeTutorialList();
+  }
+});
+</script>
 
 <script>
 /* ── Category definitions ── */
@@ -842,7 +1306,9 @@ const INSULATION_TYPES = [
 
 let curInsType = 0; // active insulation type index
 let curInsSubTab = 0; // 0 = insulation types, 1 = extras
-let curInsRvalIdx = {}; // active R-value sub-tab per type index, e.g. {0: 2, 1: 0}
+let curInsRvalIdx = {}; // active R-value sub-tab per type index
+let curBlownRval = 0;  // active R-value index for Blown-In
+let curFoamRval  = 0;  // active R-value index for Spray-Foam
 let curSteelSubTab = 0; // 0 = Steel, 1 = Extras
 let curMudSubTab = 0; // 0 = Mud, 1 = Extras
 let curCbSubTab  = 0; // 0=Vinyl, 1=Metal, 2=Bullnose, 3=Misc
@@ -1273,19 +1739,40 @@ function renderInsTypeTabs() {
     }).join('') +
     `<button class="type-tab" style="${curInsSubTab===1?`border-bottom-color:${insCol};color:${insCol}`:''}" onclick="switchInsSubTab(1)">Extras</button>`;
 
-  // R-value sub-tabs: only for batt types (Pink / Roxul) when not on Extras
+  // R-value sub-tabs: batt (Pink/Roxul), blown-in, and foam
   const rvalBar = document.getElementById('ins-rval-bar');
   const rvalTabs = document.getElementById('ins-rval-tabs');
   const t = INSULATION_TYPES[curInsType];
-  if (curInsSubTab === 0 && t && t.kind === 'batt') {
-    const rvals = t.rvals || INSULATION_RVALS;
-    const activeRv = curInsRvalIdx[curInsType] ?? 0;
-    const col = t.color;
-    rvalTabs.innerHTML = rvals.map((rv, ri) => {
-      const active = ri === activeRv;
-      return `<button class="type-tab" style="font-size:12px;padding:8px 12px;${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchInsRval(${ri})">${rv.r}</button>`;
-    }).join('');
-    rvalBar.style.display = '';
+  if (curInsSubTab === 0 && t) {
+    if (t.kind === 'batt') {
+      const rvals = t.rvals || INSULATION_RVALS;
+      const activeRv = curInsRvalIdx[curInsType] ?? 0;
+      const col = t.color;
+      rvalTabs.innerHTML = rvals.map((rv, ri) => {
+        const active = ri === activeRv;
+        return `<button class="type-tab" style="font-size:12px;padding:8px 12px;${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchInsRval(${ri})">${rv.r}</button>`;
+      }).join('');
+      rvalBar.style.display = '';
+    } else if (t.kind === 'blown') {
+      const col = t.color;
+      rvalTabs.innerHTML = BLOWN_RVALS.map((r, ri) => {
+        const active = ri === curBlownRval;
+        const hasSqft = A() && blownSqftForRval(r) > 0;
+        return `<button class="type-tab" style="font-size:12px;padding:8px 12px;${active?`border-bottom-color:${col};color:${col}`:''}${hasSqft?' font-weight:700':''}" onclick="switchBlownRval(${ri})">${r}</button>`;
+      }).join('');
+      rvalBar.style.display = '';
+    } else if (t.kind === 'foam') {
+      const col = t.color;
+      rvalTabs.innerHTML = FOAM_RVALS.map((r, ri) => {
+        const active = ri === curFoamRval;
+        const hasSqft = A() && (foamSqft(r,'half') + foamSqft(r,'two')) > 0;
+        return `<button class="type-tab" style="font-size:12px;padding:8px 12px;${active?`border-bottom-color:${col};color:${col}`:''}${hasSqft?' font-weight:700':''}" onclick="switchFoamRval(${ri})">${r}</button>`;
+      }).join('');
+      rvalBar.style.display = '';
+    } else {
+      rvalTabs.innerHTML = '';
+      rvalBar.style.display = 'none';
+    }
   } else {
     rvalTabs.innerHTML = '';
     rvalBar.style.display = 'none';
@@ -1294,6 +1781,8 @@ function renderInsTypeTabs() {
 function switchInsSubTab(n) { curInsSubTab=n; renderInsTypeTabs(); renderInsulation(); }
 function switchInsType(n)   { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
 function switchInsRval(ri)  { curInsRvalIdx[curInsType]=ri; renderInsTypeTabs(); renderInsulation(); }
+function switchBlownRval(ri){ curBlownRval=ri; renderInsTypeTabs(); renderInsulation(); }
+function switchFoamRval(ri) { curFoamRval=ri;  renderInsTypeTabs(); renderInsulation(); }
 function switchDwGroup(group) {
   curDwGroup = group;
   // Select first visible type in the new group
@@ -1832,32 +2321,40 @@ function renderBlown() {
   const area = document.getElementById('tally-area');
   const col = '#0369a1';
   const total = blownTotalSqft();
+  const r = BLOWN_RVALS[curBlownRval] || BLOWN_RVALS[0];
+  const entries = A().counts['insulation']['blown'][r] || [];
+  const rTotal = entries.reduce((s,m)=>s+m.l*m.w, 0);
 
   let html = `<div class="tally-header">
     <div class="tally-type-label" style="color:${col}">Blown-In</div>
     ${total>0?`<div class="tally-subtotal">Total: <strong>${Math.round(total)} ft²</strong></div>`:''}
   </div>`;
 
-  BLOWN_RVALS.forEach(r => {
-    const entries = A().counts['insulation']['blown'][r]||[];
-    const rTotal = entries.reduce((s,m)=>s+m.l*m.w, 0);
-    html += `<div class="meas-rval-section">
-      <div class="meas-rval-header">
-        <div class="meas-rval-label" style="color:${col}">${r}</div>
-      </div>
-      <div class="meas-add-row">
-        <input class="meas-input" id="blown-l-${r}" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
-          onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('blown-w-${r}').focus();}"/>
-        <span class="meas-x">×</span>
-        <input class="meas-input" id="blown-w-${r}" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
-          onkeydown="if(event.key==='Enter'){blownAdd('${r}');}"/>
-        <button class="meas-add-btn" style="background:${col}" onclick="blownAdd('${r}')">Add</button>
-        ${rTotal>0?`<div id="blown-total-${encodeKey(r)}" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="blownEditTotal('${r}')">${Math.round(rTotal)} ft²</div>`:''}
-      </div>
-    </div>`;
-  });
+  // Entry list for active R-value
+  if (entries.length > 0) {
+    html += `<div class="meas-list">`;
+    entries.forEach((m, i) => {
+      html += `<div class="meas-row">
+        <span class="meas-dims">${m.l} × ${m.w}</span>
+        <span class="meas-sqft">${Math.round(m.l * m.w)} ft²</span>
+        <button class="meas-del" onclick="blownDel('${r}',${i})">✕</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="meas-add-row" style="margin-top:${entries.length > 0 ? 8 : 0}px">
+    <input class="meas-input" id="blown-l-${r}" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('blown-w-${r}').focus();}"/>
+    <span class="meas-x">×</span>
+    <input class="meas-input" id="blown-w-${r}" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'){blownAdd('${r}');}"/>
+    <button class="meas-add-btn" style="background:${col}" onclick="blownAdd('${r}')">Add</button>
+    ${rTotal>0?`<div id="blown-total-${encodeKey(r)}" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="blownEditTotal('${r}')">${Math.round(rTotal)} ft²</div>`:''}
+  </div>`;
 
   area.innerHTML = html;
+  setTimeout(()=>{ const el=document.getElementById(`blown-l-${r}`); if(el)el.focus(); }, 30);
 }
 
 function blownAdd(r) {
@@ -1867,8 +2364,13 @@ function blownAdd(r) {
   A().counts['insulation']['blown'][r].push({l,w});
   J().modifiedAt=new Date().toISOString(); saveState();
   lEl.value=''; wEl.value='';
-  renderBlown(); renderStrip();
+  renderBlown(); renderStrip(); renderInsTypeTabs();
   setTimeout(()=>{ const el=document.getElementById(`blown-l-${r}`); if(el)el.focus(); },30);
+}
+function blownDel(r, i) {
+  A().counts['insulation']['blown'][r].splice(i, 1);
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderBlown(); renderStrip(); renderInsTypeTabs();
 }
 function blownEditTotal(r) {
   const id=`blown-total-${encodeKey(r)}`;
@@ -1996,51 +2498,63 @@ function renderFoam() {
   const area = document.getElementById('tally-area');
   const col = '#059669';
   const total = foamTotalSqft();
+  const r = FOAM_RVALS[curFoamRval] || FOAM_RVALS[0];
+  const halfEntries = (A().counts['insulation']['foam'][r]||{}).half||[];
+  const twoEntries  = (A().counts['insulation']['foam'][r]||{}).two||[];
+  const halfTotal = halfEntries.reduce((s,m)=>s+m.l*m.w,0);
+  const twoTotal  = twoEntries.reduce((s,m)=>s+m.l*m.w,0);
 
   let html = `<div class="tally-header">
-    <div class="tally-type-label" style="color:${col}">Foam</div>
+    <div class="tally-type-label" style="color:${col}">Spray-Foam</div>
     ${total>0?`<div class="tally-subtotal">Total: <strong>${Math.round(total)} ft²</strong></div>`:''}
   </div>`;
 
-  FOAM_RVALS.forEach(r => {
-    const halfEntries = (A().counts['insulation']['foam'][r]||{}).half||[];
-    const twoEntries  = (A().counts['insulation']['foam'][r]||{}).two||[];
-    const halfTotal = halfEntries.reduce((s,m)=>s+m.l*m.w,0);
-    const twoTotal  = twoEntries.reduce((s,m)=>s+m.l*m.w,0);
-    const rTotal = halfTotal+twoTotal;
-
-    html += `<div class="meas-rval-section">
-      <div class="meas-rval-header">
-        <div class="meas-rval-label" style="color:${col}">${r}</div>
+  // ½ lb density
+  html += `<div class="meas-density-head">½ lb</div>`;
+  if (halfEntries.length > 0) {
+    html += `<div class="meas-list">`;
+    halfEntries.forEach((m, i) => {
+      html += `<div class="meas-row">
+        <span class="meas-dims">${m.l} × ${m.w}</span>
+        <span class="meas-sqft">${Math.round(m.l * m.w)} ft²</span>
+        <button class="meas-del" onclick="foamDel('${r}','half',${i})">✕</button>
       </div>`;
-
-    // ½ lb density
-    html += `<div class="meas-density-head">½ lb</div>
-      <div class="meas-add-row" style="margin-bottom:12px">
-        <input class="meas-input" id="foam-l-${r}-half" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
-          onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-half').focus();}"/>
-        <span class="meas-x">×</span>
-        <input class="meas-input" id="foam-w-${r}-half" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
-          onkeydown="if(event.key==='Enter'){foamAdd('${r}','half');}"/>
-        <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','half')">Add</button>
-        ${halfTotal>0?`<div id="foam-total-${encodeKey(r)}-half" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="foamEditTotal('${r}','half')">${Math.round(halfTotal)} ft²</div>`:''}
-      </div>`;
-
-    // 2 lb density
-    html += `<div class="meas-density-head">2 lb</div>
-      <div class="meas-add-row">
-        <input class="meas-input" id="foam-l-${r}-two" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
-          onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-two').focus();}"/>
-        <span class="meas-x">×</span>
-        <input class="meas-input" id="foam-w-${r}-two" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
-          onkeydown="if(event.key==='Enter'){foamAdd('${r}','two');}"/>
-        <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','two')">Add</button>
-        ${twoTotal>0?`<div id="foam-total-${encodeKey(r)}-two" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="foamEditTotal('${r}','two')">${Math.round(twoTotal)} ft²</div>`:''}
-      </div>`;
-
-    if (r !== FOAM_RVALS[FOAM_RVALS.length-1]) html += `<div class="meas-section-divider"></div>`;
+    });
     html += `</div>`;
-  });
+  }
+  html += `<div class="meas-add-row" style="margin-bottom:16px">
+    <input class="meas-input" id="foam-l-${r}-half" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-half').focus();}"/>
+    <span class="meas-x">×</span>
+    <input class="meas-input" id="foam-w-${r}-half" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'){foamAdd('${r}','half');}"/>
+    <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','half')">Add</button>
+    ${halfTotal>0?`<div id="foam-total-${encodeKey(r)}-half" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="foamEditTotal('${r}','half')">${Math.round(halfTotal)} ft²</div>`:''}
+  </div>`;
+
+  // 2 lb density
+  html += `<div class="meas-section-divider"></div>`;
+  html += `<div class="meas-density-head">2 lb</div>`;
+  if (twoEntries.length > 0) {
+    html += `<div class="meas-list">`;
+    twoEntries.forEach((m, i) => {
+      html += `<div class="meas-row">
+        <span class="meas-dims">${m.l} × ${m.w}</span>
+        <span class="meas-sqft">${Math.round(m.l * m.w)} ft²</span>
+        <button class="meas-del" onclick="foamDel('${r}','two',${i})">✕</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `<div class="meas-add-row">
+    <input class="meas-input" id="foam-l-${r}-two" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('foam-w-${r}-two').focus();}"/>
+    <span class="meas-x">×</span>
+    <input class="meas-input" id="foam-w-${r}-two" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'){foamAdd('${r}','two');}"/>
+    <button class="meas-add-btn" style="background:${col}" onclick="foamAdd('${r}','two')">Add</button>
+    ${twoTotal>0?`<div id="foam-total-${encodeKey(r)}-two" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="foamEditTotal('${r}','two')">${Math.round(twoTotal)} ft²</div>`:''}
+  </div>`;
 
   area.innerHTML = html;
 }
@@ -2052,8 +2566,13 @@ function foamAdd(r, density) {
   A().counts['insulation']['foam'][r][density].push({l,w});
   J().modifiedAt=new Date().toISOString(); saveState();
   lEl.value=''; wEl.value='';
-  renderFoam(); renderStrip();
+  renderFoam(); renderStrip(); renderInsTypeTabs();
   setTimeout(()=>{ const el=document.getElementById(`foam-l-${r}-${density}`); if(el)el.focus(); },30);
+}
+function foamDel(r, density, i) {
+  A().counts['insulation']['foam'][r][density].splice(i, 1);
+  J().modifiedAt=new Date().toISOString(); saveState();
+  renderFoam(); renderStrip(); renderInsTypeTabs();
 }
 
 function renderStrip() {
@@ -2471,6 +2990,9 @@ function showReport() {
   let totalTownPremium = 0;
   let totalLocal675 = 0;
   let totalTapers = 0;
+  let totalBoarderMatDeduct = 0;
+  let totalInsulatorMatDeduct = 0;
+  let totalTaperMatDeduct = 0;
   let hasAny=false;
 
   j.areas.forEach(a=>{
@@ -2896,15 +3418,54 @@ function showReport() {
       const tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
       laborCost += (gPrices['taping_extra_2'] || 0);
 
-      // ── FIX 4: Local 675 base = subtotal dollar value of ALL drywall + extras incl pot lights ──
+      // ── Material deductions — subs buy consumables from contractor ──
+      // These are deducted from the gross before union dues and WSIB are calculated
+
+      // Boarder deduction: drywall screws
+      const screwBoxes = a.counts['extras']?.['Drywall Screws (Box)'] || 0;
+      const boarderMatDeduct = screwBoxes * (gMatPrices['mat_dw_screws'] || 0);
+
+      // Insulator deduction: poly rolls (all sizes) + tuck tape + can foam + staples + acoustic caulking
+      const polyKeys = ["8' Poly","9' Poly","10' Poly","12' Poly"];
+      const polyCount = polyKeys.reduce((s,k) => s+(a.counts['insExtras']?.[k]||0), 0);
+      const insulatorMatDeduct =
+        polyCount             * (gMatPrices['mat_poly_roll']   || 0) +
+        (a.counts['insExtras']?.['Tuck Tape']         ||0) * (gMatPrices['mat_tuck_tape']   || 0) +
+        (a.counts['insExtras']?.['Can Foam']           ||0) * (gMatPrices['mat_can_foam']    || 0) +
+        (a.counts['insExtras']?.['Staples']            ||0) * (gMatPrices['mat_staples']     || 0) +
+        (a.counts['insExtras']?.['Acoustic Caulking']  ||0) * (gMatPrices['mat_acous_caulk'] || 0);
+
+      // Taper deduction: all mud types + tape rolls
+      const mudMatDeduct =
+        (a.counts['mud']?.['All Purpose (17L)']    ||0) * (gMatPrices['mat_mud_ap17']   || 0) +
+        (a.counts['mud']?.['Machine (17L)']         ||0) * (gMatPrices['mat_mud_mach17'] || 0) +
+        (a.counts['mud']?.['Lite Finish (17L)']     ||0) * (gMatPrices['mat_mud_lite17'] || 0) +
+        (a.counts['mud']?.['Sheetrock 20 (bag)']    ||0) * (gMatPrices['mat_mud_sr20']   || 0) +
+        (a.counts['mud']?.['Sheetrock 45 (bag)']    ||0) * (gMatPrices['mat_mud_sr45']   || 0) +
+        (a.counts['mud']?.['Sheetrock 90 (bag)']    ||0) * (gMatPrices['mat_mud_sr90']   || 0) +
+        (a.counts['mud']?.['Durabond 90 (Bag)']     ||0) * (gMatPrices['mat_mud_db90']   || 0) +
+        (a.counts['mudExtras']?.['Paper Tape (roll)']||0) * (gMatPrices['mat_tape_paper'] || 0) +
+        (a.counts['mudExtras']?.['Fibre Tape (roll)']||0) * (gMatPrices['mat_tape_fibre'] || 0) +
+        (a.counts['mudExtras']?.['Mesh Tape (roll)'] ||0) * (gMatPrices['mat_tape_mesh']  || 0) +
+        (a.counts['mudExtras']?.['Flexbead (roll)']  ||0) * (gMatPrices['mat_tape_flex']  || 0);
+      const taperMatDeduct = mudMatDeduct;
+
+      totalBoarderMatDeduct   += boarderMatDeduct;
+      totalInsulatorMatDeduct += insulatorMatDeduct;
+      totalTaperMatDeduct     += taperMatDeduct;
+
+      // ── FIX 4: Local 675 base — subtract boarder + insulator material purchases ──
       const boardingExtras = boardGross * (gPrices['board_extra_1'] || 0);
       laborCost += (gPrices['board_extra_2'] || 0);
       const steelExtras = steelGross * (gPrices['steel_extra_1'] || 0);
       laborCost += (gPrices['steel_extra_2'] || 0);
-      const local675Base = insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross;
+      const local675Base = Math.max(0,
+        insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross
+        - boarderMatDeduct - insulatorMatDeduct
+      );
 
-      // ── FIX 5: Tapers base = subtotal of taping sqft × rate + extras ──
-      const tapersBase = tapingGross + tapingExtras + cbGross + mudGross;
+      // ── FIX 5: Tapers base — subtract taper material purchases ──
+      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + mudGross - taperMatDeduct);
 
       const local675Pct = (gPrices['local675_dues'] ?? 0.265);
       const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
@@ -2926,7 +3487,9 @@ function showReport() {
 
     totalLabor = laborCost;
     totalMaterial = matCost;
-    const wsib = totalLabor * WSIB_RATE;
+    // WSIB base = total labor MINUS all material deductions (subs buy from contractor)
+    const wsibBase = Math.max(0, totalLabor - totalBoarderMatDeduct - totalInsulatorMatDeduct - totalTaperMatDeduct);
+    const wsib = wsibBase * WSIB_RATE;
     const subtotalLM = totalLabor + totalMaterial + wsib;
     const profit = subtotalLM * (gProfitPct/100);
     const subtotal = subtotalLM + profit;
@@ -2940,6 +3503,18 @@ function showReport() {
 
     html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
     html += `<div class="modal-row"><span>Labor Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabor)}</span></div>`;
+    // Material deductions — subs buy consumables from contractor, deducted before dues + WSIB
+    if (totalBoarderMatDeduct > 0)
+      html += `<div class="modal-row" style="color:var(--muted)"><span>  − Boarder materials (screws)</span><span style="font-family:'DM Mono',monospace">(${fmt(totalBoarderMatDeduct)})</span></div>`;
+    if (totalInsulatorMatDeduct > 0)
+      html += `<div class="modal-row" style="color:var(--muted)"><span>  − Insulator materials (poly/tape/caulk)</span><span style="font-family:'DM Mono',monospace">(${fmt(totalInsulatorMatDeduct)})</span></div>`;
+    if (totalTaperMatDeduct > 0)
+      html += `<div class="modal-row" style="color:var(--muted)"><span>  − Taper materials (mud/tape)</span><span style="font-family:'DM Mono',monospace">(${fmt(totalTaperMatDeduct)})</span></div>`;
+    const totalMatDeduct = totalBoarderMatDeduct + totalInsulatorMatDeduct + totalTaperMatDeduct;
+    if (totalMatDeduct > 0) {
+      const wsibBase2 = Math.max(0, totalLabor - totalMatDeduct);
+      html += `<div class="modal-row" style="font-size:11px;color:var(--muted);font-style:italic"><span>  Net labor base for dues + WSIB</span><span style="font-family:'DM Mono',monospace">${fmt(wsibBase2)}</span></div>`;
+    }
     const houseType = j.details?.houseType || 'house';
     if (totalTownPremium > 0 && houseType !== 'house') {
       const townLabel = houseType === 'stacked' ? 'Stack Townhouse Premium' : 'Townhouse Premium';
@@ -2950,7 +3525,7 @@ function showReport() {
     }
     html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalLocal675)}</span></div>`;
     html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalTapers)}</span></div>`;
-    html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
+    html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}% on net labor)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
     html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal Labor + Material</span><span style="font-family:'DM Mono',monospace">${fmt(subtotalLM)}</span></div>`;
     html += `<div class="modal-row"><span>Profit (${gProfitPct}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(profit)}</span></div>`;
     html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal</span><span style="font-family:'DM Mono',monospace">${fmt(subtotal)}</span></div>`;
@@ -3389,11 +3964,22 @@ function defaultMatPrices() {
   p['mat_st_hang_wire']    = 45.00;
   p['mat_st_eyelag_c']     = 0.75;
   p['mat_st_eyelag_w']     = 0.75;
-  // Pink insulation ($/bag — all same base price, adjust per R-value as needed)
-  ['mat_ins_r8','mat_ins_r12','mat_ins_r14','mat_ins_r20',
-   'mat_ins_r22','mat_ins_r24','mat_ins_r28','mat_ins_r31','mat_ins_r40'].forEach(k => p[k] = 0.95);
-  // Roxul ($/bag)
-  ['mat_rox_15qz','mat_rox_3qz','mat_rox_r14','mat_rox_r225','mat_rox_r24'].forEach(k => p[k] = 1.10);
+  // Pink insulation ($/bag) — Ontario prices, 15"/16" OC bags (Chamberlain Timber Mart / Home Depot CA, May 2026)
+  p['mat_ins_r8']  = 59.99;   // estimated, close to R12
+  p['mat_ins_r12'] = 79.98;   // R12 15" 97.9sf bag
+  p['mat_ins_r14'] = 65.00;   // estimated
+  p['mat_ins_r20'] = 105.00;  // R20 15" 78.3sf bag
+  p['mat_ins_r22'] = 71.72;   // R22 15" 49sf bag
+  p['mat_ins_r24'] = 118.97;  // R24 23" 52sf bag
+  p['mat_ins_r28'] = 97.97;   // R28 24" 80sf bag
+  p['mat_ins_r31'] = 59.97;   // R31 16" 42.7sf bag
+  p['mat_ins_r40'] = 89.87;   // R40 16" 32sf bag
+  // Roxul/Rockwool ($/bag) — Ontario dealer pricing (May 2026)
+  p['mat_rox_15qz'] = 69.99;  // Safe and Sound 16" 2x4
+  p['mat_rox_3qz']  = 74.99;  // Safe and Sound 16" 2x6
+  p['mat_rox_r14']  = 75.00;  // ComfortBatt R14
+  p['mat_rox_r225'] = 75.00;  // ComfortBatt R22
+  p['mat_rox_r24']  = 89.99;  // ComfortBatt R24
   // Blown-in ($/ft²)
   ['mat_blown_r20','mat_blown_r32','mat_blown_r40','mat_blown_r60'].forEach(k => p[k] = 0.85);
   // Spray foam ($/ft²)
@@ -3545,7 +4131,7 @@ function openPricesSheet(tab) {
     out += `<button id="year-btn-${i}" class="year-btn ${(!gRateCustom && i===gRateIdx)?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
   });
   out += `<button id="year-btn-custom" class="year-btn ${gRateCustom?'active':'inactive'}" style="${gRateCustom?'background:#d97706;color:#fff;border-color:#d97706':''}" onclick="">Custom</button>`;
-  out += `</div><div class="year-hint">Tap a date to auto-fill all labor fields from the CBA. Modified fields are highlighted.</div></div>`;
+  out += `</div><div class="year-hint">Tap a date to auto-fill all labor fields from the CBA. Modified fields are highlighted and the custom button is selected.</div></div>`;
 
   // ── Profit % (DW tab only) ──
   if (gPriceTab === 'DW') {
@@ -3701,6 +4287,34 @@ function openMatPricesSheet(tab) {
 
   body.innerHTML = out;
   document.getElementById('matprices-overlay').classList.add('open');
+}
+
+function importMatPrices(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      // Merge — only update keys that exist in MAT_PRICE_FIELDS
+      const validKeys = new Set(MAT_PRICE_FIELDS.map(f => f.key));
+      let count = 0;
+      Object.entries(imported).forEach(([k, v]) => {
+        if (validKeys.has(k) && typeof v === 'number') {
+          gMatPrices[k] = v;
+          count++;
+        }
+      });
+      saveMatPricesStorage(gMatPrices);
+      // Re-render current tab to show imported values
+      openMatPricesSheet();
+      alert(`Imported ${count} prices successfully.`);
+    } catch(err) {
+      alert('Import failed — make sure the file is a valid material prices JSON export.');
+    }
+    input.value = ''; // reset so same file can be re-imported
+  };
+  reader.readAsText(file);
 }
 
 function saveMatPricesSheet() {
