@@ -464,6 +464,9 @@
     </div>
     <div class="sheet-body" id="modal-body" style="gap:0"></div>
     <div class="sheet-footer">
+      <div style="font-size:11px;color:var(--muted);text-align:center;padding:0 4px 10px;line-height:1.5">
+        ⚠️ Please verify all prices in the Prices sheet before exporting.
+      </div>
       <button class="sheet-save-btn" style="background:#dc2626;display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportToPDF()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <rect x="3" y="3" width="18" height="18" rx="2" fill="white" fill-opacity="0.2"/>
@@ -506,11 +509,12 @@
 <script>
 /* ── Category definitions ── */
 const CATS = [
-  { label: 'Drywall',    key: 'drywall' },
-  { label: 'Insulation', key: 'insulation' },
-  { label: 'Steel',      key: 'steel' },
-  { label: 'Mud',        key: 'mud' },
-  { label: 'Add-Ons',    key: 'jobExtras' },
+  { label: 'Drywall',     key: 'drywall' },
+  { label: 'Insulation',  key: 'insulation' },
+  { label: 'Steel',       key: 'steel' },
+  { label: 'Mud',         key: 'mud' },
+  { label: 'Corner Bead', key: 'cornerBead' },
+  { label: 'Add-Ons',     key: 'jobExtras' },
 ];
 
 /* ── Drywall sub-types ── */
@@ -640,7 +644,7 @@ const ROXUL_RVALS = [
 
 /* ── Pricing data (labour $/ft², material $/ft², WSIB rate) ── */
 // Union rate dates for Local 675
-const RATE_DATES = ['May 2025', 'May 2026', 'May 2027'];
+const RATE_DATES = ['May 4, 2025', 'May 3, 2026', 'May 2, 2027'];
 // Labour rates: [may2024, may2025, may2026]
 // Material rates $/ft² or $/unit (fixed, not union-tied)
 const MAT_RATES = {
@@ -687,7 +691,7 @@ const DEFAULT_PROFIT_PCT = 15;
    Rates per ft² (converted from per-1000-sqft in CBA)
    Rate dates: [May 4 2025, May 3 2026, May 2 2027]
    ══════════════════════════════════════════════════════════════════ */
-const RATE_DATES_CBA = ['May 2025', 'May 2026', 'May 2027'];
+const RATE_DATES_CBA = ['May 4, 2025', 'May 3, 2026', 'May 2, 2027'];
 
 const BOARD_LR_RATES = {
   h8:  { label: "Up to 8'",   rates: [0.352, 0.359, 0.366] },
@@ -739,18 +743,18 @@ const TAPING_HR_RATES = {
   h12: { label: "11' – 12'",   rates: [0.43350, 0.44217, 0.45101] },
 };
 
-const CORNER_BEAD_LF_RATES   = [0.90,  0.90,  0.90];  // LR filled (20.02)
-const CORNER_BEAD_BULL_RATES = [0.78,  0.79,  0.81];  // LR bullnose (20.02)
+const CORNER_BEAD_LF_RATES   = [0.285, 0.290, 0.295];  // Local 675 boarder CBA
+const CORNER_BEAD_BULL_RATES = [0.443, 0.451, 0.460];
 const DUROCK_RATES           = [0.60,  0.61,  0.63];
 const EXTRAS_RATES = {
-  skylight_2x4:      [141.83, 144.67, 147.56],  // LR 2×4 skylight (20.02)
-  skylight_4x4:      [234.19, 238.88, 243.65],  // LR 4×4 skylight (20.02)
-  tray_waffle_ceil:  [76.50,  78.03,  79.59],   // LR tray/waffle (20.02)
-  ota_cathedral:     [216.90, 221.24, 225.67],  // Cathedral ≥12ft LR (20.02)
-  open_round_stairs: [162.93, 166.19, 169.52],  // Circular stairs LR (20.02)
-  pot_lights:        [4.28,   4.37,   4.46],
-  townhouse_premium: [20.00,  20.40,  20.81],   // Townhouse non-stacked (20.02)
-  stack_townhouse:   [85.15,  86.85,  88.59],   // Stack townhouse premium (20.02)
+  skylight_2x4:      [82.00,   83.00,  85.00],   // Local 675 boarder CBA
+  skylight_4x4:      [174.00, 178.00, 181.00],
+  tray_waffle_ceil:  [84.00,   85.00,  87.00],
+  ota_cathedral:     [213.00, 217.00, 222.00],
+  open_round_stairs: [161.00, 164.00, 168.00],
+  pot_lights:        [4.28,    4.37,   4.46],
+  townhouse_premium: [14.02,  14.30,  14.60],
+  stack_townhouse:   [40.80,  41.60,  42.40],
   entry_door_single: [87.00,  87.00,  87.00],
   entry_door_double: [174.00, 174.00, 174.00],
   fivc_premium:      [105.00, 107.00, 109.00],
@@ -819,6 +823,7 @@ let curInsType = 0; // active insulation type index
 let curInsSubTab = 0; // 0 = insulation types, 1 = extras
 let curSteelSubTab = 0; // 0 = Steel, 1 = Extras
 let curMudSubTab = 0; // 0 = Mud, 1 = Extras
+let curCbSubTab  = 0; // 0=Vinyl, 1=Metal, 2=Bullnose, 3=Misc
 
 /* ── Blank counts ── */
 function blankCounts() {
@@ -888,7 +893,7 @@ function makeJob(name, id) {
   const now = new Date().toISOString();
   return {
     id, name, areas: [], areaCounter: 0,
-    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise' },
+    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise', houseType:'house' },
     createdAt: now, modifiedAt: now
   };
 }
@@ -973,9 +978,11 @@ function switchCat(key) {
     const gb = document.getElementById('dw-group-bar');
     if (gb) gb.style.display = 'none';
   }
+  if (key !== 'mud' && curMudSubTab > 1) curMudSubTab = 0; // clamp: mud now only has 0=Mud, 1=Extras
   renderCatTabs();
   renderTypeTabs();
   renderTally();
+  renderStrip();
 }
 
 /* ── Area form ── */
@@ -1095,6 +1102,10 @@ function renderJobDetailsBar() {
   if (d.lockbox)     parts.push(chip('Lockbox', d.lockbox));
   const rate = d.rate || 'lowrise';
   parts.push(chip('Rate', rate === 'highrise' ? 'High-Rise' : 'Low-Rise'));
+  if (rate === 'lowrise' && d.houseType && d.houseType !== 'house') {
+    const typeLabel = d.houseType === 'stacked' ? 'Stacked T/H' : 'Townhouse';
+    parts.push(chip('Type', typeLabel));
+  }
   if (d.energyStar)  parts.push(chip('Energy Star', '✓'));
   if (d.scaffolding) parts.push(chip('Scaffolding', '✓'));
   if (d.cleaning)    parts.push(chip('Cleaning', '✓'));
@@ -1206,11 +1217,18 @@ function renderTypeTabs() {
   } else if (curCat === 'mud') {
     wrap.style.display = '';
     document.getElementById('type-tabs').innerHTML = [
-      { label: 'Mud', idx: 0 }, { label: 'Corner Bead', idx: 1 }, { label: 'Extras', idx: 2 }
+      { label: 'Mud', idx: 0 }, { label: 'Extras', idx: 1 }
     ].map(({label, idx}) => {
       const active = idx === curMudSubTab;
       const col = '#92400e';
       return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchMudSubTab(${idx})">${label}</button>`;
+    }).join('');
+  } else if (curCat === 'cornerBead') {
+    wrap.style.display = '';
+    const col = '#92400e';
+    document.getElementById('type-tabs').innerHTML = CORNER_BEAD_GROUPS.map((g, i) => {
+      const active = i === curCbSubTab;
+      return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchCbSubTab(${i})">${g.label}</button>`;
     }).join('');
   } else {
     wrap.style.display = 'none';
@@ -1251,6 +1269,7 @@ function switchDwType(visIdx) {
 function switchInsType(n) { curInsSubTab=0; curInsType=n; renderInsTypeTabs(); renderInsulation(); }
 function switchSteelSubTab(n) { curSteelSubTab=n; renderTypeTabs(); renderTally(); }
 function switchMudSubTab(n) { curMudSubTab=n; renderTypeTabs(); renderTally(); }
+function switchCbSubTab(n)  { curCbSubTab=n;  renderTypeTabs(); renderTally(); renderStrip(); }
 
 /* ── Counts ── */
 function encodeKey(str) { return String(str).replace(/[^a-zA-Z0-9]/g,'_'); }
@@ -1422,10 +1441,10 @@ function renderTally() {
   }
   if (curCat === 'mud') {
     if (curMudSubTab === 0) { renderCatItems('mud', MUD_ITEMS, '#92400e', 'Mud'); return; }
-    if (curMudSubTab === 1) { renderCornerBead(); return; }
     renderCatItems('mudExtras', MUD_EXTRAS_ITEMS, '#92400e', 'Extras');
     return;
   }
+  if (curCat === 'cornerBead') { renderCornerBead(); return; }
   if (curCat === 'jobExtras') { renderCatItems('jobExtras', JOB_EXTRAS_ITEMS, '#0891b2', 'Add-Ons'); return; }
 
   document.getElementById('type-bar-wrap').style.display='none';
@@ -1472,26 +1491,30 @@ function renderCornerBead() {
   }
   const col = '#92400e';
   const c = A().counts['cornerBead'];
-  let html = ``;
-  CORNER_BEAD_GROUPS.forEach(group => {
-    html += `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:${col};margin:14px 0 8px">${group.label}</div>
-    <div class="sheet-grid">`;
-    group.items.forEach(item => {
-      const globalIdx = CORNER_BEAD_ITEMS.indexOf(item);
-      html += `<div class="sheet-card" style="border-color:${col}22">
-        <div class="sheet-card-top" style="background:${col}12">
-          <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
-          <div class="sheet-count" style="color:${col}" id="cnt-cornerBead-${encodeKey(item)}" onclick="catEditItem('cornerBead','${encodeKey(item)}',${globalIdx},'${col}')">${c[item]||0}</div>
-        </div>
-        <div class="sheet-card-controls" style="border-top-color:${col}22">
-          <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('cornerBead',${globalIdx})">−</button>
-          <div class="ctrl-divider" style="background:${col}22"></div>
-          <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('cornerBead',${globalIdx})">+</button>
-        </div>
-      </div>`;
-    });
-    html += `</div>`;
+  const group = CORNER_BEAD_GROUPS[curCbSubTab] || CORNER_BEAD_GROUPS[0];
+  const groupTotal = group.items.reduce((s, item) => s + (c[item]||0), 0);
+
+  let html = `<div class="tally-header">
+    <div class="tally-type-label" style="color:${col}">${group.label}</div>
+    ${groupTotal > 0 ? `<div class="tally-subtotal">Total: <strong>${groupTotal}</strong></div>` : ''}
+  </div>
+  <div class="sheet-grid">`;
+
+  group.items.forEach(item => {
+    const globalIdx = CORNER_BEAD_ITEMS.indexOf(item);
+    html += `<div class="sheet-card" style="border-color:${col}22">
+      <div class="sheet-card-top" style="background:${col}12">
+        <div class="sheet-ft" style="color:${col}99;font-size:11px;white-space:normal;line-height:1.3">${item}</div>
+        <div class="sheet-count" style="color:${col}" id="cnt-cornerBead-${encodeKey(item)}" onclick="catEditItem('cornerBead','${encodeKey(item)}',${globalIdx},'${col}')">${c[item]||0}</div>
+      </div>
+      <div class="sheet-card-controls" style="border-top-color:${col}22">
+        <button class="ctrl" style="--add-color:${col}" onclick="catSubItem('cornerBead',${globalIdx})">−</button>
+        <div class="ctrl-divider" style="background:${col}22"></div>
+        <button class="ctrl" style="--add-color:${col}" onclick="catAddItem('cornerBead',${globalIdx})">+</button>
+      </div>
+    </div>`;
   });
+  html += `</div>`;
   area.innerHTML = html;
 }
 
@@ -2036,14 +2059,22 @@ function renderStrip() {
   }
   if (curCat === 'mud') {
     const mudTotal    = A() ? MUD_ITEMS.reduce((s,item)=>s+(A().counts['mud'][item]||0),0) : 0;
-    const cbTotal     = A() ? CORNER_BEAD_ITEMS.reduce((s,item)=>s+(A().counts['cornerBead']?.[item]||0),0) : 0;
     const extrasTotal = A() ? MUD_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['mudExtras']?.[item]||0),0) : 0;
-    const grandTotal  = mudTotal + cbTotal + extrasTotal;
+    const grandTotal  = mudTotal + extrasTotal;
     document.getElementById('totals-strip').innerHTML=
-      `<div class="strip-total">Total <span>${grandTotal}</span></div>`+
-      (mudTotal>0    ? `<div class="strip-chip">Mud <strong>${mudTotal}</strong></div>` : '')+
-      (cbTotal>0     ? `<div class="strip-chip">Corner Bead <strong>${cbTotal}</strong></div>` : '')+
+      `<div class="strip-total">Mud <span>${grandTotal}</span></div>`+
       (extrasTotal>0 ? `<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>` : '');
+    return;
+  }
+  if (curCat === 'cornerBead') {
+    const c = A()?.counts['cornerBead'] || {};
+    const cbTotal = CORNER_BEAD_ITEMS.reduce((s,item) => s+(c[item]||0), 0);
+    const chips = CORNER_BEAD_GROUPS.map(g => {
+      const n = g.items.reduce((s,item) => s+(c[item]||0), 0);
+      return n > 0 ? `<div class="strip-chip">${g.label} <strong>${n}</strong></div>` : '';
+    }).join('');
+    document.getElementById('totals-strip').innerHTML=
+      `<div class="strip-total">Corner Bead <span>${cbTotal}</span></div>${chips}`;
     return;
   }
   const chips = DRYWALL_TYPES.filter(t=>!t.isItems).map(t=>{
@@ -2151,6 +2182,8 @@ function setRateBtn(r) {
   document.getElementById('df-rate-hr').style.color = r==='highrise' ? '#fff' : '';
   document.getElementById('df-rate-lr').dataset.selected = r==='lowrise' ? '1' : '';
   document.getElementById('df-rate-hr').dataset.selected = r==='highrise' ? '1' : '';
+  const htRow = document.getElementById('df-housetype-row');
+  if (htRow) htRow.style.display = r==='lowrise' ? '' : 'none';
 }
 function openDetails() {
   const j=J(),d=j.details;
@@ -2170,6 +2203,16 @@ function openDetails() {
       <button id="df-rate-lr" onclick="setRateBtn('lowrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">Low-Rise</button>
       <button id="df-rate-hr" onclick="setRateBtn('highrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">High-Rise</button>
     </div></div>
+    <div id="df-housetype-row" style="display:none;margin-top:8px">
+      <div class="field-group">
+        <div class="field-label">Building Type</div>
+        <select class="field-select" id="df-housetype" style="margin-top:4px">
+          <option value="house" ${(d.houseType||'house')==='house'?'selected':''}>House</option>
+          <option value="townhouse" ${(d.houseType)==='townhouse'?'selected':''}>Townhouse</option>
+          <option value="stacked" ${(d.houseType)==='stacked'?'selected':''}>Stacked Townhouse</option>
+        </select>
+      </div>
+    </div>
     <div class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="toggle-row"><span class="toggle-label">Scaffolding</span><label class="toggle"><input type="checkbox" id="df-scaffolding" ${d.scaffolding?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="toggle-row"><span class="toggle-label">Cleaning</span><label class="toggle"><input type="checkbox" id="df-cleaning" ${d.cleaning?'checked':''}/><div class="toggle-track"></div></label></div>
@@ -2197,6 +2240,8 @@ function saveDetails() {
   j.details.cleaning    = document.getElementById('df-cleaning').checked;
   j.details.touchup     = document.getElementById('df-touchup').checked;
   j.details.rate = document.getElementById('df-rate-hr').dataset.selected ? 'highrise' : 'lowrise';
+  const htEl = document.getElementById('df-housetype');
+  j.details.houseType = htEl ? htEl.value : 'house';
   j.details.notes=document.getElementById('df-notes').value.trim();
   j.modifiedAt=new Date().toISOString();
   document.getElementById('job-name-display').textContent=j.name;
@@ -2252,6 +2297,7 @@ function showReport() {
   let totalLabour = 0;
   let totalMaterial = 0;
   let totalEnergyStar = 0;
+  let totalTownPremium = 0;
   let hasAny=false;
 
   j.areas.forEach(a=>{
@@ -2617,6 +2663,20 @@ function showReport() {
       // ── Boarding gross ──
       const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate;
 
+      // ── Townhouse / Stack premium (LR only, applied to all boarding sqft) ──
+      const houseType = j.details?.houseType || 'house';
+      let townPremiumCost = 0;
+      if (!isHR) {
+        const totalBoardSqft = plainSqft + fivetSqft2;
+        if (houseType === 'townhouse') {
+          townPremiumCost = totalBoardSqft * (gPrices['townhouse_premium'] || EXTRAS_RATES.townhouse_premium[gRateIdx]) / 1000;
+        } else if (houseType === 'stacked') {
+          townPremiumCost = totalBoardSqft * (gPrices['stack_townhouse'] || EXTRAS_RATES.stack_townhouse[gRateIdx]) / 1000;
+        }
+      }
+      labourCost += townPremiumCost;
+      totalTownPremium += townPremiumCost;
+
       // ── Steel gross ──
       const steelGross = STEEL_SUBTABS.reduce((s, st) => {
         const stSqft = st.items.reduce((ss,item) => ss + (a.counts[st.key]?.[item]||0), 0);
@@ -2710,6 +2770,11 @@ function showReport() {
 
     html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
     html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabour)}</span></div>`;
+    const houseType = j.details?.houseType || 'house';
+    if (totalTownPremium > 0 && houseType !== 'house') {
+      const townLabel = houseType === 'stacked' ? 'Stack Townhouse Premium' : 'Townhouse Premium';
+      html += `<div class="modal-row"><span>${townLabel}</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalTownPremium)}</span></div>`;
+    }
     if (totalEnergyStar > 0) {
       html += `<div class="modal-row"><span>Energy Star (${(gPrices['ins_energy_star']??INS_ENERGY_STAR_RATES[gRateIdx]).toFixed(3)}/ft² of Pink+Roxul)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalEnergyStar)}</span></div>`;
     }
@@ -2930,91 +2995,92 @@ function handleSheetTap(e, overlayId) { if(e.target===document.getElementById(ov
 // ── Prices Sheet ──
 const PRICE_FIELDS = [
   // ── Boarding LR ──
-  { key:'board_lr_h8',  label:"≤8'",          rates:[0.352,0.359,0.366], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
-  { key:'board_lr_h9',  label:">8' to ≤9'",   rates:[0.373,0.381,0.388], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
-  { key:'board_lr_h10', label:">9' to ≤10'",  rates:[0.422,0.431,0.439], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
-  { key:'board_lr_h11', label:">10' to ≤11'", rates:[0.451,0.460,0.469], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
-  { key:'board_lr_h12', label:">11' to ≤12'", rates:[0.466,0.475,0.485], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)' },
+  { key:'board_lr_h8',  label:"≤8'",          rates:[0.352,0.359,0.366], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)', priceTab:'DW' },
+  { key:'board_lr_h9',  label:">8' to ≤9'",   rates:[0.373,0.381,0.388], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)', priceTab:'DW' },
+  { key:'board_lr_h10', label:">9' to ≤10'",  rates:[0.422,0.431,0.439], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)', priceTab:'DW' },
+  { key:'board_lr_h11', label:">10' to ≤11'", rates:[0.451,0.460,0.469], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)', priceTab:'DW' },
+  { key:'board_lr_h12', label:">11' to ≤12'", rates:[0.466,0.475,0.485], col:'lr', group:'Boarding', sub:'Low-Rise ($/ft²)', priceTab:'DW' },
   // ── Boarding HR ──
-  { key:'board_hr_h9',  label:">8' to ≤9'",   rates:[0.377,0.385,0.393], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
-  { key:'board_hr_h10', label:">9' to ≤10'",  rates:[0.397,0.405,0.413], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
-  { key:'board_hr_h11', label:">10' to ≤11'", rates:[0.416,0.424,0.433], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
-  { key:'board_hr_h12', label:">11' to ≤12'", rates:[0.434,0.442,0.451], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)' },
+  { key:'board_hr_h9',  label:">8' to ≤9'",   rates:[0.377,0.385,0.393], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
+  { key:'board_hr_h10', label:">9' to ≤10'",  rates:[0.397,0.405,0.413], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
+  { key:'board_hr_h11', label:">10' to ≤11'", rates:[0.416,0.424,0.433], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
+  { key:'board_hr_h12', label:">11' to ≤12'", rates:[0.434,0.442,0.451], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
   // ── Boarding Extras at bottom ──
-  { key:'board_extra_1', label:'Boarding Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Boarding', sub:'Extras' },
-  { key:'board_extra_2', label:'Boarding Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Boarding', sub:'Extras', flat:true },
-  // ── Fireguard Boarding LR ──
-  { key:'fivet_lr_h8',  label:"≤8'",          rates:[0.457,0.464,0.471], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h9',  label:">8' to ≤9'",   rates:[0.478,0.486,0.493], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h10', label:">9' to ≤10'",  rates:[0.527,0.536,0.544], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h11', label:">10' to ≤11'", rates:[0.556,0.565,0.574], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_lr_h12', label:">11' to ≤12'", rates:[0.571,0.580,0.590], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)' },
-  // ── Fireguard Boarding HR ──
-  { key:'fivet_hr_h9',  label:">8' to ≤9'",   rates:[0.482,0.490,0.498], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_hr_h10', label:">9' to ≤10'",  rates:[0.502,0.510,0.518], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_hr_h11', label:">10' to ≤11'", rates:[0.521,0.529,0.538], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
-  { key:'fivet_hr_h12', label:">11' to ≤12'", rates:[0.539,0.547,0.556], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)' },
-  // ── Steel HR ──
-  { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
-  { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
-  { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
-  { key:'steel_hr_h11', label:">10' to ≤11'", rates:[0.405,0.413,0.421], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
-  { key:'steel_hr_h12', label:">11' to ≤12'", rates:[0.427,0.436,0.444], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)' },
-  { key:'steel_lr_house', label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)' },
-  { key:'suspended_ceil',     label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings' },
-  { key:'suspended_ceil_iso', label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings' },
-  // ── Steel Extras at bottom ──
-  { key:'steel_extra_1', label:'Steel Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras' },
-  { key:'steel_extra_2', label:'Steel Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', flat:true },
-  // ── Insulation LR ──
-  { key:'ins_lr',         label:'All Insulation ($/ft²)',       rates:[0.617,0.629,0.642], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
-  { key:'ins_r24_prem',   label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
-  { key:'ins_rockwool_prem',label:'Rockwool Premium ($/ft²)',   rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
-  { key:'ins_energy_star',label:'Energy Star Premium ($/ft²)',  rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in' },
-  { key:'ins_hr_int',     label:'Interior Walls ($/ft²)',       rates:[0.328,0.335,0.342], col:'hr', group:'Insulation', sub:'High-Rise labour' },
-  { key:'ins_hr_ext',     label:'Exterior Walls ($/ft²)',       rates:[0.389,0.396,0.404], col:'hr', group:'Insulation', sub:'High-Rise labour' },
-  { key:'blanket_r12',    label:'Blanket R12 ($/ft²)',          rates:[0.2142,0.2184,0.2227], col:'lr', group:'Insulation', sub:'Blanket' },
-  { key:'blanket_r20',    label:'Blanket R20 ($/ft²)',          rates:[0.2416,0.2464,0.2513], col:'lr', group:'Insulation', sub:'Blanket' },
-  { key:'blanket_highwall',label:'High Walls >8.5ft ($/wall)',  rates:[24.70,25.19,25.69],    col:'lr', group:'Insulation', sub:'Blanket' },
-  // ── Insulation Extras at bottom ──
-  { key:'ins_extra_1',    label:'Insulation Extra 1 ($/ft²)',   rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras' },
-  { key:'ins_extra_2',    label:'Insulation Extra 2 (flat $)',  rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras', flat:true },
-  // ── Taping ──
-  { key:'tape_lr_h8',   label:"≤8'",           rates:[0.38078,0.38839,0.39616], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
-  { key:'tape_lr_h9',   label:"8' – 9'",        rates:[0.39986,0.40786,0.41601], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
-  { key:'tape_lr_h10',  label:"9' – 10'",       rates:[0.41616,0.42448,0.43297], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
-  { key:'tape_lr_h11',  label:"10' – 11'",      rates:[0.45084,0.45986,0.46905], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
-  { key:'tape_lr_h12',  label:"11' – 12'",      rates:[0.46614,0.47546,0.48497], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
-  { key:'tape_hr_h8',   label:"≤8'",            rates:[0.36469,0.37198,0.37942], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
-  { key:'tape_hr_h9',   label:"8' – 9'",        rates:[0.38375,0.39143,0.39926], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
-  { key:'tape_hr_h10',  label:"9' – 10'",       rates:[0.39168,0.39951,0.40750], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
-  { key:'tape_hr_h11',  label:"10' – 11'",      rates:[0.41610,0.42442,0.43291], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
-  { key:'tape_hr_h12',  label:"11' – 12'",      rates:[0.43350,0.44217,0.45101], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
-  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',    rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras' },
-  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',   rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', flat:true },
-  // ── Extras ──
-  { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[141.83,144.67,147.56],col:'lr', group:'Extras' },
-  { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[234.19,238.88,243.65],col:'lr', group:'Extras' },
-  { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',     rates:[76.50, 78.03, 79.59], col:'lr', group:'Extras' },
-  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',           rates:[216.90,221.24,225.67],col:'lr', group:'Extras' },
-  { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[162.93,166.19,169.52],col:'lr', group:'Extras' },
-  { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,  4.37,  4.46],  col:'lr', group:'Extras' },
-  { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00, 87.00, 87.00], col:'hr', group:'Extras' },
-  { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00,174.00,174.00],col:'hr', group:'Extras' },
-  { key:'fivc_premium',    label:'⅝" Fire Code C ($/1000ft²)', rates:[105.00,107.00,109.00],col:'lr', group:'Extras' },
-  { key:'townhouse_premium',label:'Townhouse non-stacked ($/MSF)', rates:[20.00, 20.40, 20.81], col:'lr', group:'Extras' },
-  { key:'stack_townhouse', label:'Stack/B2B Townhouse ($/MSF)',    rates:[85.15, 86.85, 88.59], col:'lr', group:'Extras' },
-  // ── Corner Beads ──
-  { key:'corner_bead_lf',  label:'Regular filled ($/lf)',       rates:[0.90,  0.90,  0.90],  col:'lr', group:'Corner Beads' },
-  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',             rates:[0.78,  0.79,  0.81],  col:'lr', group:'Corner Beads' },
+  { key:'board_extra_1', label:'Boarding Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Boarding', sub:'Extras', priceTab:'DW' },
+  { key:'board_extra_2', label:'Boarding Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Boarding', sub:'Extras', flat:true, priceTab:'DW' },
   // ── Durock ──
-  { key:'durock_rate',     label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Durock' },
+  { key:'durock_rate',     label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Durock', priceTab:'DW' },
+  // ── Fireguard Boarding LR ──
+  { key:'fivet_lr_h8',  label:"≤8'",          rates:[0.457,0.464,0.471], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  { key:'fivet_lr_h9',  label:">8' to ≤9'",   rates:[0.478,0.486,0.493], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  { key:'fivet_lr_h10', label:">9' to ≤10'",  rates:[0.527,0.536,0.544], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  { key:'fivet_lr_h11', label:">10' to ≤11'", rates:[0.556,0.565,0.574], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  { key:'fivet_lr_h12', label:">11' to ≤12'", rates:[0.571,0.580,0.590], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  // ── Fireguard Boarding HR ──
+  { key:'fivet_hr_h9',  label:">8' to ≤9'",   rates:[0.482,0.490,0.498], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  { key:'fivet_hr_h10', label:">9' to ≤10'",  rates:[0.502,0.510,0.518], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  { key:'fivet_hr_h11', label:">10' to ≤11'", rates:[0.521,0.529,0.538], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  { key:'fivet_hr_h12', label:">11' to ≤12'", rates:[0.539,0.547,0.556], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
+  // ── Steel HR ──
+  { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
+  { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
+  { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
+  { key:'steel_hr_h11', label:">10' to ≤11'", rates:[0.405,0.413,0.421], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
+  { key:'steel_hr_h12', label:">11' to ≤12'", rates:[0.427,0.436,0.444], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
+  { key:'steel_lr_house', label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)', priceTab:'DW' },
+  { key:'suspended_ceil',     label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'DW' },
+  { key:'suspended_ceil_iso', label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'DW' },
+  // ── Steel Extras at bottom ──
+  { key:'steel_extra_1', label:'Steel Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', priceTab:'DW' },
+  { key:'steel_extra_2', label:'Steel Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', flat:true, priceTab:'DW' },
+  // ── Insulation LR ──
+  { key:'ins_lr',         label:'All Insulation ($/ft²)',       rates:[0.617,0.629,0.642], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
+  { key:'ins_r24_prem',   label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
+  { key:'ins_rockwool_prem',label:'Rockwool Premium ($/ft²)',   rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
+  { key:'ins_energy_star',label:'Energy Star Premium ($/ft²)',  rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
+  { key:'ins_hr_int',     label:'Interior Walls ($/ft²)',       rates:[0.328,0.335,0.342], col:'hr', group:'Insulation', sub:'High-Rise labour', priceTab:'IN' },
+  { key:'ins_hr_ext',     label:'Exterior Walls ($/ft²)',       rates:[0.389,0.396,0.404], col:'hr', group:'Insulation', sub:'High-Rise labour', priceTab:'IN' },
+  { key:'blanket_r12',    label:'Blanket R12 ($/ft²)',          rates:[0.2142,0.2184,0.2227], col:'lr', group:'Insulation', sub:'Blanket', priceTab:'IN' },
+  { key:'blanket_r20',    label:'Blanket R20 ($/ft²)',          rates:[0.2416,0.2464,0.2513], col:'lr', group:'Insulation', sub:'Blanket', priceTab:'IN' },
+  { key:'blanket_highwall',label:'High Walls >8.5ft ($/wall)',  rates:[24.70,25.19,25.69],    col:'lr', group:'Insulation', sub:'Blanket', priceTab:'IN' },
+  // ── Insulation Extras at bottom ──
+  { key:'ins_extra_1',    label:'Insulation Extra 1 ($/ft²)',   rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras', priceTab:'IN' },
+  { key:'ins_extra_2',    label:'Insulation Extra 2 (flat $)',  rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras', flat:true, priceTab:'IN' },
+  // ── Taping ──
+  { key:'tape_lr_h8',   label:"≤8'",           rates:[0.38078,0.38839,0.39616], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_lr_h9',   label:"8' – 9'",        rates:[0.39986,0.40786,0.41601], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_lr_h10',  label:"9' – 10'",       rates:[0.41616,0.42448,0.43297], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_lr_h11',  label:"10' – 11'",      rates:[0.45084,0.45986,0.46905], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_lr_h12',  label:"11' – 12'",      rates:[0.46614,0.47546,0.48497], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_hr_h8',   label:"≤8'",            rates:[0.36469,0.37198,0.37942], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_hr_h9',   label:"8' – 9'",        rates:[0.38375,0.39143,0.39926], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_hr_h10',  label:"9' – 10'",       rates:[0.39168,0.39951,0.40750], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_hr_h11',  label:"10' – 11'",      rates:[0.41610,0.42442,0.43291], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
+  { key:'tape_hr_h12',  label:"11' – 12'",      rates:[0.43350,0.44217,0.45101], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
+  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',    rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', priceTab:'TP' },
+  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',   rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', flat:true, priceTab:'TP' },
+  // ── Corner Beads (Local 675 CBA) ──
+  { key:'corner_bead_lf',  label:'Regular filled ($/lf)',       rates:[0.285, 0.290, 0.295], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',             rates:[0.443, 0.451, 0.460], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  // ── Extras (Local 675 boarder CBA rates) ──
+  { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[82.00,  83.00,  85.00],  col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[174.00, 178.00, 181.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',     rates:[84.00,  85.00,  87.00],  col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',           rates:[213.00, 217.00, 222.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[161.00, 164.00, 168.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,   4.37,   4.46],   col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
+  { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00, 174.00, 174.00], col:'hr', group:'Extras', priceTab:'EX' },
+  { key:'fivc_premium',    label:'⅝" Fire Code C ($/MSF)',     rates:[105.00, 107.00, 109.00], col:'lr', group:'Extras', priceTab:'EX' },
+  // ── Townhouse Premiums (on boarding sqft — DW tab) ──
+  { key:'townhouse_premium',label:'Townhouse premium ($/MSF)',      rates:[14.02, 14.30, 14.60], col:'lr', group:'Townhouse', priceTab:'DW' },
+  { key:'stack_townhouse',  label:'Stack/B2B Townhouse premium ($/MSF)', rates:[40.80, 41.60, 42.40], col:'lr', group:'Townhouse', priceTab:'DW' },
   // ── Job Costs ──
-  { key:'scaffolding',     label:'Scaffolding ($)',             rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs' },
-  { key:'cleaning',        label:'Cleaning ($)',                rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs' },
-  { key:'tpy_flat',        label:'Touchup & Year End ($)',      rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs' },
-  { key:'local675_dues',   label:'Local 675 Union Dues',        rates:[25.5,26.5,27.5],      col:'lr', group:'Job Costs', pct:true },
-  { key:'tapers_union',    label:'Tapers Union Dues',           rates:[22.1,23.0,23.9],      col:'lr', group:'Job Costs', pct:true },
+  { key:'scaffolding',     label:'Scaffolding ($)',             rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
+  { key:'cleaning',        label:'Cleaning ($)',                rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
+  { key:'tpy_flat',        label:'Touchup & Year End ($)',      rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
+  { key:'local675_dues',   label:'Local 675 Union Dues',        rates:[25.5,26.5,27.5],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
+  { key:'tapers_union',    label:'Tapers Union Dues',           rates:[22.1,23.0,23.9],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
 
 ];
 // Keep PRICE_FIELD_DEFS as alias for backward compat
@@ -3022,34 +3088,128 @@ const PRICE_FIELD_DEFS = PRICE_FIELDS;
 // Now that PRICE_FIELDS is defined, populate gPrices defaults
 gPrices = defaultPrices();
 
-function openPricesSheet() {
-  if(gRateIdx===null) gRateIdx = detectRateIdx();
+let gPriceTab = 'DW'; // active prices tab: DW | IN | TP | EX
+let gRateCustom = false; // true when any CBA field has been manually changed
+
+const PRICE_TABS = [
+  { id:'DW', label:'Drywall' },
+  { id:'IN', label:'Insulation' },
+  { id:'TP', label:'Taping' },
+  { id:'EX', label:'Extras' },
+];
+
+// Check if a field's current saved value deviates from CBA for the active year
+function isPriceCustom(f) {
+  if (gRateIdx === null) return false;
+  const saved = gPrices[f.key];
+  if (saved === undefined) return false;
+  const cba = f.pct ? f.rates[gRateIdx] / 100 : f.rates[gRateIdx];
+  return Math.abs(saved - cba) > 0.0001;
+}
+
+function refreshCustomState() {
+  gRateCustom = PRICE_FIELDS.some(f => isPriceCustom(f));
+}
+
+function applyInputHighlight(el, isCustom) {
+  if (isCustom) {
+    el.style.borderColor = '#d97706';
+    el.style.background  = '#fffbeb';
+    el.style.color       = '#92400e';
+  } else {
+    el.style.borderColor = '';
+    el.style.background  = '';
+    el.style.color       = '';
+  }
+}
+
+function updateYearBtns() {
+  document.querySelectorAll('.year-btn').forEach((b, i) => {
+    b.className = 'year-btn ' + ((!gRateCustom && i === gRateIdx) ? 'active' : 'inactive');
+  });
+  const cb = document.getElementById('year-btn-custom');
+  if (cb) {
+    cb.className = 'year-btn ' + (gRateCustom ? 'active' : 'inactive');
+    cb.style.background = gRateCustom ? '#d97706' : '';
+    cb.style.color      = gRateCustom ? '#fff'    : '';
+    cb.style.borderColor= gRateCustom ? '#d97706' : '';
+  }
+}
+
+// Called oninput on every CBA-tied price field
+function onPriceFieldChange(key) {
+  const f = PRICE_FIELDS.find(x => x.key === key);
+  if (!f) return;
+  const el = document.getElementById('pf-' + key);
+  if (!el) return;
+  const raw = parseFloat(el.value) || 0;
+  const stored = f.pct ? raw / 100 : raw;
+  const cba = f.pct ? f.rates[gRateIdx] / 100 : f.rates[gRateIdx];
+  const isCustom = Math.abs(stored - cba) > 0.0001;
+  applyInputHighlight(el, isCustom);
+  // Update gPrices live so refreshCustomState works
+  gPrices[f.key] = stored;
+  refreshCustomState();
+  updateYearBtns();
+}
+
+function openPricesSheet(tab) {
+  // Flush any edited values from the currently rendered tab before switching
+  PRICE_FIELDS.forEach(f => {
+    const el = document.getElementById('pf-'+f.key);
+    if (!el) return;
+    const raw = parseFloat(el.value) || 0;
+    gPrices[f.key] = f.pct ? raw / 100 : raw;
+  });
+  const pp = document.getElementById('pf-profit');
+  if (pp) gProfitPct = parseFloat(pp.value) || DEFAULT_PROFIT_PCT;
+
+  if (tab) gPriceTab = tab;
+  if (gRateIdx === null) gRateIdx = detectRateIdx();
+  refreshCustomState();
   const body = document.getElementById('prices-body');
 
-  // ── Year selector ──
-  let out = `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:12px">
+  // ── Tab bar ──
+  let out = `<div style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg);border-radius:10px;padding:4px">`;
+  PRICE_TABS.forEach(t => {
+    const active = t.id === gPriceTab;
+    out += `<button onclick="openPricesSheet('${t.id}')" style="flex:1;padding:8px 4px;font-size:13px;font-family:inherit;font-weight:${active?'700':'500'};border:none;border-radius:8px;cursor:pointer;background:${active?'var(--surface)':'transparent'};color:${active?'var(--text)':'var(--muted)'};box-shadow:${active?'0 1px 4px rgba(0,0,0,0.10)':'none'};transition:all 0.12s">${t.label}</button>`;
+  });
+  out += `</div>`;
+
+  // ── Year selector (always visible) ──
+  out += `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Union Rate Year</div>
     <div class="year-btn-row">`;
-  RATE_DATES.forEach((d,i) => {
-    out += `<button class="year-btn ${i===gRateIdx?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
+  RATE_DATES.forEach((d, i) => {
+    out += `<button class="year-btn ${(!gRateCustom && i===gRateIdx)?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
   });
-  out += `</div><div class="year-hint">Tap a date to auto-fill all labour fields from the CBA.</div></div>`;
+  out += `<button id="year-btn-custom" class="year-btn ${gRateCustom?'active':'inactive'}" style="${gRateCustom?'background:#d97706;color:#fff;border-color:#d97706':''}" onclick="/* already custom */">Custom</button>`;
+  out += `</div><div class="year-hint">Tap a date to auto-fill all labour fields from the CBA. Modified fields are highlighted.</div></div>`;
 
-  // ── Profit % ──
-  out += `<div class="price-row" style="padding-top:12px"><span class="price-row-label" style="font-weight:600">Profit %</span>
-    <input class="profit-input" type="number" id="pf-profit" min="0" max="100" step="0.5" value="${gProfitPct}"></div>`;
+  // ── Profit % (DW tab only) ──
+  if (gPriceTab === 'DW') {
+    out += `<div class="price-row" style="padding-top:4px;padding-bottom:12px"><span class="price-row-label" style="font-weight:600">Profit %</span>
+      <input class="profit-input" type="number" id="pf-profit" min="0" max="100" step="0.5" value="${gProfitPct}"></div>`;
+  }
 
-  // ── Two-column sections by group ──
-  const groups = [...new Set(PRICE_FIELDS.map(f=>f.group))];
+  // ── Sections filtered by active tab ──
+  const tabFields = PRICE_FIELDS.filter(f => f.priceTab === gPriceTab);
+  const groups = [...new Set(tabFields.map(f => f.group))];
+
+  const inputStyle = (f) => {
+    const custom = isPriceCustom(f);
+    return custom ? 'border-color:#d97706;background:#fffbeb;color:#92400e;' : '';
+  };
+
   groups.forEach(group => {
-    const fields = PRICE_FIELDS.filter(f=>f.group===group);
-    const lrFields = fields.filter(f=>f.col==='lr');
-    const hrFields = fields.filter(f=>f.col==='hr');
+    const fields = tabFields.filter(f => f.group === group);
+    const lrFields = fields.filter(f => f.col === 'lr');
+    const hrFields = fields.filter(f => f.col === 'hr');
 
     out += `<div class="price-section-label">${group}</div>`;
 
     if (lrFields.length && hrFields.length) {
-      // Two-column layout
       const lrSub = lrFields[0]?.sub || 'Low-Rise';
       const hrSub = hrFields[0]?.sub || 'High-Rise';
       out += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
@@ -3057,21 +3217,19 @@ function openPricesSheet() {
         <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;padding:0 2px">${hrSub}</div>
       </div>`;
       const maxRows = Math.max(lrFields.length, hrFields.length);
-      for (let i=0; i<maxRows; i++) {
+      for (let i = 0; i < maxRows; i++) {
         const lf = lrFields[i], rf = hrFields[i];
         out += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">`;
-        if (lf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lf.label}</div><input class="price-row-input" style="width:100%" type="number" id="pf-${lf.key}" step="0.001" min="0" value="${(gPrices[lf.key]??lf.rates[gRateIdx]).toFixed(3)}"></div>`;
+        if (lf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(lf)}" type="number" id="pf-${lf.key}" step="0.001" min="0" value="${(gPrices[lf.key]??lf.rates[gRateIdx]).toFixed(3)}" oninput="onPriceFieldChange('${lf.key}')"></div>`;
         else out += `<div></div>`;
-        if (rf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${rf.label}</div><input class="price-row-input" style="width:100%" type="number" id="pf-${rf.key}" step="0.001" min="0" value="${(gPrices[rf.key]??rf.rates[gRateIdx]).toFixed(3)}"></div>`;
+        if (rf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${rf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(rf)}" type="number" id="pf-${rf.key}" step="0.001" min="0" value="${(gPrices[rf.key]??rf.rates[gRateIdx]).toFixed(3)}" oninput="onPriceFieldChange('${rf.key}')"></div>`;
         else out += `<div></div>`;
         out += `</div>`;
       }
     } else {
-      // Single-column
       fields.forEach(f => {
         const isFlat = f.flat === true;
         const isPct  = f.pct  === true;
-        // Style the unit hint in the label with colour instead of a badge
         const styledLabel = f.label
           .replace('($/ft²)', '<span style="color:#1d4ed8;font-weight:600">($/ft²)</span>')
           .replace('(flat $)', '<span style="color:#92400e;font-weight:600">(flat $)</span>');
@@ -3083,7 +3241,7 @@ function openPricesSheet() {
         out += `<div class="price-row">
           <span class="price-row-label">${styledLabel}</span>
           <div style="display:flex;align-items:center;gap:2px">
-            <input class="price-row-input" type="number" id="pf-${f.key}" step="${step}" min="0" value="${displayVal}">${suffix}
+            <input class="price-row-input" style="${inputStyle(f)}" type="number" id="pf-${f.key}" step="${step}" min="0" value="${displayVal}" oninput="onPriceFieldChange('${f.key}')">${suffix}
           </div>
         </div>`;
       });
@@ -3097,23 +3255,24 @@ function openPricesSheet() {
 
 function applyRateYear(idx) {
   gRateIdx = idx;
+  gRateCustom = false;
   PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
     if (!el) return;
-    // pct fields store rates as percentages (e.g. 26.5), display as-is
     el.value = f.pct ? f.rates[idx].toFixed(1) : f.rates[idx].toFixed(f.flat?2:3);
+    applyInputHighlight(el, false);
+    // Sync gPrices so custom state is clean
+    gPrices[f.key] = f.pct ? f.rates[idx] / 100 : f.rates[idx];
   });
-  document.querySelectorAll('.year-btn').forEach((b,i) => {
-    b.className = 'year-btn ' + (i===idx?'active':'inactive');
-  });
+  updateYearBtns();
 }
 
 function savePricesSheet() {
+  // Only save fields whose inputs are currently rendered (active tab)
   PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
-    if (!el) return;
+    if (!el) return; // not on current tab — leave gPrices unchanged
     const raw = parseFloat(el.value) || 0;
-    // pct fields: user enters 26.5 → store as 0.265
     gPrices[f.key] = f.pct ? raw / 100 : raw;
   });
   const pp = document.getElementById('pf-profit');
