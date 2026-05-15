@@ -394,7 +394,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-17 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-19 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -3364,6 +3364,62 @@ let gMatPrices = {};
 function defaultMatPrices() {
   const p = {};
   MAT_PRICE_FIELDS.forEach(f => { p[f.key] = f.def; });
+  // ── Prices from Drywall Material Price List ──
+  // Drywall ($/ft²)
+  p['mat_dw_half_plain']   = 0.55;
+  p['mat_dw_half_cd']      = 0.60;
+  p['mat_dw_fivet_tx']     = 0.70;
+  p['mat_dw_half_tc']      = 0.65;
+  p['mat_dw_half_dens']    = 1.85;
+  p['mat_dw_fivet_dens']   = 0.68;
+  p['mat_dw_half_wr']      = 1.05;
+  p['mat_dw_quarter_flex'] = 0.88;
+  p['mat_dw_durock']       = 2.10;
+  p['mat_dw_screws']       = 0.45;
+  // Steel framing ($/lf)
+  p['mat_st_158_stud']     = 1.25;
+  p['mat_st_158_trk']      = 1.10;
+  p['mat_st_212_stud']     = 1.40;
+  p['mat_st_212_trk']      = 1.25;
+  p['mat_st_358_stud']     = 1.55;
+  p['mat_st_358_trk']      = 1.40;
+  p['mat_st_6_stud']       = 2.10;
+  p['mat_st_6_trk']        = 1.85;
+  p['mat_st_tie_wire']     = 0.65;
+  p['mat_st_hang_wire']    = 45.00;
+  p['mat_st_eyelag_c']     = 0.75;
+  p['mat_st_eyelag_w']     = 0.75;
+  // Pink insulation ($/bag — all same base price, adjust per R-value as needed)
+  ['mat_ins_r8','mat_ins_r12','mat_ins_r14','mat_ins_r20',
+   'mat_ins_r22','mat_ins_r24','mat_ins_r28','mat_ins_r31','mat_ins_r40'].forEach(k => p[k] = 0.95);
+  // Roxul ($/bag)
+  ['mat_rox_15qz','mat_rox_3qz','mat_rox_r14','mat_rox_r225','mat_rox_r24'].forEach(k => p[k] = 1.10);
+  // Blown-in ($/ft²)
+  ['mat_blown_r20','mat_blown_r32','mat_blown_r40','mat_blown_r60'].forEach(k => p[k] = 0.85);
+  // Spray foam ($/ft²)
+  ['mat_foam_r12_half','mat_foam_r12_two','mat_foam_r20_half','mat_foam_r20_two',
+   'mat_foam_r22_half','mat_foam_r22_two','mat_foam_r31_half','mat_foam_r31_two'].forEach(k => p[k] = 2.50);
+  // Insulation consumables
+  p['mat_poly_roll']   = 0.85;
+  p['mat_tuck_tape']   = 12.00;
+  p['mat_acous_caulk'] = 11.00;
+  p['mat_can_foam']    = 9.50;
+  p['mat_staples']     = 18.00;
+  p['mat_styro_vents'] = 4.50;
+  // Corner bead
+  p['mat_cb_vinyl_90'] = 3.50;
+  p['mat_cb_vinyl_l']  = 4.50;
+  p['mat_cb_vinyl_u']  = 4.50;
+  p['mat_cb_vinyl_j']  = 4.50;
+  p['mat_cb_metal_90'] = 2.25;
+  // Mud ($/pail or $/bag)
+  p['mat_mud_ap17']   = 38.00;
+  p['mat_mud_mach17'] = 35.00;
+  p['mat_mud_lite17'] = 32.00;
+  p['mat_mud_sr20']   = 42.00;
+  p['mat_mud_sr45']   = 38.00;
+  p['mat_mud_sr90']   = 45.00;
+  p['mat_mud_db90']   = 48.00;
   return p;
 }
 gMatPrices = defaultMatPrices();
@@ -3389,12 +3445,23 @@ const PRICE_TABS = [
 ];
 
 // Check if a field's current saved value deviates from CBA for the active year
+function fieldDecimals(f) {
+  if (f.pct) return 1;
+  if (f.flat) return 2;
+  // Use 4 decimals for fields with 4-significant-digit rates, 3 otherwise
+  const maxRate = Math.max(...f.rates);
+  return maxRate < 1 && f.rates.some(r => (r * 10000) % 1 !== 0) ? 4 : 3;
+}
 function isPriceCustom(f) {
   if (gRateIdx === null) return false;
   const saved = gPrices[f.key];
   if (saved === undefined) return false;
-  const cba = f.pct ? f.rates[gRateIdx] / 100 : f.rates[gRateIdx];
-  return Math.abs(saved - cba) > 0.0001;
+  const dec = fieldDecimals(f);
+  const cbaRaw = f.pct ? f.rates[gRateIdx] / 100 : f.rates[gRateIdx];
+  // Compare at display precision — avoid false positives from float rounding
+  const savedStr = f.pct ? (saved * 100).toFixed(dec) : saved.toFixed(dec);
+  const cbaStr   = f.pct ? f.rates[gRateIdx].toFixed(dec) : cbaRaw.toFixed(dec);
+  return savedStr !== cbaStr;
 }
 
 function refreshCustomState() {
@@ -3439,12 +3506,8 @@ function onPriceFieldChange(key) {
   const el = document.getElementById('pf-' + key);
   if (!el) return;
   const raw = parseFloat(el.value) || 0;
-  const stored = f.pct ? raw / 100 : raw;
-  const cba = f.pct ? f.rates[gRateIdx] / 100 : f.rates[gRateIdx];
-  const isCustom = Math.abs(stored - cba) > 0.0001;
-  applyInputHighlight(el, isCustom);
-  // Update gPrices live so refreshCustomState works
-  gPrices[f.key] = stored;
+  gPrices[f.key] = f.pct ? raw / 100 : raw;
+  applyInputHighlight(el, isPriceCustom(f));
   refreshCustomState();
   updateYearBtns();
 }
@@ -3498,6 +3561,12 @@ function openPricesSheet(tab) {
     const custom = isPriceCustom(f);
     return custom ? 'border-color:#d97706;background:#fffbeb;color:#92400e;' : '';
   };
+  const fieldVal = (f) => {
+    const dec = fieldDecimals(f);
+    return f.pct
+      ? ((gPrices[f.key]??f.rates[gRateIdx])*100).toFixed(dec)
+      : (gPrices[f.key]??f.rates[gRateIdx]).toFixed(dec);
+  };
 
   groups.forEach(group => {
     const fields = tabFields.filter(f => f.group === group);
@@ -3517,9 +3586,9 @@ function openPricesSheet(tab) {
       for (let i = 0; i < maxRows; i++) {
         const lf = lrFields[i], rf = hrFields[i];
         out += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">`;
-        if (lf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(lf)}" type="number" id="pf-${lf.key}" step="0.001" min="0" value="${(gPrices[lf.key]??lf.rates[gRateIdx]).toFixed(3)}" oninput="onPriceFieldChange('${lf.key}')"></div>`;
+        if (lf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(lf)}" type="number" id="pf-${lf.key}" step="0.001" min="0" value="${fieldVal(lf)}" oninput="onPriceFieldChange('${lf.key}')"></div>`;
         else out += `<div></div>`;
-        if (rf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${rf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(rf)}" type="number" id="pf-${rf.key}" step="0.001" min="0" value="${(gPrices[rf.key]??rf.rates[gRateIdx]).toFixed(3)}" oninput="onPriceFieldChange('${rf.key}')"></div>`;
+        if (rf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${rf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(rf)}" type="number" id="pf-${rf.key}" step="0.001" min="0" value="${fieldVal(rf)}" oninput="onPriceFieldChange('${rf.key}')"></div>`;
         else out += `<div></div>`;
         out += `</div>`;
       }
@@ -3531,9 +3600,7 @@ function openPricesSheet(tab) {
           .replace('($/ft²)', '<span style="color:#1d4ed8;font-weight:600">($/ft²)</span>')
           .replace('(flat $)', '<span style="color:#92400e;font-weight:600">(flat $)</span>');
         const step = isPct ? '0.1' : (isFlat ? '1' : '0.001');
-        const displayVal = isPct
-          ? ((gPrices[f.key]??f.rates[gRateIdx])*100).toFixed(1)
-          : (gPrices[f.key]??f.rates[gRateIdx]).toFixed(isFlat?2:3);
+        const displayVal = fieldVal(f);
         const suffix = isPct ? '<span style="font-size:13px;color:var(--muted);margin-left:4px">%</span>' : '';
         out += `<div class="price-row">
           <span class="price-row-label">${styledLabel}</span>
@@ -3559,7 +3626,8 @@ function applyRateYear(idx) {
     // Also clear highlight on any rendered input
     const el = document.getElementById('pf-'+f.key);
     if (el) {
-      el.value = f.pct ? f.rates[idx].toFixed(1) : f.rates[idx].toFixed(f.flat?2:3);
+      const dec = fieldDecimals(f);
+      el.value = f.pct ? f.rates[idx].toFixed(dec) : f.rates[idx].toFixed(dec);
       applyInputHighlight(el, false);
     }
   });
