@@ -394,13 +394,17 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-11 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-14 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
     <button class="drawer-action-btn green" onclick="openPricesSheet();closeDrawer()">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="white" stroke-width="1.5"/><path d="M7.5 4V7.5L9.5 9.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
-      Prices
+      Labour Prices
+    </button>
+    <button class="drawer-action-btn" style="background:#ea580c" onclick="openMatPricesSheet();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="2" width="11" height="11" rx="1.5" stroke="white" stroke-width="1.5"/><path d="M5 7.5h5M7.5 5v5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Material Prices
     </button>
     <button class="drawer-action-btn blue" onclick="openMyInfoSheet();closeDrawer()">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="white" stroke-width="1.5"/><path d="M2.5 13.5C2.5 11 4.5 9.5 7.5 9.5C10.5 9.5 12.5 11 12.5 13.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -489,11 +493,24 @@
   <div class="bottom-sheet" style="max-height:95vh">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
-      <h3>Prices</h3>
+      <h3>Labour Prices</h3>
       <button class="sheet-close" onclick="closePricesSheet()">✕</button>
     </div>
     <div class="sheet-body" id="prices-body"></div>
     <div class="sheet-footer"><button class="sheet-save-btn" onclick="savePricesSheet()">Save Prices</button></div>
+  </div>
+</div>
+
+<!-- My Info Sheet -->
+<div class="sheet-overlay" id="matprices-overlay" onclick="handleSheetTap(event,'matprices-overlay')">
+  <div class="bottom-sheet" style="max-height:95vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Material Prices</h3>
+      <button class="sheet-close" onclick="closeMatPricesSheet()">✕</button>
+    </div>
+    <div class="sheet-body" id="matprices-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" style="background:#ea580c" onclick="saveMatPricesSheet()">Save Material Prices</button></div>
   </div>
 </div>
 
@@ -2452,6 +2469,8 @@ function showReport() {
   let totalMaterial = 0;
   let totalEnergyStar = 0;
   let totalTownPremium = 0;
+  let totalLocal675 = 0;
+  let totalTapers = 0;
   let hasAny=false;
 
   j.areas.forEach(a=>{
@@ -2889,8 +2908,12 @@ function showReport() {
 
       const local675Pct = (gPrices['local675_dues'] ?? 0.265);
       const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
-      labourCost += local675Base * local675Pct;
-      labourCost += tapersBase   * tapersPct;
+      const local675Amount = local675Base * local675Pct;
+      const tapersAmount   = tapersBase   * tapersPct;
+      labourCost += local675Amount;
+      labourCost += tapersAmount;
+      totalLocal675 += local675Amount;
+      totalTapers   += tapersAmount;
 
       // Add-Ons already folded into addOnGross + union dues above
 
@@ -2915,13 +2938,6 @@ function showReport() {
     html += `<div style="margin-top:16px;border-top:2px solid var(--border-md);padding-top:16px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
 
-    // Union dues shown as line items — amounts already included in totalLabour
-    // Re-derive display amounts from same logic as labour calc
-    const local675Pct = gPrices['local675_dues'] ?? 0.265;
-    const tapersPct   = gPrices['tapers_union']  ?? 0.230;
-    const local675Total = totalLabour * local675Pct * 0.65;
-    const tapersTotal   = totalLabour * tapersPct   * 0.25;
-
     html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
     html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabour)}</span></div>`;
     const houseType = j.details?.houseType || 'house';
@@ -2932,8 +2948,8 @@ function showReport() {
     if (totalEnergyStar > 0) {
       html += `<div class="modal-row"><span>Energy Star (${(gPrices['ins_energy_star']??INS_ENERGY_STAR_RATES[gRateIdx]).toFixed(3)}/ft² of Pink+Roxul)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalEnergyStar)}</span></div>`;
     }
-    html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(local675Total)}</span></div>`;
-    html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(tapersTotal)}</span></div>`;
+    html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalLocal675)}</span></div>`;
+    html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalTapers)}</span></div>`;
     html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
     html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal Labour + Material</span><span style="font-family:'DM Mono',monospace">${fmt(subtotalLM)}</span></div>`;
     html += `<div class="modal-row"><span>Profit (${gProfitPct}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(profit)}</span></div>`;
@@ -3242,6 +3258,113 @@ const PRICE_FIELD_DEFS = PRICE_FIELDS;
 // Now that PRICE_FIELDS is defined, populate gPrices defaults
 gPrices = defaultPrices();
 
+// ── Material Price Fields ──
+const MAT_PRICE_FIELDS = [
+  // ── Drywall ($/ft²) ──
+  { key:'mat_dw_half_plain',  label:'½" Plain',          unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_half_cd',     label:'½" Ceiling Drywall',unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_fivet_tx',    label:'⅝" Type X',         unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_half_tc',     label:'½" Type C',         unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_half_dens',   label:'½" Denshield',      unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_fivet_dens',  label:'⅝" Denshield',      unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_half_wr',     label:'½" Water Resistant',unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_quarter_flex',label:'¼" Flex',           unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_durock',      label:'½" Durock',         unit:'$/ft²',  group:'Drywall', def:0 },
+  { key:'mat_dw_screws',      label:'Drywall Screws',    unit:'$/box',  group:'Drywall', def:0 },
+  // ── Insulation — Pink ($/bag) ──
+  { key:'mat_ins_r8',  label:'R8',   unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r12', label:'R12',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r14', label:'R14',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r20', label:'R20',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r22', label:'R22',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r24', label:'R24',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r28', label:'R28',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r31', label:'R31',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  { key:'mat_ins_r40', label:'R40',  unit:'$/bag', group:'Insulation — Pink', def:0 },
+  // ── Insulation — Roxul ($/bag) ──
+  { key:'mat_rox_15qz', label:'1½" QZ', unit:'$/bag', group:'Insulation — Roxul', def:0 },
+  { key:'mat_rox_3qz',  label:'3" QZ',  unit:'$/bag', group:'Insulation — Roxul', def:0 },
+  { key:'mat_rox_r14',  label:'R14',    unit:'$/bag', group:'Insulation — Roxul', def:0 },
+  { key:'mat_rox_r225', label:'R22.5',  unit:'$/bag', group:'Insulation — Roxul', def:0 },
+  { key:'mat_rox_r24',  label:'R24',    unit:'$/bag', group:'Insulation — Roxul', def:0 },
+  // ── Insulation — Blown-In ($/ft²) ──
+  { key:'mat_blown_r20', label:'R20', unit:'$/ft²', group:'Insulation — Blown-In', def:0 },
+  { key:'mat_blown_r32', label:'R32', unit:'$/ft²', group:'Insulation — Blown-In', def:0 },
+  { key:'mat_blown_r40', label:'R40', unit:'$/ft²', group:'Insulation — Blown-In', def:0 },
+  { key:'mat_blown_r60', label:'R60', unit:'$/ft²', group:'Insulation — Blown-In', def:0 },
+  // ── Insulation — Spray Foam ($/ft²) ──
+  { key:'mat_foam_r12_half', label:'R12 ½lb', unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  { key:'mat_foam_r12_two',  label:'R12 2lb',  unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  { key:'mat_foam_r20_half', label:'R20 ½lb', unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  { key:'mat_foam_r20_two',  label:'R20 2lb',  unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  { key:'mat_foam_r22_half', label:'R22 ½lb', unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  { key:'mat_foam_r22_two',  label:'R22 2lb',  unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  { key:'mat_foam_r31_half', label:'R31 ½lb', unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  { key:'mat_foam_r31_two',  label:'R31 2lb',  unit:'$/ft²', group:'Insulation — Spray Foam', def:0 },
+  // ── Insulation — Blanket ($/ft²) ──
+  { key:'mat_blanket', label:'Blanket', unit:'$/ft²', group:'Insulation — Blanket', def:0 },
+  // ── Insulation Consumables (CBA-fixed where known) ──
+  { key:'mat_poly_roll',   label:"Poly Roll",           unit:'$/roll', group:'Insulation Consumables', def:84.00 },
+  { key:'mat_tuck_tape',   label:'Tuck Tape',           unit:'$/roll', group:'Insulation Consumables', def:12.61 },
+  { key:'mat_acous_caulk', label:'Acoustic Caulking',   unit:'$/tube', group:'Insulation Consumables', def:11.44 },
+  { key:'mat_can_foam',    label:'Can Foam',             unit:'$/can',  group:'Insulation Consumables', def:0 },
+  { key:'mat_staples',     label:'Staples',              unit:'$/box',  group:'Insulation Consumables', def:0 },
+  { key:'mat_styro_vents', label:'Styro-Vents',          unit:'$/each', group:'Insulation Consumables', def:0 },
+  // ── Steel ($/lf) — no material cost per CBA ──
+  { key:'mat_st_158_stud', label:'1 5/8" Stud',         unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_158_trk',  label:'1 5/8" Track',        unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_212_stud', label:'2 1/2" Stud',         unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_212_trk',  label:'2 1/2" Track',        unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_358_stud', label:'3 5/8" Stud',         unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_358_trk',  label:'3 5/8" Track',        unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_6_stud',   label:'6" Stud',             unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_6_trk',    label:'6" Track',            unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_8_stud',   label:'8" Stud',             unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_8_trk',    label:'8" Track',            unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_res_ch',   label:'Resilient Channel',   unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_hat_ch',   label:'Hat Channel',         unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_fur_ch',   label:'Furring Channel',     unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_cr_ch',    label:'Cold Roll Channel',   unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_ang_1x2',  label:'1"×2" Angle',         unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_ang_2x2',  label:'2"×2" Angle',         unit:'$/lf',  group:'Steel', def:0 },
+  { key:'mat_st_pan_screw',label:'Pan Head Screws',     unit:'$/box', group:'Steel', def:0 },
+  { key:'mat_st_sd_screw', label:'Self-Drilling Screws',unit:'$/box', group:'Steel', def:0 },
+  { key:'mat_st_hex_screw',label:'Hex-Head Screws',     unit:'$/box', group:'Steel', def:0 },
+  { key:'mat_st_tie_wire', label:'Tie-Wire',            unit:'$/box', group:'Steel', def:0 },
+  { key:'mat_st_hang_wire',label:'Hanger-Wire',         unit:'$/each',group:'Steel', def:0 },
+  { key:'mat_st_eyelag_c', label:'Eye-Lag (Concrete)',  unit:'$/box', group:'Steel', def:0 },
+  { key:'mat_st_eyelag_w', label:'Eye-Lag (Wood)',      unit:'$/box', group:'Steel', def:0 },
+  // ── Corner Bead ($/lf) ──
+  { key:'mat_cb_vinyl_90', label:"Vinyl 90°",     unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_vinyl_l',  label:"L-Bead Vinyl",  unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_vinyl_u',  label:"U-Bead Vinyl",  unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_vinyl_j',  label:"J-Bead Vinyl",  unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_metal_90', label:"Metal 90°",     unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_metal_l',  label:"L-Bead Metal",  unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_metal_u',  label:"U-Bead Metal",  unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_metal_j',  label:"J-Bead Metal",  unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_bullnose', label:"Bullnose Metal", unit:'$/lf', group:'Corner Bead', def:0 },
+  { key:'mat_cb_archway',  label:"Archway Bead",   unit:'$/lf', group:'Corner Bead', def:0 },
+];
+
+let gMatPrices = {};
+function defaultMatPrices() {
+  const p = {};
+  MAT_PRICE_FIELDS.forEach(f => { p[f.key] = f.def; });
+  return p;
+}
+gMatPrices = defaultMatPrices();
+
+async function loadMatPrices() {
+  try {
+    const r = await storageGet('mat_prices');
+    return r ? { ...defaultMatPrices(), ...JSON.parse(r) } : defaultMatPrices();
+  } catch(e) { return defaultMatPrices(); }
+}
+async function saveMatPricesStorage(p) {
+  try { await storageSet('mat_prices', JSON.stringify(p)); } catch(e) {}
+}
+
 let gPriceTab = 'DW'; // active prices tab: DW | IN | TP | EX
 let gRateCustom = false; // true when any CBA field has been manually changed
 
@@ -3436,6 +3559,38 @@ function savePricesSheet() {
   closePricesSheet();
 }
 
+function closeMatPricesSheet() { document.getElementById('matprices-overlay').classList.remove('open'); }
+
+function openMatPricesSheet() {
+  const body = document.getElementById('matprices-body');
+  const groups = [...new Set(MAT_PRICE_FIELDS.map(f => f.group))];
+  let out = '';
+
+  groups.forEach(group => {
+    const fields = MAT_PRICE_FIELDS.filter(f => f.group === group);
+    out += `<div class="price-section-label">${group}</div>`;
+    fields.forEach(f => {
+      const val = (gMatPrices[f.key] ?? f.def).toFixed(2);
+      out += `<div class="price-row">
+        <span class="price-row-label">${f.label} <span style="color:var(--muted);font-weight:400;font-size:10px;text-transform:none">${f.unit}</span></span>
+        <input class="price-row-input" type="number" id="mp-${f.key}" step="0.01" min="0" value="${val}">
+      </div>`;
+    });
+  });
+
+  body.innerHTML = out;
+  document.getElementById('matprices-overlay').classList.add('open');
+}
+
+function saveMatPricesSheet() {
+  MAT_PRICE_FIELDS.forEach(f => {
+    const el = document.getElementById('mp-'+f.key);
+    if (el) gMatPrices[f.key] = parseFloat(el.value) || 0;
+  });
+  saveMatPricesStorage(gMatPrices);
+  closeMatPricesSheet();
+}
+
 function closePricesSheet() { document.getElementById('prices-overlay').classList.remove('open'); }
 
 // ── My Info Sheet ──
@@ -3545,10 +3700,10 @@ function firstLoginSetup() {
 }
 
 async function loadUserData() {
-  const [loaded, prices, myinfo, profit] = await Promise.all([
-    loadState(), loadPrices(), loadMyInfo(), loadProfitPct()
+  const [loaded, prices, myinfo, profit, matprices] = await Promise.all([
+    loadState(), loadPrices(), loadMyInfo(), loadProfitPct(), loadMatPrices()
   ]);
-  gPrices = prices; gMyInfo = myinfo; gProfitPct = profit;
+  gPrices = prices; gMyInfo = myinfo; gProfitPct = profit; gMatPrices = matprices;
   const isFirstLoad = !loaded;
   if (!loaded) { jobs = [makeJob('Job 1', 1)]; jobCounter = 1; curJobId = 1; }
   curAreaId = J()?.areas[0]?.id || null;
