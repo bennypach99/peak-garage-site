@@ -394,7 +394,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v12.5 · May 2025</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v13-8 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -451,7 +451,7 @@
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <h3>Job Details</h3>
-      <button class="sheet-close" onclick="closeDetails()">✕</button>
+      <button class="sheet-close" id="details-close-btn" onclick="closeDetails()">✕</button>
     </div>
     <div class="sheet-body" id="details-body"></div>
     <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveDetails()">Save</button></div>
@@ -898,7 +898,7 @@ function makeJob(name, id) {
   const now = new Date().toISOString();
   return {
     id, name, areas: [], areaCounter: 0,
-    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise', houseType:'house' },
+    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise', houseType:'select', tasks:{ insulation:false, drywall:false, taping:false } },
     createdAt: now, modifiedAt: now
   };
 }
@@ -1107,9 +1107,14 @@ function renderJobDetailsBar() {
   if (d.lockbox)     parts.push(chip('Lockbox', d.lockbox));
   const rate = d.rate || 'lowrise';
   parts.push(chip('Rate', rate === 'highrise' ? 'High-Rise' : 'Low-Rise'));
-  if (rate === 'lowrise' && d.houseType && d.houseType !== 'house') {
+  if (rate === 'lowrise' && d.houseType && d.houseType !== 'house' && d.houseType !== 'select') {
     const typeLabel = d.houseType === 'stacked' ? 'Stacked T/H' : 'Townhouse';
     parts.push(chip('Type', typeLabel));
+  }
+  if (d.tasks) {
+    ['insulation','drywall','taping'].forEach(t => {
+      if (d.tasks[t]) parts.push(chip('Task', t.charAt(0).toUpperCase()+t.slice(1)));
+    });
   }
   if (d.energyStar)  parts.push(chip('Energy Star', '✓'));
   if (d.scaffolding) parts.push(chip('Scaffolding', '✓'));
@@ -1144,7 +1149,7 @@ function renderAreaInfoBar() {
   if (fivetSqft>0) chips.push(chip('⅝"', fivetSqft+' ft²'));
   const durockSqft = sqftOf('durock48');
   if (durockSqft>0) chips.push(chip('Durock', durockSqft+' ft²'));
-  const specSqft = sqftOf(['wr48','dens48','flex48']);
+  const specSqft = sqftOf(['wr48','dens48','dens58','flex48']);
   if (specSqft>0) chips.push(chip('Spec', specSqft+' ft²'));
 
   INSULATION_TYPES.forEach(t => {
@@ -2192,10 +2197,16 @@ function newJob() {
   curJobId=jobCounter; curAreaId=null; curType=0; curCat='drywall'; curDwGroup='Regular';
   saveState();
   document.getElementById('job-name-display').textContent=J().name;
+  closeDrawer();
   renderAll();
-  document.getElementById('drawer').classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('open');
-  renderDrawerList(jobCounter);
+  // Force job details form open for required setup
+  setTimeout(() => {
+    openDetails(true);
+    setTimeout(() => {
+      const input = document.getElementById('df-name');
+      if (input) { input.focus(); input.select(); }
+    }, 80);
+  }, 150);
 }
 
 /* ── Job Details ── */
@@ -2204,18 +2215,48 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-CA',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 function setRateBtn(r) {
-  document.getElementById('df-rate-lr').style.background = r==='lowrise' ? 'var(--accent)' : '';
-  document.getElementById('df-rate-lr').style.color = r==='lowrise' ? '#fff' : '';
-  document.getElementById('df-rate-hr').style.background = r==='highrise' ? 'var(--accent)' : '';
-  document.getElementById('df-rate-hr').style.color = r==='highrise' ? '#fff' : '';
-  document.getElementById('df-rate-lr').dataset.selected = r==='lowrise' ? '1' : '';
-  document.getElementById('df-rate-hr').dataset.selected = r==='highrise' ? '1' : '';
+  const lr = document.getElementById('df-rate-lr');
+  const hr = document.getElementById('df-rate-hr');
+  if (!lr || !hr) return;
+  // Active = blue, inactive = grey default
+  lr.style.background = r==='lowrise'  ? 'var(--accent)' : '';
+  lr.style.color       = r==='lowrise'  ? '#fff' : '';
+  hr.style.background  = r==='highrise' ? 'var(--accent)' : '';
+  hr.style.color       = r==='highrise' ? '#fff' : '';
+  lr.dataset.selected  = r==='lowrise'  ? '1' : '';
+  hr.dataset.selected  = r==='highrise' ? '1' : '';
+  // Hide/show housetype row
   const htRow = document.getElementById('df-housetype-row');
-  if (htRow) htRow.style.display = r==='lowrise' ? '' : 'none';
+  if (htRow) htRow.style.display = r==='lowrise' ? '' : (r==='highrise' ? 'none' : 'none');
+  // Clear rate error if one is now selected
+  const rErr = document.getElementById('df-err-rate');
+  if (rErr && r !== 'none') rErr.style.display = 'none';
 }
-function openDetails() {
-  const j=J(),d=j.details;
+function openDetails(forceRequired) {
+  const j=J(), d=j.details;
+  if (forceRequired) j._requireSetup = true;
+  // Migrate old jobs that don't have tasks or houseType:'select'
+  if (!d.tasks) d.tasks = { insulation:false, drywall:false, taping:false };
+  if (d.houseType === undefined) d.houseType = 'select';
+
+  const req = j._requireSetup;
+  const reqStar = `<span style="color:#dc2626;margin-left:2px">*</span>`;
+
+  // Building type options — if houseType is 'select' or req, start on placeholder
+  const ht = d.houseType || 'select';
+  const htOptions = [
+    `<option value="select" ${ht==='select'?'selected':''} disabled>Select Option</option>`,
+    `<option value="house" ${ht==='house'?'selected':''}>House</option>`,
+    `<option value="townhouse" ${ht==='townhouse'?'selected':''}>Townhouse</option>`,
+    `<option value="stacked" ${ht==='stacked'?'selected':''}>Stacked Townhouse</option>`,
+  ].join('');
+
+  const tk = d.tasks;
+
   document.getElementById('details-body').innerHTML=`
+    ${req ? `<div id="df-req-banner" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:#dc2626;font-weight:500">
+      Complete the required fields before continuing.
+    </div>` : ''}
     <div class="field-group"><div class="field-label">Job Name</div><input class="field-input" id="df-name" type="text" value="${j.name}" placeholder="Job name"/></div>
     <div class="field-group"><div class="field-label">Customer</div><input class="field-input" id="df-customer" type="text" value="${d.customer}" placeholder="Customer name"/></div>
     <div class="field-group"><div class="field-label">Site</div><input class="field-input" id="df-site" type="text" value="${d.site}" placeholder="Site address"/></div>
@@ -2226,21 +2267,33 @@ function openDetails() {
     <div class="field-divider"></div>
     <div class="field-group"><div class="field-label">Lockbox Code</div><input class="field-input" id="df-lockbox" type="text" value="${d.lockbox}" placeholder="Code"/></div>
     <div class="field-divider"></div>
-    <div class="field-group"><div class="field-label">Rate Type</div>
+    <div class="field-group"><div class="field-label">Rate Type${reqStar}</div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button id="df-rate-lr" onclick="setRateBtn('lowrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">Low-Rise</button>
       <button id="df-rate-hr" onclick="setRateBtn('highrise')" style="flex:1;padding:9px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);transition:all 0.15s">High-Rise</button>
-    </div></div>
-    <div id="df-housetype-row" style="display:none;margin-top:8px">
+    </div>
+    <div id="df-err-rate" style="display:none;font-size:11px;color:#dc2626;margin-top:3px">Please select a rate type.</div>
+    </div>
+    <div id="df-housetype-row" style="margin-top:12px">
       <div class="field-group">
-        <div class="field-label">Building Type</div>
-        <select class="field-select" id="df-housetype" style="margin-top:4px">
-          <option value="house" ${(d.houseType||'house')==='house'?'selected':''}>House</option>
-          <option value="townhouse" ${(d.houseType)==='townhouse'?'selected':''}>Townhouse</option>
-          <option value="stacked" ${(d.houseType)==='stacked'?'selected':''}>Stacked Townhouse</option>
+        <div class="field-label">Building Type${reqStar}</div>
+        <select class="field-select" id="df-housetype" style="margin-top:4px;color:${ht==='select'?'var(--muted)':'var(--text)'}">
+          ${htOptions}
         </select>
+        <div id="df-err-housetype" style="display:none;font-size:11px;color:#dc2626;margin-top:3px">Please select a building type.</div>
       </div>
     </div>
+    <div class="field-divider" style="margin-top:14px"></div>
+    <div class="field-group" style="margin-top:4px">
+      <div class="field-label" style="margin-bottom:8px">Tasks on this Job${reqStar}</div>
+      <div id="df-err-tasks" style="display:none;font-size:11px;color:#dc2626;margin-bottom:6px">Select at least one task.</div>
+      ${['insulation','drywall','taping'].map(task => `
+      <div class="toggle-row" style="padding:6px 0;border-bottom:1px solid var(--border)">
+        <span class="toggle-label" style="font-size:15px;text-transform:capitalize">${task.charAt(0).toUpperCase()+task.slice(1)}</span>
+        <label class="toggle"><input type="checkbox" id="df-task-${task}" ${tk[task]?'checked':''}/><div class="toggle-track"></div></label>
+      </div>`).join('')}
+    </div>
+    <div class="field-divider" style="margin-top:12px"></div>
     <div class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="toggle-row"><span class="toggle-label">Scaffolding</span><label class="toggle"><input type="checkbox" id="df-scaffolding" ${d.scaffolding?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="toggle-row"><span class="toggle-label">Cleaning</span><label class="toggle"><input type="checkbox" id="df-cleaning" ${d.cleaning?'checked':''}/><div class="toggle-track"></div></label></div>
@@ -2251,34 +2304,106 @@ function openDetails() {
     <div class="field-group"><div class="field-label">Date Created</div><div class="field-readonly">${fmtDate(j.createdAt)}</div></div>
     <div class="field-group"><div class="field-label">Last Modified</div><div class="field-readonly">${fmtDate(j.modifiedAt)}</div></div>
   `;
+
+  // Colour select placeholder grey until user picks
+  document.getElementById('df-housetype').addEventListener('change', function() {
+    this.style.color = this.value === 'select' ? 'var(--muted)' : 'var(--text)';
+  });
+
   document.getElementById('details-overlay').classList.add('open');
-  setTimeout(()=>setRateBtn(J().details.rate||'lowrise'),10);
+  // Hide ✕ when setup is required — user must complete it
+  const closeBtn = document.getElementById('details-close-btn');
+  if (closeBtn) closeBtn.style.display = req ? 'none' : '';
+  // For required setup, start with no rate selected (both grey) unless already chosen
+  const initRate = (req && !d.rateSelected) ? 'none' : (d.rate || 'lowrise');
+  setTimeout(() => setRateBtn(initRate), 10);
 }
+
 function saveDetails() {
-  const j=J();
-  j.name=document.getElementById('df-name').value.trim()||j.name;
-  j.details.customer=document.getElementById('df-customer').value.trim();
-  j.details.site=document.getElementById('df-site').value.trim();
-  j.details.contactName=document.getElementById('df-cname').value.trim();
-  j.details.contactPhone=document.getElementById('df-cphone').value.trim();
-  j.details.contactEmail=document.getElementById('df-cemail').value.trim();
-  j.details.lockbox=document.getElementById('df-lockbox').value.trim();
-  j.details.energyStar  = document.getElementById('df-energystar').checked;
-  j.details.scaffolding = document.getElementById('df-scaffolding').checked;
-  j.details.cleaning    = document.getElementById('df-cleaning').checked;
-  j.details.touchup     = document.getElementById('df-touchup').checked;
-  j.details.rate = document.getElementById('df-rate-hr').dataset.selected ? 'highrise' : 'lowrise';
-  const htEl = document.getElementById('df-housetype');
-  j.details.houseType = htEl ? htEl.value : 'house';
-  j.details.notes=document.getElementById('df-notes').value.trim();
-  j.modifiedAt=new Date().toISOString();
-  document.getElementById('job-name-display').textContent=j.name;
+  const j=J(), d=j.details;
+  const req = j._requireSetup;
+
+  const rateSelected = !!(document.getElementById('df-rate-lr').dataset.selected || document.getElementById('df-rate-hr').dataset.selected);
+  const htVal = document.getElementById('df-housetype').value;
+  const anyTask = ['insulation','drywall','taping'].some(t => document.getElementById('df-task-'+t).checked);
+  let valid = true;
+
+  const rateErr = document.getElementById('df-err-rate');
+  const htErr   = document.getElementById('df-err-housetype');
+  const tkErr   = document.getElementById('df-err-tasks');
+
+  if (!rateSelected) {
+    if (rateErr) rateErr.style.display = '';
+    valid = false;
+  } else {
+    if (rateErr) rateErr.style.display = 'none';
+  }
+
+  if (htVal === 'select') {
+    htErr.style.display = '';
+    document.getElementById('df-housetype').style.borderBottomColor = '#dc2626';
+    valid = false;
+  } else {
+    htErr.style.display = 'none';
+    document.getElementById('df-housetype').style.borderBottomColor = '';
+  }
+
+  if (!anyTask) {
+    tkErr.style.display = '';
+    valid = false;
+  } else {
+    tkErr.style.display = 'none';
+  }
+
+  if (!valid) {
+    const firstErr = !rateSelected
+      ? document.getElementById('df-err-rate')
+      : htVal === 'select'
+        ? document.getElementById('df-housetype')
+        : document.getElementById('df-err-tasks');
+    if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  // ── Save all fields ──
+  j.name = document.getElementById('df-name').value.trim() || j.name;
+  d.customer    = document.getElementById('df-customer').value.trim();
+  d.site        = document.getElementById('df-site').value.trim();
+  d.contactName = document.getElementById('df-cname').value.trim();
+  d.contactPhone= document.getElementById('df-cphone').value.trim();
+  d.contactEmail= document.getElementById('df-cemail').value.trim();
+  d.lockbox     = document.getElementById('df-lockbox').value.trim();
+  d.energyStar  = document.getElementById('df-energystar').checked;
+  d.scaffolding = document.getElementById('df-scaffolding').checked;
+  d.cleaning    = document.getElementById('df-cleaning').checked;
+  d.touchup     = document.getElementById('df-touchup').checked;
+  d.rate        = document.getElementById('df-rate-hr').dataset.selected ? 'highrise' : 'lowrise';
+  d.rateSelected = true;
+  d.houseType   = htVal;
+  d.tasks = {
+    insulation: document.getElementById('df-task-insulation').checked,
+    drywall:    document.getElementById('df-task-drywall').checked,
+    taping:     document.getElementById('df-task-taping').checked,
+  };
+  d.notes = document.getElementById('df-notes').value.trim();
+  j.modifiedAt  = new Date().toISOString();
+  delete j._requireSetup;  // clear flag once saved
+
+  document.getElementById('job-name-display').textContent = j.name;
   renderDrawerList(null);
   renderJobDetailsBar();
+  saveState();
   closeDetails();
 }
-function closeDetails() { document.getElementById('details-overlay').classList.remove('open'); }
-function handleDetailsTap(e) { if(e.target===document.getElementById('details-overlay'))closeDetails(); }
+
+function closeDetails() {
+  // Block closing if setup is still required
+  if (J()?._requireSetup) return;
+  document.getElementById('details-overlay').classList.remove('open');
+}
+function handleDetailsTap(e) {
+  if (e.target === document.getElementById('details-overlay')) closeDetails();
+}
 
 /* ── Report ── */
 function showReport() {
@@ -3409,17 +3534,12 @@ function openDrawerEdit() {
 
 /* ── First login: open drawer with job name ready to edit ── */
 function firstLoginSetup() {
-  // Small delay so the app finishes rendering first
   setTimeout(() => {
-    openDrawer();
-    // Render job list with first job in edit mode
-    renderDrawerList(curJobId);
-    // Focus and select the input
-    const input = document.getElementById('drawer-rename');
-    if (input) {
-      input.focus();
-      input.select();
-    }
+    openDetails(true);
+    setTimeout(() => {
+      const input = document.getElementById('df-name');
+      if (input) { input.focus(); input.select(); }
+    }, 80);
   }, 300);
 }
 
