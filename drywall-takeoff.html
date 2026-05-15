@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.2</title>
+  <title>Drywall Tally v14.4</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -500,7 +500,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.2 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.4 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -4537,10 +4537,6 @@ function exportToPDF() {
 }
 
 /* ── Init ── */
-function showAppScreen() {
-  document.getElementById('app').style.display = 'flex';
-}
-
 function showAuthScreen() {
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -4549,9 +4545,18 @@ function showAppScreen() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
 }
+
+/* ── Clear all in-memory state AND localStorage cache ── */
 function clearLocalState() {
   jobs = []; jobCounter = 0; curJobId = null; curAreaId = null;
   gPrices = defaultPrices(); gMyInfo = defaultMyInfo(); gProfitPct = DEFAULT_PROFIT_PCT;
+  // Wipe localStorage cache so the next user's data loads cleanly from Firebase
+  try {
+    const prefix = lsKey('');
+    Object.keys(localStorage)
+      .filter(k => k.startsWith(prefix))
+      .forEach(k => localStorage.removeItem(k));
+  } catch(e) {}
 }
 
 
@@ -4600,17 +4605,17 @@ function signInWithGoogle() {
 }
 function signOut() {
   if (!confirm('Sign out? Your data is saved to the cloud.')) return;
-  firebase.auth().signOut().then(() => {
-    clearLocalState();
-    closeDrawer();
-    document.getElementById('job-name-display').textContent = '';
-    document.getElementById('area-tabs').innerHTML = '';
-    document.getElementById('area-info-bar').innerHTML = '';
-    document.getElementById('cat-tabs').innerHTML = '';
-    document.getElementById('type-tabs').innerHTML = '';
-    document.getElementById('tally-area').innerHTML = '';
-    document.getElementById('totals-strip').innerHTML = '';
-  });
+  // Clear local cache first — so next login pulls fresh from Firebase
+  clearLocalState();
+  closeDrawer();
+  document.getElementById('job-name-display').textContent = '';
+  document.getElementById('area-tabs').innerHTML = '';
+  document.getElementById('area-info-bar').innerHTML = '';
+  document.getElementById('cat-tabs').innerHTML = '';
+  document.getElementById('type-tabs').innerHTML = '';
+  document.getElementById('tally-area').innerHTML = '';
+  document.getElementById('totals-strip').innerHTML = '';
+  firebase.auth().signOut();
 }
 
 /* ── Firebase config ── */
@@ -4624,25 +4629,66 @@ const FIREBASE_CONFIG = {
   measurementId: "G-C38YTVGRKJ"
 };
 
-/* ── Storage abstraction — Firebase when available, window.storage fallback ── */
+/* ── Storage abstraction — 3 tiers:
+   1. Firebase Firestore (primary when signed in — source of truth)
+      + mirrors every write to localStorage as a local cache
+   2. window.storage (Claude artifact sandbox)
+   3. localStorage only (real browser, not signed in)
+   On sign-out: localStorage cache is wiped so next login pulls fresh from Firebase ── */
 let useFirebase = false;
 
+function lsKey(key) { return 'drywall_tally__' + key; }
+
 async function storageSet(key, value) {
+  const json = JSON.stringify(value);
+  // Tier 1 — Firebase (primary) + mirror to localStorage cache
   if (useFirebase && fbUser) {
+    // Write to localStorage cache immediately (fast, works offline)
+    try { localStorage.setItem(lsKey(key), json); } catch(e) {}
+    // Write to Firebase (source of truth)
     return db.collection('users').doc(fbUser.uid).collection('data').doc(key)
-      .set({ json: JSON.stringify(value), updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      .set({ json, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
   }
-  try { await window.storage.set('drywall-' + key, JSON.stringify(value)); } catch(e) {}
+  // Tier 2 — Claude sandbox
+  if (typeof window.storage !== 'undefined') {
+    try { await window.storage.set('drywall-' + key, json); return; } catch(e) {}
+  }
+  // Tier 3 — localStorage (real browser, no Firebase)
+  try { localStorage.setItem(lsKey(key), json); } catch(e) {}
 }
 
 async function storageGet(key) {
+  // Tier 1 — Firebase (source of truth)
   if (useFirebase && fbUser) {
-    const doc = await db.collection('users').doc(fbUser.uid).collection('data').doc(key).get();
-    return (doc.exists && doc.data().json) ? JSON.parse(doc.data().json) : null;
+    try {
+      const doc = await db.collection('users').doc(fbUser.uid).collection('data').doc(key).get();
+      if (doc.exists && doc.data().json) {
+        const value = doc.data().json;
+        // Keep localStorage cache in sync
+        try { localStorage.setItem(lsKey(key), value); } catch(e) {}
+        return JSON.parse(value);
+      }
+    } catch(e) {
+      // Firebase read failed (offline?) — fall through to localStorage cache
+      console.warn('Firebase read failed for', key, '— using local cache');
+    }
+    // Offline fallback: use localStorage cache if Firebase unavailable
+    try {
+      const raw = localStorage.getItem(lsKey(key));
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
   }
+  // Tier 2 — Claude sandbox
+  if (typeof window.storage !== 'undefined') {
+    try {
+      const r = await window.storage.get('drywall-' + key);
+      if (r) return JSON.parse(r.value);
+    } catch(e) {}
+  }
+  // Tier 3 — localStorage (real browser, no Firebase)
   try {
-    const r = await window.storage.get('drywall-' + key);
-    return r ? JSON.parse(r.value) : null;
+    const raw = localStorage.getItem(lsKey(key));
+    return raw ? JSON.parse(raw) : null;
   } catch(e) { return null; }
 }
 
