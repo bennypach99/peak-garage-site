@@ -721,18 +721,36 @@ const INS_ENERGY_STAR_RATES  = [0.079, 0.080, 0.082];
 const BLANKET_R12_RATES      = [0.2142,0.2184,0.2227];
 const BLANKET_R20_RATES      = [0.2416,0.2464,0.2513];
 const BLANKET_HIGHWALL_RATES = [24.70, 25.19, 25.69];
-const CORNER_BEAD_LF_RATES   = [0.285, 0.290, 0.295];
-const CORNER_BEAD_BULL_RATES = [0.443, 0.451, 0.460];
+// ── Taping rates from CBA (converted from $/MSF → $/ft²) ──
+// Low-Rise Residential (Article 20.02)
+const TAPING_LR_RATES = {
+  h8:  { label: "≤8'",         rates: [0.38078, 0.38839, 0.39616] },
+  h9:  { label: "8' – 9'",     rates: [0.39986, 0.40786, 0.41601] },
+  h10: { label: "9' – 10'",    rates: [0.41616, 0.42448, 0.43297] },
+  h11: { label: "10' – 11'",   rates: [0.45084, 0.45986, 0.46905] },
+  h12: { label: "11' – 12'",   rates: [0.46614, 0.47546, 0.48497] },
+};
+// High-Rise Residential (Article 20.01)
+const TAPING_HR_RATES = {
+  h8:  { label: "≤8'",         rates: [0.36469, 0.37198, 0.37942] },
+  h9:  { label: "8' – 9'",     rates: [0.38375, 0.39143, 0.39926] },
+  h10: { label: "9' – 10'",    rates: [0.39168, 0.39951, 0.40750] },
+  h11: { label: "10' – 11'",   rates: [0.41610, 0.42442, 0.43291] },
+  h12: { label: "11' – 12'",   rates: [0.43350, 0.44217, 0.45101] },
+};
+
+const CORNER_BEAD_LF_RATES   = [0.90,  0.90,  0.90];  // LR filled (20.02)
+const CORNER_BEAD_BULL_RATES = [0.78,  0.79,  0.81];  // LR bullnose (20.02)
 const DUROCK_RATES           = [0.60,  0.61,  0.63];
 const EXTRAS_RATES = {
-  skylight_2x4:      [82.00,  83.00,  85.00],
-  skylight_4x4:      [174.00, 178.00, 181.00],
-  tray_waffle_ceil:  [84.00,  85.00,  87.00],
-  ota_cathedral:     [213.00, 217.00, 222.00],
-  open_round_stairs: [161.00, 164.00, 168.00],
+  skylight_2x4:      [141.83, 144.67, 147.56],  // LR 2×4 skylight (20.02)
+  skylight_4x4:      [234.19, 238.88, 243.65],  // LR 4×4 skylight (20.02)
+  tray_waffle_ceil:  [76.50,  78.03,  79.59],   // LR tray/waffle (20.02)
+  ota_cathedral:     [216.90, 221.24, 225.67],  // Cathedral ≥12ft LR (20.02)
+  open_round_stairs: [162.93, 166.19, 169.52],  // Circular stairs LR (20.02)
   pot_lights:        [4.28,   4.37,   4.46],
-  townhouse_premium: [14.02,  14.30,  14.60],
-  stack_townhouse:   [40.80,  41.60,  42.40],
+  townhouse_premium: [20.00,  20.40,  20.81],   // Townhouse non-stacked (20.02)
+  stack_townhouse:   [85.15,  86.85,  88.59],   // Stack townhouse premium (20.02)
   entry_door_single: [87.00,  87.00,  87.00],
   entry_door_double: [174.00, 174.00, 174.00],
   fivc_premium:      [105.00, 107.00, 109.00],
@@ -794,6 +812,7 @@ const INSULATION_TYPES = [
   { label: 'Roxul',   fullName: 'Roxul',            key: 'roxul', color: '#b45309', rvals: ROXUL_RVALS, kind: 'batt'  },
   { label: 'Blown-In',fullName: 'Blown-In',         key: 'blown', color: '#0369a1', rvals: null,        kind: 'blown' },
   { label: 'Spray-Foam', fullName: 'Spray-Foam', key: 'foam',  color: '#059669', rvals: null, kind: 'foam'  },
+  { label: 'Blanket',    fullName: 'Blanket',     key: 'blanket', color: '#7c3aed', rvals: null, kind: 'blanket' },
 ];
 
 let curInsType = 0; // active insulation type index
@@ -821,6 +840,8 @@ function blankCounts() {
     } else if (t.kind === 'foam') {
       c['insulation'][t.key] = {};
       FOAM_RVALS.forEach(r => { c['insulation'][t.key][r] = { half: [], two: [] }; });
+    } else if (t.kind === 'blanket') {
+      c['insulation'][t.key] = [];  // simple array of {l,w} entries
     } else {
       const rvals = t.rvals || INSULATION_RVALS;
       c['insulation'][t.key] = {};
@@ -888,7 +909,7 @@ async function loadState() {
       a.counts = deepMerge(fresh, a.counts);
       // Migrate old insulation cell format {sqft, pcs} → {bags, extraSqft}
       INSULATION_TYPES.forEach(t => {
-        if (t.kind === 'blown' || t.kind === 'foam') return;
+        if (t.kind === 'blown' || t.kind === 'foam' || t.kind === 'blanket') return;
         const rvals = t.rvals || INSULATION_RVALS;
         rvals.forEach(rv => {
           INSULATION_SIZES.forEach((_, si) => {
@@ -1116,6 +1137,8 @@ function renderAreaInfoBar() {
       total=BLOWN_RVALS.reduce((s,r)=>s+((A().counts['insulation']?.[t.key]?.[r])||[]).reduce((x,m)=>x+m.l*m.w,0),0);
     } else if (t.kind==='foam') {
       total=FOAM_RVALS.reduce((s,r)=>{const f=A().counts['insulation']?.[t.key]?.[r]||{};return s+((f.half||[]).reduce((x,m)=>x+m.l*m.w,0))+((f.two||[]).reduce((x,m)=>x+m.l*m.w,0));},0);
+    } else if (t.kind==='blanket') {
+      total=(A().counts['insulation']?.[t.key]||[]).reduce((s,m)=>s+m.l*m.w,0);
     } else {
       const rvals=t.rvals||INSULATION_RVALS;
       rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{
@@ -1573,6 +1596,7 @@ function renderInsulation() {
   if (curInsSubTab === 1) { renderCatItems('insExtras', INSULATION_EXTRAS_ITEMS, '#db2777', 'Insulation Extras'); return; }
   if (t.kind === 'blown') { renderBlown(); return; }
   if (t.kind === 'foam')  { renderFoam();  return; }
+  if (t.kind === 'blanket') { renderBlanket(); return; }
   const col = t.color;
   const counts = A().counts['insulation'][t.key];
   const rvals = t.rvals || INSULATION_RVALS;
@@ -1807,7 +1831,85 @@ function foamCommitTotal(r,density,val) {
   renderFoam(); renderStrip();
 }
 
-/* ── Foam renderer ── */
+/* ── Blanket renderer ── */
+function blanketTotalSqft() {
+  if (!A()) return 0;
+  return (A().counts['insulation']['blanket'] || []).reduce((s,m) => s + m.l * m.w, 0);
+}
+
+function renderBlanket() {
+  const area = document.getElementById('tally-area');
+  const col = '#7c3aed';
+  const entries = A().counts['insulation']['blanket'] || [];
+  const total = entries.reduce((s,m) => s + m.l * m.w, 0);
+
+  let html = `<div class="tally-header">
+    <div class="tally-type-label" style="color:${col}">Blanket Insulation</div>
+    ${total > 0 ? `<div class="tally-subtotal">Total: <strong>${Math.round(total)} ft²</strong></div>` : ''}
+  </div>`;
+
+  // Entry list
+  if (entries.length > 0) {
+    html += `<div class="meas-list">`;
+    entries.forEach((m, i) => {
+      html += `<div class="meas-row">
+        <span class="meas-dims">${m.l} × ${m.w}</span>
+        <span class="meas-sqft">${Math.round(m.l * m.w)} ft²</span>
+        <button class="meas-del" onclick="blanketDel(${i})">✕</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="meas-add-row" style="margin-top:${entries.length > 0 ? 8 : 0}px">
+    <input class="meas-input" id="blanket-l" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('blanket-w').focus();}"/>
+    <span class="meas-x">×</span>
+    <input class="meas-input" id="blanket-w" type="number" inputmode="decimal" placeholder="H" min="0" step="0.1"
+      onkeydown="if(event.key==='Enter'){blanketAdd();}"/>
+    <button class="meas-add-btn" style="background:${col}" onclick="blanketAdd()">Add</button>
+    ${total > 0 ? `<div id="blanket-total" style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap;cursor:pointer" onclick="blanketEditTotal()">${Math.round(total)} ft²</div>` : ''}
+  </div>`;
+
+  area.innerHTML = html;
+}
+
+function blanketAdd() {
+  const lEl = document.getElementById('blanket-l'), wEl = document.getElementById('blanket-w');
+  const l = parseFloat(lEl.value), w = parseFloat(wEl.value);
+  if (!l || !w || l <= 0 || w <= 0) { lEl.focus(); return; }
+  if (!A().counts['insulation']['blanket']) A().counts['insulation']['blanket'] = [];
+  A().counts['insulation']['blanket'].push({l, w});
+  J().modifiedAt = new Date().toISOString(); saveState();
+  lEl.value = ''; wEl.value = '';
+  renderBlanket(); renderStrip();
+  setTimeout(() => { const el = document.getElementById('blanket-l'); if (el) el.focus(); }, 30);
+}
+
+function blanketDel(i) {
+  A().counts['insulation']['blanket'].splice(i, 1);
+  J().modifiedAt = new Date().toISOString(); saveState();
+  renderBlanket(); renderStrip();
+}
+
+function blanketEditTotal() {
+  const el = document.getElementById('blanket-total');
+  if (!el || el.tagName === 'INPUT') return;
+  const cur = Math.round((A().counts['insulation']['blanket'] || []).reduce((s,m) => s + m.l * m.w, 0));
+  el.outerHTML = `<input id="blanket-total" type="number" inputmode="decimal" value="${cur}" min="0"
+    style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;width:90px;border:none;border-bottom:2px solid #7c3aed;background:transparent;outline:none;text-align:center;-moz-appearance:textfield;"
+    onblur="blanketCommitTotal(this.value)" onkeydown="if(event.key==='Enter')this.blur()"/>`;
+  const inp = document.getElementById('blanket-total'); inp.focus(); inp.select();
+}
+
+function blanketCommitTotal(val) {
+  const sqft = Math.max(0, parseFloat(val) || 0);
+  A().counts['insulation']['blanket'] = sqft > 0 ? [{l: sqft, w: 1}] : [];
+  J().modifiedAt = new Date().toISOString(); saveState();
+  renderBlanket(); renderStrip();
+}
+
+
 function foamSqft(r, density) {
   if(!A()) return 0;
   const entries = (A().counts['insulation']['foam'][r]||{})[density]||[];
@@ -1901,13 +2003,17 @@ function renderStrip() {
         const sf=foamTotalSqft();
         return sf>0?`<div class="strip-chip">${t.label} <strong>${Math.round(sf)} ft²</strong></div>`:'';
       }
+      if (t.kind === 'blanket') {
+        const sf=blanketTotalSqft();
+        return sf>0?`<div class="strip-chip">${t.label} <strong>${Math.round(sf)} ft²</strong></div>`:'';
+      }
       const b=insBagsForType(t.key); totalBags+=b;
       return b>0?`<div class="strip-chip">${t.label} <strong>${Math.ceil(b)} bags</strong></div>`:'';
     }).join('');
-    const blownSf=blownTotalSqft(), foamSf=foamTotalSqft();
+    const blownSf=blownTotalSqft(), foamSf=foamTotalSqft(), blanketSf=blanketTotalSqft();
     const extrasTotal = A() ? INSULATION_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['insExtras']?.[item]||0),0) : 0;
     const primaryLabel = totalBags>0 ? `Bags <span>${Math.ceil(totalBags)}</span>` :
-                         (blownSf+foamSf)>0 ? `ft² <span>${Math.round(blownSf+foamSf)}</span>` : `Insulation <span>—</span>`;
+                         (blownSf+foamSf+blanketSf)>0 ? `ft² <span>${Math.round(blownSf+foamSf+blanketSf)}</span>` : `Insulation <span>—</span>`;
     document.getElementById('totals-strip').innerHTML=
       `<div class="strip-total">${primaryLabel}</div>${chips}`+
       (extrasTotal>0?`<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>`:'');
@@ -2157,6 +2263,7 @@ function showReport() {
     INSULATION_TYPES.forEach(t=>{
       if(t.kind==='blown'){ if(BLOWN_RVALS.some(r=>(a.counts['insulation'][t.key][r]||[]).length>0))aHas=true; }
       else if(t.kind==='foam'){ if(FOAM_RVALS.some(r=>((a.counts['insulation'][t.key][r]||{}).half||[]).length>0||((a.counts['insulation'][t.key][r]||{}).two||[]).length>0))aHas=true; }
+      else if(t.kind==='blanket'){ if((a.counts['insulation'][t.key]||[]).length>0)aHas=true; }
       else {
         const rvals=t.rvals||INSULATION_RVALS;
         rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{
@@ -2262,6 +2369,13 @@ function showReport() {
           if(halfSqft>0)html+=`<div class="modal-row"><span>${r} ½ lb</span><span>${halfSqft} ft²</span></div>`;
           if(twoSqft>0)html+=`<div class="modal-row"><span>${r} 2 lb</span><span>${twoSqft} ft²</span></div>`;
         });
+        html+=`<div style="height:8px"></div>`;
+      } else if(t.kind==='blanket'){
+        const entries=a.counts['insulation'][t.key]||[];
+        if(!entries.length)return;
+        const sqft=Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+        html+=`<div class="modal-type-head" style="color:${t.color}">${t.fullName}</div>`;
+        html+=`<div class="modal-row"><span>Total</span><span>${sqft} ft²</span></div>`;
         html+=`<div style="height:8px"></div>`;
       } else {
         const rvals=t.rvals||INSULATION_RVALS;
@@ -2400,7 +2514,7 @@ function showReport() {
       });
       // Insulation material — use sqft tallied
       INSULATION_TYPES.forEach(t => {
-        if(t.kind==='blown'||t.kind==='foam') return; // sqft-based, skip material for now
+        if(t.kind==='blown'||t.kind==='foam'||t.kind==='blanket') return; // sqft-based, skip material for now
         const rvals = t.rvals || INSULATION_RVALS;
         const rateMap = {'R8':'ins_r8','R12':'ins_r12','R14':'ins_r14','R20':'ins_r20','R22':'ins_r22','R24':'ins_r24','R28':'ins_r28','R31':'ins_r31','R40':'ins_r40',
                          '1½" QZ':'ins_r12','3" QZ':'ins_r12','R22.5':'ins_r22'};
@@ -2452,7 +2566,7 @@ function showReport() {
       labourCost += fivetSqft2 * fivetRate;
       // Insulation labour
       INSULATION_TYPES.forEach(t => {
-        if(t.kind==='blown'||t.kind==='foam') return;
+        if(t.kind==='blown'||t.kind==='foam'||t.kind==='blanket') return;
         const rvals=t.rvals||INSULATION_RVALS;
         rvals.forEach(rv => {
           INSULATION_SIZES.forEach((_,si) => {
@@ -2476,8 +2590,7 @@ function showReport() {
       let insGross = 0;
       let energyStarSqft = 0;
       INSULATION_TYPES.forEach(t => {
-        if (t.kind === 'blown' || t.kind === 'foam') return;
-        if (t.label && t.label.toLowerCase().includes('blanket')) return;
+        if (t.kind === 'blown' || t.kind === 'foam' || t.kind === 'blanket') return;
         const rvals = t.rvals || INSULATION_RVALS;
         const isEligible = t.key === 'pink' || t.key === 'roxul';
         rvals.forEach(rv => {
@@ -2495,9 +2608,9 @@ function showReport() {
       insGross += insGross * (gPrices['ins_extra_1'] || 0) / (gPrices['ins_lr'] || INS_LR_RATES[gRateIdx] || 1);
       labourCost += (gPrices['ins_extra_2'] || 0);
 
-      // Energy Star: sqft of pink+roxul × Energy Star rate ($/ft² from CBA premium)
-      const energyStarRate = gPrices['energy_star_pct'] || INS_ENERGY_STAR_RATES[gRateIdx];
-      const energyStarCost = energyStarSqft * energyStarRate;
+      // Energy Star: only when toggle is on AND there is pink/roxul footage
+      const energyStarRate = gPrices['ins_energy_star'] || INS_ENERGY_STAR_RATES[gRateIdx];
+      const energyStarCost = (j.details?.energyStar && energyStarSqft > 0) ? energyStarSqft * energyStarRate : 0;
       labourCost += energyStarCost;
       totalEnergyStar += energyStarCost;
 
@@ -2533,8 +2646,11 @@ function showReport() {
       tapingSqft = Math.max(0, tapingSqft);
       const tapingRate2 = (() => {
         const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
-        const hKey = hMap[ceilH] || 'h9';
-        return gPrices['tape_upper'] || 0.366;
+        const hKey = hMap[ceilH] || (isHR ? 'h8' : 'h8');
+        const priceKey = (isHR ? 'tape_hr_' : 'tape_lr_') + hKey;
+        if (gPrices[priceKey] !== undefined) return gPrices[priceKey];
+        const bracket = isHR ? TAPING_HR_RATES[hKey] : TAPING_LR_RATES[hKey];
+        return bracket ? bracket.rates[gRateIdx] : (gPrices['tape_upper'] || 0.38078);
       })();
       const tapingGross = tapingSqft * tapingRate2;
 
@@ -2542,7 +2658,7 @@ function showReport() {
       const cbCount  = CORNER_BEAD_ITEMS.reduce((s,item)=>s+(a.counts['cornerBead']?.[item]||0),0);
       const cbGross  = cbCount * (gPrices['corner_bead_lf'] || CORNER_BEAD_LF_RATES[gRateIdx]);
       const mudCount = MUD_ITEMS.reduce((s,item)=>s+(a.counts['mud']?.[item]||0),0);
-      const mudGross = mudCount * (gPrices['tape_upper'] || 0.366);
+      const mudGross = mudCount * tapingRate2;
       // Taping extras
       const tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
       labourCost += (gPrices['taping_extra_2'] || 0);
@@ -2595,7 +2711,7 @@ function showReport() {
     html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
     html += `<div class="modal-row"><span>Labour Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabour)}</span></div>`;
     if (totalEnergyStar > 0) {
-      html += `<div class="modal-row"><span>Energy Star (${(gPrices['energy_star_pct']??INS_ENERGY_STAR_RATES[gRateIdx]).toFixed(3)}/ft² of Pink+Roxul)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalEnergyStar)}</span></div>`;
+      html += `<div class="modal-row"><span>Energy Star (${(gPrices['ins_energy_star']??INS_ENERGY_STAR_RATES[gRateIdx]).toFixed(3)}/ft² of Pink+Roxul)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalEnergyStar)}</span></div>`;
     }
     html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(local675Total)}</span></div>`;
     html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(tapersTotal)}</span></div>`;
@@ -2704,6 +2820,13 @@ function exportToSheets() {
           if(halfSqft>0)rows.push([r,'½ lb',halfSqft]);
           if(twoSqft>0) rows.push([r,'2 lb', twoSqft]);
         });
+        rows.push([]);
+      } else if(t.kind==='blanket'){
+        const entries=a.counts['insulation'][t.key]||[];
+        if(!entries.length)return;
+        const sqft=Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+        rows.push([t.fullName]);
+        rows.push(['Total Sq Ft', sqft]);
         rows.push([]);
       } else {
         const rvals=t.rvals||INSULATION_RVALS;
@@ -2856,25 +2979,34 @@ const PRICE_FIELDS = [
   // ── Insulation Extras at bottom ──
   { key:'ins_extra_1',    label:'Insulation Extra 1 ($/ft²)',   rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras' },
   { key:'ins_extra_2',    label:'Insulation Extra 2 (flat $)',  rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras', flat:true },
-  // ── Taping (NEW section) ──
-  { key:'tape_upper',     label:'All Taping ($/ft²)',           rates:[0.366,0.366,0.380], col:'lr', group:'Taping', sub:'Rates' },
-  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',       rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras' },
-  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',      rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', flat:true },
+  // ── Taping ──
+  { key:'tape_lr_h8',   label:"≤8'",           rates:[0.38078,0.38839,0.39616], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
+  { key:'tape_lr_h9',   label:"8' – 9'",        rates:[0.39986,0.40786,0.41601], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
+  { key:'tape_lr_h10',  label:"9' – 10'",       rates:[0.41616,0.42448,0.43297], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
+  { key:'tape_lr_h11',  label:"10' – 11'",      rates:[0.45084,0.45986,0.46905], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
+  { key:'tape_lr_h12',  label:"11' – 12'",      rates:[0.46614,0.47546,0.48497], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)' },
+  { key:'tape_hr_h8',   label:"≤8'",            rates:[0.36469,0.37198,0.37942], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
+  { key:'tape_hr_h9',   label:"8' – 9'",        rates:[0.38375,0.39143,0.39926], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
+  { key:'tape_hr_h10',  label:"9' – 10'",       rates:[0.39168,0.39951,0.40750], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
+  { key:'tape_hr_h11',  label:"10' – 11'",      rates:[0.41610,0.42442,0.43291], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
+  { key:'tape_hr_h12',  label:"11' – 12'",      rates:[0.43350,0.44217,0.45101], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)' },
+  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',    rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras' },
+  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',   rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', flat:true },
   // ── Extras ──
-  { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[82.00,83.00,85.00],   col:'lr', group:'Extras' },
-  { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[174.00,178.00,181.00],col:'lr', group:'Extras' },
-  { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',     rates:[84.00,85.00,87.00],   col:'lr', group:'Extras' },
-  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',           rates:[213.00,217.00,222.00],col:'lr', group:'Extras' },
-  { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[161.00,164.00,168.00],col:'lr', group:'Extras' },
-  { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,4.37,4.46],      col:'lr', group:'Extras' },
-  { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,87.00,87.00],   col:'hr', group:'Extras' },
+  { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[141.83,144.67,147.56],col:'lr', group:'Extras' },
+  { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[234.19,238.88,243.65],col:'lr', group:'Extras' },
+  { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',     rates:[76.50, 78.03, 79.59], col:'lr', group:'Extras' },
+  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',           rates:[216.90,221.24,225.67],col:'lr', group:'Extras' },
+  { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[162.93,166.19,169.52],col:'lr', group:'Extras' },
+  { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,  4.37,  4.46],  col:'lr', group:'Extras' },
+  { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00, 87.00, 87.00], col:'hr', group:'Extras' },
   { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00,174.00,174.00],col:'hr', group:'Extras' },
   { key:'fivc_premium',    label:'⅝" Fire Code C ($/1000ft²)', rates:[105.00,107.00,109.00],col:'lr', group:'Extras' },
-  { key:'townhouse_premium',label:'Townhouse ($/1000ft²)',      rates:[14.02,14.30,14.60],   col:'lr', group:'Extras' },
-  { key:'stack_townhouse', label:'Stack/B2B Townhouse ($/1000ft²)',rates:[40.80,41.60,42.40],col:'lr', group:'Extras' },
+  { key:'townhouse_premium',label:'Townhouse non-stacked ($/MSF)', rates:[20.00, 20.40, 20.81], col:'lr', group:'Extras' },
+  { key:'stack_townhouse', label:'Stack/B2B Townhouse ($/MSF)',    rates:[85.15, 86.85, 88.59], col:'lr', group:'Extras' },
   // ── Corner Beads ──
-  { key:'corner_bead_lf',  label:'Regular ($/lf)',              rates:[0.285,0.290,0.295],   col:'lr', group:'Corner Beads' },
-  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',             rates:[0.443,0.451,0.460],   col:'lr', group:'Corner Beads' },
+  { key:'corner_bead_lf',  label:'Regular filled ($/lf)',       rates:[0.90,  0.90,  0.90],  col:'lr', group:'Corner Beads' },
+  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',             rates:[0.78,  0.79,  0.81],  col:'lr', group:'Corner Beads' },
   // ── Durock ──
   { key:'durock_rate',     label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Durock' },
   // ── Job Costs ──
@@ -2883,7 +3015,7 @@ const PRICE_FIELDS = [
   { key:'tpy_flat',        label:'Touchup & Year End ($)',      rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs' },
   { key:'local675_dues',   label:'Local 675 Union Dues',        rates:[25.5,26.5,27.5],      col:'lr', group:'Job Costs', pct:true },
   { key:'tapers_union',    label:'Tapers Union Dues',           rates:[22.1,23.0,23.9],      col:'lr', group:'Job Costs', pct:true },
-  { key:'energy_star_pct', label:'Energy Star ($/ft²)',         rates:[0.079,0.080,0.082],   col:'lr', group:'Job Costs' },
+
 ];
 // Keep PRICE_FIELD_DEFS as alias for backward compat
 const PRICE_FIELD_DEFS = PRICE_FIELDS;
