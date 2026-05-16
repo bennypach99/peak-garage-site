@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.25</title>
+  <title>Drywall Tally v14.30</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.25 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.30 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -1278,7 +1278,7 @@ function sheetSqft(typeKey, lengthFt) {
 }
 
 // Extras category items
-const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights', 'Door Frame Single', 'Door Frame Double'];
+const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights', 'Door Frame Single', 'Door Frame Double', 'Open Round Stairs'];
 // Job Costs — items contractor pays installer but doesn't purchase material
 const JOB_COSTS_ITEMS = ['Scaffolding', 'Cleaning', 'Touchup & Year End Service Calls'];
 
@@ -1465,6 +1465,10 @@ const TAPING_HR_RATES = {
 const DUROCK_LABOR_RATES      = [0.600, 0.610, 0.630]; // per ft² CBA drywall premium
 // Boarder (Local 675) installs all bead — CBA Art. 20.02(l) / 20.01(j)
 const CORNER_BEAD_INSTALL_RATES = [0.26, 0.26, 0.27];
+// Taper add-on rates (CBA 20.02 LR / 20.01 HR)
+const TAPER_SKY24_RATES  = [141.83, 144.67, 147.56]; // Skylight 2×4
+const TAPER_SKY44_RATES  = [234.19, 238.88, 243.65]; // Skylight 4×4
+const TAPER_STAIRS_RATES = [162.93, 166.19, 169.52]; // Open round stairs
 // Taper fills bead — LR CBA Art. 20.02(f)(g), HR Art. 20.01(h)(i)
 const CORNER_BEAD_LR_FILL_RATES = [0.90, 0.90, 0.90];
 const CORNER_BEAD_LR_BULL_RATES = [0.78, 0.79, 0.81];
@@ -2899,6 +2903,7 @@ function renderStrip() {
 }
 
 function renderAll() {
+  document.getElementById('job-name-display').textContent = J()?.name || '';
   renderJobDetailsBar();
   renderCatTabs();
   renderAreaTabs();
@@ -4053,13 +4058,21 @@ function showReport() {
       const doorDoubleCost = (a.counts['jobExtras']?.["Door Frame Double"]||0) * (gPrices['entry_door_double'] > 0 ? gPrices['entry_door_double'] : EXTRAS_RATES.entry_door_double[gRateIdx]);
       const peakCost       = (a.counts['jobExtras']?.['Peak']||0)  * (gPrices['peak_niche'] > 0 ? gPrices['peak_niche'] : EXTRAS_RATES.tray_waffle_ceil[gRateIdx]);
       const nicheCost      = (a.counts['jobExtras']?.['Niche']||0) * (gPrices['peak_niche'] > 0 ? gPrices['peak_niche'] : EXTRAS_RATES.tray_waffle_ceil[gRateIdx]);
-      const addOnGross    = potLightCost + sky24Cost + sky44Cost + otaCost + doorSingleCost + doorDoubleCost + peakCost + nicheCost;
+      const stairsBoardCost = (a.counts['jobExtras']?.['Open Round Stairs']||0) * (gPrices['open_round_stairs'] > 0 ? gPrices['open_round_stairs'] : EXTRAS_RATES.open_round_stairs[gRateIdx]);
+      const addOnGross    = potLightCost + sky24Cost + sky44Cost + otaCost + doorSingleCost + doorDoubleCost + peakCost + nicheCost + stairsBoardCost;
       laborCost += addOnGross;
+
+      // ── Taper add-ons — skylights + round stairs only (CBA 20.02) ──
+      const taperSky24Cost  = (a.counts['jobExtras']?.["2' × 4' Skylight"]||0) * (gPrices['taper_sky24']  > 0 ? gPrices['taper_sky24']  : TAPER_SKY24_RATES[gRateIdx]);
+      const taperSky44Cost  = (a.counts['jobExtras']?.["4' × 4' Skylight"]||0) * (gPrices['taper_sky44']  > 0 ? gPrices['taper_sky44']  : TAPER_SKY44_RATES[gRateIdx]);
+      const taperStairsCost = (a.counts['jobExtras']?.['Open Round Stairs']||0) * (gPrices['taper_stairs'] > 0 ? gPrices['taper_stairs'] : TAPER_STAIRS_RATES[gRateIdx]);
+      const taperAddOnGross = taperSky24Cost + taperSky44Cost + taperStairsCost;
+      laborCost += taperAddOnGross;
 
       // ── Taping (only when Taping task is selected) ──
       const TAPING_EXCLUDE = new Set(['durock48','dens48','dens58']);
       const DOUBLE_LAYER_KEYS = new Set(['dl48','hdl48']);
-      let tapingSqft = 0, tapingGross = 0, cbGross = 0, mudGross = 0, tapingExtras = 0;
+      let tapingSqft = 0, tapingGross = 0, cbGross = 0, tapingExtras = 0;
       if (j.details?.tasks?.taping) {
         DRYWALL_TYPES.filter(t=>!t.isItems && !t.hidden).forEach(t => {
           if (TAPING_EXCLUDE.has(t.key)) return;
@@ -4097,11 +4110,9 @@ function showReport() {
           const lf = qty * (lenMatch ? parseInt(lenMatch[1]) : 8);
           return s + lf * (BULLNOSE_ITEMS.has(item) ? cbBullRate : cbFillRate);
         }, 0);
-        const mudCount = MUD_ITEMS.reduce((s,item)=>s+(a.counts['mud']?.[item]||0),0);
-        mudGross = mudCount * tapingRate2;
         tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
         laborCost += (gPrices['taping_extra_2'] || 0);
-        laborCost += tapingGross + cbGross + mudGross + tapingExtras;
+        laborCost += tapingGross + cbGross + tapingExtras;
       }
 
       // ── Material deductions — subs buy consumables from contractor ──
@@ -4121,7 +4132,7 @@ function showReport() {
         (a.counts['insExtras']?.['Staples']            ||0) * (gMatPrices['mat_staples']     || 0) +
         (a.counts['insExtras']?.['Acoustic Caulking']  ||0) * (gMatPrices['mat_acous_caulk'] || 0);
 
-      // Taper deduction: all mud types + tape rolls
+      // Taper deduction: taper buys mud + tape from contractor — deducted from gross before dues/WSIB
       const mudMatDeduct =
         (a.counts['mud']?.['All Purpose (17L)']    ||0) * (gMatPrices['mat_mud_ap17']   || 0) +
         (a.counts['mud']?.['Machine (17L)']         ||0) * (gMatPrices['mat_mud_mach17'] || 0) +
@@ -4148,6 +4159,7 @@ function showReport() {
       laborCost += steelExtras;
       laborCost += (gPrices['steel_extra_2'] || 0);
       const durockGross = durockLaborSqft * durockRate2;
+      laborCost += durockGross;
       // ── Corner bead install — boarder (Local 675) gets $0.26/lf for all bead types ──
       const cbInstallRate = gPrices['cb_install'] > 0 ? gPrices['cb_install'] : CORNER_BEAD_INSTALL_RATES[gRateIdx];
       const cbInstallGross = CORNER_BEAD_ITEMS.reduce((s, item) => {
@@ -4160,12 +4172,12 @@ function showReport() {
       laborCost += cbInstallGross;
 
       const local675Base = Math.max(0,
-        insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross
+        insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross + durockGross
         - boarderMatDeduct - insulatorMatDeduct
       );
 
       // ── Tapers base — subtract taper material purchases ──
-      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + mudGross - taperMatDeduct);
+      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + taperAddOnGross - taperMatDeduct);
 
       const local675Pct = (gPrices['local675_dues'] ?? 0.265);
       const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
@@ -4500,7 +4512,10 @@ const PRICE_FIELDS = [
   { key:'ota_under64',     label:"OTA <64' ($)",                rates:[213.00, 217.00, 222.00], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'ota_over64',      label:"OTA >64' ($)",                rates:[213.00, 217.00, 222.00], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'peak_niche',      label:'Peak / Niche ($)',             rates:[84.00,  85.00,  87.00],  col:'lr', group:'Extras', priceTab:'EX' },
-  { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[161.00, 164.00, 168.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'open_round_stairs',label:'Open Round Stairs — boarder ($)', rates:[161.00, 164.00, 168.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'taper_sky24',     label:'Skylight 2×4 — taper ($)',        rates:[141.83, 144.67, 147.56], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'taper_sky44',     label:'Skylight 4×4 — taper ($)',        rates:[234.19, 238.88, 243.65], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'taper_stairs',    label:'Open Round Stairs — taper ($)',   rates:[162.93, 166.19, 169.52], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'durock_labor',    label:'Durock Premium ($/ft²)',       rates:[0.600, 0.610, 0.630], col:'lr', group:'Extras', priceTab:'DW' },
   { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,   4.37,   4.46],   col:'lr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
