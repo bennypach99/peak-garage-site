@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.15</title>
+  <title>Drywall Tally v14.18</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.15 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.18 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -1278,7 +1278,7 @@ function sheetSqft(typeKey, lengthFt) {
 }
 
 // Extras category items
-const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights'];
+const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights', 'Door Frame Single', 'Door Frame Double'];
 // Job Costs — items contractor pays installer but doesn't purchase material
 const JOB_COSTS_ITEMS = ['Scaffolding', 'Cleaning', 'Touchup & Year End Service Calls'];
 
@@ -1368,9 +1368,6 @@ const ROXUL_RVALS = [
 
 
 /* ── Pricing data (labor $/ft², material $/ft², WSIB rate) ── */
-// Union rate dates for Local 675
-const RATE_DATES = ['May 4, 2025', 'May 3, 2026', 'May 2, 2027'];
-// Labor rates: [may2024, may2025, may2026]
 // Material rates $/ft² or $/unit (fixed, not union-tied)
 const MAT_RATES = {
   ins_r8:       0.29,
@@ -1442,17 +1439,10 @@ const STEEL_HR_RATES = {
   h12: { label: "11' – 12'",  rates: [0.427, 0.436, 0.444] },
 };
 const STEEL_HOUSE_RATES      = [0.405, 0.413, 0.421];
-const SUSPENDED_CEIL_RATES   = [0.66,  0.68,  0.69];
-const SUSPENDED_CEIL_ISO_RATES=[0.71,  0.73,  0.74];
 const INS_LR_RATES           = [0.617, 0.629, 0.642];
 const INS_HR_INT_RATES       = [0.328, 0.335, 0.342];
-const INS_HR_EXT_RATES       = [0.389, 0.396, 0.404];
-const INS_R24_PREMIUM_RATES  = [0.060, 0.061, 0.063];
 const INS_ROCKWOOL_PREMIUM_RATES=[0.079,0.080, 0.082];
 const INS_ENERGY_STAR_RATES  = [0.079, 0.080, 0.082];
-const BLANKET_R12_RATES      = [0.2142,0.2184,0.2227];
-const BLANKET_R20_RATES      = [0.2416,0.2464,0.2513];
-const BLANKET_HIGHWALL_RATES = [24.70, 25.19, 25.69];
 // ── Taping rates from CBA (converted from $/MSF → $/ft²) ──
 // Low-Rise Residential (Article 20.02)
 const TAPING_LR_RATES = {
@@ -1473,7 +1463,6 @@ const TAPING_HR_RATES = {
 
 const CORNER_BEAD_LF_RATES   = [0.285, 0.290, 0.295];  // Local 675 boarder CBA
 const CORNER_BEAD_BULL_RATES = [0.443, 0.451, 0.460];
-const DUROCK_RATES           = [0.60,  0.61,  0.63];
 const EXTRAS_RATES = {
   skylight_2x4:      [82.00,   83.00,  85.00],   // Local 675 boarder CBA
   skylight_4x4:      [174.00, 178.00, 181.00],
@@ -3546,19 +3535,20 @@ function showReport() {
             <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;color:#15803d">${typeMatTotal>0?fmtC(typeMatTotal):''}</span>
           </span>
         </div>`;
+        // Energy Star — shown after pink/roxul totals row
+        if (isEligible && insEStarOn && areaEnergySqft > 0) {
+          const remainingEligible = INSULATION_TYPES.slice(INSULATION_TYPES.indexOf(t)+1).some(tt => tt.key==='pink'||tt.key==='roxul');
+          if (!remainingEligible) {
+            const eStarCost = areaEnergySqft * insEStarRate;
+            html+=`<div class="modal-row" style="color:#16a34a;font-weight:500">
+              <span>Energy Star <span style="font-size:11px;font-weight:400;color:var(--muted)">(${areaEnergySqft.toFixed(0)} ft² Pink+Roxul × ${insEStarRate.toFixed(3)})</span></span>
+              <span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(eStarCost)}</span>
+            </div>`;
+          }
+        }
         html+=`<div style="height:8px"></div>`;
       }
     });
-
-    // Energy Star — shown here in insulation section (it's a labour item for insulators)
-    if (insEStarOn && areaEnergySqft > 0) {
-      const eStarCost = areaEnergySqft * insEStarRate;
-      html+=`<div class="modal-row" style="color:#16a34a;font-weight:500">
-        <span>Energy Star <span style="font-size:11px;font-weight:400;color:var(--muted)">(${areaEnergySqft.toFixed(0)} ft² Pink+Roxul × ${insEStarRate.toFixed(3)})</span></span>
-        <span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(eStarCost)}</span>
-      </div>`;
-      html+=`<div style="height:8px"></div>`;
-    }
 
     // Steel — show qty and mat cost per item (stud/track = qty × length ft × $/lf)
     const STEEL_MAT_KEYS = {
@@ -3798,7 +3788,7 @@ function showReport() {
     let matCost = 0;
     j.areas.forEach(a => {
       // Drywall material
-      const matKeyMap = { pl48:'dw_half_pl', pl54:'dw_54_half', cd48:'dw_half_cd', dens48:'dw_half_dens', wr48:'dw_half_wr', wr58:'dw_58_fg', fg48:'dw_58_fg', dl48:'dw_58_fg', fg54:'dw_58_54', durock48:'dw_cement', flex48:'dw_flex' };
+      const matKeyMap = { pl48:'dw_half_pl', pl54:'dw_54_half', cd48:'dw_half_cd', dens48:'dw_half_dens', wr48:'dw_half_wr', wr58:'dw_58_wr', fg48:'dw_58_fg', dl48:'dw_58_fg', fg54:'dw_58_54', durock48:'dw_cement', flex48:'dw_flex' };
       DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t => {
         const rate = MAT_RATES[matKeyMap[t.key]] || 0;
         const sf = t.lengths.reduce((s,l) => s + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0);
@@ -3953,13 +3943,15 @@ function showReport() {
             const cell = a.counts['insulation']?.[t.key]?.[rv.r]?.[si];
             if (!cell) return;
             const sf = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
-            insGross += sf * (isHR ? (gPrices['ins_hr_int']||INS_HR_INT_RATES[gRateIdx]) : (gPrices['ins_lr'] > 0 ? gPrices['ins_lr'] : INS_LR_RATES[gRateIdx]));
+            insGross += sf * (isHR ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx]) : (gPrices['ins_lr'] > 0 ? gPrices['ins_lr'] : INS_LR_RATES[gRateIdx]));
             if (isEligible) energyStarSqft += sf;
           });
         });
       });
-      // Insulation extras
-      insGross += insGross * (gPrices['ins_extra_1'] || 0) / (gPrices['ins_lr'] > 0 ? gPrices['ins_lr'] : INS_LR_RATES[gRateIdx] || 1);
+      // Insulation extras: extra_1 is a % markup on insGross, extra_2 is flat $
+      const insExtras = insGross * (gPrices['ins_extra_1'] || 0);
+      insGross += insExtras;
+      laborCost += insExtras;
       laborCost += (gPrices['ins_extra_2'] || 0);
 
       // Energy Star: only when toggle is on AND there is pink/roxul footage
@@ -3985,10 +3977,17 @@ function showReport() {
       laborCost += townPremiumCost;
       totalTownPremium += townPremiumCost;
 
-      // ── Steel gross ──
+      // ── Steel gross — height-aware for HR ──
+      const steelRate = (() => {
+        if (!isHR) return gPrices['steel_lr_house'] > 0 ? gPrices['steel_lr_house'] : STEEL_HOUSE_RATES[gRateIdx];
+        const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
+        const hKey = hMap[ceilH] || 'h9';
+        const priceKey = 'steel_hr_' + hKey;
+        return gPrices[priceKey] > 0 ? gPrices[priceKey] : (STEEL_HR_RATES[hKey]?.rates[gRateIdx] || STEEL_HR_RATES.h9.rates[gRateIdx]);
+      })();
       const steelGross = STEEL_SUBTABS.reduce((s, st) => {
         const stSqft = st.items.reduce((ss,item) => ss + (a.counts[st.key]?.[item]||0), 0);
-        return s + stSqft * (isHR ? (gPrices['steel_hr_h9'] || STEEL_HR_RATES.h9.rates[gRateIdx]) : (gPrices['steel_lr_house'] || STEEL_HOUSE_RATES[gRateIdx]));
+        return s + stSqft * steelRate;
       }, 0);
 
       // ── Pot lights & add-ons gross (included in 675 base per TOS) ──
@@ -3996,7 +3995,9 @@ function showReport() {
       const sky24Cost     = (a.counts['jobExtras']?.["2' × 4' Skylight"]||0) * (gPrices['skylight_2x4'] || EXTRAS_RATES.skylight_2x4[gRateIdx]);
       const sky44Cost     = (a.counts['jobExtras']?.["4' × 4' Skylight"]||0) * (gPrices['skylight_4x4'] || EXTRAS_RATES.skylight_4x4[gRateIdx]);
       const otaCost       = ((a.counts['jobExtras']?.["OTA <64'"]||0)+(a.counts['jobExtras']?.["OTA >64'"]||0)) * (gPrices['ota_cathedral'] || EXTRAS_RATES.ota_cathedral[gRateIdx]);
-      const addOnGross    = potLightCost + sky24Cost + sky44Cost + otaCost;
+      const doorSingleCost = (a.counts['jobExtras']?.["Door Frame Single"]||0) * (gPrices['entry_door_single'] || EXTRAS_RATES.entry_door_single[gRateIdx]);
+      const doorDoubleCost = (a.counts['jobExtras']?.["Door Frame Double"]||0) * (gPrices['entry_door_double'] || EXTRAS_RATES.entry_door_double[gRateIdx]);
+      const addOnGross    = potLightCost + sky24Cost + sky44Cost + otaCost + doorSingleCost + doorDoubleCost;
       laborCost += addOnGross;
 
       // ── Taping (only when Taping task is selected) ──
@@ -4017,7 +4018,7 @@ function showReport() {
           const priceKey = (isHR ? 'tape_hr_' : 'tape_lr_') + hKey;
           if (gPrices[priceKey] > 0) return gPrices[priceKey];
           const bracket = isHR ? TAPING_HR_RATES[hKey] : TAPING_LR_RATES[hKey];
-          return bracket ? bracket.rates[gRateIdx] : (gPrices['tape_upper'] || 0.38078);
+          return bracket ? bracket.rates[gRateIdx] : 0.38078;
         })();
         tapingGross = tapingSqft * tapingRate2;
         const BULLNOSE_ITEMS = new Set(["Bullnose Metal (8')", "Bullnose Metal (10')"]);
@@ -4080,7 +4081,7 @@ function showReport() {
         - boarderMatDeduct - insulatorMatDeduct
       );
 
-      // ── FIX 5: Tapers base — subtract taper material purchases ──
+      // ── Tapers base — subtract taper material purchases ──
       const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + mudGross - taperMatDeduct);
 
       const local675Pct = (gPrices['local675_dues'] ?? 0.265);
@@ -4092,7 +4093,6 @@ function showReport() {
       totalLocal675 += local675Amount;
       totalTapers   += tapersAmount;
 
-      // Add-Ons already folded into addOnGross + union dues above
 
       // Scaffolding/Cleaning/Touchup now stored as job detail toggles
       const jd = J()?.details || {};
@@ -4117,21 +4117,8 @@ function showReport() {
     html += `<div style="margin-top:16px;border-top:2px solid var(--border-md);padding-top:16px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
 
-    html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial)}</span></div>`;
+    html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial + totalBoarderMatDeduct + totalInsulatorMatDeduct + totalTaperMatDeduct)}</span></div>`;
     html += `<div class="modal-row"><span>Labor Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabor)}</span></div>`;
-    // Material deductions — subs buy consumables from contractor, deducted before dues + WSIB
-    if (totalBoarderMatDeduct > 0)
-      html += `<div class="modal-row" style="color:var(--muted)"><span>  − Boarder materials (screws)</span><span style="font-family:'DM Mono',monospace">(${fmt(totalBoarderMatDeduct)})</span></div>`;
-    if (totalInsulatorMatDeduct > 0)
-      html += `<div class="modal-row" style="color:var(--muted)"><span>  − Insulator materials (poly/tape/caulk)</span><span style="font-family:'DM Mono',monospace">(${fmt(totalInsulatorMatDeduct)})</span></div>`;
-    if (totalTaperMatDeduct > 0)
-      html += `<div class="modal-row" style="color:var(--muted)"><span>  − Taper materials (mud/tape)</span><span style="font-family:'DM Mono',monospace">(${fmt(totalTaperMatDeduct)})</span></div>`;
-    const totalMatDeduct = totalBoarderMatDeduct + totalInsulatorMatDeduct + totalTaperMatDeduct;
-    if (totalMatDeduct > 0) {
-      const wsibBase2 = Math.max(0, totalLabor - totalMatDeduct);
-      html += `<div class="modal-row" style="font-size:11px;color:var(--muted);font-style:italic"><span>  Net labor base for dues + WSIB</span><span style="font-family:'DM Mono',monospace">${fmt(wsibBase2)}</span></div>`;
-    }
-    const houseType = j.details?.houseType || 'house';
     html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalLocal675)}</span></div>`;
     html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalTapers)}</span></div>`;
     html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}% on net labor)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
@@ -4438,8 +4425,6 @@ const PRICE_FIELDS = [
   { key:'tapers_union',    label:'Tapers Union Dues',           rates:[22.1,23.0,23.9],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
 
 ];
-// Keep PRICE_FIELD_DEFS as alias for backward compat
-const PRICE_FIELD_DEFS = PRICE_FIELDS;
 // Now that PRICE_FIELDS is defined, populate gPrices defaults
 gPrices = defaultPrices();
 
