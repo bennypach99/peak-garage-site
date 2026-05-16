@@ -1,0 +1,1195 @@
+Here is the complete, updated `takeoff.html` file. It includes the PWA manifest link, the new native-feeling UI styling, the bold `+` buttons, the dim zero-counts, and the Service Worker registration at the bottom.
+
+You can copy this entire block and replace the contents of your `takeoff.html` file.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a1f2e">
+  <title>Drywall Takeoff</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --bg: #f0ede8; --surface: #ffffff;
+      --border: rgba(0,0,0,0.09); --border-md: rgba(0,0,0,0.15);
+      --text: #111111; --muted: #777777;
+      --accent: #1d4ed8; --accent-light: #eff4ff;
+      --purple: #7c3aed; --green: #15803d;
+      --radius: 14px; --radius-sm: 10px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+    html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); scroll-behavior: smooth; }
+    .app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; background: var(--bg); }
+
+    /* ── Topbar ── */
+    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: calc(12px + var(--safe-top)) 16px 12px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); z-index: 10; }
+    .topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; overflow: hidden; }
+    .menu-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.1s; }
+    .menu-btn:active { transform: scale(0.92); }
+    .job-name-display { font-size: 16px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .job-name-input { font-size: 16px; font-weight: 600; font-family: inherit; color: var(--text); border: none; border-bottom: 2px solid var(--accent); background: transparent; outline: none; width: 130px; padding: 0; }
+    .topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .add-area-btn { background: var(--purple); color: #fff; border: none; border-radius: var(--radius-sm); padding: 9px 13px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; white-space: nowrap; transition: transform 0.1s, opacity 0.1s; }
+    .add-area-btn:active { transform: scale(0.95); opacity: 0.9; }
+
+    /* ── Category tabs ── */
+    .cat-bar { background: #1a1f2e; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 9; }
+    .cat-scroll { display: flex; overflow-x: auto; padding: 0 6px; gap: 0px; scrollbar-width: none; }
+    .cat-scroll::-webkit-scrollbar { display: none; }
+    .cat-tab { padding: 12px 11px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: rgba(255,255,255,0.45); white-space: nowrap; transition: color 0.15s, border-color 0.15s; letter-spacing: 0em; }
+    .cat-tab.active { color: #fff; border-bottom-color: #fff; }
+
+    /* ── Area tabs ── */
+    .area-bar { background: #f7f5f2; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .area-scroll { display: flex; overflow-x: auto; padding: 0 12px; gap: 2px; scrollbar-width: none; align-items: stretch; }
+    .area-scroll::-webkit-scrollbar { display: none; }
+    .area-tab { padding: 9px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: var(--muted); white-space: nowrap; transition: color 0.12s, border-color 0.12s; }
+    .area-tab.active { border-bottom-color: var(--purple); color: var(--purple); }
+    .area-tab-inner { display: flex; align-items: center; gap: 5px; }
+    .area-pencil { display: flex; align-items: center; color: var(--purple); opacity: 0.6; }
+    .area-pencil:hover { opacity: 1; }
+    .area-rename-input { font-size: 13px; font-weight: 500; font-family: inherit; border: none; border-bottom: 1.5px solid var(--purple); background: transparent; outline: none; color: var(--purple); width: 90px; padding: 2px 0; }
+
+    /* ── Area info strip ── */
+    .area-info-bar { background: #f0ede8; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow: hidden; }
+    .area-info-scroll { display: flex; overflow-x: auto; padding: 7px 14px; gap: 8px; scrollbar-width: none; align-items: center; }
+    .area-info-scroll::-webkit-scrollbar { display: none; }
+    .area-info-chip { display: flex; align-items: center; gap: 5px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; white-space: nowrap; flex-shrink: 0; }
+    .area-info-chip-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .area-info-chip-val { font-size: 12px; font-weight: 500; color: var(--text); }
+
+    /* ── Type sub-tabs ── */
+    .type-bar { background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .type-scroll { display: flex; overflow-x: auto; padding: 0 12px; gap: 2px; scrollbar-width: none; }
+    .type-scroll::-webkit-scrollbar { display: none; }
+    .type-tab { padding: 11px 13px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: var(--muted); white-space: nowrap; transition: color 0.12s; }
+
+    /* ── Tally area ── */
+    .tally-area { flex: 1; overflow-y: auto; padding: 16px 14px 10px; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+    .tally-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .tally-type-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; }
+    .tally-subtotal { font-size: 12px; color: var(--muted); }
+    .tally-subtotal strong { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
+    .sheet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .sheet-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 4px rgba(0,0,0,0.03); transition: transform 0.1s; }
+    .sheet-card-top { padding: 20px 12px 14px; text-align: center; flex: 1; }
+    .sheet-ft { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+    .sheet-count { font-family: 'DM Mono', monospace; font-size: 54px; font-weight: 500; line-height: 1; cursor: text; }
+    /* UX: Dim zero counts so non-zero counts pop out visually */
+    .sheet-count.is-zero { color: var(--border-md) !important; }
+    .sheet-count-input { font-family: 'DM Mono', monospace; font-size: 54px; font-weight: 500; color: var(--accent); line-height: 1; width: 100%; border: none; border-bottom: 2px solid var(--accent); background: transparent; text-align: center; outline: none; padding: 0; -moz-appearance: textfield; }
+    .sheet-count-input::-webkit-inner-spin-button, .sheet-count-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    
+    /* UX: Better button targets and feedback */
+    .sheet-card-controls { display: flex; border-top: 1px solid var(--border); }
+    .ctrl { flex: 1; height: 52px; border: none; background: none; font-size: 26px; color: var(--muted); cursor: pointer; font-family: inherit; transition: background 0.1s, color 0.1s, transform 0.05s; display: flex; align-items: center; justify-content: center; user-select: none; -webkit-user-select: none; }
+    .ctrl:active { background: color-mix(in srgb, var(--add-color, var(--accent)) 8%, white); color: var(--add-color, var(--accent)); transform: scale(0.95); }
+    .ctrl.add-btn { font-weight: 700; color: var(--add-color, var(--accent)); }
+    .ctrl-divider { width: 1px; background: var(--border); flex-shrink: 0; }
+
+    /* ── Bottom Bar ── */
+    /* UX: Floating pill style with shadow */
+    .bottom-bar { background: var(--surface); margin: 0 10px calc(10px + var(--safe-bottom)) 10px; padding: 10px 12px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.04); }
+    .totals-strip { flex: 1; display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+    .totals-strip::-webkit-scrollbar { display: none; }
+    .strip-total { background: var(--text); color: #fff; border-radius: 20px; padding: 7px 13px; font-size: 13px; font-weight: 500; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+    .strip-total span { font-family: 'DM Mono', monospace; font-size: 15px; }
+    .strip-chip { border-radius: 20px; padding: 6px 11px; font-size: 12px; white-space: nowrap; flex-shrink: 0; border: 1px solid var(--border); color: var(--muted); background: var(--bg); }
+    .strip-chip strong { font-family: 'DM Mono', monospace; color: var(--text); font-weight: 500; }
+    .report-btn { background: var(--green); color: #fff; border: none; border-radius: 12px; padding: 10px 16px; font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer; flex-shrink: 0; transition: transform 0.1s, opacity 0.1s; box-shadow: 0 2px 4px rgba(21,128,61,0.3); }
+    .report-btn:active { transform: scale(0.95); opacity: 0.9; }
+
+    /* ── Coming soon / Empty states ── */
+    .coming-soon { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
+    .coming-soon-icon { font-size: 40px; opacity: 0.3; }
+    .coming-soon h3 { font-size: 16px; font-weight: 500; color: var(--muted); }
+    .coming-soon p  { font-size: 13px; color: var(--muted); opacity: 0.7; }
+    .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 40px 24px; text-align: center; }
+    .empty-state-icon { width: 64px; height: 64px; border-radius: 20px; background: var(--purple); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(124,58,237,0.2); }
+    .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text); }
+    .empty-state p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .empty-cta { background: var(--purple); color: #fff; border: none; border-radius: var(--radius-sm); padding: 13px 24px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; transition: transform 0.1s; box-shadow: 0 2px 8px rgba(124,58,237,0.3); }
+    .empty-cta:active { transform: scale(0.95); }
+
+    /* ── Drawer ── */
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
+    .drawer-overlay.open { opacity: 1; pointer-events: all; }
+    .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 78vw; max-width: 300px; background: #1a1f2e; z-index: 51; display: flex; flex-direction: column; padding: calc(20px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)); gap: 14px; transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
+    .drawer.open { transform: translateX(0); }
+    .drawer-title { font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+    .drawer-new-btn { background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; font-family: inherit; font-weight: 500; cursor: pointer; transition: opacity 0.1s; }
+    .drawer-new-btn:active { opacity: 0.8; }
+    .drawer-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; }
+    .drawer-job-list { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1; }
+    .drawer-job-item { padding: 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.6); transition: background 0.12s, color 0.12s; }
+    .drawer-job-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 500; }
+
+    /* ── Bottom-sheet ── */
+    .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 60; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
+    .sheet-overlay.open { opacity: 1; pointer-events: all; }
+    .bottom-sheet { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-height: 92vh; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); padding-bottom: var(--safe-bottom); }
+    .sheet-overlay.open .bottom-sheet { transform: translateY(0); }
+    .sheet-handle { width: 36px; height: 4px; background: var(--border-md); border-radius: 2px; margin: 12px auto 0; flex-shrink: 0; }
+    .sheet-header { padding: 14px 20px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .sheet-header h3 { font-size: 16px; font-weight: 600; }
+    .sheet-close { width: 30px; height: 30px; border-radius: 50%; background: var(--bg); border: none; font-size: 15px; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
+    .sheet-close:active { transform: scale(0.9); }
+    .sheet-body { overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 16px; }
+    .sheet-footer { padding: 0 20px 20px; flex-shrink: 0; }
+    .sheet-save-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px; font-size: 15px; font-family: inherit; font-weight: 500; cursor: pointer; transition: opacity 0.1s; }
+    .sheet-save-btn:active { opacity: 0.8; }
+
+    /* ── Form fields ── */
+    .field-group { display: flex; flex-direction: column; gap: 5px; }
+    .field-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .field-input { font-size: 15px; font-family: inherit; color: var(--text); border: none; border-bottom: 1px solid var(--border-md); background: transparent; outline: none; padding: 6px 0; width: 100%; }
+    .field-input:focus { border-bottom-color: var(--accent); }
+    .field-select { font-size: 15px; font-family: inherit; color: var(--text); border: none; border-bottom: 1px solid var(--border-md); background: transparent; outline: none; padding: 6px 0; width: 100%; appearance: none; -webkit-appearance: none; }
+    .field-select:focus { border-bottom-color: var(--accent); }
+    .field-readonly { font-size: 14px; color: var(--muted); padding: 6px 0; font-family: 'DM Mono', monospace; }
+    .field-divider { height: 1px; background: var(--border); }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+    .toggle-label { font-size: 15px; color: var(--text); }
+    .toggle { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track { position: absolute; inset: 0; background: #d1d5db; border-radius: 13px; cursor: pointer; transition: background 0.2s; }
+    .toggle input:checked + .toggle-track { background: var(--accent); }
+    .toggle-track::after { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .toggle input:checked + .toggle-track::after { transform: translateX(20px); }
+
+    .empty-msg { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 0; }
+    .modal-area-head { font-size: 14px; font-weight: 600; color: var(--purple); margin: 18px 0 6px; padding-bottom: 6px; border-bottom: 1.5px solid #ede9fe; }
+    .modal-area-head:first-child { margin-top: 0; }
+    .modal-type-head { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin: 10px 0 4px; }
+    .modal-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+    .modal-row:last-of-type { border-bottom: none; }
+    .modal-row span:last-child { font-family: 'DM Mono', monospace; font-weight: 500; color: var(--text); }
+    .modal-grand { background: var(--bg); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+    .modal-grand span:first-child { font-size: 14px; font-weight: 500; }
+    .modal-grand span:last-child { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+
+    /* ── Blown-In / Foam measurement UI ── */
+    .meas-rval-section { margin-bottom: 20px; }
+    .meas-rval-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .meas-rval-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; }
+    .meas-total-chip { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; }
+    .meas-density-head { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 8px; }
+    .meas-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+    .meas-row { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .meas-dims { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; flex: 1; }
+    .meas-sqft { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); }
+    .meas-del { width: 26px; height: 26px; border-radius: 50%; border: none; background: #fee2e2; color: #dc2626; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; }
+    .meas-add-row { display: flex; gap: 8px; align-items: center; }
+    .meas-input { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; width: 80px; height: 44px; border: 1.5px solid var(--border-md); border-radius: 10px; background: var(--surface); text-align: center; outline: none; padding: 0 8px; -moz-appearance: textfield; }
+    .meas-input::-webkit-inner-spin-button, .meas-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .meas-input:focus { border-color: var(--accent); }
+    .meas-x { font-size: 16px; color: var(--muted); font-weight: 500; flex-shrink: 0; }
+    .meas-add-btn { height: 44px; padding: 0 16px; border: none; border-radius: 10px; font-size: 14px; font-family: inherit; font-weight: 600; color: #fff; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: opacity 0.1s; }
+    .meas-add-btn:active { opacity: 0.8; }
+    .meas-section-divider { height: 1px; background: var(--border); margin: 14px 0; }
+    .job-details-bar { background: #f8f7f5; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .job-details-bar::-webkit-scrollbar { display: none; }
+    .job-details-chips { display: flex; gap: 6px; padding: 7px 14px; width: max-content; min-width: 100%; }
+    .job-chip { display: flex; align-items: center; gap: 5px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; white-space: nowrap; flex-shrink: 0; cursor: pointer; transition: background 0.1s; }
+    .job-chip:active { background: #ede9fe; }
+    .job-chip-label { font-size: 10px; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: 0.06em; }
+    .job-chip-val { font-size: 12px; font-weight: 500; color: var(--text); }
+    .area-bar-row { display: flex; align-items: center; background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .area-bar-row .area-scroll { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; padding: 8px 10px 8px 14px; gap: 6px; }
+    .area-bar-row .area-scroll::-webkit-scrollbar { display: none; }
+    .area-add-inline { flex-shrink: 0; padding: 6px 8px 6px 0; }
+    .area-add-inline button { background: var(--purple); color: #fff; border: none; border-radius: 8px; padding: 7px 11px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity 0.1s; }
+    .area-add-inline button:active { opacity: 0.8; }
+
+    /* ── Drywall group top-tabs ── */
+    .dw-group-bar { background: var(--bg); border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; }
+    .dw-group-tab { flex: 1; padding: 10px 4px; font-size: 13px; font-family: inherit; font-weight: 600; cursor: pointer; border: none; background: none; border-bottom: 2.5px solid transparent; color: var(--muted); text-align: center; transition: color 0.12s; }
+    .dw-group-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .type-group-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); padding: 12px 14px 6px; }
+    .type-group-divider { height: 1px; background: var(--border); margin: 4px 14px 10px; }
+
+    /* ── Auth screen ── */
+    #auth-screen { position:fixed; inset:0; background:#1a1f2e; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; z-index:999; padding:32px; }
+    .auth-logo { width:64px; height:64px; background:linear-gradient(135deg,#1d4ed8,#7c3aed); border-radius:18px; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 24px rgba(124,58,237,0.3); }
+    .auth-title { font-size:24px; font-weight:700; color:#fff; text-align:center; }
+    .auth-sub { font-size:14px; color:rgba(255,255,255,0.5); text-align:center; max-width:260px; line-height:1.6; }
+    .google-sign-in-btn { display:flex; align-items:center; gap:12px; background:#fff; color:#111; border:none; border-radius:12px; padding:14px 24px; font-size:15px; font-family:inherit; font-weight:600; cursor:pointer; box-shadow:0 2px 12px rgba(0,0,0,0.3); width:100%; max-width:280px; justify-content:center; transition:transform 0.1s,box-shadow 0.1s; }
+    .google-sign-in-btn:active { transform:scale(0.98); box-shadow:0 1px 6px rgba(0,0,0,0.2); }
+    .auth-terms { font-size:11px; color:rgba(255,255,255,0.3); text-align:center; max-width:240px; line-height:1.5; }
+    /* ── Drawer user profile ── */
+    .drawer-user-row { display:flex; align-items:center; gap:10px; padding:12px; background:rgba(255,255,255,0.07); border-radius:10px; margin-bottom:8px; }
+    .drawer-user-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#1d4ed8,#7c3aed); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; overflow:hidden; }
+    .drawer-user-avatar img { width:100%; height:100%; object-fit:cover; }
+    .drawer-user-info { flex:1; min-width:0; }
+    .drawer-user-name { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drawer-user-email { font-size:11px; color:rgba(255,255,255,0.45); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .drawer-sign-out-btn { width:28px; height:28px; border-radius:8px; background:rgba(255,255,255,0.1); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition: background 0.12s; }
+    .drawer-sign-out-btn:hover { background:rgba(255,255,255,0.18); }
+
+    /* ── Drawer action buttons ── */
+    .drawer-action-btn { width:100%; padding:12px 14px; border:none; border-radius:var(--radius-sm); font-size:14px; font-family:inherit; font-weight:500; cursor:pointer; text-align:left; display:flex; align-items:center; gap:10px; transition: opacity 0.1s; }
+    .drawer-action-btn:active { opacity: 0.8; }
+    .drawer-action-btn.green  { background:#15803d; color:#fff; }
+    .drawer-action-btn.blue   { background:var(--accent); color:#fff; }
+    .drawer-action-btn.purple { background:var(--purple); color:#fff; }
+
+    /* ── Price fields ── */
+    .price-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent); margin:18px 0 8px; }
+    .price-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); gap:10px; }
+    .price-row:last-child { border-bottom:none; }
+    .price-row-label { font-size:13px; color:var(--text); flex:1; line-height:1.3; }
+    .price-row-input { font-family:'DM Mono',monospace; font-size:14px; font-weight:500; width:80px; height:36px; border:1.5px solid var(--border-md); border-radius:8px; text-align:right; padding:0 8px; outline:none; background:var(--surface); -moz-appearance:textfield; }
+    .price-row-input::-webkit-inner-spin-button, .price-row-input::-webkit-outer-spin-button { -webkit-appearance:none; }
+    .price-row-input:focus { border-color:var(--accent); }
+    .year-btn-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+    .year-btn { flex:1; min-width:70px; padding:8px 4px; border-radius:8px; font-size:12px; font-family:inherit; font-weight:600; cursor:pointer; border:none; text-align:center; transition: opacity 0.1s; }
+    .year-btn:active { opacity: 0.8; }
+    .year-btn.active { background:var(--accent); color:#fff; }
+    .year-btn.inactive { background:#eff6ff; color:var(--accent); }
+    .year-hint { font-size:10px; color:var(--muted); margin-bottom:8px; }
+    .profit-row { display:flex; align-items:center; gap:10px; padding:8px 0; }
+    .profit-label { font-size:13px; color:var(--text); flex:1; }
+    .profit-input { font-family:'DM Mono',monospace; font-size:14px; font-weight:500; width:70px; height:36px; border:1.5px solid var(--border-md); border-radius:8px; text-align:right; padding:0 8px; outline:none; background:var(--surface); -moz-appearance:textfield; }
+    .profit-input::-webkit-inner-spin-button,.profit-input::-webkit-outer-spin-button{-webkit-appearance:none;}
+    .profit-input:focus{border-color:var(--accent);}
+
+    /* ── Tutorial System ── */
+    .tut-screen-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 300; pointer-events: all; }
+    .tut-bubble { position: fixed; z-index: 302; background: #00b4ff; border-radius: 16px; padding: 16px 18px 14px; width: min(300px, calc(100vw - 32px)); box-shadow: 0 8px 32px rgba(0,0,0,0.35); pointer-events: all; animation: tutPop 0.22s cubic-bezier(0.34,1.56,0.64,1) both; }
+    @keyframes tutPop { from { opacity:0; transform: scale(0.85); } to { opacity:1; transform: scale(1); } }
+    .tut-bubble-title { font-size: 15px; font-weight: 700; color: #000; margin-bottom: 5px; line-height: 1.3; }
+    .tut-bubble-body { font-size: 13px; color: #000; line-height: 1.5; margin-bottom: 12px; }
+    .tut-bubble-footer { display: flex; align-items: center; justify-content: space-between; }
+    .tut-dots { display: flex; gap: 6px; align-items: center; }
+    .tut-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.3); transition: background 0.15s; }
+    .tut-dot.active { background: #000; }
+    .tut-next-btn { background: #000; color: #00b4ff; border: none; border-radius: 10px; padding: 8px 18px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; }
+    .tut-arrow-down::after { content: ''; position: absolute; bottom: -11px; left: var(--arrow-x, 50%); transform: translateX(-50%); width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-top: 12px solid #00b4ff; }
+    .tut-arrow-up::before { content: ''; position: absolute; top: -11px; left: var(--arrow-x, 50%); transform: translateX(-50%); width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-bottom: 12px solid #00b4ff; }
+    .tut-highlight { position: fixed; z-index: 301; pointer-events: none; border-radius: 10px; box-shadow: 0 0 0 4px #00b4ff, 0 0 0 5000px rgba(0,0,0,0.55); transition: all 0.3s ease; }
+    .tut-list-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 310; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
+    .tut-list-overlay.open { opacity: 1; pointer-events: all; }
+    .tut-list-sheet { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; padding-bottom: calc(20px + var(--safe-bottom)); transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1); }
+    .tut-list-overlay.open .tut-list-sheet { transform: translateY(0); }
+    .tut-list-header { padding: 14px 20px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .tut-list-header h3 { font-size: 16px; font-weight: 700; color: var(--text); }
+    .tut-list-close { width: 30px; height: 30px; border-radius: 50%; background: var(--bg); border: none; font-size: 15px; color: var(--muted); cursor: pointer; }
+    .tut-list-items { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .tut-list-item { display: flex; align-items: center; gap: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; cursor: pointer; transition: background 0.12s; }
+    .tut-list-item:active { background: #e0f2ff; }
+    .tut-list-icon { width: 40px; height: 40px; border-radius: 10px; background: #00b4ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+    .tut-list-info { flex: 1; min-width: 0; }
+    .tut-list-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .tut-list-desc { font-size: 12px; color: var(--muted); }
+    .tut-list-arrow { color: var(--muted); font-size: 16px; }
+
+    /* ── Welcome Modal ── */
+    #welcome-overlay { position: fixed; inset: 0; z-index: 400; background: #0f1624; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-y: auto; padding: 0 0 40px; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+    #welcome-overlay.open { opacity: 1; pointer-events: all; }
+    .wlc-header { width: 100%; padding: 52px 28px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .wlc-logo { width: 82px; height: 82px; border-radius: 22px; background: linear-gradient(135deg, #1d4ed8, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 40px rgba(124,58,237,0.5); font-size: 38px; flex-shrink: 0; }
+    .wlc-from { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-top: 2px; }
+    .wlc-title { font-size: 26px; font-weight: 700; color: #fff; text-align: center; line-height: 1.2; letter-spacing: -0.02em; margin: 0; }
+    .wlc-sub { font-size: 14px; color: rgba(255,255,255,0.48); text-align: center; max-width: 290px; line-height: 1.65; margin: 0; }
+    .wlc-divider { width: 40px; height: 2px; background: rgba(255,255,255,0.1); border-radius: 2px; margin: 4px 0; }
+    .wlc-steps { width: 100%; max-width: 440px; padding: 4px 18px 0; display: flex; flex-direction: column; gap: 10px; }
+    .wlc-step { background: rgba(255,255,255,0.055); border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; padding: 15px 16px; display: flex; align-items: flex-start; gap: 13px; }
+    .wlc-step-icon { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .wlc-step-icon.c1 { background: rgba(29,78,216,0.35); }
+    .wlc-step-icon.c2 { background: rgba(124,58,237,0.35); }
+    .wlc-step-icon.c3 { background: rgba(8,145,178,0.35); }
+    .wlc-step-body { flex: 1; min-width: 0; }
+    .wlc-step-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 3px; }
+    .wlc-step-desc { font-size: 12px; color: rgba(255,255,255,0.42); line-height: 1.55; }
+    .wlc-actions { width: 100%; max-width: 440px; padding: 18px 18px 0; display: flex; flex-direction: column; gap: 10px; }
+    .wlc-btn-primary { width: 100%; padding: 16px; border: none; border-radius: 14px; background: linear-gradient(135deg, #1d4ed8, #7c3aed); color: #fff; font-size: 16px; font-family: inherit; font-weight: 700; cursor: pointer; letter-spacing: 0.01em; box-shadow: 0 4px 28px rgba(124,58,237,0.45); transition: transform 0.12s, box-shadow 0.12s; }
+    .wlc-btn-primary:active { transform: scale(0.98); }
+    .wlc-btn-skip { width: 100%; padding: 12px; border: none; border-radius: 14px; background: transparent; color: rgba(255,255,255,0.28); font-size: 13px; font-family: inherit; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<!-- Note: The rest of the body remains unchanged from your original file up until the <script> tag -->
+<div id="auth-screen" style="display:none" data-checking="false">
+  <div class="auth-logo">
+    <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+      <rect x="4" y="4" width="10" height="14" rx="2" fill="white" fill-opacity="0.9"/>
+      <rect x="18" y="4" width="10" height="10" rx="2" fill="white" fill-opacity="0.9"/>
+      <rect x="18" y="18" width="10" height="10" rx="2" fill="white" fill-opacity="0.4"/>
+    </svg>
+  </div>
+  <div class="auth-title">Drywall Takeoff</div>
+  <div class="auth-sub">Sign in to sync your jobs across all your devices.</div>
+  <button class="google-sign-in-btn" onclick="signInWithGoogle()">
+    <svg width="20" height="20" viewBox="0 0 48 48">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+    </svg>
+    Continue with Google
+  </button>
+  <div class="auth-error" id="auth-error"></div>
+  <div class="auth-terms">Your data is stored privately in Firebase under your Google account. No one else can access it.</div>
+</div>
+
+<div class="app" id="app" style="display:none">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="menu-btn" onclick="openDrawer()">
+        <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+          <rect width="18" height="2" rx="1" fill="#111"/>
+          <rect y="6" width="14" height="2" rx="1" fill="#111"/>
+          <rect y="12" width="10" height="2" rx="1" fill="#111"/>
+        </svg>
+      </div>
+      <div class="job-name-display" id="job-name-display" onclick="openDrawerEdit()" style="cursor:pointer" title="Tap to rename">Job 1</div>
+      <div onclick="openDetails()" style="flex-shrink:0;cursor:pointer;display:flex;align-items:center;color:#7c3aed;opacity:0.7;padding:2px 0 0 2px">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M8 3L11 6" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+    <div class="topbar-right"></div>
+  </div>
+  <div class="job-details-bar" id="job-details-bar" style="display:none"><div class="job-details-chips" id="job-details-chips"></div></div>
+  <div class="area-bar-row">
+    <div class="area-scroll" id="area-tabs"></div>
+    <div class="area-add-inline"><button onclick="openAreaForm(null)">+ Area</button></div>
+  </div>
+  <div class="area-info-bar" id="area-info-bar"></div>
+  <div class="cat-bar"><div class="cat-scroll" id="cat-tabs"></div></div>
+  <div class="dw-group-bar" id="dw-group-bar" style="display:none">
+    <button class="dw-group-tab active" onclick="switchDwGroup('Regular')">Regular</button>
+    <button class="dw-group-tab" onclick="switchDwGroup('Fireguard')">Fireguard</button>
+    <button class="dw-group-tab" onclick="switchDwGroup('Special')">Special</button>
+    <button class="dw-group-tab" onclick="switchDwGroup('Extras')">Extras</button>
+  </div>
+  <div class="type-bar" id="type-bar-wrap"><div class="type-scroll" id="type-tabs"></div></div>
+  <div class="type-bar" id="ins-rval-bar" style="display:none;border-top:1px solid var(--border)"><div class="type-scroll" id="ins-rval-tabs"></div></div>
+  <div class="tally-area" id="tally-area"></div>
+  <div class="bottom-bar">
+    <div class="totals-strip" id="totals-strip"></div>
+    <button class="report-btn" onclick="showReport()">Report</button>
+  </div>
+</div>
+
+<div id="confirm-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:24px">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:16px">
+    <div id="confirm-message" style="font-size:15px;font-weight:500;color:#111;text-align:center;line-height:1.5"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="confirmResolve(false)" style="flex:1;padding:13px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;color:#555">No</button>
+      <button onclick="confirmResolve(true)" style="flex:1;padding:13px;border:none;border-radius:10px;background:#dc2626;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;color:#fff">Yes</button>
+    </div>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-user-row">
+    <div class="drawer-user-avatar">
+      <img id="drawer-user-photo" src="" style="display:none" alt=""/>
+      <span id="drawer-user-initials">?</span>
+    </div>
+    <div class="drawer-user-info">
+      <div class="drawer-user-name" id="drawer-user-name">—</div>
+      <div class="drawer-user-email" id="drawer-user-email">—</div>
+    </div>
+    <button class="drawer-sign-out-btn" onclick="signOut()" title="Sign out">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M9 10l3-3-3-3M12 7H5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+  <div class="drawer-title" style="margin-top:4px; position:relative">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="1" y="1" width="6" height="9" rx="1" fill="white" fill-opacity="0.7"/>
+      <rect x="9" y="1" width="6" height="6" rx="1" fill="white" fill-opacity="0.7"/>
+      <rect x="9" y="9" width="6" height="6" rx="1" fill="white" fill-opacity="0.4"/>
+    </svg>
+    Drywall Takeoff
+  </div>
+  <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.34 · May 16, 2026</div>
+  <div class="drawer-label">Jobs</div>
+  <div class="drawer-job-list" id="drawer-job-list"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
+    <button class="drawer-action-btn green" onclick="openPricesSheet();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="white" stroke-width="1.5"/><path d="M7.5 4V7.5L9.5 9.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Labor Prices
+    </button>
+    <button class="drawer-action-btn" style="background:#ea580c" onclick="openMatPricesSheet();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="2" width="11" height="11" rx="1.5" stroke="white" stroke-width="1.5"/><path d="M5 7.5h5M7.5 5v5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Material Prices
+    </button>
+    <button class="drawer-action-btn blue" onclick="openMyInfoSheet();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="white" stroke-width="1.5"/><path d="M2.5 13.5C2.5 11 4.5 9.5 7.5 9.5C10.5 9.5 12.5 11 12.5 13.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
+      My Info
+    </button>
+    <button class="drawer-action-btn" style="background:#00b4ff;color:#000;" onclick="openTutorialList();closeDrawer()">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="#000" stroke-width="1.5"/><path d="M7.5 5v.5M7.5 7.5v3" stroke="#000" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Tutorials
+    </button>
+  </div>
+</div>
+</div>
+
+<!-- Area Form -->
+<div class="sheet-overlay" id="area-form-overlay" onclick="handleAreaFormTap(event)">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3 id="area-form-title">Add Area</h3><button class="sheet-close" onclick="closeAreaForm()">✕</button></div>
+    <div class="sheet-body">
+      <div class="field-group"><div class="field-label">Area Name</div><input class="field-input" id="af-name" type="text" placeholder="e.g. Main Floor, Basement…" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"/></div>
+      <div class="field-group"><div class="field-label">Ceiling Height <span style="color:#dc2626">*</span></div><select class="field-select" id="af-height"><option value="">Select height…</option><option>8'</option><option>9'</option><option>10'</option><option>11'</option><option>12'+</option></select></div>
+      <div class="field-group"><div class="field-label">Ceiling Texture</div><select class="field-select" id="af-texture"><option value="">Select texture…</option><option>Smooth</option><option>Orange Peel</option><option>Knockdown</option><option>Popcorn</option><option>Skip Trowel</option><option>Rosebud</option><option>Sand Finish</option><option>Other</option></select></div>
+    </div>
+    <div class="sheet-footer" id="area-form-footer" style="display:flex;gap:10px"><button class="sheet-save-btn" onclick="saveAreaForm()" style="flex:1">Add Area</button></div>
+  </div>
+</div>
+
+<!-- Job Details -->
+<div class="sheet-overlay" id="details-overlay" onclick="handleDetailsTap(event)">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>Job Details</h3><button class="sheet-close" id="details-close-btn" onclick="closeDetails()">✕</button></div>
+    <div class="sheet-body" id="details-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveDetails()">Save</button></div>
+  </div>
+</div>
+
+<!-- Report -->
+<div class="sheet-overlay" id="modal-overlay" onclick="handleModalTap(event)">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header" style="flex-direction:column;align-items:flex-start;gap:2px">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%"><h3 id="modal-title">Report</h3><button class="sheet-close" onclick="closeModal()">✕</button></div>
+      <div id="modal-dates" style="font-size:11px;color:var(--muted);line-height:1.5;display:none"></div>
+    </div>
+    <div class="sheet-body" id="modal-body" style="gap:0"></div>
+    <div class="sheet-footer">
+      <div style="font-size:11px;color:var(--muted);text-align:center;padding:0 4px 10px;line-height:1.5">⚠️ Please verify all prices in the Prices sheet before exporting.</div>
+      <button class="sheet-save-btn" style="background:#dc2626;display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportToPDF()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" fill="white" fill-opacity="0.2"/><path d="M7 7h6M7 11h10M7 15h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M16 3v4h4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Export as PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Prices Sheet -->
+<div class="sheet-overlay" id="prices-overlay" onclick="handleSheetTap(event,'prices-overlay')">
+  <div class="bottom-sheet" style="max-height:95vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>Labor Prices</h3><button class="sheet-close" onclick="closePricesSheet()">✕</button></div>
+    <div class="sheet-body" id="prices-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" onclick="savePricesSheet()">Save Prices</button></div>
+  </div>
+</div>
+
+<!-- My Info Sheet -->
+<div class="sheet-overlay" id="matprices-overlay" onclick="handleSheetTap(event,'matprices-overlay')">
+  <div class="bottom-sheet" style="max-height:95vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h3>Material Prices</h3>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;border:1px solid var(--color-border-tertiary);white-space:nowrap" title="Import prices from JSON file">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 1v8M4 6l3 3 3-3M2 10v1.5A1.5 1.5 0 003.5 13h7A1.5 1.5 0 0012 11.5V10"/></svg>
+        Import
+        <input type="file" accept=".json" style="display:none" onchange="importMatPrices(this)">
+      </label>
+      <button class="sheet-close" onclick="closeMatPricesSheet()">✕</button>
+    </div>
+    <div class="sheet-body" id="matprices-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" style="background:#ea580c" onclick="saveMatPricesSheet()">Save Material Prices</button></div>
+  </div>
+</div>
+
+<!-- My Info Sheet -->
+<div class="sheet-overlay" id="myinfo-overlay" onclick="handleSheetTap(event,'myinfo-overlay')">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>My Info</h3><button class="sheet-close" onclick="closeMyInfoSheet()">✕</button></div>
+    <div class="sheet-body" id="myinfo-body"></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveMyInfoSheet()">Save</button></div>
+  </div>
+</div>
+
+<!-- Welcome Modal -->
+<div id="welcome-overlay">
+  <div class="wlc-header">
+    <div class="wlc-logo">🏗️</div>
+    <div class="wlc-from">Peak Garage Solutions</div>
+    <h2 class="wlc-title">Welcome to<br>Drywall Takeoff</h2>
+    <div class="wlc-divider"></div>
+    <p class="wlc-sub">Your job site companion for counting sheets, tracking materials, and generating quotes — fast.</p>
+  </div>
+  <div class="wlc-steps">
+    <div class="wlc-step"><div class="wlc-step-icon c1">📋</div><div class="wlc-step-body"><div class="wlc-step-title">Set up your first job</div><div class="wlc-step-desc">Start by filling in the job details — rate type, building type, and which tasks are on the job.</div></div></div>
+    <div class="wlc-step"><div class="wlc-step-icon c2">🔢</div><div class="wlc-step-body"><div class="wlc-step-title">Add areas and count sheets</div><div class="wlc-step-desc">Create areas for each floor or zone, then tap + to tally sheets by length and type as you walk the job.</div></div></div>
+    <div class="wlc-step"><div class="wlc-step-icon c3">📄</div><div class="wlc-step-body"><div class="wlc-step-title">Generate a report</div><div class="wlc-step-desc">Tap Report to see a full breakdown of materials and labour cost, then export it as a PDF quote.</div></div></div>
+  </div>
+  <div class="wlc-actions">
+    <button class="wlc-btn-primary" onclick="dismissWelcome(true)">Show me around ›</button>
+    <button class="wlc-btn-skip" onclick="dismissWelcome(false)">Skip — I'll figure it out</button>
+    <label style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:4px 0">
+      <input type="checkbox" id="wlc-dont-show" style="width:15px;height:15px;accent-color:#7c3aed;cursor:pointer">
+      <span style="font-size:12px;color:rgba(255,255,255,0.25)">Don't show this again</span>
+    </label>
+  </div>
+</div>
+
+<!-- Tutorial List Sheet -->
+<div class="tut-list-overlay" id="tut-list-overlay" onclick="if(event.target===this)closeTutorialList()">
+  <div class="tut-list-sheet">
+    <div class="tut-list-header"><h3>📚 Tutorials</h3><button class="tut-list-close" onclick="closeTutorialList()">✕</button></div>
+    <div class="tut-list-items" id="tut-list-items"></div>
+  </div>
+</div>
+
+<!-- Tutorial Bubble -->
+<div id="tut-highlight" class="tut-highlight" style="display:none"></div>
+<div id="tut-bubble" class="tut-bubble" style="display:none">
+  <div class="tut-bubble-title" id="tut-title"></div>
+  <div class="tut-bubble-body" id="tut-body"></div>
+  <div class="tut-bubble-footer">
+    <div class="tut-dots" id="tut-dots"></div>
+    <button class="tut-next-btn" id="tut-next-btn" onclick="tutNext()">Next</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   TUTORIAL ENGINE — v14
+   ══════════════════════════════════════════════════════════════ */
+
+const TUTORIALS = [
+  {
+    id: 'jobdetails',
+    name: 'Job Details Form',
+    desc: 'How to set up a new job correctly',
+    icon: '📝',
+    steps: [
+      { title: 'Job Name', body: 'Give this job a name — usually the customer name or site address. You can always rename it later.', target: '#df-name', targetParent: true, arrow: 'down', noFocus: true },
+      { title: 'Customer & Site', body: 'Fill in the customer name and site address. These appear on your exported PDF report.', target: '#df-customer', targetParent: true, arrow: 'down', noFocus: true },
+      { title: 'Rate Type — Required', body: 'Choose Low-Rise or High-Rise. This sets which CBA labour rate table is used for the entire job. You must select one before saving.', target: '#df-rate-lr', targetParent: true, arrow: 'down', noFocus: true },
+      { title: 'Building Type — Low-Rise Only', body: 'For Low-Rise jobs, select the building type. Townhouse and Stacked Townhouse add a premium per sq ft on top of the base boarding rate.', target: '#df-housetype-row', arrow: 'down', noFocus: true, action: () => { if(typeof setRateBtn==='function') setRateBtn('lowrise'); } },
+      { title: 'Tasks on this Job', body: 'Toggle which trades are on this job — Drywall, Insulation, and/or Taping. This controls which sections appear in your report.', target: '#df-err-tasks', targetParent: true, arrow: 'down', noFocus: true },
+    ]
+  },
+  {
+    id: 'basics',
+    name: 'App Basics',
+    desc: 'Learn the core layout and navigation',
+    icon: '🏠',
+    steps: [
+      { title: 'Menu / Job Switcher', body: 'Tap the hamburger menu (☰) to open the side drawer. From here you can switch jobs, create new ones, and access settings.', target: '.menu-btn', arrow: 'down' },
+      { title: 'Job Name', body: 'Your current job name is shown here. Tap it to rename the job directly.', target: '#job-name-display', arrow: 'down' },
+      { title: 'Add Area', body: 'Tap "+ Area" to add a new area (e.g. Main Floor, Basement). Each area tracks its own counts separately.', target: '.area-add-inline button', arrow: 'down' },
+      { title: 'Category Tabs', body: 'Switch between Drywall, Insulation, Steel, Mud, Corner Bead, and Add-Ons using these dark tabs.', target: '.cat-bar', arrow: 'up' },
+      { title: 'Report & Export', body: 'When you\'re done tallying, tap "Report" to see a full summary and export it as a PDF.', target: '.report-btn', arrow: 'up' },
+    ]
+  },
+  {
+    id: 'drywall',
+    name: 'Counting Drywall',
+    desc: 'How to tally sheets by length and type',
+    icon: '📋',
+    steps: [
+      { title: 'Drywall Tab', body: 'Make sure you\'re on the Drywall category. The dark tab bar shows which category is active.', target: '.cat-bar', arrow: 'up', action: () => { if(typeof switchCat==='function') switchCat('drywall'); } },
+      { title: 'Drywall Groups', body: 'Choose between Regular, Fireguard, Special, and Extras using these group tabs.', target: '#dw-group-bar', arrow: 'up' },
+      { title: 'Sheet Length Cards', body: 'Each card represents one sheet length (7\', 8\', 9\'…). The big blue number is your count for that length.', target: '.sheet-card', arrow: 'up', scrollTo: '.tally-area' },
+      { title: 'Tap to Count', body: 'Tap "−" to remove a sheet, "+" to add one. You can also tap the big number directly to type in an exact count.', target: '.sheet-card-controls', arrow: 'up', scrollTo: '.tally-area' },
+      { title: 'Subtotal', body: 'The subtotal in the top right shows the total sq ft for the current drywall type in this area.', target: '.tally-header', arrow: 'down', scrollTo: '.tally-area' },
+    ]
+  },
+  {
+    id: 'areas',
+    name: 'Managing Areas',
+    desc: 'Add, rename, and configure job areas',
+    icon: '🏗️',
+    steps: [
+      { title: 'Add an Area', body: 'Tap "+ Area" to create a new area. Give it a name like "Main Floor" or "Basement".', target: '.area-add-inline button', arrow: 'down' },
+      { title: 'Switch Areas', body: 'Tap any area tab to switch to it. The purple underline shows the active area.', target: '#area-tabs', arrow: 'down' },
+      { title: 'Rename an Area', body: 'Tap the pencil ✏️ icon next to the area name in the tab to rename it.', target: '#area-tabs', arrow: 'down' },
+      { title: 'Area Details Strip', body: 'The chips below the area tabs show the ceiling height and texture for that area. Tap any chip to edit the job details.', target: '#job-details-bar', arrow: 'down' },
+    ]
+  },
+  {
+    id: 'report',
+    name: 'Generating a Report',
+    desc: 'View totals and export a PDF quote',
+    icon: '📄',
+    steps: [
+      { title: 'Totals Strip', body: 'The bottom bar shows a live running total of all sheets tallied across all areas.', target: '.totals-strip', arrow: 'up' },
+      { title: 'Open Report', body: 'Tap "Report" to open the full summary sheet with all materials broken down by area and type.', target: '.report-btn', arrow: 'up' },
+      { title: 'Set Your Prices First', body: 'Before exporting, open the Menu → Labor Prices and Material Prices to set your rates. These fill in the report automatically.', target: '.menu-btn', arrow: 'down' },
+    ]
+  },
+];
+
+let tutActive = false;
+let tutSteps = [];
+let tutStep = 0;
+
+function openTutorialList() {
+  const overlay = document.getElementById('tut-list-overlay');
+  const list = document.getElementById('tut-list-items');
+  list.innerHTML = TUTORIALS.map(t => `
+    <div class="tut-list-item" onclick="startTutorial('${t.id}')">
+      <div class="tut-list-icon">${t.icon}</div>
+      <div class="tut-list-info">
+        <div class="tut-list-name">${t.name}</div>
+        <div class="tut-list-desc">${t.desc} · ${t.steps.length} steps</div>
+      </div>
+      <div class="tut-list-arrow">›</div>
+    </div>
+  `).join('');
+  overlay.classList.add('open');
+}
+
+function closeTutorialList() {
+  document.getElementById('tut-list-overlay').classList.remove('open');
+}
+
+function startTutorial(id) {
+  closeTutorialList();
+  const tut = TUTORIALS.find(t => t.id === id);
+  if (!tut) return;
+  if (id === 'jobdetails') {
+    const detailsAlreadyOpen = document.getElementById('details-overlay')?.classList.contains('open');
+    if (!detailsAlreadyOpen) {
+      openDetails(false);
+      setTimeout(() => {
+        tutSteps = tut.steps;
+        tutStep = 0;
+        tutActive = true;
+        showTutStep();
+      }, 350);
+      return;
+    }
+  }
+  tutSteps = tut.steps;
+  tutStep = 0;
+  tutActive = true;
+  showTutStep();
+}
+
+function showTutStep() {
+  const step = tutSteps[tutStep];
+  if (!step) { endTutorial(); return; }
+  if (step.action) { try { step.action(); } catch(e) {} }
+  if (step.scrollTo) { const scrollEl = document.querySelector(step.scrollTo); if (scrollEl) scrollEl.scrollTop = 0; }
+  if (step.noFocus && document.activeElement && document.activeElement !== document.body) { document.activeElement.blur(); }
+  let rawTarget = step.target ? document.querySelector(step.target) : null;
+  const resolvedTarget = (rawTarget && step.targetParent) ? rawTarget.closest('.field-group') || rawTarget : rawTarget;
+  if (resolvedTarget) {
+    const scrollParent = findScrollParent(resolvedTarget);
+    if (scrollParent) {
+      const parentRect = scrollParent.getBoundingClientRect();
+      const targetRect = resolvedTarget.getBoundingClientRect();
+      const relTop = targetRect.top - parentRect.top + scrollParent.scrollTop;
+      const targetCenter = relTop + targetRect.height / 2;
+      const viewCenter = scrollParent.clientHeight / 2;
+      scrollParent.scrollTo({ top: targetCenter - viewCenter, behavior: 'smooth' });
+    } else {
+      try { resolvedTarget.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e) {}
+    }
+    setTimeout(() => positionBubble(step, resolvedTarget), step.noFocus ? 450 : 380);
+  } else {
+    requestAnimationFrame(() => { setTimeout(() => positionBubble(step, null), 120); });
+  }
+}
+
+function findScrollParent(el) {
+  let node = el.parentElement;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    const overflow = style.overflowY;
+    if ((overflow === 'auto' || overflow === 'scroll') && node.scrollHeight > node.clientHeight) { return node; }
+    node = node.parentElement;
+  }
+  return null;
+}
+
+function positionBubble(step, resolvedTarget) {
+  const bubble = document.getElementById('tut-bubble');
+  const highlight = document.getElementById('tut-highlight');
+  const titleEl = document.getElementById('tut-title');
+  const bodyEl = document.getElementById('tut-body');
+  const dotsEl = document.getElementById('tut-dots');
+  const nextBtn = document.getElementById('tut-next-btn');
+  titleEl.textContent = step.title;
+  bodyEl.textContent = step.body;
+  dotsEl.innerHTML = tutSteps.map((_, i) => `<div class="tut-dot ${i === tutStep ? 'active' : ''}"></div>`).join('');
+  nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
+  const target = resolvedTarget !== undefined ? resolvedTarget : (step.target ? document.querySelector(step.target) : null);
+  bubble.className = 'tut-bubble';
+  bubble.style.cssText = 'display:block';
+  if (target) {
+    const rect = target.getBoundingClientRect();
+    const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const vTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+    const bw = Math.min(300, vw - 32);
+    const bh = 175;
+    const visible = rect.top < (vTop + vh - 20) && rect.bottom > (vTop + 20);
+    if (!visible) {
+      highlight.style.display = 'none';
+      bubble.style.left = Math.round((vw - bw) / 2) + 'px';
+      bubble.style.top = Math.round(vTop + vh / 2 - 80) + 'px';
+      bubble.style.width = bw + 'px';
+      return;
+    }
+    const hlTop = Math.max(vTop + 4, rect.top - 4);
+    const hlLeft = Math.max(4, rect.left - 4);
+    highlight.style.cssText = `display:block;left:${hlLeft}px;top:${hlTop}px;width:${Math.min(rect.width + 8, vw - 8)}px;height:${Math.min(rect.height + 8, (vTop + vh) - hlTop - 4)}px;border-radius:${rect.height < 40 ? '8px' : '12px'};`;
+    const targetCenterX = rect.left + rect.width / 2;
+    const spaceBelow = (vTop + vh) - rect.bottom;
+    let bubbleTop, arrowDir;
+    if (step.arrow === 'up' || (step.arrow !== 'down' && spaceBelow < bh + 24)) {
+      bubbleTop = rect.top - bh - 16;
+      arrowDir = 'down';
+      if (bubbleTop < vTop + 8) bubbleTop = vTop + 8;
+    } else {
+      bubbleTop = rect.bottom + 12;
+      arrowDir = 'up';
+      if (bubbleTop + bh > vTop + vh - 8) bubbleTop = vTop + vh - bh - 8;
+    }
+    let bubbleLeft = targetCenterX - bw / 2;
+    bubbleLeft = Math.max(16, Math.min(vw - bw - 16, bubbleLeft));
+    const arrowX = targetCenterX - bubbleLeft;
+    const arrowXClamped = Math.max(22, Math.min(bw - 22, arrowX));
+    bubble.style.left = Math.round(bubbleLeft) + 'px';
+    bubble.style.top = Math.round(bubbleTop) + 'px';
+    bubble.style.width = bw + 'px';
+    bubble.style.setProperty('--arrow-x', Math.round(arrowXClamped) + 'px');
+    if (arrowDir === 'down') bubble.classList.add('tut-arrow-down');
+    else bubble.classList.add('tut-arrow-up');
+  } else {
+    highlight.style.display = 'none';
+    const vw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const vTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+    const bw = Math.min(300, vw - 32);
+    bubble.style.left = Math.round((vw - bw) / 2) + 'px';
+    bubble.style.top = Math.round(vTop + vh / 2 - 80) + 'px';
+    bubble.style.width = bw + 'px';
+  }
+}
+
+function tutNext() {
+  tutStep++;
+  if (tutStep >= tutSteps.length) { endTutorial(); } else {
+    const bubble = document.getElementById('tut-bubble');
+    bubble.style.animation = 'none';
+    bubble.style.opacity = '0';
+    bubble.style.transform = 'scale(0.9)';
+    setTimeout(() => { bubble.style.animation = ''; showTutStep(); }, 120);
+  }
+}
+
+function endTutorial() {
+  tutActive = false;
+  document.getElementById('tut-bubble').style.display = 'none';
+  document.getElementById('tut-highlight').style.display = 'none';
+  if (typeof window._tutOnEnd === 'function') { window._tutOnEnd(); }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (tutActive) endTutorial();
+    else if (document.getElementById('tut-list-overlay').classList.contains('open')) closeTutorialList();
+  }
+});
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    if (tutActive && tutSteps[tutStep]) { positionBubble(tutSteps[tutStep], undefined); }
+  });
+}
+</script>
+
+<script>
+/* ── Category definitions ── */
+const CATS = [
+  { label: 'Drywall', key: 'drywall' },
+  { label: 'Insulation', key: 'insulation' },
+  { label: 'Steel', key: 'steel' },
+  { label: 'Mud', key: 'mud' },
+  { label: 'Corner Bead', key: 'cornerBead' },
+  { label: 'Add-Ons', key: 'jobExtras' },
+];
+
+const DW_GROUPS = ['Regular', 'Fireguard', 'Special', 'Extras'];
+const DRYWALL_TYPES = [
+  { label: '½" Plain', fullName: '½" Plain (48" & 54")', key: 'pl48', lengths: [7,8,9,10,12], color: '#2563eb', group: 'Regular', combined: true, combinedKey: 'pl54', combinedLengths: [8,10,12] },
+  { label: '54" × ½" PL', fullName: '54" × ½" Plain', key: 'pl54', lengths: [8,10,12], color: '#2563eb', group: 'Regular', hidden: true },
+  { label: '½" CD', fullName: '48" × ½" Ceiling Drywall', key: 'cd48', lengths: [8,10,12], color: '#7c3aed', group: 'Regular' },
+  { label: '⅝" Type X', fullName: '⅝" Type X (48" & 54")',key: 'fg48', lengths: [8,9,10,12], color: '#dc2626', group: 'Fireguard', combined: true, combinedKey: 'fg54', combinedLengths: [8,10,12] },
+  { label: '54" × ⅝" Type X', fullName: '54" × ⅝" Type X', key: 'fg54', lengths: [8,10,12], color: '#dc2626', group: 'Fireguard', hidden: true },
+  { label: '⅝" DL', fullName: '48" × ⅝" Double Layer', key: 'dl48', lengths: [8,9,10,12], color: '#dc2626', group: 'Fireguard' },
+  { label: '½" Type C', fullName: '48" × ½" Type C', key: 'tc48', lengths: [8,9,10,12], color: '#b45309', group: 'Fireguard' },
+  { label: '½" DL', fullName: '48" × ½" Double Layer', key: 'hdl48', lengths: [8,9,10,12], color: '#b45309', group: 'Fireguard' },
+  { label: 'Durock', fullName: '½" Durock', key: 'durock48', lengths: [5,8], color: '#111111', group: 'Special', labels: ["3' × 5'", "4' × 8'"] },
+  { label: 'Denshield', fullName: '48" × ½" Denshield', key: 'dens48', lengths: [5,8], color: '#6b7280', group: 'Special' },
+  { label: '⅝" Denshield', fullName: '48" × ⅝" Denshield', key: 'dens58', lengths: [8], color: '#6b7280', group: 'Special' },
+  { label: '½" WR', fullName: '48" × ½" Water Resistant', key: 'wr48', lengths: [8,10,12], color: '#ca8a04', group: 'Special' },
+  { label: '⅝" WR', fullName: '48" × ⅝" Water Resistant', key: 'wr58', lengths: [8,10,12], color: '#b45309', group: 'Special' },
+  { label: '¼" Flex', fullName: '48" × ¼" Flex', key: 'flex48', lengths: [8,10,12], color: '#ea580c', group: 'Special' },
+  { label: 'Extras', fullName: 'Extras', key: 'extras', lengths: [], color: '#0891b2', group: 'Extras', isItems: true },
+];
+
+const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)'];
+const SQFT_54_KEYS = new Set(['pl54', 'fg54']);
+const SQFT_OVERRIDES = { durock48: { 5: 15 } };
+function sheetSqft(typeKey, lengthFt) {
+  const override = SQFT_OVERRIDES[typeKey]?.[lengthFt];
+  if (override !== undefined) return override;
+  return SQFT_54_KEYS.has(typeKey) ? 4.5 * lengthFt : 4 * lengthFt;
+}
+
+const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights', 'Door Frame Single', 'Door Frame Double', 'Open Round Stairs'];
+const JOB_COSTS_ITEMS = ['Scaffolding', 'Cleaning', 'Touchup & Year End Service Calls'];
+
+function getItemsForKey(key) {
+  if (key === 'extras') return EXTRAS_ITEMS;
+  return [];
+}
+const STEEL_SUBTABS = [
+  { key: 'steel_158', label: '1 5/8"', items: ['1 5/8" Stud 8\'', '1 5/8" Stud 9\'', '1 5/8" Stud 10\'', '1 5/8" Stud 12\'', '1 5/8" Track'], groups: [ { label: 'Stud', items: ['1 5/8" Stud 8\'', '1 5/8" Stud 9\'', '1 5/8" Stud 10\'', '1 5/8" Stud 12\''] }, { label: 'Track', items: ['1 5/8" Track'] } ] },
+  { key: 'steel_212', label: '2 1/2"', items: ['2 1/2" Stud 8\'', '2 1/2" Stud 9\'', '2 1/2" Stud 10\'', '2 1/2" Stud 12\'', '2 1/2" Track'], groups: [ { label: 'Stud', items: ['2 1/2" Stud 8\'', '2 1/2" Stud 9\'', '2 1/2" Stud 10\'', '2 1/2" Stud 12\''] }, { label: 'Track', items: ['2 1/2" Track'] } ] },
+  { key: 'steel_358', label: '3 5/8"', items: ['3 5/8" Stud 8\'', '3 5/8" Stud 9\'', '3 5/8" Stud 10\'', '3 5/8" Stud 12\'', '3 5/8" Track'], groups: [ { label: 'Stud', items: ['3 5/8" Stud 8\'', '3 5/8" Stud 9\'', '3 5/8" Stud 10\'', '3 5/8" Stud 12\''] }, { label: 'Track', items: ['3 5/8" Track'] } ] },
+  { key: 'steel_6', label: '6"', items: ['6" Stud 8\'', '6" Stud 9\'', '6" Stud 10\'', '6" Stud 12\'', '6" Track'], groups: [ { label: 'Stud', items: ['6" Stud 8\'', '6" Stud 9\'', '6" Stud 10\'', '6" Stud 12\''] }, { label: 'Track', items: ['6" Track'] } ] },
+  { key: 'steel_8', label: '8"', items: ['8" Stud 8\'', '8" Stud 9\'', '8" Stud 10\'', '8" Stud 12\'', '8" Track'], groups: [ { label: 'Stud', items: ['8" Stud 8\'', '8" Stud 9\'', '8" Stud 10\'', '8" Stud 12\''] }, { label: 'Track', items: ['8" Track'] } ] },
+  { key: 'steel_ch', label: 'Ch/Angle', items: ['Resilient Channel', 'Hat Channel', 'Furring Channel', 'Cold Roll Channel', '1" x 2" Angle', '2" x 2" Angle'], groups: [ { label: 'Channel', items: ['Resilient Channel', 'Hat Channel', 'Furring Channel', 'Cold Roll Channel'] }, { label: 'Angle', items: ['1" x 2" Angle', '2" x 2" Angle'] } ] },
+];
+const STEEL_EXTRAS_ITEMS = [ 'Pan Head Screws (Box)', 'Self-Drilling Screws (Box)', 'Hex-Head Screws (Box)', 'Tie-Wire (Box)', 'Hanger-Wire', 'Eye-Lag (Concrete)', 'Eye-Lag (Wood)' ];
+const INSULATION_EXTRAS_ITEMS = [ "8' Poly", "9' Poly", "10' Poly", "12' Poly", 'Tuck Tape', 'Can Foam', 'Staples', 'Styro-Vents', 'Acoustic Caulking' ];
+const MUD_ITEMS = [ 'All Purpose (17L)', 'Machine (17L)', 'Lite Finish (17L)', 'Sheetrock 20 (bag)', 'Sheetrock 45 (bag)', 'Sheetrock 90 (bag)', 'Durabond 90 (Bag)' ];
+const CORNER_BEAD_GROUPS = [
+  { label: 'Vinyl', items: ["Vinyl 90° (8')", "Vinyl 90° (10')", "L-Bead Vinyl (8')", "L-Bead Vinyl (10')", "U-Bead Vinyl (8')", "U-Bead Vinyl (10')", "J-Bead Vinyl (8')", "J-Bead Vinyl (10')"] },
+  { label: 'Metal', items: ["Metal 90° (8')", "Metal 90° (10')", "L-Bead Metal (8')", "L-Bead Metal (10')", "U-Bead Metal (8')", "U-Bead Metal (10')", "J-Bead Metal (8')", "J-Bead Metal (10')"] },
+  { label: 'Bullnose', items: ["Bullnose Metal (8')", "Bullnose Metal (10')"] },
+  { label: 'Misc', items: ["Archway Bead (8')", "Archway Bead (10')"] },
+];
+const CORNER_BEAD_ITEMS = CORNER_BEAD_GROUPS.flatMap(g => g.items);
+const MUD_EXTRAS_ITEMS = [ 'Paper Tape (roll)', 'Fibre Tape (roll)', 'Mesh Tape (roll)', 'Flexbead (roll)' ];
+
+const INSULATION_SIZES = ['15"', '16"', '23"', '24"'];
+const INSULATION_RVALS = [
+  { r: 'R8', sqft: [null, 149.33, null, 224.00], pcs: [null, 28, null, 28] },
+  { r: 'R12', sqft: [97.92, 106.67, 150.14, 160.00], pcs: [20, 20, 20, 20] },
+  { r: 'R14', sqft: [78.33, null, 120.11, null], pcs: [16, null, 16, null] },
+  { r: 'R20', sqft: [78.33, 85.33, 120.11, 128.00], pcs: [16, 16, 16, 16] },
+  { r: 'R22', sqft: [48.96, null, 75.07, null], pcs: [10, null, 10, null] },
+  { r: 'R24', sqft: [38.51, null, 51.98, null], pcs: [8, null, 7, null] },
+  { r: 'R28', sqft: [null, 42.67, null, 64.00], pcs: [null, 8, null, 8] },
+  { r: 'R31', sqft: [null, 42.67, null, 64.00], pcs: [null, 8, null, 8] },
+  { r: 'R40', sqft: [null, 32.00, null, 48.00], pcs: [null, 6, null, 6] },
+];
+
+const ROXUL_RVALS = [
+  { r: '1½" QZ', sqft: [190.0, null, null, null], pcs: [38, null, null, null] },
+  { r: '3" QZ', sqft: [59.7, 64.0, 60.1, 64.0], pcs: [12, 12, 8, 8] },
+  { r: 'R14', sqft: [59.7, null, 60.1, null], pcs: [12, null, 8, null] },
+  { r: 'R22.5', sqft: [null, 43.3, null, 40.4], pcs: [null, 8, null, 5] },
+  { r: 'R24', sqft: [29.4, null, 29.7, null], pcs: [6, null, 4, null] },
+];
+
+const MAT_RATES = { ins_r8: 0.29, ins_r12: 0.418, ins_r14: 0.624, ins_r20: 0.695, ins_r22: 0.911, ins_r24: 1.528, ins_r28: 0.933, ins_r31: 1.017, ins_r40: 1.454, roxul_3sound: 1.17, roxul_r14: 1.17, roxul_r22: 1.794, roxul_r24: 2.938, dw_half_pl: 0.555, dw_54_half: 0.729, dw_half_cd: 0.671, dw_half_dens: 1.83, dw_half_wr: 1.024, dw_58_fg: 0.678, dw_58_54: 0.881, dw_cement: 2.119, dw_flex: 0.724, st_furring: 0.582, st_resilient: 0.475, st_angle: 0.442, st_158_track: 0.533, st_158_stud: 0.587, st_212_track: 0.636, st_212_stud: 0.678, st_358_track: 0.757, st_358_stud: 0.799, cb_regular: 0.45, cb_sure: 0.495 };
+const WSIB_RATE = 0.0617;
+const DEFAULT_PROFIT_PCT = 15;
+
+const RATE_DATES_CBA = ['May 4, 2025', 'May 3, 2026', 'May 2, 2027'];
+const BOARD_LR_RATES = { h8: { label: "Up to 8'", rates: [0.352, 0.359, 0.366] }, h9: { label: "8' – 9'", rates: [0.373, 0.381, 0.388] }, h10: { label: "9' – 10'", rates: [0.422, 0.431, 0.439] }, h11: { label: "10' – 11'", rates: [0.451, 0.460, 0.469] }, h12: { label: "11' – 12'", rates: [0.466, 0.475, 0.485] } };
+const BOARD_HR_RATES = { h8: { label: "8' – 9'", rates: [0.377, 0.385, 0.393] }, h9: { label: "8' – 9'", rates: [0.377, 0.385, 0.393] }, h10: { label: "9' – 10'", rates: [0.397, 0.405, 0.413] }, h11: { label: "10' – 11'", rates: [0.416, 0.424, 0.433] }, h12: { label: "11' – 12'", rates: [0.434, 0.442, 0.451] } };
+const FIVET_PREMIUM = [0.105, 0.107, 0.109];
+const STEEL_HR_RATES = { h8: { label: "Up to 8'", rates: [0.343, 0.349, 0.357] }, h9: { label: "8' – 9'", rates: [0.361, 0.368, 0.376] }, h10: { label: "9' – 10'", rates: [0.384, 0.391, 0.399] }, h11: { label: "10' – 11'", rates: [0.405, 0.413, 0.421] }, h12: { label: "11' – 12'", rates: [0.427, 0.436, 0.444] } };
+const STEEL_HOUSE_RATES = [0.405, 0.413, 0.421];
+const INS_LR_RATES = [0.617, 0.629, 0.642];
+const INS_HR_INT_RATES = [0.328, 0.335, 0.342];
+const INS_ROCKWOOL_PREMIUM_RATES = [0.079, 0.080, 0.082];
+const INS_ENERGY_STAR_RATES = [0.079, 0.080, 0.082];
+const INS_R24_PREMIUM_RATES = [0.060, 0.061, 0.063];
+const TAPING_LR_RATES = { h8: { label: "≤8'", rates: [0.38078, 0.38839, 0.39616] }, h9: { label: "8' – 9'", rates: [0.39986, 0.40786, 0.41601] }, h10: { label: "9' – 10'", rates: [0.41616, 0.42448, 0.43297] }, h11: { label: "10' – 11'", rates: [0.45084, 0.45986, 0.46905] }, h12: { label: "11' – 12'", rates: [0.46614, 0.47546, 0.48497] } };
+const TAPING_HR_RATES = { h8: { label: "≤8'", rates: [0.36469, 0.37198, 0.37942] }, h9: { label: "8' – 9'", rates: [0.38375, 0.39143, 0.39926] }, h10: { label: "9' – 10'", rates: [0.39168, 0.39951, 0.40750] }, h11: { label: "10' – 11'", rates: [0.41610, 0.42442, 0.43291] }, h12: { label: "11' – 12'", rates: [0.43350, 0.44217, 0.45101] } };
+const DUROCK_LABOR_RATES = [0.600, 0.610, 0.630];
+const CORNER_BEAD_INSTALL_RATES = [0.26, 0.26, 0.27];
+const TAPER_SKY24_RATES = [141.83, 144.67, 147.56];
+const TAPER_SKY44_RATES = [234.19, 238.88, 243.65];
+const TAPER_STAIRS_RATES = [162.93, 166.19, 169.52];
+const TAPER_TOWN_RATES = [20.00, 20.40, 20.81];
+const TAPER_STACK_RATES = [85.15, 86.85, 88.59];
+const CORNER_BEAD_LR_FILL_RATES = [0.90, 0.90, 0.90];
+const CORNER_BEAD_LR_BULL_RATES = [0.78, 0.79, 0.81];
+const CORNER_BEAD_HR_FILL_RATES = [0.42, 0.43, 0.44];
+const CORNER_BEAD_HR_BULL_RATES = [0.42, 0.43, 0.44];
+const CORNER_BEAD_LF_RATES = CORNER_BEAD_LR_FILL_RATES;
+const CORNER_BEAD_BULL_RATES = CORNER_BEAD_LR_BULL_RATES;
+const EXTRAS_RATES = { skylight_2x4: [82.00, 83.00, 85.00], skylight_4x4: [174.00, 178.00, 181.00], tray_waffle_ceil: [84.00, 85.00, 87.00], ota_under64: [213.00, 217.00, 222.00], ota_over64: [213.00, 217.00, 222.00], open_round_stairs: [161.00, 164.00, 168.00], peak_niche: [84.00, 85.00, 87.00], pot_lights: [4.28, 4.37, 4.46], townhouse_premium: [14.02, 14.30, 14.60], stack_townhouse: [40.80, 41.60, 42.40], entry_door_single: [87.00, 87.00, 87.00], entry_door_double: [174.00, 174.00, 174.00], fivc_premium: [105.00, 107.00, 109.00] };
+
+function detectRateIdx() {
+  const today = new Date();
+  const cuts = [new Date('2025-05-04'), new Date('2026-05-03'), new Date('2027-05-02')];
+  let idx = 0;
+  for (let i = cuts.length-1; i>=0; i--) { if(today>=cuts[i]){ idx=i; break; } }
+  return idx;
+}
+
+function defaultPrices() {
+  if (typeof PRICE_FIELDS === 'undefined') return {};
+  const idx = detectRateIdx();
+  const p = {};
+  PRICE_FIELDS.forEach(f => { p[f.key] = f.pct ? f.rates[idx] / 100 : f.rates[idx]; });
+  return p;
+}
+
+function defaultMyInfo() { return { name:'', company:'', hst:'', email:'', phone:'' }; }
+function savePrices(p) { storageSet('prices', p); }
+function saveMyInfo(m) { storageSet('myinfo', m); }
+function saveProfitPct(v) { storageSet('profit', v); }
+async function loadPrices() { try { const r = await storageGet('prices'); return r || defaultPrices(); } catch(e) { return defaultPrices(); } }
+async function loadMyInfo() { try { const r = await storageGet('myinfo'); return r || defaultMyInfo(); } catch(e) { return defaultMyInfo(); } }
+async function loadProfitPct() { try { const r = await storageGet('profit'); return r ? parseFloat(r) : DEFAULT_PROFIT_PCT; } catch(e) { return DEFAULT_PROFIT_PCT; } }
+
+let gPrices = {};
+let gMyInfo = defaultMyInfo();
+let gProfitPct = DEFAULT_PROFIT_PCT;
+let gRateIdx = 1;
+let fbUser = null;
+let db = null;
+
+const BLOWN_RVALS = ['R20', 'R32', 'R40', 'R60'];
+const FOAM_RVALS = ['R12', 'R20', 'R22', 'R31'];
+const INSULATION_TYPES = [
+  { label: 'Pink', fullName: 'Pink Insulation', key: 'pink', color: '#db2777', rvals: null, kind: 'batt' },
+  { label: 'Roxul', fullName: 'Roxul', key: 'roxul', color: '#b45309', rvals: ROXUL_RVALS, kind: 'batt' },
+  { label: 'Blown-In', fullName: 'Blown-In', key: 'blown', color: '#0369a1', rvals: null, kind: 'blown' },
+  { label: 'Spray-Foam', fullName: 'Spray-Foam', key: 'foam', color: '#059669', rvals: null, kind: 'foam' },
+  { label: 'Blanket', fullName: 'Blanket', key: 'blanket', color: '#7c3aed', rvals: null, kind: 'blanket' },
+];
+
+let curInsType = 0;
+let curInsSubTab = 0;
+let curInsRvalIdx = {};
+let curBlownRval = 0;
+let curFoamRval = 0;
+let curSteelSubTab = 0;
+let curMudSubTab = 0;
+let curCbSubTab = 0;
+
+function blankCounts() {
+  const c = {};
+  DRYWALL_TYPES.forEach(t => {
+    c[t.key] = {};
+    if (t.isItems) { getItemsForKey(t.key).forEach(item => c[t.key][item] = 0); }
+    else { t.lengths.forEach(l => c[t.key][l] = 0); }
+  });
+  c['insulation'] = {};
+  INSULATION_TYPES.forEach(t => {
+    if (t.kind === 'blown') { c['insulation'][t.key] = {}; BLOWN_RVALS.forEach(r => { c['insulation'][t.key][r] = []; }); }
+    else if (t.kind === 'foam') { c['insulation'][t.key] = {}; FOAM_RVALS.forEach(r => { c['insulation'][t.key][r] = { half: [], two: [] }; }); }
+    else if (t.kind === 'blanket') { c['insulation'][t.key] = []; }
+    else {
+      const rvals = t.rvals || INSULATION_RVALS;
+      c['insulation'][t.key] = {};
+      rvals.forEach(rv => {
+        c['insulation'][t.key][rv.r] = {};
+        INSULATION_SIZES.forEach((sz, si) => { if (rv.sqft[si] !== null) { c['insulation'][t.key][rv.r][si] = { bags: 0, extraSqft: 0 }; } });
+      });
+    }
+  });
+  STEEL_SUBTABS.forEach(st => { c[st.key] = {}; st.items.forEach(item => c[st.key][item] = 0); });
+  c['steelExtras'] = {}; STEEL_EXTRAS_ITEMS.forEach(item => c['steelExtras'][item] = 0);
+  c['insExtras'] = {}; INSULATION_EXTRAS_ITEMS.forEach(item => c['insExtras'][item] = 0);
+  c['jobExtras'] = {}; JOB_EXTRAS_ITEMS.forEach(item => c['jobExtras'][item] = 0);
+  c['jobCosts'] = {}; JOB_COSTS_ITEMS.forEach(item => c['jobCosts'][item] = 0);
+  c['mud'] = {}; MUD_ITEMS.forEach(item => c['mud'][item] = 0);
+  c['cornerBead'] = {}; CORNER_BEAD_ITEMS.forEach(item => c['cornerBead'][item] = 0);
+  c['mudExtras'] = {}; MUD_EXTRAS_ITEMS.forEach(item => c['mudExtras'][item] = 0);
+  return c;
+}
+
+function makeArea(name, id, height, texture) { return { id, name, height: height||'', texture: texture||'', counts: blankCounts() }; }
+function makeJob(name, id) {
+  const now = new Date().toISOString();
+  return { id, name, areas: [], areaCounter: 0, details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise', houseType:'select', tasks:{ insulation:false, drywall:false, taping:false } }, createdAt: now, modifiedAt: now };
+}
+
+function saveState() { storageSet('appState', { jobs, jobCounter, curJobId }).catch(e => console.warn('saveState', e)); }
+
+async function loadState() {
+  try {
+    const s = await storageGet('appState');
+    if (!s) return false;
+    if (!s.jobs || !s.jobs.length) return false;
+    s.jobs.forEach(j => j.areas.forEach(a => {
+      const fresh = blankCounts();
+      a.counts = deepMerge(fresh, a.counts);
+      INSULATION_TYPES.forEach(t => {
+        if (t.kind === 'blown' || t.kind === 'foam' || t.kind === 'blanket') return;
+        const rvals = t.rvals || INSULATION_RVALS;
+        rvals.forEach(rv => { INSULATION_SIZES.forEach((_, si) => { if (rv.sqft[si] === null) return; const cell = a.counts['insulation']?.[t.key]?.[rv.r]?.[si]; if (!cell) return; if ('sqft' in cell || 'pcs' in cell) { const totalSqft = (cell.sqft || 0) + (rv.sqft[si] && rv.pcs[si] ? (cell.pcs || 0) / rv.pcs[si] * rv.sqft[si] : 0); cell.bags = rv.sqft[si] ? Math.floor(totalSqft / rv.sqft[si]) : 0; cell.extraSqft = totalSqft - cell.bags * rv.sqft[si]; delete cell.sqft; delete cell.pcs; } }); });
+      });
+    }));
+    jobs = s.jobs; jobCounter = s.jobCounter || jobs.length; curJobId = s.curJobId || jobs[0].id;
+    return true;
+  } catch(e) { return false; }
+}
+
+function deepMerge(target, source) {
+  if (typeof target !== 'object' || target === null) return source ?? target;
+  if (Array.isArray(target)) return Array.isArray(source) ? source : target;
+  const out = { ...target };
+  Object.keys(target).forEach(k => { out[k] = (source && k in source) ? deepMerge(target[k], source[k]) : target[k]; });
+  return out;
+}
+
+let jobs, jobCounter, curJobId;
+let curAreaId = null;
+let curCat = 'drywall';
+let curType = 0;
+let curDwGroup = 'Regular';
+let areaFormEditId = null;
+
+const J = () => jobs.find(j => j.id === curJobId);
+const A = () => J().areas.find(a => a.id === curAreaId);
+
+function drywallSubtotal(key) { return A() ? Object.values(A().counts[key]).reduce((s,v)=>s+v,0) : 0; }
+function areaTotal(a) { return DRYWALL_TYPES.filter(t=>!t.isItems).reduce((s,t)=>s+Object.values(a.counts[t.key]).reduce((x,v)=>x+v,0),0); }
+function jobTotal() { return J().areas.reduce((s,a)=>s+areaTotal(a),0); }
+
+function renderCatTabs() { document.getElementById('cat-tabs').innerHTML = CATS.map(c => `<button class="cat-tab ${c.key===curCat?'active':''}" onclick="switchCat('${c.key}')">${c.label}</button>`).join(''); }
+function switchCat(key) {
+  curCat = key;
+  if (key !== 'drywall') { const gb = document.getElementById('dw-group-bar'); if (gb) gb.style.display = 'none'; }
+  if (key !== 'mud' && curMudSubTab > 1) curMudSubTab = 0;
+  renderCatTabs(); renderTypeTabs(); renderTally(); renderStrip();
+}
+
+function openAreaForm(editId) {
+  areaFormEditId = editId;
+  const title = document.getElementById('area-form-title');
+  const saveBtn = document.querySelector('#area-form-overlay .sheet-save-btn');
+  const footer = document.getElementById('area-form-footer');
+  const existing = document.getElementById('area-delete-btn');
+  if (existing) existing.remove();
+  if (editId) {
+    const a = J().areas.find(x => x.id === editId);
+    title.textContent = 'Edit Area'; saveBtn.textContent = 'Save Changes';
+    document.getElementById('af-name').value = a.name; document.getElementById('af-height').value = a.height; document.getElementById('af-texture').value = a.texture;
+    const delBtn = document.createElement('button'); delBtn.id = 'area-delete-btn'; delBtn.textContent = 'Delete Area'; delBtn.style.cssText = 'flex:1;padding:14px;border:none;border-radius:10px;background:#fee2e2;color:#dc2626;font-size:15px;font-family:inherit;font-weight:500;cursor:pointer;'; delBtn.onclick = () => deleteArea(editId); footer.appendChild(delBtn);
+  } else {
+    title.textContent = 'Add Area'; saveBtn.textContent = 'Add Area'; document.getElementById('af-name').value = ''; document.getElementById('af-height').value = ''; document.getElementById('af-texture').value = '';
+  }
+  document.getElementById('area-form-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('af-name').focus(), 300);
+}
+
+function deleteArea(id) {
+  showConfirm('Delete this area?', (yes) => { if(!yes) return; const j = J(); j.areas = j.areas.filter(a => a.id !== id); if (curAreaId === id) curAreaId = j.areas[0]?.id || null; j.modifiedAt = new Date().toISOString(); saveState(); closeAreaForm(); renderAll(); });
+}
+
+function closeAreaForm() { document.getElementById('area-form-overlay').classList.remove('open'); }
+function handleAreaFormTap(e) { if (e.target===document.getElementById('area-form-overlay')) closeAreaForm(); }
+function saveAreaForm() {
+  let name = document.getElementById('af-name').value.trim(); const height = document.getElementById('af-height').value; const texture = document.getElementById('af-texture').value;
+  if (!height) { document.getElementById('af-height').focus(); return; }
+  if (!name) { const usedNums = new Set(J().areas.map(a => { const m = a.name.match(/^Area (\d+)$/); return m ? parseInt(m[1]) : null; }).filter(n => n !== null)); let n = 1; while (usedNums.has(n)) n++; name = 'Area ' + n; }
+  const j = J();
+  if (areaFormEditId) { const a = j.areas.find(x=>x.id===areaFormEditId); a.name=name; a.height=height; a.texture=texture; }
+  else { j.areaCounter++; j.areas.push(makeArea(name, j.areaCounter, height, texture)); curAreaId = j.areaCounter; curType = 0; }
+  j.modifiedAt = new Date().toISOString(); closeAreaForm(); renderAll();
+}
+
+function renderAreaTabs() {
+  const j = J();
+  if (j.areas.length === 0) { document.getElementById('area-tabs').innerHTML = `<div style="padding:10px 14px;font-size:13px;color:var(--muted);font-style:italic">No areas yet — tap + Add Area</div>`; return; }
+  document.getElementById('area-tabs').innerHTML = j.areas.map(a => {
+    const isActive = a.id === curAreaId;
+    return `<button class="area-tab ${isActive?'active':''}" onclick="switchArea(${a.id})"><span class="area-tab-inner">${a.name}${isActive?`<span class="area-pencil" onclick="event.stopPropagation();openAreaForm(${a.id})"><svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 3L11 6" stroke="currentColor" stroke-width="1.5"/></svg></span>`:''}</span></button>`;
+  }).join('');
+}
+function switchArea(id) { curAreaId=id; renderAll(); }
+
+function renderJobDetailsBar() {
+  const bar = document.getElementById('job-details-bar'); const chips = document.getElementById('job-details-chips');
+  if (!J()) { bar.style.display='none'; return; }
+  const d = J().details; const chip = (label, val) => `<div class="job-chip" onclick="openDetails()"><span class="job-chip-label">${label}</span><span class="job-chip-val">${val}</span></div>`;
+  const parts = [];
+  if (d.customer) parts.push(chip('Customer', d.customer)); if (d.site) parts.push(chip('Site', d.site)); if (d.contactName) parts.push(chip('Contact', d.contactName)); if (d.contactPhone) parts.push(chip('Phone', d.contactPhone)); if (d.lockbox) parts.push(chip('Lockbox', d.lockbox));
+  const rate = d.rate || 'lowrise'; parts.push(chip('Rate', rate === 'highrise' ? 'High-Rise' : 'Low-Rise'));
+  if (rate === 'lowrise' && d.houseType && d.houseType !== 'house' && d.houseType !== 'select') { const typeLabel = d.houseType === 'stacked' ? 'Stacked T/H' : 'Townhouse'; parts.push(chip('Type', typeLabel)); }
+  if (d.tasks) { ['insulation','drywall','taping'].forEach(t => { if (d.tasks[t]) parts.push(chip('Task', t.charAt(0).toUpperCase()+t.slice(1))); }); }
+  if (d.energyStar) parts.push(chip('Energy Star', '✓')); if (d.scaffolding) parts.push(chip('Scaffolding', '✓')); if (d.cleaning) parts.push(chip('Cleaning', '✓')); if (d.touchup) parts.push(chip('T/p+Y/e', '✓'));
+  bar.style.display=''; chips.innerHTML = parts.join('');
+}
+
+function renderAreaInfoBar() {
+  const bar = document.getElementById('area-info-bar');
+  if (!A()) { bar.innerHTML=''; return; }
+  const chips = []; const chip = (label, val) => `<div class="area-info-chip"><span class="area-info-chip-label">${label}</span><span class="area-info-chip-val">${val}</span></div>`;
+  const sqftOf = (keys) => (Array.isArray(keys)?keys:[keys]).reduce((s,k)=> s+Object.entries(A().counts[k]||{}).reduce((s2,[l,q])=>s2+sheetSqft(k,Number(l))*q,0),0);
+  if (A().height) chips.push(chip('Ceiling', A().height)); if (A().texture) chips.push(chip('Texture', A().texture));
+  const halfPlain = sqftOf(['pl48','pl54']); if (halfPlain>0) chips.push(chip('½" Plain', halfPlain+' ft²'));
+  const tcSqft = sqftOf('tc48'); if (tcSqft>0) chips.push(chip('½" Type C', tcSqft+' ft²'));
+  const hdlSqft = sqftOf('hdl48'); if (hdlSqft>0) chips.push(chip('½" DL', hdlSqft+' ft²'));
+  const ceilSqft = sqftOf('cd48'); if (ceilSqft>0) chips.push(chip('Ceiling DW', ceilSqft+' ft²'));
+  const dblSqft = sqftOf('dl48'); if (dblSqft>0) chips.push(chip('Double', dblSqft+' ft²'));
+  const fivetSqft = sqftOf(['fg48','fg54']); if (fivetSqft>0) chips.push(chip('⅝"', fivetSqft+' ft²'));
+  const durockSqft = sqftOf('durock48'); if (durockSqft>0) chips.push(chip('Durock', durockSqft+' ft²'));
+  const specSqft = sqftOf(['wr48','wr58','dens48','dens58','flex48']); if (specSqft>0) chips.push(chip('Spec', specSqft+' ft²'));
+  INSULATION_TYPES.forEach(t => {
+    let total=0;
+    if (t.kind==='blown') { total=BLOWN_RVALS.reduce((s,r)=>s+((A().counts['insulation']?.[t.key]?.[r])||[]).reduce((x,m)=>x+m.l*m.w,0),0); }
+    else if (t.kind==='foam') { total=FOAM_RVALS.reduce((s,r)=>{const f=A().counts['insulation']?.[t.key]?.[r]||{};return s+((f.half||[]).reduce((x,m)=>x+m.l*m.w,0))+((f.two||[]).reduce((x,m)=>x+m.l*m.w,0));},0); }
+    else if (t.kind==='blanket') { total=(A().counts['insulation']?.[t.key]||[]).reduce((s,m)=>s+m.l*m.w,0); }
+    else { const rvals=t.rvals||INSULATION_RVALS; rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{ if(rv.sqft[si]===null)return; const cell=A().counts['insulation']?.[t.key]?.[rv.r]?.[si]; if(cell)total+=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0); })); }
+    if(total>0) chips.push(chip(t.label, Math.round(total)+' ft²'));
+  });
+  STEEL_SUBTABS.forEach(st=>{ const count=st.items.reduce((s,item)=>s+(A().counts[st.key]?.[item]||0),0); if(count>0) chips.push(chip('Steel '+st.label, count)); });
+  const steelExtCount=STEEL_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['steelExtras']?.[item]||0),0); if(steelExtCount>0) chips.push(chip('Steel Extras', steelExtCount));
+  const cbCount=CORNER_BEAD_ITEMS.reduce((s,item)=>s+(A().counts['cornerBead']?.[item]||0),0); if(cbCount>0) chips.push(chip('Corner Bead', cbCount));
+  JOB_EXTRAS_ITEMS.forEach(item=>{ const v=A().counts['jobExtras']?.[item]||0; if(v>0) chips.push(chip(item===('Pot Lights')?'Pot Lights':item, v)); });
+  const greenGlue=A().counts['extras']?.['Green Glue']||0; if(greenGlue>0) chips.push(chip('Green Glue', greenGlue));
+  bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
+}
+
+function renderTypeTabs() {
+  const wrap = document.getElementById('type-bar-wrap'); const rvalBar = document.getElementById('ins-rval-bar');
+  if (curCat !== 'insulation' && rvalBar) rvalBar.style.display = 'none';
+  if (curCat === 'drywall') {
+    document.getElementById('dw-group-bar').style.display = '';
+    document.querySelectorAll('.dw-group-tab').forEach(b => { b.classList.toggle('active', b.textContent === curDwGroup); });
+    const groupTypes = DRYWALL_TYPES.filter(t => t.group === curDwGroup && !t.hidden);
+    if (curDwGroup === 'Extras' || groupTypes.length === 0) { wrap.style.display = 'none'; } else {
+      wrap.style.display = ''; const curVisIdx = groupTypes.indexOf(DRYWALL_TYPES[curType]);
+      document.getElementById('type-tabs').innerHTML = groupTypes.map((t,i) => { const active = i === curVisIdx; return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchDwType(${i})">${t.label}</button>`; }).join('');
+    }
+  } else if (curCat === 'insulation') { wrap.style.display = ''; renderInsTypeTabs(); }
+  else if (curCat === 'steel') { wrap.style.display = ''; const col = '#475569'; document.getElementById('type-tabs').innerHTML = STEEL_SUBTABS.map((st, idx) => { const active = idx === curSteelSubTab; return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchSteelSubTab(${idx})">${st.label}</button>`; }).join('') + `<button class="type-tab" style="${curSteelSubTab===STEEL_SUBTABS.length?`border-bottom-color:${col};color:${col}`:''}" onclick="switchSteelSubTab(${STEEL_SUBTABS.length})">Extras</button>`; }
+  else if (curCat === 'mud') { wrap.style.display = ''; document.getElementById('type-tabs').innerHTML = [{ label: 'Mud', idx: 0 }, { label: 'Extras', idx: 1 }].map(({label, idx}) => { const active = idx === curMudSubTab; const col = '#92400e'; return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchMudSubTab(${idx})">${label}</button>`; }).join(''); }
+  else if (curCat === 'cornerBead') { wrap.style.display = ''; const col = '#92400e'; document.getElementById('type-tabs').innerHTML = CORNER_BEAD_GROUPS.map((g, i) => { const active = i === curCbSubTab; return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchCbSubTab(${i})">${g.label}</button>`; }).join(''); }
+  else { wrap.style.display = 'none'; }
+}
+
+function renderInsTypeTabs() {
+  const insCol = '#db2777';
+  document.getElementById('type-tabs').innerHTML = INSULATION_TYPES.map((t,i) => { const active = curInsSubTab===0 && i===curInsType; return `<button class="type-tab" style="${active?`border-bottom-color:${t.color};color:${t.color}`:''}" onclick="switchInsType(${i})">${t.label}</button>`; }).join('') + `<button class="type-tab" style="${curInsSubTab===1?`border-bottom-color:${insCol};color:${insCol}`:''}" onclick="switchInsSubTab(1)">Extras</button>`;
+  const rvalBar = document.getElementById('ins-rval-bar'); const rvalTabs = document.getElementById('ins-rval-tabs'); const t = INSULATION_TYPES[curInsType];
+  if (curInsSubTab === 0 && t) {
+    if (t.kind === 'batt') { const rvals = t.rvals || INSULATION_RVALS; const activeRv = curInsRvalIdx[curInsType] ?? 0; const col = t.color; rvalTabs.innerHTML = rvals.map((rv, ri) => { const active = ri === activeRv; return `<button class="type-tab" style="font-size:12px;padding:8px 12px;${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchInsRval(${ri})">${rv.r}</button>`; }).join(''); rvalBar.style.display = ''; }
+    else if (t.kind === 'blown') { const col = t.color; rvalTabs.innerHTML = BLOWN_RVALS.map((r, ri) => { const active = ri === curBlownRval; const hasSqft = A() && blownSqftForRval(r) > 0; return `<button class="type-tab" style="font-size:12px;padding:8px 12px;${active?`border-bottom-color:${col};color:${col}`:''}${hasSqft?' font-weight:700':''}" onclick="switchBlownRval(${ri})">${r}</button>`; }).join(''); rvalBar.style.display = ''; }
+    else if (t.kind === 'foam') { const col = t.color; rvalTabs.innerHTML = FOAM_RVALS.map((r, ri) => { const active = ri ===
