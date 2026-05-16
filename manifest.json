@@ -1,0 +1,18 @@
+{
+  "name": "Drywall Takeoff",
+  "short_name": "Takeoff",
+  "description": "Job site companion for counting sheets, tracking materials, and generating quotes.",
+  "start_url": "/takeoff.html",
+  "display": "standalone",
+  "background_color": "#1a1f2e",
+  "theme_color": "#1a1f2e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%237c3aed'/><rect x='15' y='15' width='30' height='40' rx='4' fill='white' fill-opacity='0.9'/><rect x='55' y='15' width='30' height='25' rx='4' fill='white' fill-opacity='0.9'/><rect x='55' y='50' width='30' height='35' rx='4' fill='white' fill-opacity='0.4'/></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
