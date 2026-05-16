@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.20</title>
+  <title>Drywall Tally v14.23</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.20 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.23 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -1443,6 +1443,7 @@ const INS_LR_RATES           = [0.617, 0.629, 0.642];
 const INS_HR_INT_RATES       = [0.328, 0.335, 0.342];
 const INS_ROCKWOOL_PREMIUM_RATES=[0.079,0.080, 0.082];
 const INS_ENERGY_STAR_RATES  = [0.079, 0.080, 0.082];
+const INS_R24_PREMIUM_RATES  = [0.060, 0.061, 0.063]; // per ft² (CBA $60/$61/$63 per MSF)
 // ── Taping rates from CBA (converted from $/MSF → $/ft²) ──
 // Low-Rise Residential (Article 20.02)
 const TAPING_LR_RATES = {
@@ -1461,6 +1462,7 @@ const TAPING_HR_RATES = {
   h12: { label: "11' – 12'",   rates: [0.43350, 0.44217, 0.45101] },
 };
 
+const DUROCK_LABOR_RATES      = [0.600, 0.610, 0.630]; // per ft² CBA drywall premium
 const CORNER_BEAD_LF_RATES   = [0.285, 0.290, 0.295];  // Local 675 boarder CBA
 const CORNER_BEAD_BULL_RATES = [0.443, 0.451, 0.460];
 const EXTRAS_RATES = {
@@ -3498,7 +3500,9 @@ function showReport() {
             const ceilBags=Math.ceil(bags);
             const pcs=rv.pcs[si]>0?Math.round(bags*rv.pcs[si]):0;
             if(bags>0){
-              const lc=totalSqft*insLabRate;
+              const roxulPrem = gPrices['ins_rockwool_prem'] > 0 ? gPrices['ins_rockwool_prem'] : INS_ROCKWOOL_PREMIUM_RATES[gRateIdx];
+              const r24Prem2 = rv.r === 'R24' ? (gPrices['ins_r24_prem'] > 0 ? gPrices['ins_r24_prem'] : INS_R24_PREMIUM_RATES[gRateIdx]) : 0;
+              const lc=totalSqft*(t.key==='roxul' ? insLabRate + roxulPrem + r24Prem2 : insLabRate + r24Prem2);
               const matKey=insRateMap[rv.r]||'ins_r12';
               const mc=totalSqft*(MAT_RATES[matKey]||0);
               typeBags+=bags; typeSqftTotal+=totalSqft; typeLabTotal+=lc; typeMatTotal+=mc;
@@ -3888,12 +3892,14 @@ function showReport() {
         const priceKey = (isHR ? 'board_hr_' : 'board_lr_') + key;
         return gPrices[priceKey] > 0 ? gPrices[priceKey] : (bracket ? bracket.rates[gRateIdx] : 0.39);
       })();
-      // Split sqft by regular vs fireguard — each uses different rate
-      const FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58','wr58']);
-      let plainSqft = 0, fivetSqft2 = 0;
+      // Split sqft by rate type — fireguard, durock, and plain each use different rates
+      const FIVET_KEYS  = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58','wr58']);
+      const DUROCK_KEYS = new Set(['durock48']);
+      let plainSqft = 0, fivetSqft2 = 0, durockLaborSqft = 0;
       DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t => {
         const sf = t.lengths.reduce((s,l) => s + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0);
-        if (FIVET_KEYS.has(t.key)) fivetSqft2 += sf;
+        if (FIVET_KEYS.has(t.key))  fivetSqft2 += sf;
+        else if (DUROCK_KEYS.has(t.key)) durockLaborSqft += sf; // charged at durock rate, not plain
         else plainSqft += sf;
       });
       const fivetRate = (() => {
@@ -3906,6 +3912,9 @@ function showReport() {
       })();
       laborCost += plainSqft * boardRate;
       laborCost += fivetSqft2 * fivetRate;
+      // Durock at its own CBA rate (replacement, not additive)
+      const durockRate2 = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
+      laborCost += durockLaborSqft * durockRate2;
       // Insulation labor
       INSULATION_TYPES.forEach(t => {
         if(t.kind==='blown'||t.kind==='foam') return;
@@ -3927,12 +3936,18 @@ function showReport() {
             const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
             if(!cell) return;
             const sf=(cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const insBaseRate = isHR
+              ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
+              : (gPrices['ins_lr']     > 0 ? gPrices['ins_lr']     : INS_LR_RATES[gRateIdx]);
             const insRate = t.key==='roxul'
-              ? (gPrices['ins_rockwool_prem'] > 0 ? gPrices['ins_rockwool_prem'] : INS_ROCKWOOL_PREMIUM_RATES[gRateIdx])
-              : isHR
-                ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
-                : (gPrices['ins_lr']     > 0 ? gPrices['ins_lr']     : INS_LR_RATES[gRateIdx]);
+              ? insBaseRate + (gPrices['ins_rockwool_prem'] > 0 ? gPrices['ins_rockwool_prem'] : INS_ROCKWOOL_PREMIUM_RATES[gRateIdx])
+              : insBaseRate;
             laborCost += sf * insRate;
+            // R24 premium — additive on top of base rate
+            if (rv.r === 'R24' && sf > 0) {
+              const r24Prem = gPrices['ins_r24_prem'] > 0 ? gPrices['ins_r24_prem'] : INS_R24_PREMIUM_RATES[gRateIdx];
+              laborCost += sf * r24Prem;
+            }
           });
         });
       });
@@ -3954,11 +3969,17 @@ function showReport() {
             const cell = a.counts['insulation']?.[t.key]?.[rv.r]?.[si];
             if (!cell) return;
             const sf = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
+            const insBaseRate2 = isHR
+              ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
+              : (gPrices['ins_lr']     > 0 ? gPrices['ins_lr']     : INS_LR_RATES[gRateIdx]);
             const insGrossRate = t.key === 'roxul'
-              ? (gPrices['ins_rockwool_prem'] > 0 ? gPrices['ins_rockwool_prem'] : INS_ROCKWOOL_PREMIUM_RATES[gRateIdx])
-              : isHR ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
-                     : (gPrices['ins_lr']     > 0 ? gPrices['ins_lr']     : INS_LR_RATES[gRateIdx]);
+              ? insBaseRate2 + (gPrices['ins_rockwool_prem'] > 0 ? gPrices['ins_rockwool_prem'] : INS_ROCKWOOL_PREMIUM_RATES[gRateIdx])
+              : insBaseRate2;
             insGross += sf * insGrossRate;
+            if (rv.r === 'R24' && sf > 0) {
+              const r24Prem = gPrices['ins_r24_prem'] > 0 ? gPrices['ins_r24_prem'] : INS_R24_PREMIUM_RATES[gRateIdx];
+              insGross += sf * r24Prem;
+            }
             if (isEligible) energyStarSqft += sf;
           });
         });
@@ -3975,8 +3996,8 @@ function showReport() {
       laborCost += energyStarCost;
       totalEnergyStar += energyStarCost;
 
-      // ── Boarding gross ──
-      const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate;
+      // ── Boarding gross (plain + fireguard + durock) ──
+      const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate + durockLaborSqft * durockRate2;
 
       // ── Townhouse / Stack premium (LR only, applied to all boarding sqft) ──
       const houseType = j.details?.houseType || 'house';
@@ -4000,9 +4021,18 @@ function showReport() {
         const priceKey = 'steel_hr_' + hKey;
         return gPrices[priceKey] > 0 ? gPrices[priceKey] : (STEEL_HR_RATES[hKey]?.rates[gRateIdx] || STEEL_HR_RATES.h9.rates[gRateIdx]);
       })();
+      // Steel gross — CBA rate is per 1000 lf, stored as $/lf in steelRate
+      // For studs: extract length from item name (e.g. "1 5/8\" Stud 8'" = 8 lf per stud)
+      // For track/channel: user enters qty as linear feet directly
       const steelGross = STEEL_SUBTABS.reduce((s, st) => {
-        const stSqft = st.items.reduce((ss,item) => ss + (a.counts[st.key]?.[item]||0), 0);
-        return s + stSqft * steelRate;
+        const stLf = st.items.reduce((ss, item) => {
+          const qty = a.counts[st.key]?.[item] || 0;
+          if (!qty) return ss;
+          const lenMatch = item.match(/(\d+)'$/);
+          const lf = lenMatch ? qty * parseInt(lenMatch[1]) : qty * 10; // track = 10' per piece
+          return ss + lf;
+        }, 0);
+        return s + stLf * steelRate;
       }, 0);
 
       // ── Pot lights & add-ons gross (included in 675 base per TOS) ──
@@ -4099,6 +4129,7 @@ function showReport() {
       const steelExtras = steelGross * (gPrices['steel_extra_1'] || 0);
       laborCost += steelExtras;
       laborCost += (gPrices['steel_extra_2'] || 0);
+      const durockGross = durockLaborSqft * durockRate2;
       const local675Base = Math.max(0,
         insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross + townPremiumCost
         - boarderMatDeduct - insulatorMatDeduct
@@ -4404,6 +4435,7 @@ const PRICE_FIELDS = [
   { key:'ins_r24_prem',   label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
   { key:'ins_rockwool_prem',label:'Rockwool Premium ($/ft²)',   rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
   { key:'ins_energy_star',label:'Energy Star Premium ($/ft²)',  rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
+  { key:'ins_r24_prem',  label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
   { key:'ins_hr_int',     label:'Interior Walls ($/ft²)',       rates:[0.328,0.335,0.342], col:'hr', group:'Insulation', sub:'High-Rise labor', priceTab:'IN' },
   { key:'ins_hr_ext',     label:'Exterior Walls ($/ft²)',       rates:[0.389,0.396,0.404], col:'hr', group:'Insulation', sub:'High-Rise labor', priceTab:'IN' },
   { key:'blanket_r12',    label:'Blanket R12 ($/ft²)',          rates:[0.2142,0.2184,0.2227], col:'lr', group:'Insulation', sub:'Blanket', priceTab:'IN' },
@@ -4436,6 +4468,7 @@ const PRICE_FIELDS = [
   { key:'ota_over64',      label:"OTA >64' ($)",                rates:[213.00, 217.00, 222.00], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'peak_niche',      label:'Peak / Niche ($)',             rates:[84.00,  85.00,  87.00],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[161.00, 164.00, 168.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'durock_labor',    label:'Durock Premium ($/ft²)',       rates:[0.600, 0.610, 0.630], col:'lr', group:'Extras', priceTab:'DW' },
   { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,   4.37,   4.46],   col:'lr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00, 174.00, 174.00], col:'hr', group:'Extras', priceTab:'EX' },
@@ -4447,7 +4480,7 @@ const PRICE_FIELDS = [
   { key:'scaffolding',     label:'Scaffolding ($)',             rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
   { key:'cleaning',        label:'Cleaning ($)',                rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
   { key:'tpy_flat',        label:'Touchup & Year End ($)',      rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
-  { key:'local675_dues',   label:'Local 675 Union Dues',        rates:[25.5,26.5,27.5],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
+  { key:'local675_dues',   label:'Local 675 Union Dues',        rates:[26.5,26.5,26.5],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
   { key:'tapers_union',    label:'Tapers Union Dues',           rates:[22.1,23.0,23.9],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
 
 ];
@@ -4635,9 +4668,9 @@ function defaultMatPrices() {
   // Blanket ($/ft²) — R12 fiberglass blanket wrap material
   p['mat_blanket'] = 0.65;
   // Insulation consumables — poly rolls per CBA are priced per roll (all same price)
-  p['mat_poly_roll']   = 38.00;  // per roll (8'/9'/10'/12' all same per CBA)
-  p['mat_tuck_tape']   = 12.00;
-  p['mat_acous_caulk'] = 11.00;
+  p['mat_poly_roll']   = 84.00;  // per roll (CBA: $84.00)
+  p['mat_tuck_tape']   = 12.61;  // per roll (CBA: $12.61)
+  p['mat_acous_caulk'] = 11.44;  // per tube (CBA: $11.44)
   p['mat_can_foam']    = 9.50;
   p['mat_staples']     = 18.00;
   p['mat_styro_vents'] = 4.50;
