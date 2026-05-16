@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.18</title>
+  <title>Drywall Tally v14.20</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.18 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.20 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -1467,8 +1467,10 @@ const EXTRAS_RATES = {
   skylight_2x4:      [82.00,   83.00,  85.00],   // Local 675 boarder CBA
   skylight_4x4:      [174.00, 178.00, 181.00],
   tray_waffle_ceil:  [84.00,   85.00,  87.00],
-  ota_cathedral:     [213.00, 217.00, 222.00],
+  ota_under64:       [213.00, 217.00, 222.00],
+  ota_over64:        [213.00, 217.00, 222.00],
   open_round_stairs: [161.00, 164.00, 168.00],
+  peak_niche:        [84.00,   85.00,  87.00],
   pot_lights:        [4.28,    4.37,   4.46],
   townhouse_premium: [14.02,  14.30,  14.60],
   stack_townhouse:   [40.80,  41.60,  42.40],
@@ -3316,8 +3318,8 @@ function showReport() {
     DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
       const entries=t.lengths.filter(l=>a.counts[t.key][l]>0);
       if(!entries.length)return;
-      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',wr58:'dw_58_wr',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex',tc48:'dw_half_pl',hdl48:'dw_half_pl',dens58:'dw_58_fg'};
-      const matRate2 = MAT_RATES[matKeyMap2[t.key]] || 0;
+      const matKeyMap2={pl48:'mat_dw_half_plain',pl54:'mat_dw_half_plain',cd48:'mat_dw_half_cd',dens48:'mat_dw_half_dens',dens58:'mat_dw_fivet_dens',wr48:'mat_dw_half_wr',wr58:'mat_dw_58_wr',fg48:'mat_dw_fivet_tx',dl48:'mat_dw_fivet_tx',fg54:'mat_dw_fivet_tx',durock48:'mat_dw_durock',flex48:'mat_dw_quarter_flex',tc48:'mat_dw_half_tc',hdl48:'mat_dw_half_plain'};
+      const matRate2 = gMatPrices[matKeyMap2[t.key]] || 0;
       const labRate2 = DW_FIVET_KEYS.has(t.key) ? dwFivetRate : dwBoardRate;
       html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
         <span>${t.fullName}</span>
@@ -3729,7 +3731,7 @@ function showReport() {
     const ADDON_RATE_MAP = {
       "2' × 4' Skylight": 'skylight_2x4', "4' × 4' Skylight": 'skylight_4x4',
       'Peak': 'tray_waffle_ceil', 'Niche': 'tray_waffle_ceil',
-      "OTA <64'": 'ota_cathedral', "OTA >64'": 'ota_cathedral',
+      "OTA <64'": 'ota_under64', "OTA >64'": 'ota_over64',
     };
     const jobExtrasEntries=JOB_EXTRAS_ITEMS.filter(item=>item!=='Pot Lights'&&(a.counts['jobExtras']?.[item]||0)>0);
     if(jobExtrasEntries.length){
@@ -3787,10 +3789,18 @@ function showReport() {
     // Use total sqft per drywall type × material rate
     let matCost = 0;
     j.areas.forEach(a => {
-      // Drywall material
-      const matKeyMap = { pl48:'dw_half_pl', pl54:'dw_54_half', cd48:'dw_half_cd', dens48:'dw_half_dens', wr48:'dw_half_wr', wr58:'dw_58_wr', fg48:'dw_58_fg', dl48:'dw_58_fg', fg54:'dw_58_54', durock48:'dw_cement', flex48:'dw_flex' };
+      // Drywall material — uses user-editable gMatPrices
+      const matKeyMap = {
+        pl48:'mat_dw_half_plain', pl54:'mat_dw_half_plain', cd48:'mat_dw_half_cd',
+        fg48:'mat_dw_fivet_tx',   fg54:'mat_dw_fivet_tx',   dl48:'mat_dw_fivet_tx',
+        tc48:'mat_dw_half_tc',    hdl48:'mat_dw_half_plain',
+        dens48:'mat_dw_half_dens',dens58:'mat_dw_fivet_dens',
+        wr48:'mat_dw_half_wr',    wr58:'mat_dw_58_wr',
+        flex48:'mat_dw_quarter_flex', durock48:'mat_dw_durock',
+      };
       DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t => {
-        const rate = MAT_RATES[matKeyMap[t.key]] || 0;
+        const mk = matKeyMap[t.key];
+        const rate = mk ? (gMatPrices[mk] || 0) : 0;
         const sf = t.lengths.reduce((s,l) => s + sheetSqft(t.key,l)*(a.counts[t.key][l]||0), 0);
         matCost += sf * rate;
       });
@@ -3798,15 +3808,16 @@ function showReport() {
       INSULATION_TYPES.forEach(t => {
         if(t.kind==='blown'||t.kind==='foam'||t.kind==='blanket') return;
         const rvals = t.rvals || INSULATION_RVALS;
-        const rateMap = {'R8':'ins_r8','R12':'ins_r12','R14':'ins_r14','R20':'ins_r20','R22':'ins_r22','R24':'ins_r24','R28':'ins_r28','R31':'ins_r31','R40':'ins_r40',
-                         '1½" QZ':'ins_r12','3" QZ':'ins_r12','R22.5':'ins_r22'};
+        const rateMap = {'R8':'ins_r8','R12':'ins_r12','R14':'ins_r14','R20':'ins_r20',
+                         'R22':'ins_r22','R24':'ins_r24','R28':'ins_r28','R31':'ins_r31',
+                         'R40':'ins_r40','1½" QZ':'ins_r12','3" QZ':'ins_r12','R22.5':'ins_r22'};
         rvals.forEach(rv => {
           INSULATION_SIZES.forEach((_,si) => {
             if(rv.sqft[si]===null) return;
             const cell = a.counts['insulation'][t.key]?.[rv.r]?.[si];
             if(!cell) return;
             const totalSqft = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
-            const rate = MAT_RATES[rateMap[rv.r]] || 0;
+            const rate = MAT_RATES[rateMap[rv.r]] || 0; // $/ft² from static table
             matCost += totalSqft * rate;
           });
         });
@@ -3943,7 +3954,11 @@ function showReport() {
             const cell = a.counts['insulation']?.[t.key]?.[rv.r]?.[si];
             if (!cell) return;
             const sf = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
-            insGross += sf * (isHR ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx]) : (gPrices['ins_lr'] > 0 ? gPrices['ins_lr'] : INS_LR_RATES[gRateIdx]));
+            const insGrossRate = t.key === 'roxul'
+              ? (gPrices['ins_rockwool_prem'] > 0 ? gPrices['ins_rockwool_prem'] : INS_ROCKWOOL_PREMIUM_RATES[gRateIdx])
+              : isHR ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
+                     : (gPrices['ins_lr']     > 0 ? gPrices['ins_lr']     : INS_LR_RATES[gRateIdx]);
+            insGross += sf * insGrossRate;
             if (isEligible) energyStarSqft += sf;
           });
         });
@@ -3969,9 +3984,9 @@ function showReport() {
       if (!isHR) {
         const totalBoardSqft = plainSqft + fivetSqft2;
         if (houseType === 'townhouse') {
-          townPremiumCost = totalBoardSqft * (gPrices['townhouse_premium'] || EXTRAS_RATES.townhouse_premium[gRateIdx]) / 1000;
+          townPremiumCost = totalBoardSqft * (gPrices['townhouse_premium'] > 0 ? gPrices['townhouse_premium'] : EXTRAS_RATES.townhouse_premium[gRateIdx]) / 1000;
         } else if (houseType === 'stacked') {
-          townPremiumCost = totalBoardSqft * (gPrices['stack_townhouse'] || EXTRAS_RATES.stack_townhouse[gRateIdx]) / 1000;
+          townPremiumCost = totalBoardSqft * (gPrices['stack_townhouse'] > 0 ? gPrices['stack_townhouse'] : EXTRAS_RATES.stack_townhouse[gRateIdx]) / 1000;
         }
       }
       laborCost += townPremiumCost;
@@ -3994,10 +4009,13 @@ function showReport() {
       const potLightCost  = (a.counts['jobExtras']?.['Pot Lights']||0) * (gPrices['pot_lights'] || EXTRAS_RATES.pot_lights[gRateIdx]);
       const sky24Cost     = (a.counts['jobExtras']?.["2' × 4' Skylight"]||0) * (gPrices['skylight_2x4'] || EXTRAS_RATES.skylight_2x4[gRateIdx]);
       const sky44Cost     = (a.counts['jobExtras']?.["4' × 4' Skylight"]||0) * (gPrices['skylight_4x4'] || EXTRAS_RATES.skylight_4x4[gRateIdx]);
-      const otaCost       = ((a.counts['jobExtras']?.["OTA <64'"]||0)+(a.counts['jobExtras']?.["OTA >64'"]||0)) * (gPrices['ota_cathedral'] || EXTRAS_RATES.ota_cathedral[gRateIdx]);
-      const doorSingleCost = (a.counts['jobExtras']?.["Door Frame Single"]||0) * (gPrices['entry_door_single'] || EXTRAS_RATES.entry_door_single[gRateIdx]);
-      const doorDoubleCost = (a.counts['jobExtras']?.["Door Frame Double"]||0) * (gPrices['entry_door_double'] || EXTRAS_RATES.entry_door_double[gRateIdx]);
-      const addOnGross    = potLightCost + sky24Cost + sky44Cost + otaCost + doorSingleCost + doorDoubleCost;
+      const otaCost       = (a.counts['jobExtras']?.["OTA <64'"]||0) * (gPrices['ota_under64'] > 0 ? gPrices['ota_under64'] : EXTRAS_RATES.ota_cathedral[gRateIdx])
+                          + (a.counts['jobExtras']?.["OTA >64'"]||0) * (gPrices['ota_over64']  > 0 ? gPrices['ota_over64']  : EXTRAS_RATES.ota_cathedral[gRateIdx]);
+      const doorSingleCost = (a.counts['jobExtras']?.["Door Frame Single"]||0) * (gPrices['entry_door_single'] > 0 ? gPrices['entry_door_single'] : EXTRAS_RATES.entry_door_single[gRateIdx]);
+      const doorDoubleCost = (a.counts['jobExtras']?.["Door Frame Double"]||0) * (gPrices['entry_door_double'] > 0 ? gPrices['entry_door_double'] : EXTRAS_RATES.entry_door_double[gRateIdx]);
+      const peakCost       = (a.counts['jobExtras']?.['Peak']||0)  * (gPrices['peak_niche'] > 0 ? gPrices['peak_niche'] : EXTRAS_RATES.tray_waffle_ceil[gRateIdx]);
+      const nicheCost      = (a.counts['jobExtras']?.['Niche']||0) * (gPrices['peak_niche'] > 0 ? gPrices['peak_niche'] : EXTRAS_RATES.tray_waffle_ceil[gRateIdx]);
+      const addOnGross    = potLightCost + sky24Cost + sky44Cost + otaCost + doorSingleCost + doorDoubleCost + peakCost + nicheCost;
       laborCost += addOnGross;
 
       // ── Taping (only when Taping task is selected) ──
@@ -4022,10 +4040,15 @@ function showReport() {
         })();
         tapingGross = tapingSqft * tapingRate2;
         const BULLNOSE_ITEMS = new Set(["Bullnose Metal (8')", "Bullnose Metal (10')"]);
-        const cbRegCount  = CORNER_BEAD_ITEMS.reduce((s,item) => BULLNOSE_ITEMS.has(item) ? s : s+(a.counts['cornerBead']?.[item]||0), 0);
-        const cbBullCount = CORNER_BEAD_ITEMS.reduce((s,item) => BULLNOSE_ITEMS.has(item) ? s+(a.counts['cornerBead']?.[item]||0) : s, 0);
-        cbGross = cbRegCount  * (gPrices['corner_bead_lf']   > 0 ? gPrices['corner_bead_lf']   : CORNER_BEAD_LF_RATES[gRateIdx])
-                + cbBullCount * (gPrices['corner_bead_bull'] > 0 ? gPrices['corner_bead_bull'] : CORNER_BEAD_BULL_RATES[gRateIdx]);
+        const cbLfRate   = gPrices['corner_bead_lf']   > 0 ? gPrices['corner_bead_lf']   : CORNER_BEAD_LF_RATES[gRateIdx];
+        const cbBullRate = gPrices['corner_bead_bull'] > 0 ? gPrices['corner_bead_bull'] : CORNER_BEAD_BULL_RATES[gRateIdx];
+        cbGross = CORNER_BEAD_ITEMS.reduce((s, item) => {
+          const qty = a.counts['cornerBead']?.[item] || 0;
+          if (!qty) return s;
+          const lenMatch = item.match(/\((\d+)'/);
+          const lf = qty * (lenMatch ? parseInt(lenMatch[1]) : 8);
+          return s + lf * (BULLNOSE_ITEMS.has(item) ? cbBullRate : cbLfRate);
+        }, 0);
         const mudCount = MUD_ITEMS.reduce((s,item)=>s+(a.counts['mud']?.[item]||0),0);
         mudGross = mudCount * tapingRate2;
         tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
@@ -4096,17 +4119,18 @@ function showReport() {
 
       // Scaffolding/Cleaning/Touchup now stored as job detail toggles
       const jd = J()?.details || {};
-      if (jd.scaffolding) laborCost += gPrices['scaffolding'] || 100;
-      if (jd.cleaning)    laborCost += gPrices['cleaning']    || 300;
-      if (jd.touchup)     laborCost += gPrices['tpy_flat']    || 280;
+      if (jd.scaffolding) laborCost += gPrices['scaffolding'] > 0 ? gPrices['scaffolding'] : 100;
+      if (jd.cleaning)    laborCost += gPrices['cleaning']    > 0 ? gPrices['cleaning']    : 300;
+      if (jd.touchup)     laborCost += gPrices['tpy_flat']    > 0 ? gPrices['tpy_flat']    : 280;
     });
 
     totalLabor = laborCost;
     totalMaterial = matCost;
     // WSIB base = total labor MINUS all material deductions (subs buy from contractor)
+    const totalMatDisplay = totalMaterial + totalBoarderMatDeduct + totalInsulatorMatDeduct + totalTaperMatDeduct;
     const wsibBase = Math.max(0, totalLabor - totalBoarderMatDeduct - totalInsulatorMatDeduct - totalTaperMatDeduct);
     const wsib = wsibBase * WSIB_RATE;
-    const subtotalLM = totalLabor + totalMaterial + wsib;
+    const subtotalLM = totalLabor + totalMatDisplay + wsib;
     const profit = subtotalLM * (gProfitPct/100);
     const subtotal = subtotalLM + profit;
     const hst = subtotal * 0.13;
@@ -4117,7 +4141,7 @@ function showReport() {
     html += `<div style="margin-top:16px;border-top:2px solid var(--border-md);padding-top:16px">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
 
-    html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMaterial + totalBoarderMatDeduct + totalInsulatorMatDeduct + totalTaperMatDeduct)}</span></div>`;
+    html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMatDisplay)}</span></div>`;
     html += `<div class="modal-row"><span>Labor Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabor)}</span></div>`;
     html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalLocal675)}</span></div>`;
     html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalTapers)}</span></div>`;
@@ -4408,7 +4432,9 @@ const PRICE_FIELDS = [
   { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[82.00,  83.00,  85.00],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[174.00, 178.00, 181.00], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'tray_waffle_ceil',label:'Tray/Waffle Ceiling ($)',     rates:[84.00,  85.00,  87.00],  col:'lr', group:'Extras', priceTab:'EX' },
-  { key:'ota_cathedral',   label:'OTA/Cathedral ($)',           rates:[213.00, 217.00, 222.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'ota_under64',     label:"OTA <64' ($)",                rates:[213.00, 217.00, 222.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'ota_over64',      label:"OTA >64' ($)",                rates:[213.00, 217.00, 222.00], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'peak_niche',      label:'Peak / Niche ($)',             rates:[84.00,  85.00,  87.00],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'open_round_stairs',label:'Open Round Stairs ($)',      rates:[161.00, 164.00, 168.00], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,   4.37,   4.46],   col:'lr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
@@ -4543,17 +4569,13 @@ function defaultMatPrices() {
   p['mat_dw_fivet_tx']     = 0.70;
   p['mat_dw_half_tc']      = 0.65;
   p['mat_dw_half_dens']    = 1.85;
-  p['mat_dw_fivet_dens']   = 0.68;
+  p['mat_dw_fivet_dens']   = 2.25;
   p['mat_dw_half_wr']      = 1.05;
   p['mat_dw_quarter_flex'] = 0.88;
   p['mat_dw_durock']       = 2.10;
   p['mat_dw_screws']       = 75.00;  // box per user
   p['mat_dw_green_glue']   = 18.50;  // per tube
-  // Denshield — ⅝" is more expensive than ½" (fire-rated Type X backer)
-  p['mat_dw_half_dens']    = 1.85;   // ½" Denshield $/ft²
-  p['mat_dw_fivet_dens']   = 2.25;   // ⅝" Denshield $/ft² (was incorrectly 0.68)
-  // ⅝" Water Resistant — same as ⅝" Type X since it's a WR version
-  p['mat_dw_58_wr']        = 0.70;   // ⅝" WR $/ft²
+  p['mat_dw_58_wr']        = 0.70;
   // Steel framing ($/lf) — existing studs/track unchanged
   p['mat_st_158_stud']     = 1.25;
   p['mat_st_158_trk']      = 1.10;
