@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.11</title>
+  <title>Drywall Tally v14.12</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.11 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.12 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -3324,7 +3324,7 @@ function showReport() {
     DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
       const entries=t.lengths.filter(l=>a.counts[t.key][l]>0);
       if(!entries.length)return;
-      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',wr58:'dw_58_fg',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex',tc48:'dw_half_pl',hdl48:'dw_half_pl',dens58:'dw_58_fg'};
+      const matKeyMap2={pl48:'dw_half_pl',pl54:'dw_54_half',cd48:'dw_half_cd',dens48:'dw_half_dens',wr48:'dw_half_wr',wr58:'dw_58_wr',fg48:'dw_58_fg',dl48:'dw_58_fg',fg54:'dw_58_54',durock48:'dw_cement',flex48:'dw_flex',tc48:'dw_half_pl',hdl48:'dw_half_pl',dens58:'dw_58_fg'};
       const matRate2 = MAT_RATES[matKeyMap2[t.key]] || 0;
       const labRate2 = DW_FIVET_KEYS.has(t.key) ? dwFivetRate : dwBoardRate;
       html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
@@ -4438,6 +4438,7 @@ const MAT_PRICE_FIELDS = [
   { key:'mat_dw_half_dens',   label:'½" Denshield',      unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
   { key:'mat_dw_fivet_dens',  label:'⅝" Denshield',      unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
   { key:'mat_dw_half_wr',     label:'½" Water Resistant',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
+  { key:'mat_dw_58_wr',      label:'⅝" Water Resistant',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
   { key:'mat_dw_quarter_flex',label:'¼" Flex',           unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
   { key:'mat_dw_durock',      label:'½" Durock',         unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
   { key:'mat_dw_screws',      label:'Drywall Screws',    unit:'$/box',  group:'Drywall', matTab:'DW', def:0 },
@@ -4546,9 +4547,14 @@ function defaultMatPrices() {
   p['mat_dw_half_wr']      = 1.05;
   p['mat_dw_quarter_flex'] = 0.88;
   p['mat_dw_durock']       = 2.10;
-  p['mat_dw_screws']       = 0.45;
-  p['mat_dw_green_glue']   = 18.50;
-  // Steel framing ($/lf)
+  p['mat_dw_screws']       = 75.00;  // box per user
+  p['mat_dw_green_glue']   = 18.50;  // per tube
+  // Denshield — ⅝" is more expensive than ½" (fire-rated Type X backer)
+  p['mat_dw_half_dens']    = 1.85;   // ½" Denshield $/ft²
+  p['mat_dw_fivet_dens']   = 2.25;   // ⅝" Denshield $/ft² (was incorrectly 0.68)
+  // ⅝" Water Resistant — same as ⅝" Type X since it's a WR version
+  p['mat_dw_58_wr']        = 0.70;   // ⅝" WR $/ft²
+  // Steel framing ($/lf) — existing studs/track unchanged
   p['mat_st_158_stud']     = 1.25;
   p['mat_st_158_trk']      = 1.10;
   p['mat_st_212_stud']     = 1.40;
@@ -4557,10 +4563,21 @@ function defaultMatPrices() {
   p['mat_st_358_trk']      = 1.40;
   p['mat_st_6_stud']       = 2.10;
   p['mat_st_6_trk']        = 1.85;
-  p['mat_st_tie_wire']     = 0.65;
-  p['mat_st_hang_wire']    = 45.00;
-  p['mat_st_eyelag_c']     = 0.75;
-  p['mat_st_eyelag_w']     = 0.75;
+  // Channel & angle ($/lf) — Ontario contractor pricing May 2026
+  p['mat_st_res_ch']       = 1.45;  // Resilient channel $/lf
+  p['mat_st_hat_ch']       = 0.85;  // Hat channel $/lf
+  p['mat_st_fur_ch']       = 0.75;  // Furring channel $/lf
+  p['mat_st_cr_ch']        = 1.20;  // Cold roll channel $/lf
+  p['mat_st_ang_1x2']      = 0.95;  // 1"×2" angle $/lf
+  p['mat_st_ang_2x2']      = 1.25;  // 2"×2" angle $/lf
+  // Steel hardware — box pricing, Ontario contractor May 2026
+  p['mat_st_pan_screw']    = 28.00; // Pan head screws $/box
+  p['mat_st_sd_screw']     = 32.00; // Self-drilling screws $/box
+  p['mat_st_hex_screw']    = 35.00; // Hex-head screws $/box
+  p['mat_st_tie_wire']     = 18.00; // Tie-wire $/box
+  p['mat_st_hang_wire']    = 45.00; // Hanger-wire $/roll
+  p['mat_st_eyelag_c']     = 28.00; // Eye-lag concrete $/box (was $0.75 — that was per piece not box)
+  p['mat_st_eyelag_w']     = 22.00; // Eye-lag wood $/box
   // Pink insulation ($/bag) — Ontario prices, 15"/16" OC bags (Chamberlain Timber Mart / Home Depot CA, May 2026)
   p['mat_ins_r8']  = 59.99;   // estimated, close to R12
   p['mat_ins_r12'] = 79.98;   // R12 15" 97.9sf bag
@@ -4577,25 +4594,43 @@ function defaultMatPrices() {
   p['mat_rox_r14']  = 75.00;  // ComfortBatt R14
   p['mat_rox_r225'] = 75.00;  // ComfortBatt R22
   p['mat_rox_r24']  = 89.99;  // ComfortBatt R24
-  // Blown-in ($/ft²)
-  ['mat_blown_r20','mat_blown_r32','mat_blown_r40','mat_blown_r60'].forEach(k => p[k] = 0.85);
-  // Spray foam ($/ft²)
-  ['mat_foam_r12_half','mat_foam_r12_two','mat_foam_r20_half','mat_foam_r20_two',
-   'mat_foam_r22_half','mat_foam_r22_two','mat_foam_r31_half','mat_foam_r31_two'].forEach(k => p[k] = 2.50);
-  // Insulation consumables
-  p['mat_poly_roll']   = 0.85;
+  // Blown-in ($/ft²) — material only, Ontario contractor pricing May 2026
+  p['mat_blown_r20'] = 0.55;  // R20 cellulose/fibreglass blown
+  p['mat_blown_r32'] = 0.75;  // R32
+  p['mat_blown_r40'] = 0.90;  // R40
+  p['mat_blown_r60'] = 1.10;  // R60
+  // Spray foam ($/ft²) — material only at typical code thickness, Ontario 2026
+  // Open-cell ½ lb (~R3.8/in): R12=3.2", R20=5.3", R22=5.8", R31=8.2"
+  p['mat_foam_r12_half'] = 1.80;
+  p['mat_foam_r20_half'] = 2.40;
+  p['mat_foam_r22_half'] = 2.60;
+  p['mat_foam_r31_half'] = 3.50;
+  // Closed-cell 2 lb (~R6.5/in): R12=1.9", R20=3.1", R22=3.4", R31=4.8"
+  p['mat_foam_r12_two']  = 4.00;
+  p['mat_foam_r20_two']  = 5.25;
+  p['mat_foam_r22_two']  = 6.00;
+  p['mat_foam_r31_two']  = 5.90;
+  // Blanket ($/ft²) — R12 fiberglass blanket wrap material
+  p['mat_blanket'] = 0.65;
+  // Insulation consumables — poly rolls per CBA are priced per roll (all same price)
+  p['mat_poly_roll']   = 38.00;  // per roll (8'/9'/10'/12' all same per CBA)
   p['mat_tuck_tape']   = 12.00;
   p['mat_acous_caulk'] = 11.00;
   p['mat_can_foam']    = 9.50;
   p['mat_staples']     = 18.00;
   p['mat_styro_vents'] = 4.50;
-  // Corner bead
-  p['mat_cb_vinyl_90'] = 3.50;
-  p['mat_cb_vinyl_l']  = 4.50;
-  p['mat_cb_vinyl_u']  = 4.50;
-  p['mat_cb_vinyl_j']  = 4.50;
+  // Corner bead ($/lf) — all set to $2.25 base per instruction
+  p['mat_cb_vinyl_90'] = 2.25;
+  p['mat_cb_vinyl_l']  = 2.25;
+  p['mat_cb_vinyl_u']  = 2.25;
+  p['mat_cb_vinyl_j']  = 2.25;
   p['mat_cb_metal_90'] = 2.25;
-  // Mud ($/pail or $/bag)
+  p['mat_cb_metal_l']  = 2.25;
+  p['mat_cb_metal_u']  = 2.25;
+  p['mat_cb_metal_j']  = 2.25;
+  p['mat_cb_bullnose'] = 2.25;
+  p['mat_cb_archway']  = 2.25;
+  // Mud ($/pail or $/bag) — unchanged from previous
   p['mat_mud_ap17']   = 38.00;
   p['mat_mud_mach17'] = 35.00;
   p['mat_mud_lite17'] = 32.00;
@@ -4603,6 +4638,11 @@ function defaultMatPrices() {
   p['mat_mud_sr45']   = 38.00;
   p['mat_mud_sr90']   = 45.00;
   p['mat_mud_db90']   = 48.00;
+  // Mud tape ($/roll) — Ontario contractor pricing May 2026
+  p['mat_tape_paper']  = 5.00;   // Paper tape 250ft roll
+  p['mat_tape_fibre']  = 11.00;  // Fibre/mesh tape 300ft roll
+  p['mat_tape_mesh']   = 11.00;  // Mesh tape 300ft roll (same as fibre)
+  p['mat_tape_flex']   = 18.00;  // Flexbead roll
   return p;
 }
 gMatPrices = defaultMatPrices();
