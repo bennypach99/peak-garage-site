@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.24</title>
+  <title>Drywall Tally v14.25</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.24 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.25 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -1463,8 +1463,16 @@ const TAPING_HR_RATES = {
 };
 
 const DUROCK_LABOR_RATES      = [0.600, 0.610, 0.630]; // per ft² CBA drywall premium
-const CORNER_BEAD_LF_RATES   = [0.285, 0.290, 0.295];  // Local 675 boarder CBA
-const CORNER_BEAD_BULL_RATES = [0.443, 0.451, 0.460];
+// Boarder (Local 675) installs all bead — CBA Art. 20.02(l) / 20.01(j)
+const CORNER_BEAD_INSTALL_RATES = [0.26, 0.26, 0.27];
+// Taper fills bead — LR CBA Art. 20.02(f)(g), HR Art. 20.01(h)(i)
+const CORNER_BEAD_LR_FILL_RATES = [0.90, 0.90, 0.90];
+const CORNER_BEAD_LR_BULL_RATES = [0.78, 0.79, 0.81];
+const CORNER_BEAD_HR_FILL_RATES = [0.42, 0.43, 0.44];
+const CORNER_BEAD_HR_BULL_RATES = [0.42, 0.43, 0.44];
+// Legacy aliases kept to avoid reference errors
+const CORNER_BEAD_LF_RATES  = CORNER_BEAD_LR_FILL_RATES;
+const CORNER_BEAD_BULL_RATES = CORNER_BEAD_LR_BULL_RATES;
 const EXTRAS_RATES = {
   skylight_2x4:      [82.00,   83.00,  85.00],   // Local 675 boarder CBA
   skylight_4x4:      [174.00, 178.00, 181.00],
@@ -4075,14 +4083,19 @@ function showReport() {
         })();
         tapingGross = tapingSqft * tapingRate2;
         const BULLNOSE_ITEMS = new Set(["Bullnose Metal (8')", "Bullnose Metal (10')"]);
-        const cbLfRate   = gPrices['corner_bead_lf']   > 0 ? gPrices['corner_bead_lf']   : CORNER_BEAD_LF_RATES[gRateIdx];
-        const cbBullRate = gPrices['corner_bead_bull'] > 0 ? gPrices['corner_bead_bull'] : CORNER_BEAD_BULL_RATES[gRateIdx];
+        // Taper fill rates — split by LR/HR and bead type
+        const cbFillRate = isHR
+          ? (gPrices['cb_hr_fill'] > 0 ? gPrices['cb_hr_fill'] : CORNER_BEAD_HR_FILL_RATES[gRateIdx])
+          : (gPrices['cb_lr_fill'] > 0 ? gPrices['cb_lr_fill'] : CORNER_BEAD_LR_FILL_RATES[gRateIdx]);
+        const cbBullRate = isHR
+          ? (gPrices['cb_hr_bull'] > 0 ? gPrices['cb_hr_bull'] : CORNER_BEAD_HR_BULL_RATES[gRateIdx])
+          : (gPrices['cb_lr_bull'] > 0 ? gPrices['cb_lr_bull'] : CORNER_BEAD_LR_BULL_RATES[gRateIdx]);
         cbGross = CORNER_BEAD_ITEMS.reduce((s, item) => {
           const qty = a.counts['cornerBead']?.[item] || 0;
           if (!qty) return s;
           const lenMatch = item.match(/\((\d+)'/);
           const lf = qty * (lenMatch ? parseInt(lenMatch[1]) : 8);
-          return s + lf * (BULLNOSE_ITEMS.has(item) ? cbBullRate : cbLfRate);
+          return s + lf * (BULLNOSE_ITEMS.has(item) ? cbBullRate : cbFillRate);
         }, 0);
         const mudCount = MUD_ITEMS.reduce((s,item)=>s+(a.counts['mud']?.[item]||0),0);
         mudGross = mudCount * tapingRate2;
@@ -4135,8 +4148,19 @@ function showReport() {
       laborCost += steelExtras;
       laborCost += (gPrices['steel_extra_2'] || 0);
       const durockGross = durockLaborSqft * durockRate2;
+      // ── Corner bead install — boarder (Local 675) gets $0.26/lf for all bead types ──
+      const cbInstallRate = gPrices['cb_install'] > 0 ? gPrices['cb_install'] : CORNER_BEAD_INSTALL_RATES[gRateIdx];
+      const cbInstallGross = CORNER_BEAD_ITEMS.reduce((s, item) => {
+        const qty = a.counts['cornerBead']?.[item] || 0;
+        if (!qty) return s;
+        const lenMatch = item.match(/\((\d+)'/);
+        const lf = qty * (lenMatch ? parseInt(lenMatch[1]) : 8);
+        return s + lf * cbInstallRate;
+      }, 0);
+      laborCost += cbInstallGross;
+
       const local675Base = Math.max(0,
-        insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross + townPremiumCost
+        insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross
         - boarderMatDeduct - insulatorMatDeduct
       );
 
@@ -4462,9 +4486,13 @@ const PRICE_FIELDS = [
   { key:'tape_hr_h12',  label:"11' – 12'",      rates:[0.43350,0.44217,0.45101], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
   { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',    rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', priceTab:'TP' },
   { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',   rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', flat:true, priceTab:'TP' },
-  // ── Corner Beads (Local 675 CBA) ──
-  { key:'corner_bead_lf',  label:'Regular filled ($/lf)',       rates:[0.285, 0.290, 0.295], col:'lr', group:'Corner Beads', priceTab:'TP' },
-  { key:'corner_bead_bull',label:'Bull-nose ($/lf)',             rates:[0.443, 0.451, 0.460], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  // ── Corner Beads — Taper fill rates (CBA Art. 20.01/20.02) ──
+  { key:'cb_lr_fill',  label:'LR Regular filled ($/lf)',  rates:[0.90, 0.90, 0.90], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  { key:'cb_lr_bull',  label:'LR Bullnose ($/lf)',         rates:[0.78, 0.79, 0.81], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  { key:'cb_hr_fill',  label:'HR Regular filled ($/lf)',  rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
+  { key:'cb_hr_bull',  label:'HR Bullnose ($/lf)',         rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
+  // ── Corner Beads — Boarder install rate (CBA Art. 20.01(j)/20.02(l)) ──
+  { key:'cb_install',  label:'Bead install — boarder ($/lf)', rates:[0.26, 0.26, 0.27], col:'lr', group:'Corner Beads', priceTab:'DW' },
   // ── Extras (Local 675 boarder CBA rates) ──
   { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[82.00,  83.00,  85.00],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[174.00, 178.00, 181.00], col:'lr', group:'Extras', priceTab:'EX' },
