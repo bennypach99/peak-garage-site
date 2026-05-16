@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.32</title>
+  <title>Drywall Tally v14.34</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.32 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.34 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -1469,6 +1469,8 @@ const CORNER_BEAD_INSTALL_RATES = [0.26, 0.26, 0.27];
 const TAPER_SKY24_RATES  = [141.83, 144.67, 147.56]; // Skylight 2×4
 const TAPER_SKY44_RATES  = [234.19, 238.88, 243.65]; // Skylight 4×4
 const TAPER_STAIRS_RATES = [162.93, 166.19, 169.52]; // Open round stairs
+const TAPER_TOWN_RATES   = [20.00,  20.40,  20.81];  // Townhouse premium (CBA 20.02(u))
+const TAPER_STACK_RATES  = [85.15,  86.85,  88.59];  // Stack townhouse premium (CBA 20.02(t))
 // Taper fills bead — LR CBA Art. 20.02(f)(g), HR Art. 20.01(h)(i)
 const CORNER_BEAD_LR_FILL_RATES = [0.90, 0.90, 0.90];
 const CORNER_BEAD_LR_BULL_RATES = [0.78, 0.79, 0.81];
@@ -4017,8 +4019,8 @@ function showReport() {
       // ── Townhouse / Stack premium (LR only, applied to all boarding sqft) ──
       const houseType = j.details?.houseType || 'house';
       let townPremiumCost = 0;
+      const totalBoardSqft = plainSqft + fivetSqft2;
       if (!isHR) {
-        const totalBoardSqft = plainSqft + fivetSqft2;
         if (houseType === 'townhouse') {
           townPremiumCost = totalBoardSqft * (gPrices['townhouse_premium'] > 0 ? gPrices['townhouse_premium'] : EXTRAS_RATES.townhouse_premium[gRateIdx]) / 1000;
         } else if (houseType === 'stacked') {
@@ -4070,6 +4072,17 @@ function showReport() {
       const taperStairsCost = (a.counts['jobExtras']?.['Open Round Stairs']||0) * (gPrices['taper_stairs'] > 0 ? gPrices['taper_stairs'] : TAPER_STAIRS_RATES[gRateIdx]);
       const taperAddOnGross = taperSky24Cost + taperSky44Cost + taperStairsCost;
       laborCost += taperAddOnGross;
+
+      // ── Taper townhouse / stack premium (CBA 20.02(t)(u)) — same sqft base as boarder ──
+      let taperTownPremium = 0;
+      if (!isHR && j.details?.tasks?.taping) {
+        if (houseType === 'townhouse') {
+          taperTownPremium = totalBoardSqft * (gPrices['taper_town'] > 0 ? gPrices['taper_town'] : TAPER_TOWN_RATES[gRateIdx]) / 1000;
+        } else if (houseType === 'stacked') {
+          taperTownPremium = totalBoardSqft * (gPrices['taper_stack'] > 0 ? gPrices['taper_stack'] : TAPER_STACK_RATES[gRateIdx]) / 1000;
+        }
+      }
+      laborCost += taperTownPremium;
 
       // ── Taping (only when Taping task is selected) ──
       const TAPING_EXCLUDE = new Set(['durock48','dens48','dens58']);
@@ -4179,7 +4192,7 @@ function showReport() {
       );
 
       // ── Tapers base — subtract taper material purchases ──
-      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + taperAddOnGross - taperMatDeduct);
+      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + taperAddOnGross + taperTownPremium - taperMatDeduct);
 
       const local675Pct = (gPrices['local675_dues'] ?? 0.265);
       const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
@@ -4518,6 +4531,8 @@ const PRICE_FIELDS = [
   { key:'taper_sky24',     label:'Skylight 2×4 — taper ($)',        rates:[141.83, 144.67, 147.56], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'taper_sky44',     label:'Skylight 4×4 — taper ($)',        rates:[234.19, 238.88, 243.65], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'taper_stairs',    label:'Open Round Stairs — taper ($)',   rates:[162.93, 166.19, 169.52], col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'taper_town',      label:'Townhouse premium — taper ($/MSF)', rates:[20.00, 20.40, 20.81],  col:'lr', group:'Extras', priceTab:'EX' },
+  { key:'taper_stack',     label:'Stack T/H premium — taper ($/MSF)', rates:[85.15, 86.85, 88.59],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'durock_labor',    label:'Durock Premium ($/ft²)',       rates:[0.600, 0.610, 0.630], col:'lr', group:'Extras', priceTab:'DW' },
   { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,   4.37,   4.46],   col:'lr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
