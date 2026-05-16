@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.6</title>
+  <title>Drywall Tally v14.7</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.6 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.7 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -1005,16 +1005,50 @@ function showTutStep() {
     try { step.action(); } catch(e) {}
   }
 
-  // Scroll into view if needed
+  // Scroll into view if needed (legacy scrollTo support)
   if (step.scrollTo) {
     const scrollEl = document.querySelector(step.scrollTo);
     if (scrollEl) scrollEl.scrollTop = 0;
   }
 
-  // Wait a tick for layout to settle after any tab switches
-  requestAnimationFrame(() => {
-    setTimeout(() => positionBubble(step), 120);
-  });
+  // Find target and scroll its scroll container so the element is visible
+  const target = step.target ? document.querySelector(step.target) : null;
+  if (target) {
+    // Find the nearest scrollable ancestor (sheet body or window)
+    const scrollParent = findScrollParent(target);
+    if (scrollParent) {
+      // Get target position relative to the scroll container
+      const parentRect = scrollParent.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const relTop = targetRect.top - parentRect.top + scrollParent.scrollTop;
+      const targetCenter = relTop + targetRect.height / 2;
+      const viewCenter = scrollParent.clientHeight / 2;
+      scrollParent.scrollTo({ top: targetCenter - viewCenter, behavior: 'smooth' });
+    } else {
+      // Try native scrollIntoView as fallback
+      try { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e) {}
+    }
+    // Wait for scroll animation to finish before measuring
+    setTimeout(() => positionBubble(step), 380);
+  } else {
+    requestAnimationFrame(() => {
+      setTimeout(() => positionBubble(step), 120);
+    });
+  }
+}
+
+/* Find the nearest scrollable ancestor of an element */
+function findScrollParent(el) {
+  let node = el.parentElement;
+  while (node && node !== document.body) {
+    const style = window.getComputedStyle(node);
+    const overflow = style.overflowY;
+    if ((overflow === 'auto' || overflow === 'scroll') && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return null;
 }
 
 function positionBubble(step) {
@@ -1045,67 +1079,73 @@ function positionBubble(step) {
 
   if (target) {
     const rect = target.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const bw = Math.min(300, vw - 32);
-    const bh = 160; // estimated bubble height
 
-    // Show highlight ring
+    // Use visualViewport to handle keyboard pushes correctly on mobile
+    const vw   = window.visualViewport ? window.visualViewport.width  : window.innerWidth;
+    const vh   = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const vTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+
+    const bw = Math.min(300, vw - 32);
+    const bh = 175;
+
+    // If target is still off-screen after scroll, centre bubble with no highlight
+    const visible = rect.top < (vTop + vh - 20) && rect.bottom > (vTop + 20);
+    if (!visible) {
+      highlight.style.display = 'none';
+      bubble.style.left  = Math.round((vw - bw) / 2) + 'px';
+      bubble.style.top   = Math.round(vTop + vh / 2 - 80) + 'px';
+      bubble.style.width = bw + 'px';
+      return;
+    }
+
+    // Highlight ring — clamped to visible area
+    const hlTop  = Math.max(vTop + 4, rect.top  - 4);
+    const hlLeft = Math.max(4,         rect.left - 4);
     highlight.style.cssText = `
       display:block;
-      left:${rect.left - 4}px;
-      top:${rect.top - 4}px;
-      width:${rect.width + 8}px;
-      height:${rect.height + 8}px;
+      left:${hlLeft}px;
+      top:${hlTop}px;
+      width:${Math.min(rect.width  + 8, vw - 8)}px;
+      height:${Math.min(rect.height + 8, (vTop + vh) - hlTop - 4)}px;
       border-radius:${rect.height < 40 ? '8px' : '12px'};
     `;
 
-    // Arrow x offset relative to bubble left
     const targetCenterX = rect.left + rect.width / 2;
-
-    // Try to place bubble below target first, else above
-    const spaceBelow = vh - rect.bottom;
-    const spaceAbove = rect.top;
+    const spaceBelow = (vTop + vh) - rect.bottom;
     let bubbleTop, arrowDir;
 
-    if (step.arrow === 'up' || (step.arrow !== 'down' && spaceBelow < bh + 30)) {
-      // Bubble ABOVE target, arrow points DOWN
-      bubbleTop = rect.top - bh - 18;
-      arrowDir = 'down';
-      if (bubbleTop < 10) { bubbleTop = 10; }
+    if (step.arrow === 'up' || (step.arrow !== 'down' && spaceBelow < bh + 24)) {
+      bubbleTop = rect.top - bh - 16;
+      arrowDir  = 'down';
+      if (bubbleTop < vTop + 8) bubbleTop = vTop + 8;
     } else {
-      // Bubble BELOW target, arrow points UP
-      bubbleTop = rect.bottom + 14;
-      arrowDir = 'up';
-      if (bubbleTop + bh > vh - 10) { bubbleTop = vh - bh - 10; }
+      bubbleTop = rect.bottom + 12;
+      arrowDir  = 'up';
+      if (bubbleTop + bh > vTop + vh - 8) bubbleTop = vTop + vh - bh - 8;
     }
 
-    // Horizontal: center on target, clamp to viewport
     let bubbleLeft = targetCenterX - bw / 2;
     bubbleLeft = Math.max(16, Math.min(vw - bw - 16, bubbleLeft));
 
-    // Arrow offset within bubble
-    const arrowX = targetCenterX - bubbleLeft;
+    const arrowX        = targetCenterX - bubbleLeft;
     const arrowXClamped = Math.max(22, Math.min(bw - 22, arrowX));
 
-    bubble.style.left = bubbleLeft + 'px';
-    bubble.style.top = bubbleTop + 'px';
+    bubble.style.left  = Math.round(bubbleLeft) + 'px';
+    bubble.style.top   = Math.round(bubbleTop)  + 'px';
     bubble.style.width = bw + 'px';
-    bubble.style.setProperty('--arrow-x', arrowXClamped + 'px');
+    bubble.style.setProperty('--arrow-x', Math.round(arrowXClamped) + 'px');
 
-    if (arrowDir === 'down') {
-      bubble.classList.add('tut-arrow-down');
-    } else {
-      bubble.classList.add('tut-arrow-up');
-    }
+    if (arrowDir === 'down') bubble.classList.add('tut-arrow-down');
+    else                     bubble.classList.add('tut-arrow-up');
   } else {
-    // No target — center on screen
+    // No target — centre on screen
     highlight.style.display = 'none';
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const bw = Math.min(300, vw - 32);
-    bubble.style.left = ((vw - bw) / 2) + 'px';
-    bubble.style.top = ((vh / 2) - 80) + 'px';
+    const vw   = window.visualViewport ? window.visualViewport.width  : window.innerWidth;
+    const vh   = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    const vTop = window.visualViewport ? window.visualViewport.offsetTop : 0;
+    const bw   = Math.min(300, vw - 32);
+    bubble.style.left  = Math.round((vw - bw) / 2) + 'px';
+    bubble.style.top   = Math.round(vTop + vh / 2 - 80) + 'px';
     bubble.style.width = bw + 'px';
   }
 }
@@ -1144,6 +1184,15 @@ document.addEventListener('keydown', e => {
     else if (document.getElementById('tut-list-overlay').classList.contains('open')) closeTutorialList();
   }
 });
+
+// Reposition bubble when keyboard opens/closes on mobile
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    if (tutActive && tutSteps[tutStep]) {
+      positionBubble(tutSteps[tutStep]);
+    }
+  });
+}
 </script>
 
 <script>
