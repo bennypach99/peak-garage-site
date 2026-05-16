@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.5</title>
+  <title>Drywall Tally v14.6</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.5 · May 15, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.6 · May 15, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -749,6 +749,10 @@
     <button class="wlc-btn-skip" onclick="dismissWelcome(false)">
       Skip — I'll figure it out
     </button>
+    <label style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;padding:4px 0">
+      <input type="checkbox" id="wlc-dont-show" style="width:15px;height:15px;accent-color:#7c3aed;cursor:pointer">
+      <span style="font-size:12px;color:rgba(255,255,255,0.25)">Don't show this again</span>
+    </label>
   </div>
 </div>
 
@@ -780,6 +784,44 @@
    ══════════════════════════════════════════════════════════════ */
 
 const TUTORIALS = [
+  {
+    id: 'jobdetails',
+    name: 'Job Details Form',
+    desc: 'How to set up a new job correctly',
+    icon: '📝',
+    steps: [
+      {
+        title: 'Job Name',
+        body: 'Give this job a name — usually the customer name or site address. You can always rename it later.',
+        target: '#df-name',
+        arrow: 'down',
+      },
+      {
+        title: 'Customer & Site',
+        body: 'Fill in the customer name and site address. These appear on your exported PDF report.',
+        target: '#df-customer',
+        arrow: 'down',
+      },
+      {
+        title: 'Rate Type — Required',
+        body: 'Choose Low-Rise or High-Rise. This sets which CBA labour rate table is used for the entire job. You must select one before saving.',
+        target: '#df-rate-lr',
+        arrow: 'down',
+      },
+      {
+        title: 'Building Type — Low-Rise Only',
+        body: 'For Low-Rise jobs, select the building type. Townhouse and Stacked Townhouse add a premium per sq ft on top of the base boarding rate.',
+        target: '#df-housetype-row',
+        arrow: 'down',
+      },
+      {
+        title: 'Tasks on this Job',
+        body: 'Toggle which trades are on this job — Drywall, Insulation, and/or Taping. This controls which sections appear in your report.',
+        target: '#df-err-tasks',
+        arrow: 'down',
+      },
+    ]
+  },
   {
     id: 'basics',
     name: 'App Basics',
@@ -1089,6 +1131,10 @@ function endTutorial() {
   tutActive = false;
   document.getElementById('tut-bubble').style.display = 'none';
   document.getElementById('tut-highlight').style.display = 'none';
+  // Run any pending end callback (e.g. close drawer after onboarding)
+  if (typeof window._tutOnEnd === 'function') {
+    window._tutOnEnd();
+  }
 }
 
 // Close tutorial on Escape
@@ -4678,44 +4724,92 @@ function openDrawerEdit() {
 }
 
 /* ── Welcome modal — shown once on first ever launch ── */
+/* ── Welcome & onboarding flow ── */
+
+const WELCOME_SEEN_KEY = 'drywall_tally__welcome_seen';
+
+function hasSeenWelcome() {
+  try { return !!localStorage.getItem(WELCOME_SEEN_KEY); } catch(e) { return false; }
+}
+function markWelcomeSeen() {
+  try { localStorage.setItem(WELCOME_SEEN_KEY, '1'); } catch(e) {}
+}
+
 function showWelcome() {
   const overlay = document.getElementById('welcome-overlay');
   overlay.classList.add('open');
 }
 
-function dismissWelcome(startTutorial) {
+function dismissWelcome(doTutorial) {
   const overlay = document.getElementById('welcome-overlay');
   overlay.style.transition = 'opacity 0.3s ease';
   overlay.style.opacity = '0';
+  // Respect "Don't show again" checkbox — if checked, never show on this device again
+  const dontShow = document.getElementById('wlc-dont-show');
+  if (dontShow && dontShow.checked) markWelcomeSeen();
   setTimeout(() => {
     overlay.classList.remove('open');
     overlay.style.opacity = '';
-    // Open job details form so they fill in required fields
+    // Open job details form (required setup)
     openDetails(true);
     setTimeout(() => {
       const input = document.getElementById('df-name');
       if (input) { input.focus(); input.select(); }
-    }, 80);
-    // After details are saved, kick off the App Basics tutorial
-    if (startTutorial) {
-      // Hook into the details close — start tutorial after form is dismissed
-      window._pendingWelcomeTutorial = true;
-    }
+      // Immediately start the Job Details tutorial on top of the open form
+      if (doTutorial) {
+        startTutorial('jobdetails');
+        // Flag to run the "where to find tutorials" step after save
+        window._pendingDrawerTutorial = true;
+      }
+    }, 200);
   }, 300);
 }
 
-/* ── First login: show welcome modal instead of jumping straight to details ── */
+/* ── First login: show welcome only if not seen before ── */
 function firstLoginSetup() {
   setTimeout(() => {
-    showWelcome();
+    if (!hasSeenWelcome()) {
+      showWelcome();
+    } else {
+      // Returning user with no data (e.g. signed in fresh) — just open details
+      openDetails(true);
+      setTimeout(() => {
+        const input = document.getElementById('df-name');
+        if (input) { input.focus(); input.select(); }
+      }, 80);
+    }
   }, 400);
 }
 
-/* ── Called when job details are saved — start pending welcome tutorial ── */
+/* ── After job details saved: show "where to find tutorials" drawer hint ── */
 function checkPendingWelcomeTutorial() {
-  if (window._pendingWelcomeTutorial) {
-    window._pendingWelcomeTutorial = false;
-    setTimeout(() => startTutorial('basics'), 500);
+  if (window._pendingDrawerTutorial) {
+    window._pendingDrawerTutorial = false;
+    // End any running tutorial first
+    endTutorial();
+    // Small delay, then open drawer and point to Tutorials button
+    setTimeout(() => {
+      openDrawer();
+      setTimeout(() => {
+        // Manually show a single-step bubble pointing at the Tutorials button
+        tutSteps = [{
+          title: 'More tutorials here',
+          body: 'Tap "Tutorials" anytime from the menu to access step-by-step guides on counting drywall, managing areas, generating reports, and more.',
+          target: 'button[onclick*="openTutorialList"]',
+          arrow: 'down',
+        }];
+        tutStep = 0;
+        tutActive = true;
+        // Override Next button to close drawer when done
+        window._tutOnEnd = () => { closeDrawer(); window._tutOnEnd = null; };
+        showTutStep();
+        // Change next button label
+        setTimeout(() => {
+          const btn = document.getElementById('tut-next-btn');
+          if (btn) btn.textContent = 'Got it ✓';
+        }, 200);
+      }, 400);
+    }, 600);
   }
 }
 
