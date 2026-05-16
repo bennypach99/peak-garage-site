@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.31</title>
+  <title>Drywall Tally v14.32</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.31 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.32 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -5341,15 +5341,33 @@ async function storageSet(key, value) {
 }
 
 async function storageGet(key) {
-  // Tier 1 — Firebase (source of truth)
+  // Tier 1 — Firebase vs localStorage cache (use whichever has the newer modifiedAt)
   if (useFirebase && fbUser) {
     try {
       const doc = await db.collection('users').doc(fbUser.uid).collection('data').doc(key).get();
       if (doc.exists && doc.data().json) {
-        const value = doc.data().json;
-        // Keep localStorage cache in sync
-        try { localStorage.setItem(lsKey(key), value); } catch(e) {}
-        return JSON.parse(value);
+        const fbJson = doc.data().json;
+        // Check if localStorage cache is newer (can happen if page refreshed before Firebase write completed)
+        try {
+          const localRaw = localStorage.getItem(lsKey(key));
+          if (localRaw) {
+            const fbData    = JSON.parse(fbJson);
+            const localData = JSON.parse(localRaw);
+            const fbMod    = fbData.jobs?.reduce((m,j) => j.modifiedAt > m ? j.modifiedAt : m, '') || '';
+            const localMod = localData.jobs?.reduce((m,j) => j.modifiedAt > m ? j.modifiedAt : m, '') || '';
+            if (localMod > fbMod) {
+              // localStorage is newer — use it and re-sync Firebase
+              console.log('localStorage newer than Firebase — using local cache and re-syncing');
+              db.collection('users').doc(fbUser.uid).collection('data').doc(key)
+                .set({ json: localRaw, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+                .catch(e => console.warn('re-sync to Firebase failed', e));
+              return localData;
+            }
+          }
+        } catch(e) { /* comparison failed — fall through to Firebase data */ }
+        // Firebase is authoritative
+        try { localStorage.setItem(lsKey(key), fbJson); } catch(e) {}
+        return JSON.parse(fbJson);
       }
     } catch(e) {
       // Firebase read failed (offline?) — fall through to localStorage cache
