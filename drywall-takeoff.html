@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.30</title>
+  <title>Drywall Tally v14.31</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.30 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.31 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -3749,6 +3749,8 @@ function showReport() {
       "2' × 4' Skylight": 'skylight_2x4', "4' × 4' Skylight": 'skylight_4x4',
       'Peak': 'tray_waffle_ceil', 'Niche': 'tray_waffle_ceil',
       "OTA <64'": 'ota_under64', "OTA >64'": 'ota_over64',
+      'Door Frame Single': 'entry_door_single', 'Door Frame Double': 'entry_door_double',
+      'Open Round Stairs': 'open_round_stairs',
     };
     const jobExtrasEntries=JOB_EXTRAS_ITEMS.filter(item=>item!=='Pot Lights'&&(a.counts['jobExtras']?.[item]||0)>0);
     if(jobExtrasEntries.length){
