@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.12</title>
+  <title>Drywall Tally v14.13</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.12 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.13 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -3312,7 +3312,7 @@ function showReport() {
       const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
       const hKey = hMap[dwCeilH] || 'h9';
       const priceKey = (dwIsHR ? 'fivet_hr_' : 'fivet_lr_') + hKey;
-      if (gPrices[priceKey] !== undefined) return gPrices[priceKey];
+      if (gPrices[priceKey] > 0) return gPrices[priceKey];
       return dwBoardRate + 0.105;
     })();
     const DW_FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58','wr58']);
@@ -3896,7 +3896,7 @@ function showReport() {
         const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
         const hKey = hMap[ceilH] || (isHR ? 'h9' : 'h8');
         const priceKey = (isHR ? 'fivet_hr_' : 'fivet_lr_') + hKey;
-        if (gPrices[priceKey] !== undefined) return gPrices[priceKey];
+        if (gPrices[priceKey] > 0) return gPrices[priceKey];
         // Fallback: ½" rate + $0.105 premium per CBA
         return boardRate + 0.105;
       })();
@@ -4002,7 +4002,7 @@ function showReport() {
         const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
         const hKey = hMap[ceilH] || (isHR ? 'h8' : 'h8');
         const priceKey = (isHR ? 'tape_hr_' : 'tape_lr_') + hKey;
-        if (gPrices[priceKey] !== undefined) return gPrices[priceKey];
+        if (gPrices[priceKey] > 0) return gPrices[priceKey];
         const bracket = isHR ? TAPING_HR_RATES[hKey] : TAPING_LR_RATES[hKey];
         return bracket ? bracket.rates[gRateIdx] : (gPrices['tape_upper'] || 0.38078);
       })();
@@ -4862,7 +4862,9 @@ function savePricesSheet() {
   PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
     if (!el) return; // not on current tab — leave gPrices unchanged
-    const raw = parseFloat(el.value) || 0;
+    const raw = parseFloat(el.value);
+    // Don't save blank/zero values — leave the CBA default intact
+    if (!raw || isNaN(raw)) return;
     gPrices[f.key] = f.pct ? raw / 100 : raw;
   });
   const pp = document.getElementById('pf-profit');
