@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.7</title>
+  <title>Drywall Tally v14.8</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.7 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.8 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -794,31 +794,40 @@ const TUTORIALS = [
         title: 'Job Name',
         body: 'Give this job a name — usually the customer name or site address. You can always rename it later.',
         target: '#df-name',
+        targetParent: true,   // target the field-group wrapper, not the input itself
         arrow: 'down',
+        noFocus: true,
       },
       {
         title: 'Customer & Site',
         body: 'Fill in the customer name and site address. These appear on your exported PDF report.',
         target: '#df-customer',
+        targetParent: true,
         arrow: 'down',
+        noFocus: true,
       },
       {
         title: 'Rate Type — Required',
         body: 'Choose Low-Rise or High-Rise. This sets which CBA labour rate table is used for the entire job. You must select one before saving.',
         target: '#df-rate-lr',
+        targetParent: true,
         arrow: 'down',
+        noFocus: true,
       },
       {
         title: 'Building Type — Low-Rise Only',
         body: 'For Low-Rise jobs, select the building type. Townhouse and Stacked Townhouse add a premium per sq ft on top of the base boarding rate.',
         target: '#df-housetype-row',
         arrow: 'down',
+        noFocus: true,
       },
       {
         title: 'Tasks on this Job',
         body: 'Toggle which trades are on this job — Drywall, Insulation, and/or Taping. This controls which sections appear in your report.',
         target: '#df-err-tasks',
+        targetParent: true,
         arrow: 'down',
+        noFocus: true,
       },
     ]
   },
@@ -1011,28 +1020,34 @@ function showTutStep() {
     if (scrollEl) scrollEl.scrollTop = 0;
   }
 
-  // Find target and scroll its scroll container so the element is visible
-  const target = step.target ? document.querySelector(step.target) : null;
-  if (target) {
-    // Find the nearest scrollable ancestor (sheet body or window)
-    const scrollParent = findScrollParent(target);
+  // noFocus: blur any active input so keyboard doesn't open/stay open
+  if (step.noFocus && document.activeElement && document.activeElement !== document.body) {
+    document.activeElement.blur();
+  }
+
+  // Resolve the actual target element
+  // targetParent: use the .field-group wrapper instead of the input itself
+  let rawTarget = step.target ? document.querySelector(step.target) : null;
+  const resolvedTarget = (rawTarget && step.targetParent) ? rawTarget.closest('.field-group') || rawTarget : rawTarget;
+
+  if (resolvedTarget) {
+    // Find the nearest scrollable ancestor and centre the element
+    const scrollParent = findScrollParent(resolvedTarget);
     if (scrollParent) {
-      // Get target position relative to the scroll container
       const parentRect = scrollParent.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
+      const targetRect = resolvedTarget.getBoundingClientRect();
       const relTop = targetRect.top - parentRect.top + scrollParent.scrollTop;
       const targetCenter = relTop + targetRect.height / 2;
       const viewCenter = scrollParent.clientHeight / 2;
       scrollParent.scrollTo({ top: targetCenter - viewCenter, behavior: 'smooth' });
     } else {
-      // Try native scrollIntoView as fallback
-      try { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e) {}
+      try { resolvedTarget.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e) {}
     }
-    // Wait for scroll animation to finish before measuring
-    setTimeout(() => positionBubble(step), 380);
+    // Wait for scroll + keyboard dismiss to settle before measuring
+    setTimeout(() => positionBubble(step, resolvedTarget), step.noFocus ? 450 : 380);
   } else {
     requestAnimationFrame(() => {
-      setTimeout(() => positionBubble(step), 120);
+      setTimeout(() => positionBubble(step, null), 120);
     });
   }
 }
@@ -1051,7 +1066,7 @@ function findScrollParent(el) {
   return null;
 }
 
-function positionBubble(step) {
+function positionBubble(step, resolvedTarget) {
   const bubble = document.getElementById('tut-bubble');
   const highlight = document.getElementById('tut-highlight');
   const titleEl = document.getElementById('tut-title');
@@ -1070,8 +1085,10 @@ function positionBubble(step) {
   // Next/Done button
   nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
 
-  // Find target element
-  const target = step.target ? document.querySelector(step.target) : null;
+  // Use pre-resolved target if provided, else query fresh
+  const target = resolvedTarget !== undefined
+    ? resolvedTarget
+    : (step.target ? document.querySelector(step.target) : null);
 
   // Reset bubble classes
   bubble.className = 'tut-bubble';
@@ -1189,7 +1206,7 @@ document.addEventListener('keydown', e => {
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', () => {
     if (tutActive && tutSteps[tutStep]) {
-      positionBubble(tutSteps[tutStep]);
+      positionBubble(tutSteps[tutStep], undefined);
     }
   });
 }
@@ -4845,7 +4862,7 @@ function checkPendingWelcomeTutorial() {
           title: 'More tutorials here',
           body: 'Tap "Tutorials" anytime from the menu to access step-by-step guides on counting drywall, managing areas, generating reports, and more.',
           target: 'button[onclick*="openTutorialList"]',
-          arrow: 'down',
+          arrow: 'up',   // bubble ABOVE the button, arrow points DOWN at it
         }];
         tutStep = 0;
         tutActive = true;
