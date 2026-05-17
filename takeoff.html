@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.85</title>
+  <title>Drywall Tally v14.87</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -383,9 +383,9 @@
     }
     .wlc-logo {
       width: 82px; height: 82px; border-radius: 22px;
-      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      background: #fff;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 8px 40px rgba(124,58,237,0.5);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.25);
       font-size: 38px; flex-shrink: 0;
     }
     .wlc-from { font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-top: 2px; }
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.85 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.87 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -713,7 +713,7 @@
 <!-- Welcome Modal — shown on first launch only -->
 <div id="welcome-overlay">
   <div class="wlc-header">
-    <div class="wlc-logo">🏗️</div>
+    <div class="wlc-logo"><img src="./favicon.ico" alt="Drywall Tally" style="width:56px;height:56px;object-fit:contain;border-radius:10px;"></div>
     <div class="wlc-from">Peak Garage Solutions</div>
     <h2 class="wlc-title">Welcome to<br>Drywall Tally</h2>
     <div class="wlc-divider"></div>
@@ -5100,7 +5100,7 @@ function onPriceFieldChange(key) {
   // If this change just switched us into custom mode, restore all other custom prices
   if (!wasCustom && gRateCustom && Object.keys(gCustomPrices).length > 1) {
     PRICE_FIELDS.forEach(pf => {
-      if (pf.key === key) return; // already updated above
+      if (pf.key === key) return;
       if (gCustomPrices[pf.key] !== undefined) {
         gPrices[pf.key] = gCustomPrices[pf.key];
         const pEl = document.getElementById('pf-' + pf.key);
@@ -5108,13 +5108,33 @@ function onPriceFieldChange(key) {
           const dec = fieldDecimals(pf);
           pEl.value = pf.pct ? (gCustomPrices[pf.key] * 100).toFixed(dec) : gCustomPrices[pf.key].toFixed(dec);
           applyInputHighlight(pEl, isPriceCustom(pf));
+          ensureResetBtn(pf, pEl);
         }
       }
     });
   }
 
   applyInputHighlight(el, isPriceCustom(f));
+  ensureResetBtn(f, el);
   updateYearBtns();
+}
+
+// Inject reset button next to input if field is custom and btn doesn't exist yet
+function ensureResetBtn(f, el) {
+  const existing = document.getElementById('reset-btn-' + f.key);
+  if (isPriceCustom(f) && gRateCustom) {
+    if (!existing) {
+      const btn = document.createElement('button');
+      btn.id = 'reset-btn-' + f.key;
+      btn.title = 'Reset to CBA rate';
+      btn.textContent = '↺';
+      btn.style.cssText = 'flex-shrink:0;width:22px;height:22px;border:none;background:rgba(217,119,6,0.12);border-radius:6px;cursor:pointer;color:#d97706;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0';
+      btn.onclick = () => resetPriceField(f.key);
+      el.parentNode.appendChild(btn);
+    }
+  } else if (existing) {
+    existing.remove();
+  }
 }
 
 function resetPriceField(key) {
@@ -5186,7 +5206,7 @@ function openPricesSheet(tab) {
     return custom ? 'border-color:#d97706;background:#fffbeb;color:#92400e;' : '';
   };
   const resetBtn = (f) => {
-    if (!isPriceCustom(f)) return '';
+    if (!gRateCustom || !isPriceCustom(f)) return '';
     return `<button id="reset-btn-${f.key}" onclick="resetPriceField('${f.key}')" title="Reset to CBA rate" style="flex-shrink:0;width:22px;height:22px;border:none;background:rgba(217,119,6,0.12);border-radius:6px;cursor:pointer;color:#d97706;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0">↺</button>`;
   };
   const fieldVal = (f) => {
