@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.47</title>
+  <title>Drywall Tally v14.37</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -98,13 +98,13 @@
 
     /* ── Bottom Bar ── */
     .bottom-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 12px calc(10px + var(--safe-bottom)); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
-    .totals-strip { flex: 1; display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; min-width: 0; touch-action: pan-x; }
+    .totals-strip { flex: 1; display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
     .totals-strip::-webkit-scrollbar { display: none; }
     .strip-total { background: var(--text); color: #fff; border-radius: 20px; padding: 7px 13px; font-size: 13px; font-weight: 500; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
     .strip-total span { font-family: 'DM Mono', monospace; font-size: 15px; }
     .strip-chip { border-radius: 20px; padding: 6px 11px; font-size: 12px; white-space: nowrap; flex-shrink: 0; border: 1px solid var(--border); color: var(--muted); background: var(--bg); }
     .strip-chip strong { font-family: 'DM Mono', monospace; color: var(--text); font-weight: 500; }
-    .report-btn { background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; flex-shrink: 0; position: relative; z-index: 2; touch-action: manipulation; }
+    .report-btn { background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; flex-shrink: 0; }
 
     /* ── Drawer ── */
     .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
@@ -114,7 +114,7 @@
     .drawer-title { font-size: 16px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
     .drawer-new-btn { background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 12px 14px; font-size: 14px; font-family: inherit; font-weight: 500; cursor: pointer; }
     .drawer-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.08em; }
-    .drawer-job-list { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1; min-height: 0; }
+    .drawer-job-list { display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1; }
     .drawer-job-item { padding: 12px; border-radius: 10px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.6); transition: background 0.12s, color 0.12s; }
     .drawer-job-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 500; }
 
@@ -455,7 +455,6 @@
     Continue with Google
   </button>
   <div class="auth-error" id="auth-error"></div>
-  <button onclick="initFallback()" style="background:transparent;border:none;color:rgba(255,255,255,0.45);font-size:13px;font-family:inherit;cursor:pointer;padding:4px;text-decoration:underline;">Use without signing in</button>
   <div class="auth-terms">Your data is stored privately in Firebase under your Google account. No one else can access it.</div>
 </div>
 
@@ -470,7 +469,7 @@
           <rect y="12" width="10" height="2" rx="1" fill="#111"/>
         </svg>
       </div>
-      <div class="job-name-display" id="job-name-display">Job 1</div>
+      <div class="job-name-display" id="job-name-display" onclick="openDrawerEdit()" style="cursor:pointer" title="Tap to rename">Job 1</div>
       <div onclick="openDetails()" style="flex-shrink:0;cursor:pointer;display:flex;align-items:center;color:#7c3aed;opacity:0.7;padding:2px 0 0 2px">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -565,10 +564,10 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.47 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.37 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
-  <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
     <button class="drawer-action-btn green" onclick="openPricesSheet();closeDrawer()">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="white" stroke-width="1.5"/><path d="M7.5 4V7.5L9.5 9.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       Labor Prices
@@ -3974,9 +3973,7 @@ function showReport() {
             }
           });
         });
-      }); // end INSULATION_TYPES.forEach (labor)
-      } // end if (hasInsulation) labor block
-
+      });
       // ════════════════════════════════════════════════════════════
       // UNION DUES & ENERGY STAR — per TOS spreadsheet rules
       // ════════════════════════════════════════════════════════════
@@ -3985,7 +3982,7 @@ function showReport() {
       // Energy Star also applies only to pink/roxul sqft × %
       let insGross = 0;
       let energyStarSqft = 0;
-      if (hasInsulation) INSULATION_TYPES.forEach(t => {
+      INSULATION_TYPES.forEach(t => {
         if (t.kind === 'blown' || t.kind === 'foam' || t.kind === 'blanket') return;
         const rvals = t.rvals || INSULATION_RVALS;
         const isEligible = t.key === 'pink' || t.key === 'roxul';
@@ -4021,6 +4018,7 @@ function showReport() {
       const energyStarCost = (j.details?.energyStar && energyStarSqft > 0) ? energyStarSqft * energyStarRate : 0;
       laborCost += energyStarCost;
       totalEnergyStar += energyStarCost;
+      } // end if (hasInsulation)
 
       // ── Boarding gross (plain + fireguard + durock) ──
       // Zero boarding sqft if Drywall task not selected
@@ -4836,7 +4834,7 @@ function applyInputHighlight(el, isCustom) {
 }
 
 function updateYearBtns() {
-  RATE_DATES_CBA.forEach((d, i) => {
+  RATE_DATES.forEach((d, i) => {
     const b = document.getElementById('year-btn-'+i);
     if (!b) return;
     const isActive = !gRateCustom && i === gRateIdx;
@@ -4896,7 +4894,7 @@ function openPricesSheet(tab) {
   out += `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Union Rate Year</div>
     <div class="year-btn-row">`;
-  RATE_DATES_CBA.forEach((d, i) => {
+  RATE_DATES.forEach((d, i) => {
     out += `<button id="year-btn-${i}" class="year-btn ${(!gRateCustom && i===gRateIdx)?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
   });
   out += `<button id="year-btn-custom" class="year-btn ${gRateCustom?'active':'inactive'}" style="${gRateCustom?'background:#d97706;color:#fff;border-color:#d97706':''}" onclick="">Custom</button>`;
@@ -5501,10 +5499,11 @@ async function initFirebase() {
         clearLocalState();
         showAuthScreen();
       } else {
-        // First auth check — wait 2s for session restore, then fall back to local mode
+        // First auth check — wait 2s for session restore before giving up
         setTimeout(() => {
-          if (!fbUser && useFirebase) {
-            initFallback();
+          if (!fbUser) {
+            clearLocalState();
+            showAuthScreen();
           }
         }, 2000);
         authInitialized = true;
