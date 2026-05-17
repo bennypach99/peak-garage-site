@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.87</title>
+  <title>Drywall Tally v14.91</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -520,7 +520,7 @@
 
   <div class="bottom-bar">
     <div class="totals-strip" id="totals-strip"></div>
-    <button class="report-btn" onclick="showReport()">Report</button>
+    <button class="report-btn" onclick="showReport()">Create Report</button>
   </div>
 
 </div>
@@ -539,7 +539,7 @@
 <!-- Drawer -->
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
-  <div class="drawer-user-row">
+  <div id="drawer-user-row" class="drawer-user-row">
     <div class="drawer-user-avatar">
       <img id="drawer-user-photo" src="" style="display:none" alt=""/>
       <span id="drawer-user-initials">?</span>
@@ -548,7 +548,7 @@
       <div class="drawer-user-name" id="drawer-user-name">—</div>
       <div class="drawer-user-email" id="drawer-user-email">—</div>
     </div>
-    <button class="drawer-sign-out-btn" onclick="signOut()" title="Sign out">
+    <button id="drawer-sign-out-btn" class="drawer-sign-out-btn" onclick="signOut()" title="Sign out">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
         <path d="M5 2H2a1 1 0 00-1 1v8a1 1 0 001 1h3" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/>
         <path d="M9 10l3-3-3-3M12 7H5" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -563,20 +563,20 @@
     </svg>
     Drywall Tally
   </div>
-  <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.87 · May 16, 2026</div>
-  <div class="drawer-label">Jobs</div>
+  <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.91 · May 16, 2026</div>
+  <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
-  <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
+  <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
     <button id="drawer-labor-prices-btn" class="drawer-action-btn green" onclick="openPricesSheet();closeDrawer()">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="white" stroke-width="1.5"/><path d="M7.5 4V7.5L9.5 9.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       Labor Prices
     </button>
-    <button class="drawer-action-btn" style="background:#ea580c" onclick="openMatPricesSheet();closeDrawer()">
+    <button id="drawer-mat-prices-btn" class="drawer-action-btn" style="background:#ea580c" onclick="openMatPricesSheet();closeDrawer()">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="2" width="11" height="11" rx="1.5" stroke="white" stroke-width="1.5"/><path d="M5 7.5h5M7.5 5v5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       Material Prices
     </button>
-    <button class="drawer-action-btn blue" onclick="openMyInfoSheet();closeDrawer()">
+    <button id="drawer-my-info-btn" class="drawer-action-btn blue" onclick="openMyInfoSheet();closeDrawer()">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="white" stroke-width="1.5"/><path d="M2.5 13.5C2.5 11 4.5 9.5 7.5 9.5C10.5 9.5 12.5 11 12.5 13.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       My Info
     </button>
@@ -685,7 +685,7 @@
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <h3>Material Prices</h3>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;border:1px solid var(--color-border-tertiary);white-space:nowrap" title="Import prices from JSON file">
+      <label id="mat-import-btn" style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;padding:6px 10px;border-radius:8px;border:1px solid var(--color-border-tertiary);white-space:nowrap" title="Import prices from JSON file">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 1v8M4 6l3 3 3-3M2 10v1.5A1.5 1.5 0 003.5 13h7A1.5 1.5 0 0012 11.5V10"/></svg>
         Import
         <input type="file" accept=".json" style="display:none" onchange="importMatPrices(this)">
@@ -693,7 +693,7 @@
       <button class="sheet-close" onclick="closeMatPricesSheet()">✕</button>
     </div>
     <div class="sheet-body" id="matprices-body"></div>
-    <div class="sheet-footer"><button class="sheet-save-btn" style="background:#ea580c" onclick="saveMatPricesSheet()">Save Material Prices</button></div>
+    <div class="sheet-footer"><button id="save-mat-prices-btn" class="sheet-save-btn" style="background:#ea580c" onclick="saveMatPricesSheet()">Save Material Prices</button></div>
   </div>
 </div>
 
@@ -1128,6 +1128,175 @@ const TUTORIALS = [
       },
     ]
   },
+  {
+    id: 'mat_prices',
+    name: 'Material Prices',
+    desc: 'Set your material costs per sheet or unit',
+    icon: '🧱',
+    steps: [
+      {
+        title: 'Open Material Prices',
+        body: 'Tap "Material Prices" in the menu to open the material prices sheet.',
+        target: '#drawer-mat-prices-btn',
+        arrow: 'up',
+        waitForMatPrices: true,
+        action: () => { openDrawer(); },
+      },
+      {
+        title: 'Material Categories',
+        body: 'Switch between Drywall, Insulation, Steel, Corner Bead, and Mud using these tabs. Each tab holds the material costs for that trade.',
+        target: '#mat-prices-tab-bar',
+        arrow: 'down',
+      },
+      {
+        title: 'Price Fields',
+        body: 'Each field shows the cost per sheet or unit for that material. Enter your supplier prices here — these feed directly into the material cost column on your report.',
+        target: '#matprices-body',
+        arrow: 'down',
+      },
+      {
+        title: 'Import Prices',
+        body: 'Tap "Import" to load a JSON file of material prices. This is useful if your supplier sends you a price list or if you want to back up and restore your prices across devices.',
+        target: '#mat-import-btn',
+        arrow: 'down',
+      },
+      {
+        title: 'Save Material Prices',
+        body: 'Tap "Save Material Prices" when done. Your prices are saved and applied to all future reports.',
+        target: '#save-mat-prices-btn',
+        arrow: 'up',
+        onNext: () => { saveMatPricesSheet(); },
+      },
+    ]
+  },
+  {
+    id: 'side_menu',
+    name: 'Side Menu',
+    desc: 'Navigate jobs, prices, and settings',
+    icon: '☰',
+    steps: [
+      {
+        title: 'Open the Side Menu',
+        body: 'Tap the hamburger menu (☰) to open the side drawer.',
+        target: '.menu-btn',
+        arrow: 'down',
+        waitForDrawer: true,
+      },
+      {
+        title: 'Sign Out',
+        body: 'Your account info is shown here. Tap the arrow icon on the right to sign out. Your data is saved to your account and will be there when you sign back in.',
+        target: '#drawer-user-row',
+        arrow: 'down',
+      },
+      {
+        title: 'New Job',
+        body: 'Tap "+ New Job" to create a new job. Each job stores its own areas, counts, and details independently.',
+        target: '#drawer-new-job-btn',
+        arrow: 'down',
+      },
+      {
+        title: 'Jobs List',
+        body: 'All your saved jobs appear here. Tap a job to switch to it. Tap the ✕ to delete it permanently.',
+        targets: ['#drawer-jobs-label', '#drawer-job-list'],
+        arrow: 'down',
+      },
+      {
+        title: 'Labor & Material Prices',
+        body: 'Tap "Labor Prices" to set your union rates. Tap "Material Prices" to set your supplier costs. Both feed directly into your report.',
+        targets: ['#drawer-labor-prices-btn', '#drawer-mat-prices-btn'],
+        arrow: 'down',
+      },
+      {
+        title: 'My Info',
+        body: 'Tap "My Info" to set your company name, HST number, phone, and email. This information appears at the top of every report you export.',
+        target: '#drawer-my-info-btn',
+        arrow: 'up',
+      },
+    ]
+  },
+  {
+    id: 'ins_batt',
+    name: 'Counting Insulation',
+    desc: 'How to tally Pink and Roxul batt insulation',
+    icon: '🩷',
+    steps: [
+      {
+        title: 'Insulation Tab',
+        body: 'Tap the Insulation category tab to get started.',
+        target: '.cat-bar',
+        arrow: 'up',
+        action: () => { if (typeof switchCat === 'function') switchCat('insulation'); },
+      },
+      {
+        title: 'Insulation Types',
+        body: 'These tabs switch between insulation types — Pink batt, Roxul, Blown-In, Spray-Foam, Blanket, and Extras. Tap Pink or Roxul to start counting batt insulation.',
+        target: '#type-tabs',
+        arrow: 'up',
+        action: () => { if (typeof switchInsType === 'function') switchInsType(0); },
+      },
+      {
+        title: 'R-Value',
+        body: 'Select the R-value for the insulation you are counting. Each R-value has its own separate tally.',
+        target: '#ins-rval-bar',
+        arrow: 'up',
+      },
+      {
+        title: 'Sheet Width',
+        body: 'The insulation section shows the sheet width (16" or 24") with the number of pieces and bags. These are the same counters as drywall — tap "+" or "−" to add or remove pieces.',
+        target: '.tally-header',
+        arrow: 'down',
+        scrollTo: '.tally-area',
+      },
+      {
+        title: 'Pieces & Bags',
+        body: 'As you count pieces, the app automatically calculates how many bags are needed and the total square footage. The totals strip at the bottom updates live.',
+        target: '.totals-strip',
+        arrow: 'up',
+      },
+    ]
+  },
+  {
+    id: 'ins_other',
+    name: 'Other Insulation',
+    desc: 'Blown-in, spray-foam, blanket and extras',
+    icon: '💨',
+    steps: [
+      {
+        title: 'Insulation Tab',
+        body: 'Make sure you are on the Insulation category.',
+        target: '.cat-bar',
+        arrow: 'up',
+        action: () => { if (typeof switchCat === 'function') switchCat('insulation'); },
+      },
+      {
+        title: 'Blown-In & Spray-Foam',
+        body: 'Tap Blown-In or Spray-Foam to tally those materials. Select the R-value, then enter the square footage directly. These are priced per ft² in the report.',
+        target: '#type-tabs',
+        arrow: 'up',
+        action: () => { if (typeof switchInsType === 'function') switchInsType(2); },
+      },
+      {
+        title: 'Blanket Insulation',
+        body: 'Tap Blanket to tally blanket insulation. Enter the length and height of each section and tap Add — each entry is saved as L × H and the square footage adds to the running total automatically.',
+        target: '#type-tabs',
+        arrow: 'up',
+        action: () => { if (typeof switchInsType === 'function') switchInsType(4); },
+      },
+      {
+        title: 'Multiple Entries',
+        body: 'Each L × H entry appears in a list below. Add as many entries as you need — the total square footage shown is the sum of all entries combined.',
+        target: '.tally-area',
+        arrow: 'down',
+      },
+      {
+        title: 'Insulation Extras',
+        body: 'Tap the Extras tab to count installation materials — Poly, Tuck Tape, Can Foam, Staples, Styro-Vents, and Acoustic Caulking. These items are paid by the installer and show as a separate line on the report.',
+        target: '#type-tabs',
+        arrow: 'up',
+        action: () => { if (typeof switchInsSubTab === 'function') switchInsSubTab(1); },
+      },
+    ]
+  },
 ];
 
 let tutActive = false;
@@ -1174,8 +1343,8 @@ function startTutorial(id) {
     }
   }
 
-  // drywall and area_details tutorials need at least one area
-  if ((id === 'drywall' || id === 'area_details') && (!J() || !J().areas || J().areas.length === 0)) {
+  // These tutorials need at least one area
+  if ((id === 'drywall' || id === 'area_details' || id === 'ins_batt' || id === 'ins_other') && (!J() || !J().areas || J().areas.length === 0)) {
     tutSteps = [{
       title: 'Add an Area First',
       body: 'This tutorial requires at least one area. Tap "+ Area" to add one, then come back and try this tutorial again.',
@@ -1276,7 +1445,7 @@ function positionBubble(step, resolvedTarget) {
   // Next/Done button
   nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
   // Hide Next button when tutorial is waiting for user action
-  if (step.waitForArea || step.waitForAreaOpen || step.waitForReport || step.waitForPrices) {
+  if (step.waitForArea || step.waitForAreaOpen || step.waitForReport || step.waitForPrices || step.waitForMatPrices || step.waitForDrawer) {
     nextBtn.style.display = 'none';
   } else {
     nextBtn.style.display = '';
@@ -3196,7 +3365,15 @@ function commitDrawerRename(id) {
   saveState();
   renderDrawerList(null);
 }
-function openDrawer()  { renderDrawerList(null); document.getElementById('drawer').classList.add('open'); document.getElementById('drawer-overlay').classList.add('open'); }
+function openDrawer()  {
+  renderDrawerList(null);
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  // If tutorial is waiting for drawer to open, advance
+  if (tutActive && tutSteps[tutStep]?.waitForDrawer) {
+    setTimeout(() => tutNext(), 350);
+  }
+}
 function closeDrawer() { const i=document.getElementById('drawer-rename'); if(i)i.blur(); document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
 function selectJob(id) {
   curJobId=id; curAreaId=J().areas[0]?.id||null; curType=0; curCat='drywall'; curDwGroup='Regular';
@@ -3562,51 +3739,91 @@ function showReport() {
     // Track totals for townhouse premium display
     let dwAreaPlainSqft = 0, dwAreaFivetSqft = 0;
 
-    DRYWALL_TYPES.filter(t=>!t.isItems).forEach(t=>{
-      const entries=t.lengths.filter(l=>a.counts[t.key][l]>0);
-      if(!entries.length)return;
-      const matKeyMap2={pl48:'mat_dw_half_plain',pl54:'mat_dw_half_plain',cd48:'mat_dw_half_cd',dens48:'mat_dw_half_dens',dens58:'mat_dw_fivet_dens',wr48:'mat_dw_half_wr',wr58:'mat_dw_58_wr',fg48:'mat_dw_fivet_tx',dl48:'mat_dw_fivet_tx',fg54:'mat_dw_fivet_tx',durock48:'mat_dw_durock',flex48:'mat_dw_quarter_flex',tc48:'mat_dw_half_tc',hdl48:'mat_dw_half_plain'};
-      const matRate2 = gMatPrices[matKeyMap2[t.key]] || 0;
-      const labRate2 = DW_FIVET_KEYS.has(t.key) ? dwFivetRate : DW_DUROCK_KEYS.has(t.key) ? dwDurockRate : dwBoardRate;
-      html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
-        <span>${t.fullName}</span>
-        <span style="display:flex;gap:10px">
-          <span style="min-width:32px;text-align:right">Sheets</span>
-          <span style="min-width:44px;text-align:right">Sq Ft</span>
-          <span style="min-width:60px;text-align:right">Lab Cost</span>
-          <span style="min-width:60px;text-align:right">Mat Cost</span>
-        </span>
-      </div>`;
-      let typeSheets=0,typeSqft=0,typeLab=0,typeMat=0;
-      entries.forEach(l=>{
-        const li=t.lengths.indexOf(l);
-        const lLabel = t.labels ? t.labels[li] : l+"' sheets";
-        const qty=a.counts[t.key][l];
-        const sf=sheetSqft(t.key,l)*qty;
-        const lc=sf*labRate2;
-        const mc=sf*matRate2;
-        typeSheets+=qty; typeSqft+=sf; typeLab+=lc; typeMat+=mc;
-        if (DW_FIVET_KEYS.has(t.key)) dwAreaFivetSqft+=sf; else dwAreaPlainSqft+=sf;
-        html+=`<div class="modal-row"><span>${lLabel}</span>
+    // Rate tier groupings — one subtotal per group
+    const PLAIN_KEYS  = new Set(['pl48','pl54','cd48','wr48','flex48','dens48']);
+    const FIVET_KEYS  = DW_FIVET_KEYS; // fg48,fg54,dl48,tc48,hdl48,dens58,wr58
+    const DUROCK_KEYS = DW_DUROCK_KEYS; // durock48
+
+    const matKeyMap2 = {
+      pl48:'mat_dw_half_plain', pl54:'mat_dw_half_plain', cd48:'mat_dw_half_cd',
+      dens48:'mat_dw_half_dens', dens58:'mat_dw_fivet_dens',
+      wr48:'mat_dw_half_wr', wr58:'mat_dw_58_wr',
+      fg48:'mat_dw_fivet_tx', dl48:'mat_dw_fivet_tx', fg54:'mat_dw_fivet_tx',
+      durock48:'mat_dw_durock', flex48:'mat_dw_quarter_flex',
+      tc48:'mat_dw_half_tc', hdl48:'mat_dw_half_plain'
+    };
+
+    const renderDwGroup = (types, labRate, groupLabel) => {
+      const activeTypes = types.filter(t => !t.isItems && t.lengths.filter(l => a.counts[t.key]?.[l] > 0).length > 0);
+      if (!activeTypes.length) return;
+
+      let groupSheets = 0, groupSqft = 0, groupLab = 0, groupMat = 0;
+
+      activeTypes.forEach(t => {
+        const entries = t.lengths.filter(l => a.counts[t.key][l] > 0);
+        const matRate2 = gMatPrices[matKeyMap2[t.key]] || 0;
+
+        // Type header (name only, no columns — they show at row level)
+        html += `<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
+          <span>${t.fullName}</span>
           <span style="display:flex;gap:10px">
-            <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${qty}</span>
-            <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${sf>0?sf:''}</span>
-            <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${lc>0?fmtC(lc):''}</span>
-            <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc>0?fmtC(mc):''}</span>
+            <span style="min-width:32px;text-align:right">Sheets</span>
+            <span style="min-width:44px;text-align:right">Sq Ft</span>
+            <span style="min-width:60px;text-align:right">Lab Cost</span>
+            <span style="min-width:60px;text-align:right">Mat Cost</span>
           </span>
         </div>`;
+
+        entries.forEach(l => {
+          const li = t.lengths.indexOf(l);
+          const lLabel = t.labels ? t.labels[li] : l + "' sheets";
+          const qty = a.counts[t.key][l];
+          const sf = sheetSqft(t.key, l) * qty;
+          const lc = sf * labRate;
+          const mc = sf * matRate2;
+          groupSheets += qty; groupSqft += sf; groupLab += lc; groupMat += mc;
+          if (FIVET_KEYS.has(t.key)) dwAreaFivetSqft += sf; else dwAreaPlainSqft += sf;
+          html += `<div class="modal-row"><span>${lLabel}</span>
+            <span style="display:flex;gap:10px">
+              <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${qty}</span>
+              <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${sf > 0 ? sf : ''}</span>
+              <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${lc > 0 ? fmtC(lc) : ''}</span>
+              <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc > 0 ? fmtC(mc) : ''}</span>
+            </span>
+          </div>`;
+        });
       });
-      html+=`<div class="modal-row" style="font-weight:500;color:var(--text);border-bottom:1.5px solid var(--border-md)">
+
+      // One combined subtotal for the whole group
+      html += `<div class="modal-row" style="font-weight:500;color:var(--text);border-bottom:1.5px solid var(--border-md)">
         <span>Totals</span>
         <span style="display:flex;gap:10px">
-          <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSheets}</span>
-          <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${typeSqft>0?typeSqft:''}</span>
-          <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${typeLab>0?fmtC(typeLab):''}</span>
-          <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${typeMat>0?fmtC(typeMat):''}</span>
+          <span style="min-width:32px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${groupSheets}</span>
+          <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${groupSqft > 0 ? groupSqft : ''}</span>
+          <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${groupLab > 0 ? fmtC(groupLab) : ''}</span>
+          <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${groupMat > 0 ? fmtC(groupMat) : ''}</span>
         </span>
       </div>`;
-      html+=`<div style="height:8px"></div>`;
-    });
+      html += `<div style="height:8px"></div>`;
+    };
+
+    // Plain rate group: ½" Plain, CD, WR, Flex, Denshield ½"
+    renderDwGroup(
+      DRYWALL_TYPES.filter(t => PLAIN_KEYS.has(t.key)),
+      dwBoardRate, 'Plain'
+    );
+
+    // Fireguard rate group: Type X, DL, Type C, ½" DL, ⅝" WR, ⅝" Denshield
+    renderDwGroup(
+      DRYWALL_TYPES.filter(t => FIVET_KEYS.has(t.key)),
+      dwFivetRate, 'Fireguard'
+    );
+
+    // Durock — own rate, own subtotal
+    renderDwGroup(
+      DRYWALL_TYPES.filter(t => DUROCK_KEYS.has(t.key)),
+      dwDurockRate, 'Durock'
+    );
 
     // Townhouse / Stack Premium — shown here in drywall section (it's a labour item charged to boarder)
     if (!dwIsHR) {
@@ -5373,7 +5590,7 @@ function openMatPricesSheet(tab) {
   const body = document.getElementById('matprices-body');
 
   // ── Tab bar ──
-  let out = `<div style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg);border-radius:10px;padding:4px;flex-wrap:wrap">`;
+  let out = `<div id="mat-prices-tab-bar" style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg);border-radius:10px;padding:4px;flex-wrap:wrap">`;
   MAT_TABS.forEach(t => {
     const active = t.id === gMatTab;
     out += `<button onclick="switchMatTab('${t.id}')" style="flex:1;min-width:60px;padding:8px 4px;font-size:12px;font-family:inherit;font-weight:${active?'700':'500'};border:none;border-radius:8px;cursor:pointer;background:${active?'var(--surface)':'transparent'};color:${active?'var(--text)':'var(--muted)'};box-shadow:${active?'0 1px 4px rgba(0,0,0,0.10)':'none'};transition:all 0.12s">${t.label}</button>`;
@@ -5398,6 +5615,10 @@ function openMatPricesSheet(tab) {
 
   body.innerHTML = out;
   document.getElementById('matprices-overlay').classList.add('open');
+  // If tutorial is waiting for mat prices sheet to open, advance
+  if (tutActive && tutSteps[tutStep]?.waitForMatPrices) {
+    setTimeout(() => tutNext(), 400);
+  }
 }
 
 function importMatPrices(input) {
