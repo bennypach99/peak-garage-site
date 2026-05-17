@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.48</title>
+  <title>Drywall Tally v14.49</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.48 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.49 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3433,7 +3433,8 @@ function showReport() {
       html+=`<div style="height:8px"></div>`;
     }
 
-    // Insulation
+    // Insulation — only shown when Insulation task is selected
+    if (j.details?.tasks?.insulation) {
     const insIsHR = (J()?.details?.rate || 'lowrise') === 'highrise';
     const insLabRate = insIsHR
       ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
@@ -3571,7 +3572,8 @@ function showReport() {
         }
         html+=`<div style="height:8px"></div>`;
       }
-    });
+    }); // end INSULATION_TYPES.forEach (report display)
+    } // end if tasks.insulation
 
     // Steel — show qty and mat cost per item (stud/track = qty × length ft × $/lf)
     const STEEL_MAT_KEYS = {
@@ -3900,6 +3902,7 @@ function showReport() {
     let laborCost = 0;
     j.areas.forEach(a => {
       // Boarding labor: use area ceiling height to look up correct rate bracket
+      const hasDrywall = j.details?.tasks?.drywall !== false;
       const ceilH = a.height || "9'";
       const isHR = (J()?.details?.rate || 'lowrise') === 'highrise';
       const boardRate = (() => {
@@ -3934,7 +3937,9 @@ function showReport() {
       // Durock at its own CBA rate (replacement, not additive)
       const durockRate2 = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
       laborCost += durockLaborSqft * durockRate2;
-      // Insulation labor
+      // Insulation labor — only when Insulation task is selected
+      const hasInsulation = j.details?.tasks?.insulation !== false;
+      if (hasInsulation) {
       INSULATION_TYPES.forEach(t => {
         if(t.kind==='blown'||t.kind==='foam') return;
         if(t.kind==='blanket') {
@@ -3969,16 +3974,18 @@ function showReport() {
             }
           });
         });
-      });
+      }); // end INSULATION_TYPES.forEach (labor)
+      } // end if (hasInsulation)
+
       // ════════════════════════════════════════════════════════════
       // UNION DUES & ENERGY STAR — per TOS spreadsheet rules
       // ════════════════════════════════════════════════════════════
 
       // ── Insulation gross (batt/roxul only — NOT blanket, blown-in, foam) ──
-      // Energy Star also applies only to pink/roxul sqft × %
       let insGross = 0;
       let energyStarSqft = 0;
-      INSULATION_TYPES.forEach(t => {
+      // Energy Star also applies only to pink/roxul sqft × %
+      if (hasInsulation) INSULATION_TYPES.forEach(t => {
         if (t.kind === 'blown' || t.kind === 'foam' || t.kind === 'blanket') return;
         const rvals = t.rvals || INSULATION_RVALS;
         const isEligible = t.key === 'pink' || t.key === 'roxul';
@@ -4016,6 +4023,7 @@ function showReport() {
       totalEnergyStar += energyStarCost;
 
       // ── Boarding gross (plain + fireguard + durock) ──
+      if (!hasDrywall) { plainSqft = 0; fivetSqft2 = 0; durockLaborSqft = 0; }
       const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate + durockLaborSqft * durockRate2;
 
       // ── Townhouse / Stack premium (LR only, applied to all boarding sqft) ──
