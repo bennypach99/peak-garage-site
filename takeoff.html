@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.37</title>
+  <title>Drywall Tally v14.35</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.37 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.35 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12)">
@@ -3327,8 +3327,6 @@ function showReport() {
       return dwBoardRate + FIVET_PREMIUM[gRateIdx];
     })();
     const DW_FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58','wr58']);
-    const DW_DUROCK_KEYS = new Set(['durock48']);
-    const dwDurockRate = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
     const fmtC = v => '$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
 
     // Track totals for townhouse premium display
@@ -3339,7 +3337,7 @@ function showReport() {
       if(!entries.length)return;
       const matKeyMap2={pl48:'mat_dw_half_plain',pl54:'mat_dw_half_plain',cd48:'mat_dw_half_cd',dens48:'mat_dw_half_dens',dens58:'mat_dw_fivet_dens',wr48:'mat_dw_half_wr',wr58:'mat_dw_58_wr',fg48:'mat_dw_fivet_tx',dl48:'mat_dw_fivet_tx',fg54:'mat_dw_fivet_tx',durock48:'mat_dw_durock',flex48:'mat_dw_quarter_flex',tc48:'mat_dw_half_tc',hdl48:'mat_dw_half_plain'};
       const matRate2 = gMatPrices[matKeyMap2[t.key]] || 0;
-      const labRate2 = DW_FIVET_KEYS.has(t.key) ? dwFivetRate : DW_DUROCK_KEYS.has(t.key) ? dwDurockRate : dwBoardRate;
+      const labRate2 = DW_FIVET_KEYS.has(t.key) ? dwFivetRate : dwBoardRate;
       html+=`<div class="modal-type-head" style="color:${t.color};display:flex;justify-content:space-between;padding-right:4px">
         <span>${t.fullName}</span>
         <span style="display:flex;gap:10px">
@@ -3433,8 +3431,7 @@ function showReport() {
       html+=`<div style="height:8px"></div>`;
     }
 
-    // Insulation — only shown when Insulation task is selected
-    if (j.details?.tasks?.insulation) {
+    // Insulation
     const insIsHR = (J()?.details?.rate || 'lowrise') === 'highrise';
     const insLabRate = insIsHR
       ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
@@ -3572,8 +3569,7 @@ function showReport() {
         }
         html+=`<div style="height:8px"></div>`;
       }
-    }); // end INSULATION_TYPES.forEach (report display)
-    } // end if tasks.insulation
+    });
 
     // Steel — show qty and mat cost per item (stud/track = qty × length ft × $/lf)
     const STEEL_MAT_KEYS = {
@@ -3902,7 +3898,6 @@ function showReport() {
     let laborCost = 0;
     j.areas.forEach(a => {
       // Boarding labor: use area ceiling height to look up correct rate bracket
-      const hasDrywall = j.details?.tasks?.drywall !== false;
       const ceilH = a.height || "9'";
       const isHR = (J()?.details?.rate || 'lowrise') === 'highrise';
       const boardRate = (() => {
@@ -3937,8 +3932,7 @@ function showReport() {
       // Durock at its own CBA rate (replacement, not additive)
       const durockRate2 = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
       laborCost += durockLaborSqft * durockRate2;
-      // Insulation labor — only when Insulation task is selected
-      if (hasInsulation) {
+      // Insulation labor
       INSULATION_TYPES.forEach(t => {
         if(t.kind==='blown'||t.kind==='foam') return;
         if(t.kind==='blanket') {
@@ -4018,11 +4012,8 @@ function showReport() {
       const energyStarCost = (j.details?.energyStar && energyStarSqft > 0) ? energyStarSqft * energyStarRate : 0;
       laborCost += energyStarCost;
       totalEnergyStar += energyStarCost;
-      } // end if (hasInsulation)
 
       // ── Boarding gross (plain + fireguard + durock) ──
-      // Zero boarding sqft if Drywall task not selected
-      if (!hasDrywall) { plainSqft = 0; fivetSqft2 = 0; durockLaborSqft = 0; }
       const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate + durockLaborSqft * durockRate2;
 
       // ── Townhouse / Stack premium (LR only, applied to all boarding sqft) ──
