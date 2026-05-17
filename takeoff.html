@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.54</title>
+  <title>Drywall Tally v14.55</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -470,7 +470,7 @@
         </svg>
       </div>
       <div class="job-name-display" id="job-name-display" >Job 1</div>
-      <div onclick="openDetails()" style="flex-shrink:0;cursor:pointer;display:flex;align-items:center;color:#7c3aed;opacity:0.7;padding:2px 0 0 2px">
+      <div id="job-pencil-btn" onclick="openDetails()" style="flex-shrink:0;cursor:pointer;display:flex;align-items:center;color:#7c3aed;opacity:0.7;padding:2px 0 0 2px">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
           <path d="M9.5 1.5L12.5 4.5L4.5 12.5H1.5V9.5L9.5 1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M8 3L11 6" stroke="currentColor" stroke-width="1.5"/>
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.54 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.55 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -875,14 +875,14 @@ const TUTORIALS = [
     steps: [
       {
         title: 'Menu / Job Switcher',
-        body: 'Tap the hamburger menu (☰) to open the side drawer. From here you can switch jobs, create new ones, and access settings.',
+        body: 'Tap the hamburger menu (☰) to open the side drawer. This is where you create new jobs. You can also find the Labor Prices, Material Prices, My Info, and Tutorials buttons.',
         target: '.menu-btn',
         arrow: 'down',
       },
       {
         title: 'Job Name',
-        body: 'Your current job name is shown here. Tap it to rename the job directly.',
-        target: '#job-name-display',
+        body: 'This is the currently selected job. Tap the pencil to edit the job name and all other job details.',
+        targets: ['#job-name-display', '#job-pencil-btn'],
         arrow: 'down',
       },
       {
@@ -898,8 +898,14 @@ const TUTORIALS = [
         arrow: 'up',
       },
       {
+        title: 'Material Type',
+        body: 'These sub-tabs let you switch between different material types within the selected category — for example, Regular, Fireguard, Special, and Extras under Drywall.',
+        target: '#type-bar-wrap',
+        arrow: 'up',
+      },
+      {
         title: 'Report & Export',
-        body: 'When you\'re done tallying, tap "Report" to see a full summary and export it as a PDF.',
+        body: 'When you\'re done tallying, tap "Report" to see a full summary and export it as a file.',
         target: '.report-btn',
         arrow: 'up',
       },
