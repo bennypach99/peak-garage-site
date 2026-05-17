@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.91</title>
+  <title>Drywall Tally v15.00</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.91 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.00 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -612,10 +612,15 @@
         <div class="field-label">Ceiling Texture</div>
         <select class="field-select" id="af-texture">
           <option value="">Select texture…</option>
-          <option>Smooth</option><option>Orange Peel</option><option>Knockdown</option>
-          <option>Popcorn</option><option>Skip Trowel</option><option>Rosebud</option>
-          <option>Sand Finish</option><option>Other</option>
+          <option value="smooth">Smooth (Level 5)</option>
+          <option value="spray">Texture Spray</option>
+          <option value="knockdown">Knockdown Spray</option>
+          <option value="none">No Ceiling Premium</option>
         </select>
+      </div>
+      <div class="field-group" style="margin-top:12px">
+        <div class="field-label">Area Notes</div>
+        <textarea class="field-input" id="af-notes" rows="2" placeholder="e.g. Orange peel, skip trowel, excluded rooms…" style="resize:none;line-height:1.5"></textarea>
       </div>
     </div>
     <div class="sheet-footer" id="area-form-footer" style="display:flex;gap:10px">
@@ -2018,11 +2023,13 @@ function blankCounts() {
   CORNER_BEAD_ITEMS.forEach(item => c['cornerBead'][item] = 0);
   c['mudExtras'] = {};
   MUD_EXTRAS_ITEMS.forEach(item => c['mudExtras'][item] = 0);
+  // Ceilings sub-tab: L×W entries array + flat-rate counters
+  c['ceilings'] = { entries: [], cathedral: 0, waffle: 0, tray: 0 };
   return c;
 }
 
-function makeArea(name, id, height, texture) {
-  return { id, name, height: height||'', texture: texture||'', counts: blankCounts() };
+function makeArea(name, id, height, texture, notes='') {
+  return { id, name, height: height||'', texture: texture||'', notes: notes||'', counts: blankCounts() };
 }
 function makeJob(name, id) {
   const now = new Date().toISOString();
@@ -2135,6 +2142,7 @@ function openAreaForm(editId) {
     document.getElementById('af-name').value = a.name;
     document.getElementById('af-height').value = a.height;
     document.getElementById('af-texture').value = a.texture;
+    document.getElementById('af-notes').value = a.notes || '';
     // Add delete button
     const delBtn = document.createElement('button');
     delBtn.id = 'area-delete-btn';
@@ -2147,6 +2155,7 @@ function openAreaForm(editId) {
     document.getElementById('af-name').value = '';
     document.getElementById('af-height').value = '';
     document.getElementById('af-texture').value = '';
+    document.getElementById('af-notes').value = '';
   }
   document.getElementById('area-form-overlay').classList.add('open');
   setTimeout(() => document.getElementById('af-name').focus(), 300);
@@ -2173,6 +2182,7 @@ function saveAreaForm() {
   let name    = document.getElementById('af-name').value.trim();
   const height  = document.getElementById('af-height').value;
   const texture = document.getElementById('af-texture').value;
+  const notes   = document.getElementById('af-notes').value.trim();
   if (!height) { document.getElementById('af-height').focus(); return; }
   // Auto-name if blank
   if (!name) {
@@ -2187,10 +2197,10 @@ function saveAreaForm() {
   const j = J();
   if (areaFormEditId) {
     const a = j.areas.find(x=>x.id===areaFormEditId);
-    a.name=name; a.height=height; a.texture=texture;
+    a.name=name; a.height=height; a.texture=texture; a.notes=notes;
   } else {
     j.areaCounter++;
-    j.areas.push(makeArea(name, j.areaCounter, height, texture));
+    j.areas.push(makeArea(name, j.areaCounter, height, texture, notes));
     curAreaId = j.areaCounter;
     curType = 0;
   }
@@ -2364,7 +2374,7 @@ function renderTypeTabs() {
   } else if (curCat === 'mud') {
     wrap.style.display = '';
     document.getElementById('type-tabs').innerHTML = [
-      { label: 'Mud', idx: 0 }, { label: 'Extras', idx: 1 }
+      { label: 'Mud', idx: 0 }, { label: 'Extras', idx: 1 }, { label: 'Ceilings', idx: 2 }
     ].map(({label, idx}) => {
       const active = idx === curMudSubTab;
       const col = '#92400e';
@@ -2629,7 +2639,8 @@ function renderTally() {
   }
   if (curCat === 'mud') {
     if (curMudSubTab === 0) { renderCatItems('mud', MUD_ITEMS, '#92400e', 'Mud'); return; }
-    renderCatItems('mudExtras', MUD_EXTRAS_ITEMS, '#92400e', 'Extras');
+    if (curMudSubTab === 1) { renderCatItems('mudExtras', MUD_EXTRAS_ITEMS, '#92400e', 'Extras'); return; }
+    renderCeilings();
     return;
   }
   if (curCat === 'cornerBead') { renderCornerBead(); return; }
@@ -2671,6 +2682,92 @@ function renderSteelGrouped(st) {
 }
 
 /* ── Corner Bead grouped renderer ── */
+function renderCeilings() {
+  const col = '#92400e';
+  const a = A();
+  if (!a) { document.getElementById('tally-area').innerHTML = '<div class="no-area-msg">No area selected.</div>'; return; }
+  const ceil = a.counts['ceilings'];
+  const entries = ceil.entries || [];
+  const totalSqft = entries.reduce((s, e) => s + (e.l * e.w), 0);
+
+  // Texture label for display
+  const texMap = { smooth: 'Smooth (Level 5)', spray: 'Texture Spray', knockdown: 'Knockdown Spray', none: 'No Ceiling Premium' };
+  const texLabel = texMap[a.texture] || a.texture || 'No texture set';
+
+  let html = `<div style="padding:16px 12px 8px">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${col};margin-bottom:10px">Ceilings</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Texture: <strong style="color:var(--text)">${texLabel}</strong>${a.notes ? ` — <em>${a.notes}</em>` : ''}</div>
+
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">L × W Entries</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:center;margin-bottom:8px">
+      <input id="ceil-l" type="number" min="0" step="0.1" placeholder="Length (ft)" style="border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;font-family:inherit;background:var(--surface)">
+      <input id="ceil-w" type="number" min="0" step="0.1" placeholder="Width (ft)" style="border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;font-family:inherit;background:var(--surface)">
+      <button onclick="addCeilEntry()" style="padding:10px 14px;background:${col};color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Add</button>
+    </div>`;
+
+  if (entries.length) {
+    html += `<div style="margin-bottom:12px">`;
+    entries.forEach((e, i) => {
+      const sqft = e.l * e.w;
+      html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px">
+        <span>${e.l} × ${e.w} ft</span>
+        <span style="display:flex;align-items:center;gap:12px">
+          <span style="color:var(--muted)">${sqft.toFixed(1)} ft²</span>
+          <button onclick="removeCeilEntry(${i})" style="width:22px;height:22px;border-radius:50%;border:none;background:rgba(0,0,0,0.08);color:var(--muted);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+        </span>
+      </div>`;
+    });
+    html += `</div>
+    <div style="display:flex;justify-content:space-between;font-weight:600;font-size:14px;padding:8px 0;border-bottom:2px solid ${col};margin-bottom:16px">
+      <span>Total Ceiling</span><span>${totalSqft.toFixed(1)} ft²</span>
+    </div>`;
+  }
+
+  // Flat-rate counters
+  html += `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px;margin-top:4px">Flat-Rate Items</div>`;
+  [
+    { key: 'cathedral', label: 'Cathedral Ceiling (each)' },
+    { key: 'waffle',    label: 'Waffle Ceiling (per room)' },
+    { key: 'tray',      label: 'Tray Ceiling (per ceiling)' },
+  ].forEach(item => {
+    const qty = ceil[item.key] || 0;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:14px">${item.label}</span>
+      <div style="display:flex;align-items:center;gap:0">
+        <button onclick="adjustCeilFlat('${item.key}',-1)" style="width:36px;height:36px;border:1px solid var(--border);border-radius:8px 0 0 8px;background:var(--surface);font-size:18px;cursor:pointer;color:var(--text)">−</button>
+        <div style="width:40px;text-align:center;font-size:15px;font-weight:600;border-top:1px solid var(--border);border-bottom:1px solid var(--border);height:36px;line-height:36px;background:var(--surface)">${qty}</div>
+        <button onclick="adjustCeilFlat('${item.key}',1)" style="width:36px;height:36px;border:1px solid var(--border);border-radius:0 8px 8px 0;background:var(--surface);font-size:18px;cursor:pointer;color:var(--text)">+</button>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  document.getElementById('tally-area').innerHTML = html;
+}
+
+function addCeilEntry() {
+  const l = parseFloat(document.getElementById('ceil-l').value);
+  const w = parseFloat(document.getElementById('ceil-w').value);
+  if (!l || !w || l <= 0 || w <= 0) return;
+  A().counts['ceilings'].entries.push({ l, w });
+  saveState();
+  renderCeilings();
+}
+
+function removeCeilEntry(idx) {
+  A().counts['ceilings'].entries.splice(idx, 1);
+  saveState();
+  renderCeilings();
+}
+
+function adjustCeilFlat(key, delta) {
+  const c = A().counts['ceilings'];
+  c[key] = Math.max(0, (c[key] || 0) + delta);
+  saveState();
+  renderCeilings();
+}
+
+
 function renderCornerBead() {
   const area = document.getElementById('tally-area');
   if (!A()) {
@@ -4232,6 +4329,45 @@ function showReport() {
       });
       html+=`<div style="height:8px"></div>`;
     }
+
+    // Ceilings — show measurements and premium
+    const texMap = { smooth: 'Smooth (Level 5)', spray: 'Texture Spray', knockdown: 'Knockdown Spray' };
+    const ceilEntries = a.counts['ceilings']?.entries || [];
+    const ceilSqft = ceilEntries.reduce((s, e) => s + (e.l * e.w), 0);
+    const ceilCts = a.counts['ceilings'] || {};
+    const hasCeil = ceilSqft > 0 || ceilCts.cathedral > 0 || ceilCts.waffle > 0 || ceilCts.tray > 0;
+    if (hasCeil) {
+      const aIsHR = (J()?.details?.rate || 'lowrise') === 'highrise';
+      html += `<div class="modal-type-head" style="color:#92400e">Ceilings</div>`;
+      if (ceilSqft > 0) {
+        ceilEntries.forEach(e => {
+          html += `<div class="modal-row"><span>${e.l} × ${e.w} ft</span><span style="font-family:'DM Mono',monospace;font-weight:500">${(e.l*e.w).toFixed(1)} ft²</span></div>`;
+        });
+        html += `<div class="modal-row" style="font-weight:500"><span>Total Ceiling</span><span style="font-family:'DM Mono',monospace;font-weight:500">${ceilSqft.toFixed(1)} ft²</span></div>`;
+        if (a.texture && a.texture !== 'none') {
+          let prem = 0, premKey = '';
+          if (a.texture === 'smooth')    { premKey = aIsHR ? 'ceil_smooth_hr'    : 'ceil_smooth_lr';    prem = gPrices[premKey]||( aIsHR?375:450); }
+          if (a.texture === 'spray')     { premKey = aIsHR ? 'ceil_spray_hr'     : 'ceil_spray_lr';     prem = gPrices[premKey]||([321.79,328.23,334.79][gRateIdx]); }
+          if (a.texture === 'knockdown') { premKey = aIsHR ? 'ceil_knockdown_hr' : 'ceil_knockdown_lr'; prem = gPrices[premKey]||([552.40,563.45,574.72][gRateIdx]); }
+          const premAmt = (ceilSqft / 1000) * prem;
+          html += `<div class="modal-row" style="color:#1d4ed8"><span>${texMap[a.texture]||a.texture} Premium</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(premAmt)}</span></div>`;
+        }
+      }
+      if (ceilCts.cathedral > 0) {
+        const rate = gPrices[aIsHR?'ceil_cathedral_hr':'ceil_cathedral_lr']||[216.90,221.24,225.67][gRateIdx];
+        html += `<div class="modal-row"><span>Cathedral Ceilings <span style="font-size:11px;color:var(--muted)">(×${ceilCts.cathedral})</span></span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(ceilCts.cathedral*rate)}</span></div>`;
+      }
+      if (!aIsHR && ceilCts.waffle > 0) {
+        const rate = gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx];
+        html += `<div class="modal-row"><span>Waffle Ceilings <span style="font-size:11px;color:var(--muted)">(×${ceilCts.waffle})</span></span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(ceilCts.waffle*rate)}</span></div>`;
+      }
+      if (!aIsHR && ceilCts.tray > 0) {
+        const rate = gPrices['ceil_tray']||[76.50,78.03,79.59][gRateIdx];
+        html += `<div class="modal-row"><span>Tray Ceilings <span style="font-size:11px;color:var(--muted)">(×${ceilCts.tray})</span></span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(ceilCts.tray*rate)}</span></div>`;
+      }
+      if (a.notes) html += `<div class="modal-row" style="color:var(--muted);font-style:italic"><span>Notes</span><span>${a.notes}</span></div>`;
+      html += `<div style="height:8px"></div>`;
+    }
   });
 
 
@@ -4576,6 +4712,43 @@ function showReport() {
         tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
         laborCost += (gPrices['taping_extra_2'] || 0);
         laborCost += tapingGross + cbGross + tapingExtras;
+
+        // ── Ceiling premiums (based on area texture and manually entered ceiling sqft) ──
+        const ceilEntries = a.counts['ceilings']?.entries || [];
+        const ceilSqft = ceilEntries.reduce((s, e) => s + (e.l * e.w), 0);
+        if (ceilSqft > 0 && a.texture && a.texture !== 'none') {
+          let ceilPremRate = 0;
+          if (a.texture === 'smooth') {
+            const key = isHR ? 'ceil_smooth_hr' : 'ceil_smooth_lr';
+            const def = isHR ? 375 : 450;
+            ceilPremRate = gPrices[key] > 0 ? gPrices[key] : def;
+          } else if (a.texture === 'spray') {
+            const key = isHR ? 'ceil_spray_hr' : 'ceil_spray_lr';
+            const def = isHR ? [321.79,328.23,334.79][gRateIdx] : [350,357,364.14][gRateIdx];
+            ceilPremRate = gPrices[key] > 0 ? gPrices[key] : def;
+          } else if (a.texture === 'knockdown') {
+            const key = isHR ? 'ceil_knockdown_hr' : 'ceil_knockdown_lr';
+            const def = isHR ? [552.40,563.45,574.72][gRateIdx] : [566.11,577.43,588.98][gRateIdx];
+            ceilPremRate = gPrices[key] > 0 ? gPrices[key] : def;
+          }
+          laborCost += (ceilSqft / 1000) * ceilPremRate;
+        }
+
+        // ── Ceiling flat-rate items ──
+        const ceilCounts = a.counts['ceilings'] || {};
+        if (ceilCounts.cathedral > 0) {
+          const key = isHR ? 'ceil_cathedral_hr' : 'ceil_cathedral_lr';
+          const def = [216.90, 221.24, 225.67][gRateIdx];
+          laborCost += ceilCounts.cathedral * (gPrices[key] > 0 ? gPrices[key] : def);
+        }
+        if (!isHR && ceilCounts.waffle > 0) {
+          const def = [76.50, 78.03, 79.59][gRateIdx];
+          laborCost += ceilCounts.waffle * (gPrices['ceil_waffle'] > 0 ? gPrices['ceil_waffle'] : def);
+        }
+        if (!isHR && ceilCounts.tray > 0) {
+          const def = [76.50, 78.03, 79.59][gRateIdx];
+          laborCost += ceilCounts.tray * (gPrices['ceil_tray'] > 0 ? gPrices['ceil_tray'] : def);
+        }
       }
 
       // ── Material deductions — subs buy consumables from contractor ──
@@ -4981,6 +5154,18 @@ const PRICE_FIELDS = [
   { key:'cb_lr_bull',  label:'LR Bullnose ($/lf)',         rates:[0.78, 0.79, 0.81], col:'lr', group:'Corner Beads', priceTab:'TP' },
   { key:'cb_hr_fill',  label:'HR Regular filled ($/lf)',  rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
   { key:'cb_hr_bull',  label:'HR Bullnose ($/lf)',         rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
+  // ── Ceiling Premiums (CBA Art. 20.01 / 20.02) ──
+  { key:'ceil_smooth_lr',    label:'LR Smooth Ceiling ($/MSF)',       rates:[450.00, 450.00, 450.00], col:'lr', group:'Ceiling Premiums', priceTab:'TP' },
+  { key:'ceil_smooth_hr',    label:'HR Smooth Ceiling ($/MSF)',       rates:[375.00, 375.00, 375.00], col:'hr', group:'Ceiling Premiums', priceTab:'TP' },
+  { key:'ceil_spray_lr',     label:'LR Texture Spray ($/MSF)',        rates:[350.00, 357.00, 364.14], col:'lr', group:'Ceiling Premiums', priceTab:'TP' },
+  { key:'ceil_spray_hr',     label:'HR Texture Spray ($/MSF)',        rates:[321.79, 328.23, 334.79], col:'hr', group:'Ceiling Premiums', priceTab:'TP' },
+  { key:'ceil_knockdown_lr', label:'LR Knockdown Spray ($/MSF)',      rates:[566.11, 577.43, 588.98], col:'lr', group:'Ceiling Premiums', priceTab:'TP' },
+  { key:'ceil_knockdown_hr', label:'HR Knockdown Spray ($/MSF)',      rates:[552.40, 563.45, 574.72], col:'hr', group:'Ceiling Premiums', priceTab:'TP' },
+  // ── Ceiling Flat Rates (CBA Art. 20.02) ──
+  { key:'ceil_cathedral_lr', label:'LR Cathedral Ceiling (each)',     rates:[216.90, 221.24, 225.67], col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
+  { key:'ceil_cathedral_hr', label:'HR Cathedral Ceiling (each)',     rates:[216.90, 221.24, 225.67], col:'hr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
+  { key:'ceil_waffle',       label:'Waffle Ceiling (per room)',       rates:[76.50,  78.03,  79.59],  col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
+  { key:'ceil_tray',         label:'Tray Ceiling (per ceiling)',      rates:[76.50,  78.03,  79.59],  col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   // ── Corner Beads — Boarder install rate (CBA Art. 20.01(j)/20.02(l)) ──
   { key:'cb_install',  label:'Bead install — boarder ($/lf)', rates:[0.26, 0.26, 0.27], col:'lr', group:'Corner Beads', priceTab:'DW' },
   // ── Extras (Local 675 boarder CBA rates) ──
