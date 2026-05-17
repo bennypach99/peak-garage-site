@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.38</title>
+  <title>Drywall Tally v14.39</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.38 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.39 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4834,7 +4834,7 @@ function applyInputHighlight(el, isCustom) {
 }
 
 function updateYearBtns() {
-  RATE_DATES.forEach((d, i) => {
+  RATE_DATES_CBA.forEach((d, i) => {
     const b = document.getElementById('year-btn-'+i);
     if (!b) return;
     const isActive = !gRateCustom && i === gRateIdx;
@@ -4894,7 +4894,7 @@ function openPricesSheet(tab) {
   out += `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Union Rate Year</div>
     <div class="year-btn-row">`;
-  RATE_DATES.forEach((d, i) => {
+  RATE_DATES_CBA.forEach((d, i) => {
     out += `<button id="year-btn-${i}" class="year-btn ${(!gRateCustom && i===gRateIdx)?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
   });
   out += `<button id="year-btn-custom" class="year-btn ${gRateCustom?'active':'inactive'}" style="${gRateCustom?'background:#d97706;color:#fff;border-color:#d97706':''}" onclick="">Custom</button>`;
