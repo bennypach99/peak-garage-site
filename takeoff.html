@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.44</title>
+  <title>Drywall Tally v14.45</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -455,6 +455,7 @@
     Continue with Google
   </button>
   <div class="auth-error" id="auth-error"></div>
+  <button onclick="initFallback()" style="background:transparent;border:none;color:rgba(255,255,255,0.45);font-size:13px;font-family:inherit;cursor:pointer;padding:4px;text-decoration:underline;">Use without signing in</button>
   <div class="auth-terms">Your data is stored privately in Firebase under your Google account. No one else can access it.</div>
 </div>
 
@@ -564,7 +565,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.44 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.45 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -5502,7 +5503,7 @@ async function initFirebase() {
       } else {
         // First auth check — wait 2s for session restore before giving up
         setTimeout(() => {
-          if (!fbUser) {
+          if (!fbUser && useFirebase) {
             clearLocalState();
             showAuthScreen();
           }
