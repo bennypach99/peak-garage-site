@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.67</title>
+  <title>Drywall Tally v14.77</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.67 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.77 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -653,7 +653,7 @@
       <div style="font-size:11px;color:var(--muted);text-align:center;padding:0 4px 10px;line-height:1.5">
         ⚠️ Please verify all prices in the Prices sheet before exporting.
       </div>
-      <button class="sheet-save-btn" style="background:#dc2626;display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportToPDF()">
+      <button id="export-pdf-btn" class="sheet-save-btn" style="background:#dc2626;display:flex;align-items:center;justify-content:center;gap:10px" onclick="exportToPDF()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
           <rect x="3" y="3" width="18" height="18" rx="2" fill="white" fill-opacity="0.2"/>
           <path d="M7 7h6M7 11h10M7 15h10" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
@@ -930,7 +930,7 @@ const TUTORIALS = [
         body: 'Give this area a name like "Main Floor", "Basement", or "2nd Floor". Leave it blank to auto-name it.',
         target: '#af-name',
         targetParent: true,
-        arrow: 'down',
+        arrow: 'up',
         noFocus: true,
       },
       {
@@ -938,7 +938,7 @@ const TUTORIALS = [
         body: 'Select the ceiling height for this area. This sets the labour rate bracket for boarding.',
         target: '#af-height',
         targetParent: true,
-        arrow: 'down',
+        arrow: 'up',
         noFocus: true,
         validateBeforeNext: () => {
           const el = document.getElementById('af-height');
@@ -951,7 +951,7 @@ const TUTORIALS = [
         body: 'Select the ceiling texture. This will appear on your report as a reference.',
         target: '#af-texture',
         targetParent: true,
-        arrow: 'down',
+        arrow: 'up',
         noFocus: true,
       },
       {
@@ -978,7 +978,7 @@ const TUTORIALS = [
       },
       {
         title: 'Rename an Area',
-        body: 'Tap the pencil ✏️ icon next to the area name to rename it or change its ceiling height and texture.',
+        body: 'Tap the pencil ✏️ icon next to the area name to rename it, delete it or change its ceiling height and texture.',
         target: '#area-tabs',
         arrow: 'down',
       },
@@ -1010,6 +1010,26 @@ const TUTORIALS = [
         arrow: 'up',
       },
       {
+        title: 'Material Sub-Tabs',
+        body: 'These tabs switch between material sub-types within the group — for example ½" Plain and ½" CD under Regular.',
+        target: '#type-bar-wrap',
+        arrow: 'up',
+      },
+      {
+        title: 'Sheet Width & Sheet Tally',
+        body: 'The label on the left shows the sheet width (48" or 54"). The subtotal on the right shows the running square footage for that width.',
+        target: '.tally-header',
+        arrow: 'down',
+        scrollTo: '.tally-area',
+      },
+      {
+        title: '54" Sheets',
+        body: 'Wider 54" sheets are tallied separately in their own section below the 48" cards. Each has its own subtotal so you can order the right mix.',
+        target: '#tally-header-54',
+        arrow: 'down',
+        scrollTo: '.tally-area',
+      },
+      {
         title: 'Sheet Length Cards',
         body: 'Each card represents one sheet length (7\', 8\', 9\'…). The big blue number is your count for that length.',
         target: '.sheet-card',
@@ -1018,16 +1038,16 @@ const TUTORIALS = [
       },
       {
         title: 'Tap to Count',
-        body: 'Tap "−" to remove a sheet, "+" to add one. You can also tap the big number directly to type in an exact count.',
+        body: 'Tap "+" or "−" to add or remove one sheet at a time.',
         target: '.sheet-card-controls',
         arrow: 'up',
         scrollTo: '.tally-area',
       },
       {
-        title: 'Subtotal',
-        body: 'The subtotal in the top right shows the total sq ft for the current drywall type in this area.',
-        target: '.tally-header',
-        arrow: 'down',
+        title: 'Exact Count',
+        body: 'Tap the big number directly to type in an exact sheet count.',
+        target: '.sheet-count',
+        arrow: 'up',
         scrollTo: '.tally-area',
       },
     ]
@@ -1040,7 +1060,7 @@ const TUTORIALS = [
     steps: [
       {
         title: 'Totals Strip',
-        body: 'The bottom bar shows a live running total of all sheets tallied across all areas.',
+        body: 'The bottom bar shows a live running total of all material tallied across all areas.',
         target: '.totals-strip',
         arrow: 'up',
       },
@@ -1049,10 +1069,18 @@ const TUTORIALS = [
         body: 'Tap "Report" to open the full summary sheet with all materials broken down by area and type.',
         target: '.report-btn',
         arrow: 'up',
+        waitForReport: true,
+      },
+      {
+        title: 'Export to PDF',
+        body: 'If everything looks good in the report, tap "Export as PDF" to create a file to send or save to your device storage.',
+        target: '#export-pdf-btn',
+        arrow: 'up',
+        onNext: () => { closeModal(); },
       },
       {
         title: 'Set Your Prices First',
-        body: 'Before exporting, open the Menu → Labor Prices and Material Prices to set your rates. These fill in the report automatically.',
+        body: 'Double check the correct material and labor prices before you print the report. Tap on the Prices tutorial to see how to do that.',
         target: '.menu-btn',
         arrow: 'down',
       },
@@ -1205,8 +1233,8 @@ function positionBubble(step, resolvedTarget) {
 
   // Next/Done button
   nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
-  // waitForArea / waitForAreaOpen: hide Next button — tutorial auto-advances
-  if (step.waitForArea || step.waitForAreaOpen) {
+  // waitForArea / waitForAreaOpen / waitForReport: hide Next button — tutorial auto-advances
+  if (step.waitForArea || step.waitForAreaOpen || step.waitForReport) {
     nextBtn.style.display = 'none';
   } else {
     nextBtn.style.display = '';
@@ -1326,6 +1354,11 @@ function tutNext() {
       }, 2000);
       return;
     }
+  }
+
+  // onNext: run a callback before advancing (e.g. close modal)
+  if (step?.onNext) {
+    try { step.onNext(); } catch(e) {}
   }
 
   tutStep++;
@@ -2299,7 +2332,7 @@ function renderTally() {
         </div>
         <div class="sheet-grid">${mkCards(t.key, t.lengths)}</div>
         <div class="type-group-divider" style="margin:8px 0 4px"></div>
-        <div class="tally-header">
+        <div class="tally-header" id="tally-header-54">
           <div class="tally-type-label" style="color:${col}">54" × ${t.fullName.includes('Type X') ? '⅝" Type X' : '½" Plain'}</div>
           <div class="tally-subtotal">Subtotal: <strong>${sub54} ft²</strong></div>
         </div>
@@ -4390,6 +4423,10 @@ function showReport() {
   document.getElementById('modal-body').innerHTML=html;
   document.getElementById('modal-overlay').classList.add('open');
   history.pushState({ modal: 'report' }, '');
+  // If tutorial is waiting for report to open, advance to next step
+  if (tutActive && tutSteps[tutStep]?.waitForReport) {
+    setTimeout(() => tutNext(), 400);
+  }
 }
 
 function closeModal() {
