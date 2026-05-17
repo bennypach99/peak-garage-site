@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.51</title>
+  <title>Drywall Tally v14.54</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.51 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.54 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -633,7 +633,7 @@
       <button class="sheet-close" id="details-close-btn" onclick="closeDetails()">✕</button>
     </div>
     <div class="sheet-body" id="details-body"></div>
-    <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveDetails()">Save</button></div>
+    <div class="sheet-footer"><button class="sheet-save-btn" onclick="saveDetails()">Save & Close</button></div>
   </div>
 </div>
 
@@ -786,29 +786,43 @@
 const TUTORIALS = [
   {
     id: 'jobdetails',
-    name: 'Job Details Form',
+    name: 'Job Details',
     desc: 'How to set up a new job correctly',
     icon: '📝',
     steps: [
       {
         title: 'Job Name',
-        body: 'Give this job a name — usually the customer name or site address. You can always rename it later.',
+        body: 'Give this job a name. This is the name the export file will save as. It can be edited later by pressing the pencil next to the job name.',
         target: '#df-name',
-        targetParent: true,   // target the field-group wrapper, not the input itself
+        targetParent: true,
         arrow: 'down',
         noFocus: true,
       },
       {
         title: 'Customer & Site',
-        body: 'Fill in the customer name and site address. These appear on your exported PDF report.',
-        target: '#df-customer',
+        body: 'Fill in the customer name and the site address. Both will appear on your exported report.',
+        targets: ['#df-customer', '#df-site'],
+        arrow: 'down',
+        noFocus: true,
+      },
+      {
+        title: 'Site Contact Details',
+        body: 'This is your point of contact on site, usually the foreman. Fill in their name, phone number, and email.',
+        targets: ['#df-cname', '#df-cphone', '#df-cemail'],
+        arrow: 'down',
+        noFocus: true,
+      },
+      {
+        title: 'Lockbox Code',
+        body: 'Does your job have a lockbox code? Save it here so it shows up on your report.',
+        target: '#df-lockbox',
         targetParent: true,
         arrow: 'down',
         noFocus: true,
       },
       {
         title: 'Rate Type — Required',
-        body: 'Choose Low-Rise or High-Rise. This sets which CBA labour rate table is used for the entire job. You must select one before saving.',
+        body: 'Pick your rate. This sets the labour prices for the entire job. You must choose one to move on.',
         target: '#df-rate-lr',
         targetParent: true,
         arrow: 'down',
@@ -816,19 +830,39 @@ const TUTORIALS = [
       },
       {
         title: 'Building Type — Low-Rise Only',
-        body: 'For Low-Rise jobs, select the building type. Townhouse and Stacked Townhouse add a premium per sq ft on top of the base boarding rate.',
+        body: 'Select the building type to apply the correct premium for the job. Townhouse and Stacked add a premium per sq ft. You must choose one to move on.',
         target: '#df-housetype-row',
         arrow: 'down',
         noFocus: true,
-        // Pre-select Low-Rise so the building type row is always visible for this step
-        action: () => { if(typeof setRateBtn==='function') setRateBtn('lowrise'); },
       },
       {
-        title: 'Tasks on this Job',
-        body: 'Toggle which trades are on this job — Drywall, Insulation, and/or Taping. This controls which sections appear in your report.',
-        target: '#df-err-tasks',
+        title: 'Taping',
+        body: 'Is this job getting taped? Toggle this on to include taper labour, corner bead coating, and tapers union dues in the report.',
+        target: '#df-task-taping',
         targetParent: true,
         arrow: 'down',
+        noFocus: true,
+      },
+      {
+        title: 'Job Options',
+        body: 'Choose the applicable job options. Energy Star, Scaffolding, Cleaning, and Touchup & Year End Service Calls will each appear as a line item on your report.',
+        targets: ['#df-energystar', '#df-touchup'],
+        arrow: 'down',
+        noFocus: true,
+      },
+      {
+        title: 'Notes',
+        body: 'Put any job notes here. These will appear on the report.',
+        target: '#df-notes',
+        targetParent: true,
+        arrow: 'down',
+        noFocus: true,
+      },
+      {
+        title: 'Save & Close',
+        body: "Don't forget to tap Save & Close when you're done. Your job details won't be saved until you do.",
+        target: '#details-overlay .sheet-save-btn',
+        arrow: 'up',
         noFocus: true,
       },
     ]
@@ -1046,6 +1080,7 @@ function showTutStep() {
   // Resolve the actual target element
   // targetParent: use the .field-group wrapper instead of the input itself
   let rawTarget = step.target ? document.querySelector(step.target) : null;
+  if (!rawTarget && step.targets) rawTarget = document.querySelector(step.targets[0]);
   const resolvedTarget = (rawTarget && step.targetParent) ? rawTarget.closest('.field-group') || rawTarget : rawTarget;
 
   if (resolvedTarget) {
@@ -1104,9 +1139,23 @@ function positionBubble(step, resolvedTarget) {
   nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
 
   // Use pre-resolved target if provided, else query fresh
-  const target = resolvedTarget !== undefined
-    ? resolvedTarget
-    : (step.target ? document.querySelector(step.target) : null);
+  // Support step.targets (array of selectors) for multi-element highlight
+  let target;
+  if (resolvedTarget !== undefined) {
+    target = resolvedTarget;
+  } else if (step.targets) {
+    // Build a bounding box spanning all targets
+    const rects = step.targets.map(s => document.querySelector(s)).filter(Boolean).map(el => el.getBoundingClientRect());
+    if (rects.length) {
+      const top    = Math.min(...rects.map(r => r.top));
+      const left   = Math.min(...rects.map(r => r.left));
+      const right  = Math.max(...rects.map(r => r.right));
+      const bottom = Math.max(...rects.map(r => r.bottom));
+      target = { getBoundingClientRect: () => ({ top, left, right, bottom, width: right - left, height: bottom - top }) };
+    } else { target = null; }
+  } else {
+    target = step.target ? document.querySelector(step.target) : null;
+  }
 
   // Reset bubble classes
   bubble.className = 'tut-bubble';
@@ -1631,7 +1680,7 @@ function makeJob(name, id) {
   const now = new Date().toISOString();
   return {
     id, name, areas: [], areaCounter: 0,
-    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise', houseType:'select', tasks:{ insulation:false, drywall:false, taping:false } },
+    details: { customer:'', site:'', contactName:'', contactPhone:'', contactEmail:'', lockbox:'', energyStar:false, scaffolding:false, cleaning:false, touchup:false, notes:'', rate:'lowrise', houseType:'select', tasks:{ taping:false } },
     createdAt: now, modifiedAt: now
   };
 }
@@ -1844,11 +1893,7 @@ function renderJobDetailsBar() {
     const typeLabel = d.houseType === 'stacked' ? 'Stacked T/H' : 'Townhouse';
     parts.push(chip('Type', typeLabel));
   }
-  if (d.tasks) {
-    ['insulation','drywall','taping'].forEach(t => {
-      if (d.tasks[t]) parts.push(chip('Task', t.charAt(0).toUpperCase()+t.slice(1)));
-    });
-  }
+  if (d.tasks?.taping) parts.push(chip('Task', 'Taping'));
   if (d.energyStar)  parts.push(chip('Energy Star', '✓'));
   if (d.scaffolding) parts.push(chip('Scaffolding', '✓'));
   if (d.cleaning)    parts.push(chip('Cleaning', '✓'));
@@ -3012,9 +3057,16 @@ function setRateBtn(r) {
   hr.style.color       = r==='highrise' ? '#fff' : '';
   lr.dataset.selected  = r==='lowrise'  ? '1' : '';
   hr.dataset.selected  = r==='highrise' ? '1' : '';
-  // Hide/show housetype row
+  // Grey out housetype row for High-Rise, enable for Low-Rise
   const htRow = document.getElementById('df-housetype-row');
-  if (htRow) htRow.style.display = r==='lowrise' ? '' : (r==='highrise' ? 'none' : 'none');
+  const htSel = document.getElementById('df-housetype');
+  const htNote = document.getElementById('df-housetype-note');
+  if (htRow) {
+    const isHR = r === 'highrise';
+    if (htSel) htSel.disabled = isHR;
+    htRow.style.opacity = isHR ? '0.45' : '1';
+    if (htNote) htNote.style.display = isHR ? '' : 'none';
+  }
   // Clear rate error if one is now selected
   const rErr = document.getElementById('df-err-rate');
   if (rErr && r !== 'none') rErr.style.display = 'none';
@@ -3023,7 +3075,7 @@ function openDetails(forceRequired) {
   const j=J(), d=j.details;
   if (forceRequired) j._requireSetup = true;
   // Migrate old jobs that don't have tasks or houseType:'select'
-  if (!d.tasks) d.tasks = { insulation:false, drywall:false, taping:false };
+  if (!d.tasks) d.tasks = { taping:false };
   if (d.houseType === undefined) d.houseType = 'select';
 
   const req = j._requireSetup;
@@ -3063,22 +3115,24 @@ function openDetails(forceRequired) {
     </div>
     <div id="df-housetype-row" style="margin-top:12px">
       <div class="field-group">
-        <div class="field-label">Building Type${reqStar} <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— please select one</span></div>
+        <div class="field-label">Building Type <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— Low-Rise only</span></div>
         <select class="field-select" id="df-housetype" style="margin-top:4px;color:${ht==='select'?'var(--muted)':'var(--text)'}">
           ${htOptions}
         </select>
+        <div id="df-housetype-note" style="display:none;font-size:11px;color:var(--muted);margin-top:4px">Not applicable for High-Rise — always billed as House</div>
         <div id="df-err-housetype" style="display:none;font-size:11px;color:#dc2626;margin-top:3px">Please select a building type.</div>
       </div>
     </div>
     <div class="field-divider" style="margin-top:14px"></div>
     <div class="field-group" style="margin-top:4px">
-      <div class="field-label" style="margin-bottom:8px">Tasks on this Job${reqStar} <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">— select at least one</span></div>
-      <div id="df-err-tasks" style="display:none;font-size:11px;color:#dc2626;margin-bottom:6px">Select at least one task.</div>
-      ${['insulation','drywall','taping'].map(task => `
-      <div class="toggle-row" style="padding:6px 0;border-bottom:1px solid var(--border)">
-        <span class="toggle-label" style="font-size:15px;text-transform:capitalize">${task.charAt(0).toUpperCase()+task.slice(1)}</span>
-        <label class="toggle"><input type="checkbox" id="df-task-${task}" ${tk[task]?'checked':''}/><div class="toggle-track"></div></label>
-      </div>`).join('')}
+      <div class="field-label" style="margin-bottom:8px">Taping</div>
+      <div class="toggle-row" style="padding:6px 0">
+        <div>
+          <span class="toggle-label" style="font-size:15px">Is this job getting taped?</span>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Include taper labor and union dues in the report</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="df-task-taping" ${tk.taping?'checked':''}/><div class="toggle-track"></div></label>
+      </div>
     </div>
     <div class="field-divider" style="margin-top:12px"></div>
     <div class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
@@ -3113,12 +3167,10 @@ function saveDetails() {
   const rateSelected = !!(document.getElementById('df-rate-lr').dataset.selected || document.getElementById('df-rate-hr').dataset.selected);
   const isHighRise = !!document.getElementById('df-rate-hr').dataset.selected;
   const htVal = isHighRise ? 'house' : document.getElementById('df-housetype').value;
-  const anyTask = ['insulation','drywall','taping'].some(t => document.getElementById('df-task-'+t).checked);
   let valid = true;
 
   const rateErr = document.getElementById('df-err-rate');
   const htErr   = document.getElementById('df-err-housetype');
-  const tkErr   = document.getElementById('df-err-tasks');
 
   if (!rateSelected) {
     if (rateErr) rateErr.style.display = '';
@@ -3127,7 +3179,7 @@ function saveDetails() {
     if (rateErr) rateErr.style.display = 'none';
   }
 
-  if (htVal === 'select') {
+  if (!isHighRise && htVal === 'select') {
     htErr.style.display = '';
     document.getElementById('df-housetype').style.borderBottomColor = '#dc2626';
     valid = false;
@@ -3136,19 +3188,10 @@ function saveDetails() {
     document.getElementById('df-housetype').style.borderBottomColor = '';
   }
 
-  if (!anyTask) {
-    tkErr.style.display = '';
-    valid = false;
-  } else {
-    tkErr.style.display = 'none';
-  }
-
   if (!valid) {
     const firstErr = !rateSelected
       ? document.getElementById('df-err-rate')
-      : htVal === 'select'
-        ? document.getElementById('df-housetype')
-        : document.getElementById('df-err-tasks');
+      : document.getElementById('df-err-housetype');
     if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
     return;
   }
@@ -3169,9 +3212,7 @@ function saveDetails() {
   d.rateSelected = true;
   d.houseType = isHighRise ? 'house' : htVal;
   d.tasks = {
-    insulation: document.getElementById('df-task-insulation').checked,
-    drywall:    document.getElementById('df-task-drywall').checked,
-    taping:     document.getElementById('df-task-taping').checked,
+    taping: document.getElementById('df-task-taping').checked,
   };
   d.notes = document.getElementById('df-notes').value.trim();
   j.modifiedAt  = new Date().toISOString();
@@ -3228,7 +3269,7 @@ function showReport() {
   // Job details block — full info from job details form
   const houseLabel = { house: 'House', townhouse: 'Townhouse', stacked: 'Stacked Townhouse' }[d.houseType] || '';
   const rateLabel = d.rate === 'highrise' ? 'High-Rise' : ('Low-Rise' + (houseLabel ? ' — ' + houseLabel : ''));
-  const tasksList = [d.tasks?.drywall && 'Drywall', d.tasks?.insulation && 'Insulation', d.tasks?.taping && 'Taping'].filter(Boolean).join(', ');
+  const tasksList = d.tasks?.taping ? 'Drywall, Insulation, Taping' : 'Drywall, Insulation';
   const togglesList = [d.energyStar && 'Energy Star', d.scaffolding && 'Scaffolding', d.cleaning && 'Cleaning', d.touchup && 'Touchup'].filter(Boolean).join(', ');
 
   const detailRows = [
@@ -3433,8 +3474,7 @@ function showReport() {
       html+=`<div style="height:8px"></div>`;
     }
 
-    // Insulation — only shown when Insulation task is selected
-    if (j.details?.tasks?.insulation) {
+    // Insulation
     const insIsHR = (J()?.details?.rate || 'lowrise') === 'highrise';
     const insLabRate = insIsHR
       ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
@@ -3572,8 +3612,7 @@ function showReport() {
         }
         html+=`<div style="height:8px"></div>`;
       }
-    }); // end INSULATION_TYPES.forEach (report display)
-    } // end if tasks.insulation
+    });
 
     // Steel — show qty and mat cost per item (stud/track = qty × length ft × $/lf)
     const STEEL_MAT_KEYS = {
@@ -3902,7 +3941,6 @@ function showReport() {
     let laborCost = 0;
     j.areas.forEach(a => {
       // Boarding labor: use area ceiling height to look up correct rate bracket
-      const hasDrywall = j.details?.tasks?.drywall !== false;
       const ceilH = a.height || "9'";
       const isHR = (J()?.details?.rate || 'lowrise') === 'highrise';
       const boardRate = (() => {
@@ -3937,9 +3975,7 @@ function showReport() {
       // Durock at its own CBA rate (replacement, not additive)
       const durockRate2 = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
       laborCost += durockLaborSqft * durockRate2;
-      // Insulation labor — only when Insulation task is selected
-      const hasInsulation = j.details?.tasks?.insulation !== false;
-      if (hasInsulation) {
+      // Insulation labor
       INSULATION_TYPES.forEach(t => {
         if(t.kind==='blown'||t.kind==='foam') return;
         if(t.kind==='blanket') {
@@ -3974,8 +4010,7 @@ function showReport() {
             }
           });
         });
-      }); // end INSULATION_TYPES.forEach (labor)
-      } // end if (hasInsulation)
+      });
 
       // ════════════════════════════════════════════════════════════
       // UNION DUES & ENERGY STAR — per TOS spreadsheet rules
@@ -3985,7 +4020,7 @@ function showReport() {
       let insGross = 0;
       let energyStarSqft = 0;
       // Energy Star also applies only to pink/roxul sqft × %
-      if (hasInsulation) INSULATION_TYPES.forEach(t => {
+      INSULATION_TYPES.forEach(t => {
         if (t.kind === 'blown' || t.kind === 'foam' || t.kind === 'blanket') return;
         const rvals = t.rvals || INSULATION_RVALS;
         const isEligible = t.key === 'pink' || t.key === 'roxul';
@@ -4023,7 +4058,6 @@ function showReport() {
       totalEnergyStar += energyStarCost;
 
       // ── Boarding gross (plain + fireguard + durock) ──
-      if (!hasDrywall) { plainSqft = 0; fivetSqft2 = 0; durockLaborSqft = 0; }
       const boardGross = plainSqft * boardRate + fivetSqft2 * fivetRate + durockLaborSqft * durockRate2;
 
       // ── Townhouse / Stack premium (LR only, applied to all boarding sqft) ──
