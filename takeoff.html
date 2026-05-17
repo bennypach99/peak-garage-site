@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.49</title>
+  <title>Drywall Tally v14.51</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.49 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.51 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4254,10 +4254,20 @@ function showReport() {
 
   document.getElementById('modal-body').innerHTML=html;
   document.getElementById('modal-overlay').classList.add('open');
+  history.pushState({ modal: 'report' }, '');
 }
 
-function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  if (history.state?.modal === 'report') history.back();
+}
 function handleModalTap(e) { if(e.target===document.getElementById('modal-overlay'))closeModal(); }
+
+window.addEventListener('popstate', e => {
+  if (document.getElementById('modal-overlay').classList.contains('open')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+});
 
 /* ── Export ── */
 function exportToSheets() {
@@ -5128,10 +5138,11 @@ function closeMyInfoSheet() { document.getElementById('myinfo-overlay').classLis
 
 
 /* ── Export to PDF ── */
-function exportToPDF() {
+async function exportToPDF() {
   const j = J();
   const reportBody = document.getElementById('modal-body').innerHTML;
   const title = j.name + ' \u2014 Report';
+  const fileName = (j.name || 'Report').replace(/[^a-z0-9]/gi, '_') + '_Report.html';
 
   const css = [
     '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }',
@@ -5149,21 +5160,36 @@ function exportToPDF() {
     '@media print { body { padding: 0; } @page { margin: 18mm 14mm; } }',
   ].join('\n');
 
-  const pw = window.open('', '_blank');
-  if (!pw) { alert('Please allow pop-ups to export as PDF.'); return; }
+  const fullHTML = '<!DOCTYPE html><html><head>\n'
+    + '<meta charset="UTF-8">\n'
+    + '<title>' + title + '</title>\n'
+    + '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">\n'
+    + '<style>' + css + '</style>\n'
+    + '</head><body>\n'
+    + '<h1>' + title + '</h1>\n'
+    + reportBody
+    + '\n</body></html>';
 
-  pw.document.open();
-  pw.document.write('<!DOCTYPE html><html><head>');
-  pw.document.write('<meta charset="UTF-8">');
-  pw.document.write('<title>' + title + '</title>');
-  pw.document.write('<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">');
-  pw.document.write('<style>' + css + '</style>');
-  pw.document.write('</head><body>');
-  pw.document.write('<h1>' + title + '</h1>');
-  pw.document.write(reportBody);
-  pw.document.write('<scr' + 'ipt>window.onload=function(){setTimeout(function(){window.print();},500);}<\/scr' + 'ipt>');
-  pw.document.write('</body></html>');
-  pw.document.close();
+  const blob = new Blob([fullHTML], { type: 'text/html' });
+  const file = new File([blob], fileName, { type: 'text/html' });
+
+  // Try Web Share API with file (native share sheet on Android/iOS)
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return; // user cancelled
+    }
+  }
+
+  // Fallback: trigger download
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 /* ── Init ── */
