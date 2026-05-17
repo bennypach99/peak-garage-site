@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.45</title>
+  <title>Drywall Tally v14.46</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -98,13 +98,13 @@
 
     /* ── Bottom Bar ── */
     .bottom-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 12px calc(10px + var(--safe-bottom)); flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
-    .totals-strip { flex: 1; display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+    .totals-strip { flex: 1; display: flex; align-items: center; gap: 7px; overflow-x: auto; scrollbar-width: none; min-width: 0; touch-action: pan-x; }
     .totals-strip::-webkit-scrollbar { display: none; }
     .strip-total { background: var(--text); color: #fff; border-radius: 20px; padding: 7px 13px; font-size: 13px; font-weight: 500; white-space: nowrap; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
     .strip-total span { font-family: 'DM Mono', monospace; font-size: 15px; }
     .strip-chip { border-radius: 20px; padding: 6px 11px; font-size: 12px; white-space: nowrap; flex-shrink: 0; border: 1px solid var(--border); color: var(--muted); background: var(--bg); }
     .strip-chip strong { font-family: 'DM Mono', monospace; color: var(--text); font-weight: 500; }
-    .report-btn { background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; flex-shrink: 0; }
+    .report-btn { background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; font-family: inherit; font-weight: 500; cursor: pointer; flex-shrink: 0; position: relative; z-index: 2; touch-action: manipulation; }
 
     /* ── Drawer ── */
     .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.22s; }
@@ -565,7 +565,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.45 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.46 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
