@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.55</title>
+  <title>Drywall Tally v14.67</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.55 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.67 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -846,7 +846,7 @@ const TUTORIALS = [
       {
         title: 'Job Options',
         body: 'Choose the applicable job options. Energy Star, Scaffolding, Cleaning, and Touchup & Year End Service Calls will each appear as a line item on your report.',
-        targets: ['#df-energystar', '#df-touchup'],
+        targets: ['#df-row-energystar', '#df-row-touchup'],
         arrow: 'down',
         noFocus: true,
       },
@@ -900,14 +900,93 @@ const TUTORIALS = [
       {
         title: 'Material Type',
         body: 'These sub-tabs let you switch between different material types within the selected category — for example, Regular, Fireguard, Special, and Extras under Drywall.',
-        target: '#type-bar-wrap',
+        target: '#dw-group-bar',
         arrow: 'up',
+        action: () => { if (typeof switchCat === 'function') switchCat('drywall'); },
       },
       {
         title: 'Report & Export',
         body: 'When you\'re done tallying, tap "Report" to see a full summary and export it as a file.',
         target: '.report-btn',
         arrow: 'up',
+      },
+    ]
+  },
+  {
+    id: 'add_area',
+    name: 'Add an Area',
+    desc: 'How to add and configure a job area',
+    icon: '➕',
+    steps: [
+      {
+        title: 'Add an Area',
+        body: 'Tap "+ Area" to open the form.',
+        target: '.area-add-inline button',
+        arrow: 'down',
+        waitForAreaOpen: true,
+      },
+      {
+        title: 'Area Name',
+        body: 'Give this area a name like "Main Floor", "Basement", or "2nd Floor". Leave it blank to auto-name it.',
+        target: '#af-name',
+        targetParent: true,
+        arrow: 'down',
+        noFocus: true,
+      },
+      {
+        title: 'Ceiling Height',
+        body: 'Select the ceiling height for this area. This sets the labour rate bracket for boarding.',
+        target: '#af-height',
+        targetParent: true,
+        arrow: 'down',
+        noFocus: true,
+        validateBeforeNext: () => {
+          const el = document.getElementById('af-height');
+          if (!el || !el.value) return 'Please select a ceiling height before continuing.';
+          return null;
+        },
+      },
+      {
+        title: 'Ceiling Texture',
+        body: 'Select the ceiling texture. This will appear on your report as a reference.',
+        target: '#af-texture',
+        targetParent: true,
+        arrow: 'down',
+        noFocus: true,
+      },
+      {
+        title: 'Add Area',
+        body: 'Tap "Add Area" to save it.',
+        target: '#area-form-footer .sheet-save-btn',
+        arrow: 'up',
+        noFocus: true,
+        waitForArea: true,
+      },
+    ]
+  },
+  {
+    id: 'area_details',
+    name: 'Area Details',
+    desc: 'Switch areas, rename, and view area info',
+    icon: '🏗️',
+    steps: [
+      {
+        title: 'Switch Areas',
+        body: 'Tap any area tab to switch to it. The purple underline shows which area is active.',
+        target: '#area-tabs',
+        arrow: 'down',
+      },
+      {
+        title: 'Rename an Area',
+        body: 'Tap the pencil ✏️ icon next to the area name to rename it or change its ceiling height and texture.',
+        target: '#area-tabs',
+        arrow: 'down',
+      },
+      {
+        title: 'Area Info Strip',
+        body: 'These chips show the ceiling height and texture for the active area. They update as you switch between areas.',
+        target: '#area-info-bar',
+        arrow: 'down',
       },
     ]
   },
@@ -950,38 +1029,6 @@ const TUTORIALS = [
         target: '.tally-header',
         arrow: 'down',
         scrollTo: '.tally-area',
-      },
-    ]
-  },
-  {
-    id: 'areas',
-    name: 'Managing Areas',
-    desc: 'Add, rename, and configure job areas',
-    icon: '🏗️',
-    steps: [
-      {
-        title: 'Add an Area',
-        body: 'Tap "+ Area" to create a new area. Give it a name like "Main Floor" or "Basement".',
-        target: '.area-add-inline button',
-        arrow: 'down',
-      },
-      {
-        title: 'Switch Areas',
-        body: 'Tap any area tab to switch to it. The purple underline shows the active area.',
-        target: '#area-tabs',
-        arrow: 'down',
-      },
-      {
-        title: 'Rename an Area',
-        body: 'Tap the pencil ✏️ icon next to the area name in the tab to rename it.',
-        target: '#area-tabs',
-        arrow: 'down',
-      },
-      {
-        title: 'Area Details Strip',
-        body: 'The chips below the area tabs show the ceiling height and texture for that area. Tap any chip to edit the job details.',
-        target: '#job-details-bar',
-        arrow: 'down',
       },
     ]
   },
@@ -1055,6 +1102,21 @@ function startTutorial(id) {
       }, 350);
       return;
     }
+  }
+
+  // drywall and area_details tutorials need at least one area
+  if ((id === 'drywall' || id === 'area_details') && (!J() || !J().areas || J().areas.length === 0)) {
+    tutSteps = [{
+      title: 'Add an Area First',
+      body: 'This tutorial requires at least one area. Tap "+ Area" to add one, then come back and try this tutorial again.',
+      target: '.area-add-inline button',
+      arrow: 'down',
+      noFocus: true,
+    }];
+    tutStep = 0;
+    tutActive = true;
+    showTutStep();
+    return;
   }
 
   tutSteps = tut.steps;
@@ -1143,6 +1205,12 @@ function positionBubble(step, resolvedTarget) {
 
   // Next/Done button
   nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
+  // waitForArea / waitForAreaOpen: hide Next button — tutorial auto-advances
+  if (step.waitForArea || step.waitForAreaOpen) {
+    nextBtn.style.display = 'none';
+  } else {
+    nextBtn.style.display = '';
+  }
 
   // Use pre-resolved target if provided, else query fresh
   // Support step.targets (array of selectors) for multi-element highlight
@@ -1241,6 +1309,25 @@ function positionBubble(step, resolvedTarget) {
 }
 
 function tutNext() {
+  const step = tutSteps[tutStep];
+
+  // validateBeforeNext: run validation before advancing
+  if (step?.validateBeforeNext) {
+    const result = step.validateBeforeNext();
+    if (result) {
+      // Show error message in bubble body temporarily
+      const bodyEl = document.getElementById('tut-body');
+      const original = bodyEl.textContent;
+      bodyEl.style.color = '#dc2626';
+      bodyEl.textContent = result;
+      setTimeout(() => {
+        bodyEl.style.color = '';
+        bodyEl.textContent = original;
+      }, 2000);
+      return;
+    }
+  }
+
   tutStep++;
   if (tutStep >= tutSteps.length) {
     endTutorial();
@@ -1808,6 +1895,10 @@ function openAreaForm(editId) {
   }
   document.getElementById('area-form-overlay').classList.add('open');
   setTimeout(() => document.getElementById('af-name').focus(), 300);
+  // If tutorial is waiting for the area form to open, advance to next step
+  if (!editId && tutActive && tutSteps[tutStep]?.waitForAreaOpen) {
+    setTimeout(() => tutNext(), 400);
+  }
 }
 function deleteArea(id) {
   showConfirm('Delete this area?', (yes) => {
@@ -1851,6 +1942,10 @@ function saveAreaForm() {
   j.modifiedAt = new Date().toISOString();
   closeAreaForm();
   renderAll();
+  // If tutorial is waiting for an area to be added, advance it now
+  if (tutActive && tutSteps[tutStep]?.waitForArea) {
+    setTimeout(() => tutNext(), 300);
+  }
 }
 
 /* ── Area tabs ── */
@@ -3141,10 +3236,10 @@ function openDetails(forceRequired) {
       </div>
     </div>
     <div class="field-divider" style="margin-top:12px"></div>
-    <div class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
+    <div id="df-row-energystar" class="toggle-row"><span class="toggle-label">Energy Star</span><label class="toggle"><input type="checkbox" id="df-energystar" ${d.energyStar?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="toggle-row"><span class="toggle-label">Scaffolding</span><label class="toggle"><input type="checkbox" id="df-scaffolding" ${d.scaffolding?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="toggle-row"><span class="toggle-label">Cleaning</span><label class="toggle"><input type="checkbox" id="df-cleaning" ${d.cleaning?'checked':''}/><div class="toggle-track"></div></label></div>
-    <div class="toggle-row"><span class="toggle-label">Touchup &amp; Year End Service Calls</span><label class="toggle"><input type="checkbox" id="df-touchup" ${d.touchup?'checked':''}/><div class="toggle-track"></div></label></div>
+    <div id="df-row-touchup" class="toggle-row"><span class="toggle-label">Touchup &amp; Year End Service Calls</span><label class="toggle"><input type="checkbox" id="df-touchup" ${d.touchup?'checked':''}/><div class="toggle-track"></div></label></div>
     <div class="field-divider"></div>
     <div class="field-group"><div class="field-label">Notes</div><textarea class="field-input" id="df-notes" rows="3" placeholder="Notes…" style="resize:none;line-height:1.5">${d.notes}</textarea></div>
     <div class="field-divider"></div>
