@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v14.77</title>
+  <title>Drywall Tally v14.85</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,11 +564,11 @@
     Drywall Tally
   </div>
   <button class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.77 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v14.85 · May 16, 2026</div>
   <div class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
-    <button class="drawer-action-btn green" onclick="openPricesSheet();closeDrawer()">
+    <button id="drawer-labor-prices-btn" class="drawer-action-btn green" onclick="openPricesSheet();closeDrawer()">
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="white" stroke-width="1.5"/><path d="M7.5 4V7.5L9.5 9.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>
       Labor Prices
     </button>
@@ -675,7 +675,7 @@
       <button class="sheet-close" onclick="closePricesSheet()">✕</button>
     </div>
     <div class="sheet-body" id="prices-body"></div>
-    <div class="sheet-footer"><button class="sheet-save-btn" onclick="savePricesSheet()">Save Prices</button></div>
+    <div class="sheet-footer"><button id="save-prices-btn" class="sheet-save-btn" onclick="savePricesSheet()">Save Prices and Close</button></div>
   </div>
 </div>
 
@@ -1086,6 +1086,48 @@ const TUTORIALS = [
       },
     ]
   },
+  {
+    id: 'prices',
+    name: 'Labor Prices',
+    desc: 'Set your CBA labor rates and profit margin',
+    icon: '💰',
+    steps: [
+      {
+        title: 'Open Labor Prices',
+        body: 'Tap "Labor Prices" in the menu to open the prices sheet.',
+        target: '#drawer-labor-prices-btn',
+        arrow: 'up',
+        waitForPrices: true,
+        action: () => { openDrawer(); },
+      },
+      {
+        title: 'Price Tabs',
+        body: 'Switch between the trades Drywall, Insulation, Taping, and the job Extras.',
+        target: '#prices-tab-bar',
+        arrow: 'down',
+      },
+      {
+        title: 'Current Union Rate or Custom Rate',
+        body: 'Tap the current CBA date to load the official union labor prices for this year. Tap Custom to load your own saved prices. Any price you change manually turns orange and is saved to Custom — switch back and forth anytime without losing either set.',
+        target: '#prices-year-selector',
+        arrow: 'down',
+      },
+      {
+        title: 'Profit %',
+        body: 'Set your profit margin here. This percentage is applied on top of all labor and material costs in the report.',
+        target: '#pf-profit',
+        targetParent: true,
+        arrow: 'down',
+      },
+      {
+        title: 'Save Prices',
+        body: 'Tap "Save Prices and Close" and your rates will be saved and applied to all future reports. Remember to check or set your prices before printing each report.',
+        target: '#save-prices-btn',
+        arrow: 'up',
+        onNext: () => { savePricesSheet(); },
+      },
+    ]
+  },
 ];
 
 let tutActive = false;
@@ -1233,8 +1275,8 @@ function positionBubble(step, resolvedTarget) {
 
   // Next/Done button
   nextBtn.textContent = tutStep === tutSteps.length - 1 ? 'Done ✓' : 'Next';
-  // waitForArea / waitForAreaOpen / waitForReport: hide Next button — tutorial auto-advances
-  if (step.waitForArea || step.waitForAreaOpen || step.waitForReport) {
+  // Hide Next button when tutorial is waiting for user action
+  if (step.waitForArea || step.waitForAreaOpen || step.waitForReport || step.waitForPrices) {
     nextBtn.style.display = 'none';
   } else {
     nextBtn.style.display = '';
@@ -1695,6 +1737,14 @@ function defaultMyInfo() {
 
 /* ── Price / MyInfo persistence ── */
 function savePrices(p) { storageSet('prices', p); }
+function saveCustomPrices(p) { storageSet('custom_prices', p); }
+function saveCustomProfitPct(v) { storageSet('custom_profit', v); }
+async function loadCustomPrices() {
+  try { const r = await storageGet('custom_prices'); return r || null; } catch(e) { return null; }
+}
+async function loadCustomProfitPct() {
+  try { const r = await storageGet('custom_profit'); return r ? parseFloat(r) : null; } catch(e) { return null; }
+}
 function saveMyInfo(m) { storageSet('myinfo', m); }
 function saveProfitPct(v) { storageSet('profit', v); }
 async function loadPrices() {
@@ -1711,6 +1761,9 @@ let gPrices = {}; // filled after PRICE_FIELDS loads
 let gMyInfo = defaultMyInfo();
 let gProfitPct = DEFAULT_PROFIT_PCT;
 let gRateIdx = 1; // active rate date index — will be set by detectRateIdx() on init
+let gRateCustom = false; // true when any price deviates from current CBA
+let gCustomPrices = {}; // user's saved custom prices — persisted separately
+let gCustomProfitPct = DEFAULT_PROFIT_PCT;
 let fbUser = null; // Firebase Auth user
 let db = null;     // Firestore instance
 
@@ -4971,7 +5024,6 @@ async function saveMatPricesStorage(p) {
 }
 
 let gPriceTab = 'DW'; // active prices tab: DW | IN | TP | EX
-let gRateCustom = false; // true when any CBA field has been manually changed
 
 const PRICE_TABS = [
   { id:'DW', label:'Drywall' },
@@ -5017,21 +5069,17 @@ function applyInputHighlight(el, isCustom) {
 }
 
 function updateYearBtns() {
-  RATE_DATES_CBA.forEach((d, i) => {
-    const b = document.getElementById('year-btn-'+i);
-    if (!b) return;
-    const isActive = !gRateCustom && i === gRateIdx;
-    b.className = 'year-btn ' + (isActive ? 'active' : 'inactive');
-    b.style.background = '';
-    b.style.color = '';
-    b.style.borderColor = '';
-  });
+  const cbaBtn = document.getElementById('year-btn-cba');
+  if (cbaBtn) {
+    cbaBtn.className = 'year-btn ' + (!gRateCustom ? 'active' : 'inactive');
+    cbaBtn.style.background = '';
+    cbaBtn.style.color = '';
+  }
   const cb = document.getElementById('year-btn-custom');
   if (cb) {
     cb.className = 'year-btn ' + (gRateCustom ? 'active' : 'inactive');
     cb.style.background  = gRateCustom ? '#d97706' : '';
     cb.style.color       = gRateCustom ? '#fff'    : '';
-    cb.style.borderColor = gRateCustom ? '#d97706' : '';
   }
 }
 
@@ -5043,7 +5091,48 @@ function onPriceFieldChange(key) {
   if (!el) return;
   const raw = parseFloat(el.value) || 0;
   gPrices[f.key] = f.pct ? raw / 100 : raw;
+  // Auto-save change to custom prices
+  gCustomPrices[f.key] = gPrices[f.key];
+
+  const wasCustom = gRateCustom;
+  refreshCustomState();
+
+  // If this change just switched us into custom mode, restore all other custom prices
+  if (!wasCustom && gRateCustom && Object.keys(gCustomPrices).length > 1) {
+    PRICE_FIELDS.forEach(pf => {
+      if (pf.key === key) return; // already updated above
+      if (gCustomPrices[pf.key] !== undefined) {
+        gPrices[pf.key] = gCustomPrices[pf.key];
+        const pEl = document.getElementById('pf-' + pf.key);
+        if (pEl) {
+          const dec = fieldDecimals(pf);
+          pEl.value = pf.pct ? (gCustomPrices[pf.key] * 100).toFixed(dec) : gCustomPrices[pf.key].toFixed(dec);
+          applyInputHighlight(pEl, isPriceCustom(pf));
+        }
+      }
+    });
+  }
+
   applyInputHighlight(el, isPriceCustom(f));
+  updateYearBtns();
+}
+
+function resetPriceField(key) {
+  const f = PRICE_FIELDS.find(x => x.key === key);
+  if (!f) return;
+  // Reset to current CBA rate
+  const cbaVal = f.pct ? f.rates[gRateIdx] / 100 : f.rates[gRateIdx];
+  gPrices[f.key] = cbaVal;
+  delete gCustomPrices[f.key];
+  const el = document.getElementById('pf-' + key);
+  if (el) {
+    const dec = fieldDecimals(f);
+    el.value = f.pct ? f.rates[gRateIdx].toFixed(dec) : f.rates[gRateIdx].toFixed(dec);
+    applyInputHighlight(el, false);
+  }
+  // Remove the reset button for this field
+  const btn = document.getElementById('reset-btn-' + key);
+  if (btn) btn.remove();
   refreshCustomState();
   updateYearBtns();
 }
@@ -5066,22 +5155,21 @@ function openPricesSheet(tab) {
   const body = document.getElementById('prices-body');
 
   // ── Tab bar ──
-  let out = `<div style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg);border-radius:10px;padding:4px">`;
+  let out = `<div id="prices-tab-bar" style="display:flex;gap:4px;margin-bottom:14px;background:var(--bg);border-radius:10px;padding:4px">`;
   PRICE_TABS.forEach(t => {
     const active = t.id === gPriceTab;
     out += `<button onclick="openPricesSheet('${t.id}')" style="flex:1;padding:8px 4px;font-size:13px;font-family:inherit;font-weight:${active?'700':'500'};border:none;border-radius:8px;cursor:pointer;background:${active?'var(--surface)':'transparent'};color:${active?'var(--text)':'var(--muted)'};box-shadow:${active?'0 1px 4px rgba(0,0,0,0.10)':'none'};transition:all 0.12s">${t.label}</button>`;
   });
   out += `</div>`;
 
-  // ── Year selector (always visible) ──
-  out += `<div style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:12px">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Union Rate Year</div>
+  // ── Year selector — only current CBA date + Custom ──
+  out += `<div id="prices-year-selector" style="background:#eff6ff;border-radius:12px;padding:14px;margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);margin-bottom:8px">Current Union Rate or Custom Rate</div>
     <div class="year-btn-row">`;
-  RATE_DATES_CBA.forEach((d, i) => {
-    out += `<button id="year-btn-${i}" class="year-btn ${(!gRateCustom && i===gRateIdx)?'active':'inactive'}" onclick="applyRateYear(${i})">${d}</button>`;
-  });
-  out += `<button id="year-btn-custom" class="year-btn ${gRateCustom?'active':'inactive'}" style="${gRateCustom?'background:#d97706;color:#fff;border-color:#d97706':''}" onclick="">Custom</button>`;
-  out += `</div><div class="year-hint">Tap a date to auto-fill all labor fields from the CBA. Modified fields are highlighted and the custom button is selected.</div></div>`;
+  // Only show the currently active CBA date
+  out += `<button id="year-btn-cba" class="year-btn ${!gRateCustom?'active':'inactive'}" onclick="applyRateYear(${gRateIdx})">${RATE_DATES_CBA[gRateIdx]}</button>`;
+  out += `<button id="year-btn-custom" class="year-btn ${gRateCustom?'active':'inactive'}" style="${gRateCustom?'background:#d97706;color:#fff;':''}" onclick="applyCustomPrices()">Custom</button>`;
+  out += `</div><div class="year-hint">Tap the current CBA date to load official union rates. Tap Custom to load your saved prices.</div></div>`;
 
   // ── Profit % (DW tab only) ──
   if (gPriceTab === 'DW') {
@@ -5096,6 +5184,10 @@ function openPricesSheet(tab) {
   const inputStyle = (f) => {
     const custom = isPriceCustom(f);
     return custom ? 'border-color:#d97706;background:#fffbeb;color:#92400e;' : '';
+  };
+  const resetBtn = (f) => {
+    if (!isPriceCustom(f)) return '';
+    return `<button id="reset-btn-${f.key}" onclick="resetPriceField('${f.key}')" title="Reset to CBA rate" style="flex-shrink:0;width:22px;height:22px;border:none;background:rgba(217,119,6,0.12);border-radius:6px;cursor:pointer;color:#d97706;font-size:13px;display:flex;align-items:center;justify-content:center;padding:0">↺</button>`;
   };
   const fieldVal = (f) => {
     const dec = fieldDecimals(f);
@@ -5122,9 +5214,9 @@ function openPricesSheet(tab) {
       for (let i = 0; i < maxRows; i++) {
         const lf = lrFields[i], rf = hrFields[i];
         out += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">`;
-        if (lf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(lf)}" type="number" id="pf-${lf.key}" step="0.001" min="0" value="${fieldVal(lf)}" oninput="onPriceFieldChange('${lf.key}')"></div>`;
+        if (lf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${lf.label}</div><div style="display:flex;align-items:center;gap:3px"><input class="price-row-input" style="flex:1;${inputStyle(lf)}" type="number" id="pf-${lf.key}" step="0.001" min="0" value="${fieldVal(lf)}" oninput="onPriceFieldChange('${lf.key}')">${resetBtn(lf)}</div></div>`;
         else out += `<div></div>`;
-        if (rf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${rf.label}</div><input class="price-row-input" style="width:100%;${inputStyle(rf)}" type="number" id="pf-${rf.key}" step="0.001" min="0" value="${fieldVal(rf)}" oninput="onPriceFieldChange('${rf.key}')"></div>`;
+        if (rf) out += `<div><div style="font-size:11px;color:var(--muted);margin-bottom:2px">${rf.label}</div><div style="display:flex;align-items:center;gap:3px"><input class="price-row-input" style="flex:1;${inputStyle(rf)}" type="number" id="pf-${rf.key}" step="0.001" min="0" value="${fieldVal(rf)}" oninput="onPriceFieldChange('${rf.key}')">${resetBtn(rf)}</div></div>`;
         else out += `<div></div>`;
         out += `</div>`;
       }
@@ -5140,8 +5232,8 @@ function openPricesSheet(tab) {
         const suffix = isPct ? '<span style="font-size:13px;color:var(--muted);margin-left:4px">%</span>' : '';
         out += `<div class="price-row">
           <span class="price-row-label">${styledLabel}</span>
-          <div style="display:flex;align-items:center;gap:2px">
-            <input class="price-row-input" style="${inputStyle(f)}" type="number" id="pf-${f.key}" step="${step}" min="0" value="${displayVal}" oninput="onPriceFieldChange('${f.key}')">${suffix}
+          <div style="display:flex;align-items:center;gap:4px">
+            ${resetBtn(f)}<input class="price-row-input" style="${inputStyle(f)}" type="number" id="pf-${f.key}" step="${step}" min="0" value="${displayVal}" oninput="onPriceFieldChange('${f.key}')">${suffix}
           </div>
         </div>`;
       });
@@ -5150,16 +5242,20 @@ function openPricesSheet(tab) {
 
   body.innerHTML = out;
   document.getElementById('prices-overlay').classList.add('open');
+  // If tutorial is waiting for prices sheet to open, advance to next step
+  if (tutActive && tutSteps[tutStep]?.waitForPrices) {
+    setTimeout(() => tutNext(), 400);
+  }
 }
 
 
 function applyRateYear(idx) {
   gRateIdx = idx;
   gRateCustom = false;
-  // Reset ALL fields in gPrices — not just the ones currently rendered
+  // Reset ALL fields in gPrices to the CBA rates for this year
   PRICE_FIELDS.forEach(f => {
     gPrices[f.key] = f.pct ? f.rates[idx] / 100 : f.rates[idx];
-    // Also clear highlight on any rendered input
+    // Update any rendered input
     const el = document.getElementById('pf-'+f.key);
     if (el) {
       const dec = fieldDecimals(f);
@@ -5170,20 +5266,63 @@ function applyRateYear(idx) {
   updateYearBtns();
 }
 
+function applyCustomPrices() {
+  gRateCustom = true;
+
+  // If no custom prices saved yet, seed from current CBA rates (no highlighting)
+  const firstUse = Object.keys(gCustomPrices).length === 0;
+  if (firstUse) {
+    PRICE_FIELDS.forEach(f => {
+      gCustomPrices[f.key] = f.pct ? f.rates[gRateIdx] / 100 : f.rates[gRateIdx];
+    });
+    gCustomProfitPct = gProfitPct;
+  }
+
+  // Restore all saved custom prices into gPrices and rendered inputs
+  PRICE_FIELDS.forEach(f => {
+    if (gCustomPrices[f.key] !== undefined) {
+      gPrices[f.key] = gCustomPrices[f.key];
+    }
+    const el = document.getElementById('pf-'+f.key);
+    if (el && gCustomPrices[f.key] !== undefined) {
+      const dec = fieldDecimals(f);
+      el.value = f.pct ? (gCustomPrices[f.key] * 100).toFixed(dec) : gCustomPrices[f.key].toFixed(dec);
+      // Only highlight if the value differs from CBA rates
+      applyInputHighlight(el, !firstUse && isPriceCustom(f));
+    }
+  });
+  // Restore custom profit %
+  if (gCustomProfitPct !== null) {
+    gProfitPct = gCustomProfitPct;
+    const pp = document.getElementById('pf-profit');
+    if (pp) pp.value = gProfitPct;
+  }
+  updateYearBtns();
+}
+
 function savePricesSheet() {
-  // Only save fields whose inputs are currently rendered (active tab)
+  // Flush all rendered fields into gPrices
   PRICE_FIELDS.forEach(f => {
     const el = document.getElementById('pf-'+f.key);
-    if (!el) return; // not on current tab — leave gPrices unchanged
+    if (!el) return;
     const raw = parseFloat(el.value);
-    // Don't save blank/zero values — leave the CBA default intact
     if (!raw || isNaN(raw)) return;
     gPrices[f.key] = f.pct ? raw / 100 : raw;
+    // If in custom mode, also save to gCustomPrices
+    if (gRateCustom) gCustomPrices[f.key] = gPrices[f.key];
   });
   const pp = document.getElementById('pf-profit');
-  if (pp) gProfitPct = parseFloat(pp.value)||DEFAULT_PROFIT_PCT;
+  if (pp) {
+    gProfitPct = parseFloat(pp.value) || DEFAULT_PROFIT_PCT;
+    if (gRateCustom) gCustomProfitPct = gProfitPct;
+  }
   savePrices(gPrices);
   saveProfitPct(gProfitPct);
+  // Always persist custom prices separately
+  if (Object.keys(gCustomPrices).length > 0) {
+    saveCustomPrices(gCustomPrices);
+    saveCustomProfitPct(gCustomProfitPct);
+  }
   closePricesSheet();
 }
 
@@ -5488,10 +5627,13 @@ function checkPendingWelcomeTutorial() {
 }
 
 async function loadUserData() {
-  const [loaded, prices, myinfo, profit, matprices] = await Promise.all([
-    loadState(), loadPrices(), loadMyInfo(), loadProfitPct(), loadMatPrices()
+  const [loaded, prices, myinfo, profit, matprices, customPrices, customProfit] = await Promise.all([
+    loadState(), loadPrices(), loadMyInfo(), loadProfitPct(), loadMatPrices(),
+    loadCustomPrices(), loadCustomProfitPct()
   ]);
   gPrices = prices; gMyInfo = myinfo; gProfitPct = profit; gMatPrices = matprices;
+  gCustomPrices = customPrices || {};
+  gCustomProfitPct = customProfit !== null ? customProfit : DEFAULT_PROFIT_PCT;
   // Set rate year from today's date and compute custom state from stored prices
   gRateIdx = detectRateIdx();
   refreshCustomState();
