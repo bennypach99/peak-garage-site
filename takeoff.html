@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.15</title>
+  <title>Drywall Tally v15.09</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -264,17 +264,7 @@
     .tut-screen-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.55);
       z-index: 300; pointer-events: all;
-      display: none;
     }
-    .tut-screen-overlay.active { display: block; }
-
-    /* Tutorial lock — block all interaction except explicitly unlocked elements */
-    body.tut-active .tut-lockable { pointer-events: none !important; touch-action: none !important; }
-    body.tut-active .tut-lockable.tut-unlocked { pointer-events: all !important; touch-action: auto !important; }
-    /* Scrollable containers locked during tutorial */
-    body.tut-active .sheet-body,
-    body.tut-active .tally-area,
-    body.tut-active .drawer-job-list { overflow: hidden !important; touch-action: none !important; }
     .tut-bubble {
       position: fixed; z-index: 302;
       background: #00b4ff; border-radius: 16px;
@@ -574,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.15 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.09 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -782,12 +772,9 @@
   </div>
 </div>
 
-<!-- Tutorial Screen Overlay -->
-<div id="tut-screen-overlay" class="tut-screen-overlay"></div>
-
 <!-- Tutorial Bubble (dynamically positioned) -->
 <div id="tut-highlight" class="tut-highlight" style="display:none"></div>
-<div id="tut-bubble" class="tut-bubble tut-lockable tut-unlocked" style="display:none">
+<div id="tut-bubble" class="tut-bubble" style="display:none">
   <div class="tut-bubble-title" id="tut-title"></div>
   <div class="tut-bubble-body" id="tut-body"></div>
   <div class="tut-bubble-footer">
@@ -1387,14 +1374,6 @@ function showTutStep() {
   const step = tutSteps[tutStep];
   if (!step) { endTutorial(); return; }
 
-  // Activate tutorial lock
-  document.body.classList.add('tut-active');
-  document.getElementById('tut-screen-overlay').classList.add('active');
-  // Remove any previously unlocked target
-  document.querySelectorAll('.tut-unlocked').forEach(el => {
-    if (el.id !== 'tut-bubble') el.classList.remove('tut-unlocked');
-  });
-
   // Run any setup action (e.g. switch tab)
   if (step.action) {
     try { step.action(); } catch(e) {}
@@ -1497,20 +1476,8 @@ function positionBubble(step, resolvedTarget) {
     target = step.target ? document.querySelector(step.target) : null;
   }
 
-  // Unlock the specific target element (and its interactive children) for this step
-  const rawLiftTarget = step.target ? document.querySelector(step.target) :
-                        step.targets ? document.querySelector(step.targets[0]) : null;
-  const liftEl = (rawLiftTarget && step.targetParent) ? rawLiftTarget.closest('.field-group') || rawLiftTarget : rawLiftTarget;
-  if (liftEl) {
-    liftEl.classList.add('tut-lockable', 'tut-unlocked');
-    // Also unlock interactive children (inputs, selects, buttons)
-    liftEl.querySelectorAll('input,select,textarea,button').forEach(el => {
-      el.classList.add('tut-lockable', 'tut-unlocked');
-    });
-  }
-
   // Reset bubble classes
-  bubble.className = 'tut-bubble tut-lockable tut-unlocked';
+  bubble.className = 'tut-bubble';
   bubble.style.cssText = 'display:block';
 
   if (target) {
@@ -1629,14 +1596,9 @@ function tutNext() {
 
 function endTutorial() {
   tutActive = false;
-  document.body.classList.remove('tut-active');
   document.getElementById('tut-bubble').style.display = 'none';
   document.getElementById('tut-highlight').style.display = 'none';
-  document.getElementById('tut-screen-overlay').classList.remove('active');
-  // Remove all tutorial lock/unlock classes
-  document.querySelectorAll('.tut-lockable').forEach(el => {
-    el.classList.remove('tut-lockable', 'tut-unlocked');
-  });
+  // Run any pending end callback (e.g. close drawer after onboarding)
   if (typeof window._tutOnEnd === 'function') {
     window._tutOnEnd();
   }
@@ -2216,8 +2178,8 @@ function deleteArea(id) {
     renderAll();
   });
 }
-function closeAreaForm() { if (tutActive) return; document.getElementById('area-form-overlay').classList.remove('open'); }
-function handleAreaFormTap(e) { if (tutActive) return; if (e.target===document.getElementById('area-form-overlay')) closeAreaForm(); }
+function closeAreaForm() { document.getElementById('area-form-overlay').classList.remove('open'); }
+function handleAreaFormTap(e) { if (e.target===document.getElementById('area-form-overlay')) closeAreaForm(); }
 function saveAreaForm() {
   let name    = document.getElementById('af-name').value.trim();
   const height  = document.getElementById('af-height').value;
@@ -3534,7 +3496,7 @@ function openDrawer()  {
     setTimeout(() => tutNext(), 350);
   }
 }
-function closeDrawer() { if (tutActive) return; const i=document.getElementById('drawer-rename'); if(i)i.blur(); document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
+function closeDrawer() { const i=document.getElementById('drawer-rename'); if(i)i.blur(); document.getElementById('drawer').classList.remove('open'); document.getElementById('drawer-overlay').classList.remove('open'); }
 function selectJob(id) {
   curJobId=id; curAreaId=J().areas[0]?.id||null; curType=0; curCat='drywall'; curDwGroup='Regular';
   document.getElementById('job-name-display').textContent=J().name;
@@ -3753,7 +3715,6 @@ function saveDetails() {
 }
 
 function closeDetails() {
-  if (tutActive) return;
   // Block closing if setup is still required
   if (J()?._requireSetup) return;
   document.getElementById('details-overlay').classList.remove('open');
@@ -5173,7 +5134,7 @@ function exportToSheets() {
 
 
 /* ── Prices / My Info sheets ── */
-function handleSheetTap(e, overlayId) { if (tutActive) return; if(e.target===document.getElementById(overlayId)) document.getElementById(overlayId).classList.remove('open'); }
+function handleSheetTap(e, overlayId) { if(e.target===document.getElementById(overlayId)) document.getElementById(overlayId).classList.remove('open'); }
 
 // ── Prices Sheet ──
 const PRICE_FIELDS = [
@@ -5864,7 +5825,7 @@ function switchMatTab(id) {
   openMatPricesSheet();
 }
 
-function closeMatPricesSheet() { if (tutActive) return; document.getElementById('matprices-overlay').classList.remove('open'); }
+function closeMatPricesSheet() { document.getElementById('matprices-overlay').classList.remove('open'); }
 
 function openMatPricesSheet(tab) {
   if (tab) gMatTab = tab;
@@ -5941,7 +5902,7 @@ function saveMatPricesSheet() {
   closeMatPricesSheet();
 }
 
-function closePricesSheet() { if (tutActive) return; document.getElementById('prices-overlay').classList.remove('open'); }
+function closePricesSheet() { document.getElementById('prices-overlay').classList.remove('open'); }
 
 // ── My Info Sheet ──
 function openMyInfoSheet() {
@@ -5969,7 +5930,7 @@ function saveMyInfoSheet() {
   closeMyInfoSheet();
 }
 
-function closeMyInfoSheet() { if (tutActive) return; document.getElementById('myinfo-overlay').classList.remove('open'); }
+function closeMyInfoSheet() { document.getElementById('myinfo-overlay').classList.remove('open'); }
 
 
 /* ── Export to PDF ── */
