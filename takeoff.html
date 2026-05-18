@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.00</title>
+  <title>Drywall Tally v15.09</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.00 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.09 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -609,7 +609,7 @@
         </select>
       </div>
       <div class="field-group">
-        <div class="field-label">Ceiling Texture</div>
+        <div class="field-label">Ceiling Texture <span style="font-size:10px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">*If no texture selected, no ceiling premium on report</span></div>
         <select class="field-select" id="af-texture">
           <option value="">Select texture…</option>
           <option value="smooth">Smooth (Level 5)</option>
@@ -1322,6 +1322,7 @@ function openTutorialList() {
     </div>
   `).join('');
   overlay.classList.add('open');
+  history.pushState({ panel: 'tut-list' }, '');
 }
 
 function closeTutorialList() {
@@ -2158,6 +2159,7 @@ function openAreaForm(editId) {
     document.getElementById('af-notes').value = '';
   }
   document.getElementById('area-form-overlay').classList.add('open');
+  history.pushState({ panel: 'area-form' }, '');
   setTimeout(() => document.getElementById('af-name').focus(), 300);
   // If tutorial is waiting for the area form to open, advance to next step
   if (!editId && tutActive && tutSteps[tutStep]?.waitForAreaOpen) {
@@ -2181,7 +2183,7 @@ function handleAreaFormTap(e) { if (e.target===document.getElementById('area-for
 function saveAreaForm() {
   let name    = document.getElementById('af-name').value.trim();
   const height  = document.getElementById('af-height').value;
-  const texture = document.getElementById('af-texture').value;
+  const texture = document.getElementById('af-texture').value || 'none';
   const notes   = document.getElementById('af-notes').value.trim();
   if (!height) { document.getElementById('af-height').focus(); return; }
   // Auto-name if blank
@@ -2276,8 +2278,9 @@ function renderAreaInfoBar() {
   const sqftOf = (keys) => (Array.isArray(keys)?keys:[keys]).reduce((s,k)=>
     s+Object.entries(A().counts[k]||{}).reduce((s2,[l,q])=>s2+sheetSqft(k,Number(l))*q,0),0);
 
+  const texLabels = { smooth: 'Smooth (L5)', spray: 'Texture Spray', knockdown: 'Knockdown', none: 'No Premium' };
   if (A().height)  chips.push(chip('Ceiling', A().height));
-  if (A().texture) chips.push(chip('Texture', A().texture));
+  if (A().texture && A().texture !== 'none') chips.push(chip('Texture', texLabels[A().texture] || A().texture));
 
   const halfPlain = sqftOf(['pl48','pl54']);
   if (halfPlain>0) chips.push(chip('½" Plain', halfPlain+' ft²'));
@@ -2331,6 +2334,11 @@ function renderAreaInfoBar() {
   });
   const greenGlue=A().counts['extras']?.['Green Glue']||0;
   if(greenGlue>0) chips.push(chip('Green Glue', greenGlue));
+
+  const manualCeilSqft = (A().counts['ceilings']?.entries||[]).reduce((s,e)=>s+(e.l*e.w),0);
+  if(manualCeilSqft>0) chips.push(chip('Ceilings', manualCeilSqft.toFixed(0)+' ft²'));
+  if((A().counts['ceilings']?.cathedral||0)>0) chips.push(chip('Cathedral', '✓'));
+  if((A().counts['ceilings']?.waffle||0)>0) chips.push(chip('Waffle/Tray', '✓'));
 
   bar.innerHTML = chips.length ? `<div class="area-info-scroll">${chips.join('')}</div>` : '';
 }
@@ -2699,10 +2707,14 @@ function renderCeilings() {
     <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Texture: <strong style="color:var(--text)">${texLabel}</strong>${a.notes ? ` — <em>${a.notes}</em>` : ''}</div>
 
     <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px">L × W Entries</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:center;margin-bottom:8px">
-      <input id="ceil-l" type="number" min="0" step="0.1" placeholder="Length (ft)" style="border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;font-family:inherit;background:var(--surface)">
-      <input id="ceil-w" type="number" min="0" step="0.1" placeholder="Width (ft)" style="border:1px solid var(--border);border-radius:8px;padding:10px;font-size:14px;font-family:inherit;background:var(--surface)">
-      <button onclick="addCeilEntry()" style="padding:10px 14px;background:${col};color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Add</button>
+    <div class="meas-add-row" style="margin-bottom:8px">
+      <input class="meas-input" id="ceil-l" type="number" inputmode="decimal" placeholder="L" min="0" step="0.1"
+        onkeydown="if(event.key==='Enter'||event.key==='Tab'){event.preventDefault();document.getElementById('ceil-w').focus();}"/>
+      <span class="meas-x">×</span>
+      <input class="meas-input" id="ceil-w" type="number" inputmode="decimal" placeholder="W" min="0" step="0.1"
+        onkeydown="if(event.key==='Enter'){addCeilEntry();}"/>
+      <button class="meas-add-btn" style="background:${col}" onclick="addCeilEntry()">Add</button>
+      ${totalSqft > 0 ? `<div style="font-family:'DM Mono',monospace;font-size:20px;font-weight:700;color:${col};white-space:nowrap">${totalSqft.toFixed(1)} ft²</div>` : ''}
     </div>`;
 
   if (entries.length) {
@@ -2726,9 +2738,8 @@ function renderCeilings() {
   // Flat-rate counters
   html += `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:8px;margin-top:4px">Flat-Rate Items</div>`;
   [
-    { key: 'cathedral', label: 'Cathedral Ceiling (each)' },
-    { key: 'waffle',    label: 'Waffle Ceiling (per room)' },
-    { key: 'tray',      label: 'Tray Ceiling (per ceiling)' },
+    { key: 'cathedral', label: 'Cathedral Ceiling' },
+    { key: 'waffle',    label: 'Waffle / Tray Ceiling' },
   ].forEach(item => {
     const qty = ceil[item.key] || 0;
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
@@ -2752,12 +2763,16 @@ function addCeilEntry() {
   A().counts['ceilings'].entries.push({ l, w });
   saveState();
   renderCeilings();
+  renderStrip();
+  renderAreaInfoBar();
 }
 
 function removeCeilEntry(idx) {
   A().counts['ceilings'].entries.splice(idx, 1);
   saveState();
   renderCeilings();
+  renderStrip();
+  renderAreaInfoBar();
 }
 
 function adjustCeilFlat(key, delta) {
@@ -2765,6 +2780,8 @@ function adjustCeilFlat(key, delta) {
   c[key] = Math.max(0, (c[key] || 0) + delta);
   saveState();
   renderCeilings();
+  renderStrip();
+  renderAreaInfoBar();
 }
 
 
@@ -3377,10 +3394,17 @@ function renderStrip() {
   if (curCat === 'mud') {
     const mudTotal    = A() ? MUD_ITEMS.reduce((s,item)=>s+(A().counts['mud'][item]||0),0) : 0;
     const extrasTotal = A() ? MUD_EXTRAS_ITEMS.reduce((s,item)=>s+(A().counts['mudExtras']?.[item]||0),0) : 0;
+    const ceilEntries = A()?.counts['ceilings']?.entries || [];
+    const ceilSqft    = ceilEntries.reduce((s,e)=>s+(e.l*e.w),0);
+    const hasCathedral = (A()?.counts['ceilings']?.cathedral||0) > 0;
+    const hasWaffle    = (A()?.counts['ceilings']?.waffle||0) > 0;
     const grandTotal  = mudTotal + extrasTotal;
     document.getElementById('totals-strip').innerHTML=
       `<div class="strip-total">Mud <span>${grandTotal}</span></div>`+
-      (extrasTotal>0 ? `<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>` : '');
+      (extrasTotal>0   ? `<div class="strip-chip">Extras <strong>${extrasTotal}</strong></div>` : '')+
+      (ceilSqft>0      ? `<div class="strip-chip">Ceilings <strong>${ceilSqft.toFixed(0)} ft²</strong></div>` : '')+
+      (hasCathedral    ? `<div class="strip-chip">Cathedral <strong>✓</strong></div>` : '')+
+      (hasWaffle       ? `<div class="strip-chip">Waffle/Tray <strong>✓</strong></div>` : '');
     return;
   }
   if (curCat === 'cornerBead') {
@@ -3466,6 +3490,7 @@ function openDrawer()  {
   renderDrawerList(null);
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-overlay').classList.add('open');
+  history.pushState({ panel: 'drawer' }, '');
   // If tutorial is waiting for drawer to open, advance
   if (tutActive && tutSteps[tutStep]?.waitForDrawer) {
     setTimeout(() => tutNext(), 350);
@@ -3613,6 +3638,7 @@ function openDetails(forceRequired) {
   });
 
   document.getElementById('details-overlay').classList.add('open');
+  history.pushState({ panel: 'details' }, '');
   // Hide ✕ when setup is required — user must complete it
   const closeBtn = document.getElementById('details-close-btn');
   if (closeBtn) closeBtn.style.display = req ? 'none' : '';
@@ -3794,6 +3820,8 @@ function showReport() {
     if(MUD_EXTRAS_ITEMS.some(item=>(a.counts['mudExtras']?.[item]||0)>0))aHas=true;
     if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
     if(JOB_COSTS_ITEMS.some(item=>(a.counts['jobCosts']?.[item]||0)>0))aHas=true;
+    const ceilData = a.counts['ceilings'];
+    if(ceilData && ((ceilData.entries||[]).length>0 || ceilData.cathedral>0 || ceilData.waffle>0 || ceilData.tray>0))aHas=true;
     if(!aHas)return;
     hasAny=true;
 
@@ -4355,15 +4383,11 @@ function showReport() {
       }
       if (ceilCts.cathedral > 0) {
         const rate = gPrices[aIsHR?'ceil_cathedral_hr':'ceil_cathedral_lr']||[216.90,221.24,225.67][gRateIdx];
-        html += `<div class="modal-row"><span>Cathedral Ceilings <span style="font-size:11px;color:var(--muted)">(×${ceilCts.cathedral})</span></span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(ceilCts.cathedral*rate)}</span></div>`;
+        html += `<div class="modal-row"><span>Cathedral Ceiling</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(rate)}</span></div>`;
       }
-      if (!aIsHR && ceilCts.waffle > 0) {
+      if (ceilCts.waffle > 0) {
         const rate = gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx];
-        html += `<div class="modal-row"><span>Waffle Ceilings <span style="font-size:11px;color:var(--muted)">(×${ceilCts.waffle})</span></span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(ceilCts.waffle*rate)}</span></div>`;
-      }
-      if (!aIsHR && ceilCts.tray > 0) {
-        const rate = gPrices['ceil_tray']||[76.50,78.03,79.59][gRateIdx];
-        html += `<div class="modal-row"><span>Tray Ceilings <span style="font-size:11px;color:var(--muted)">(×${ceilCts.tray})</span></span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(ceilCts.tray*rate)}</span></div>`;
+        html += `<div class="modal-row"><span>Waffle / Tray Ceiling</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${fmtC(rate)}</span></div>`;
       }
       if (a.notes) html += `<div class="modal-row" style="color:var(--muted);font-style:italic"><span>Notes</span><span>${a.notes}</span></div>`;
       html += `<div style="height:8px"></div>`;
@@ -4739,16 +4763,13 @@ function showReport() {
         if (ceilCounts.cathedral > 0) {
           const key = isHR ? 'ceil_cathedral_hr' : 'ceil_cathedral_lr';
           const def = [216.90, 221.24, 225.67][gRateIdx];
-          laborCost += ceilCounts.cathedral * (gPrices[key] > 0 ? gPrices[key] : def);
+          laborCost += (gPrices[key] > 0 ? gPrices[key] : def);
         }
-        if (!isHR && ceilCounts.waffle > 0) {
+        if (ceilCounts.waffle > 0) {
           const def = [76.50, 78.03, 79.59][gRateIdx];
-          laborCost += ceilCounts.waffle * (gPrices['ceil_waffle'] > 0 ? gPrices['ceil_waffle'] : def);
+          laborCost += (gPrices['ceil_waffle'] > 0 ? gPrices['ceil_waffle'] : def);
         }
-        if (!isHR && ceilCounts.tray > 0) {
-          const def = [76.50, 78.03, 79.59][gRateIdx];
-          laborCost += ceilCounts.tray * (gPrices['ceil_tray'] > 0 ? gPrices['ceil_tray'] : def);
-        }
+
       }
 
       // ── Material deductions — subs buy consumables from contractor ──
@@ -4878,11 +4899,46 @@ function closeModal() {
 }
 function handleModalTap(e) { if(e.target===document.getElementById('modal-overlay'))closeModal(); }
 
-window.addEventListener('popstate', e => {
+window.addEventListener('popstate', () => {
+  // Close panels in priority order — innermost first
   if (document.getElementById('modal-overlay').classList.contains('open')) {
     document.getElementById('modal-overlay').classList.remove('open');
+    return;
   }
+  if (document.getElementById('prices-overlay').classList.contains('open')) {
+    document.getElementById('prices-overlay').classList.remove('open');
+    return;
+  }
+  if (document.getElementById('matprices-overlay').classList.contains('open')) {
+    document.getElementById('matprices-overlay').classList.remove('open');
+    return;
+  }
+  if (document.getElementById('myinfo-overlay').classList.contains('open')) {
+    document.getElementById('myinfo-overlay').classList.remove('open');
+    return;
+  }
+  if (document.getElementById('details-overlay').classList.contains('open')) {
+    closeDetails();
+    return;
+  }
+  if (document.getElementById('area-form-overlay').classList.contains('open')) {
+    closeAreaForm();
+    return;
+  }
+  if (document.getElementById('tut-list-overlay')?.classList.contains('open')) {
+    closeTutorialList();
+    return;
+  }
+  if (document.getElementById('drawer').classList.contains('open')) {
+    closeDrawer();
+    return;
+  }
+  // Nothing open — push a new state to prevent leaving the app
+  history.pushState({ app: true }, '');
 });
+
+// Push initial history state so first back press is caught
+history.pushState({ app: true }, '');
 
 /* ── Export ── */
 function exportToSheets() {
@@ -5664,6 +5720,7 @@ function openPricesSheet(tab) {
 
   body.innerHTML = out;
   document.getElementById('prices-overlay').classList.add('open');
+  history.pushState({ panel: 'prices' }, '');
   // If tutorial is waiting for prices sheet to open, advance to next step
   if (tutActive && tutSteps[tutStep]?.waitForPrices) {
     setTimeout(() => tutNext(), 400);
@@ -5800,6 +5857,7 @@ function openMatPricesSheet(tab) {
 
   body.innerHTML = out;
   document.getElementById('matprices-overlay').classList.add('open');
+  history.pushState({ panel: 'matprices' }, '');
   // If tutorial is waiting for mat prices sheet to open, advance
   if (tutActive && tutSteps[tutStep]?.waitForMatPrices) {
     setTimeout(() => tutNext(), 400);
@@ -5857,6 +5915,7 @@ function openMyInfoSheet() {
     <div class="field-group"><div class="field-label">Phone</div><input class="field-input" id="mi-phone" type="tel" value="${m.phone}" placeholder="(416) 555-0000" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"/></div>
   `;
   document.getElementById('myinfo-overlay').classList.add('open');
+  history.pushState({ panel: 'myinfo' }, '');
 }
 
 function saveMyInfoSheet() {
