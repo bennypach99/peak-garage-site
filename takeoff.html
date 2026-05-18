@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.10</title>
+  <title>Drywall Tally v15.11</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -267,7 +267,7 @@
       display: none;
     }
     .tut-screen-overlay.active { display: block; }
-    .tut-target-lifted { position: relative !important; z-index: 303 !important; }
+    /* tut-target-lifted reserved for future use */
     .tut-bubble {
       position: fixed; z-index: 304;
       background: #00b4ff; border-radius: 16px;
@@ -567,7 +567,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.10 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.11 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -1448,29 +1448,20 @@ function findScrollParent(el) {
 let _tutLiftedEls = [];
 
 function tutLiftTarget(el) {
-  if (!el) return;
-  // Collect: the element itself, all its ancestors up to a sheet/overlay boundary
-  // We lift the target and any scroll container parents so they're above the overlay
-  const toLift = [el];
-  let parent = el.parentElement;
-  while (parent && parent !== document.body) {
-    toLift.push(parent);
-    // Stop at the topmost sheet/overlay boundary
-    if (parent.classList.contains('sheet-body') ||
-        parent.classList.contains('bottom-sheet') ||
-        parent.classList.contains('sheet-overlay') ||
-        parent.classList.contains('drawer') ||
-        parent.id === 'app') break;
-    parent = parent.parentElement;
-  }
-  toLift.forEach(node => {
-    node.classList.add('tut-target-lifted');
-  });
-  _tutLiftedEls = toLift;
+  const overlay = document.getElementById('tut-screen-overlay');
+  if (!overlay) return;
+  // For interactive elements (inputs, selects, textareas, buttons),
+  // disable pointer-events on the overlay so the element receives taps directly.
+  // For non-interactive targets (divs, labels), keep overlay blocking.
+  const tag = el ? el.tagName.toLowerCase() : '';
+  const isInteractive = ['input','select','textarea','button'].includes(tag);
+  overlay.style.pointerEvents = isInteractive ? 'none' : 'all';
+  _tutLiftedEls = el ? [el] : [];
 }
 
 function tutDropTarget() {
-  _tutLiftedEls.forEach(node => node.classList.remove('tut-target-lifted'));
+  const overlay = document.getElementById('tut-screen-overlay');
+  if (overlay) overlay.style.pointerEvents = 'all';
   _tutLiftedEls = [];
 }
 
