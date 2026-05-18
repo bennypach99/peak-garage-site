@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.09</title>
+  <title>Drywall Tally v15.11</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.09 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.11 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -2025,7 +2025,7 @@ function blankCounts() {
   c['mudExtras'] = {};
   MUD_EXTRAS_ITEMS.forEach(item => c['mudExtras'][item] = 0);
   // Ceilings sub-tab: L×W entries array + flat-rate counters
-  c['ceilings'] = { entries: [], cathedral: 0, waffle: 0, tray: 0 };
+  c['ceilings'] = { entries: [], cathedral: 0, waffle: 0 };
   return c;
 }
 
@@ -3787,6 +3787,7 @@ function showReport() {
   let totalMaterial = 0;
   let totalEnergyStar = 0;
   let totalTownPremium = 0;
+  let totalCeilPremium = 0;
   let totalLocal675 = 0;
   let totalTapers = 0;
   let totalBoarderMatDeduct = 0;
@@ -3821,13 +3822,15 @@ function showReport() {
     if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
     if(JOB_COSTS_ITEMS.some(item=>(a.counts['jobCosts']?.[item]||0)>0))aHas=true;
     const ceilData = a.counts['ceilings'];
-    if(ceilData && ((ceilData.entries||[]).length>0 || ceilData.cathedral>0 || ceilData.waffle>0 || ceilData.tray>0))aHas=true;
+    if(ceilData && ((ceilData.entries||[]).length>0 || ceilData.cathedral>0 || ceilData.waffle>0))aHas=true;
     if(!aHas)return;
     hasAny=true;
 
     const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
     const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
-    const metaParts=[a.height,a.texture].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${s}</span>`);
+    const texLabelMap = { smooth: 'Smooth (L5)', spray: 'Texture Spray', knockdown: 'Knockdown Spray', none: '' };
+    const texDisplay = texLabelMap[a.texture] ?? a.texture ?? '';
+    const metaParts=[a.height, texDisplay].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${s}</span>`);
     const sqftParts=[
       ceilingSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${ceilingSqft} ft² ceiling</span>`:'',
       doubleSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${doubleSqft} ft² double</span>`:'',
@@ -4755,7 +4758,9 @@ function showReport() {
             const def = isHR ? [552.40,563.45,574.72][gRateIdx] : [566.11,577.43,588.98][gRateIdx];
             ceilPremRate = gPrices[key] > 0 ? gPrices[key] : def;
           }
-          laborCost += (ceilSqft / 1000) * ceilPremRate;
+          const ceilPremAmt = (ceilSqft / 1000) * ceilPremRate;
+          laborCost += ceilPremAmt;
+          totalCeilPremium += ceilPremAmt;
         }
 
         // ── Ceiling flat-rate items ──
@@ -4834,7 +4839,7 @@ function showReport() {
       );
 
       // ── Tapers base — subtract taper material purchases ──
-      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + taperAddOnGross + taperTownPremium - taperMatDeduct);
+      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + taperAddOnGross + taperTownPremium + totalCeilPremium - taperMatDeduct);
 
       const local675Pct = (gPrices['local675_dues'] ?? 0.265);
       const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
@@ -5474,7 +5479,7 @@ gMatPrices = defaultMatPrices();
 async function loadMatPrices() {
   try {
     const r = await storageGet('mat_prices');
-    return r ? { ...defaultMatPrices(), ...JSON.parse(r) } : defaultMatPrices();
+    return r ? { ...defaultMatPrices(), ...r } : defaultMatPrices();
   } catch(e) { return defaultMatPrices(); }
 }
 async function saveMatPricesStorage(p) {
