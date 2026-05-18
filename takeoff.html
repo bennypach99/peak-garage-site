@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.11</title>
+  <title>Drywall Tally v15.09</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -264,12 +264,9 @@
     .tut-screen-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.55);
       z-index: 300; pointer-events: all;
-      display: none;
     }
-    .tut-screen-overlay.active { display: block; }
-    /* tut-target-lifted reserved for future use */
     .tut-bubble {
-      position: fixed; z-index: 304;
+      position: fixed; z-index: 302;
       background: #00b4ff; border-radius: 16px;
       padding: 16px 18px 14px;
       width: min(300px, calc(100vw - 32px));
@@ -324,9 +321,9 @@
     }
     /* Highlight ring */
     .tut-highlight {
-      position: fixed; z-index: 303; pointer-events: none;
+      position: fixed; z-index: 301; pointer-events: none;
       border-radius: 10px;
-      box-shadow: 0 0 0 4px #00b4ff;
+      box-shadow: 0 0 0 4px #00b4ff, 0 0 0 5000px rgba(0,0,0,0.55);
       transition: all 0.3s ease;
     }
     /* Tutorial list modal */
@@ -567,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.11 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.09 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -774,9 +771,6 @@
     <div class="tut-list-items" id="tut-list-items"></div>
   </div>
 </div>
-
-<!-- Tutorial Screen Overlay — blocks background interaction during tutorials -->
-<div id="tut-screen-overlay" class="tut-screen-overlay"></div>
 
 <!-- Tutorial Bubble (dynamically positioned) -->
 <div id="tut-highlight" class="tut-highlight" style="display:none"></div>
@@ -1380,12 +1374,6 @@ function showTutStep() {
   const step = tutSteps[tutStep];
   if (!step) { endTutorial(); return; }
 
-  // Drop any previously lifted target
-  tutDropTarget();
-
-  // Show the screen overlay to block background interaction
-  document.getElementById('tut-screen-overlay').classList.add('active');
-
   // Run any setup action (e.g. switch tab)
   if (step.action) {
     try { step.action(); } catch(e) {}
@@ -1444,27 +1432,6 @@ function findScrollParent(el) {
   return null;
 }
 
-// Track currently lifted elements so we can drop them
-let _tutLiftedEls = [];
-
-function tutLiftTarget(el) {
-  const overlay = document.getElementById('tut-screen-overlay');
-  if (!overlay) return;
-  // For interactive elements (inputs, selects, textareas, buttons),
-  // disable pointer-events on the overlay so the element receives taps directly.
-  // For non-interactive targets (divs, labels), keep overlay blocking.
-  const tag = el ? el.tagName.toLowerCase() : '';
-  const isInteractive = ['input','select','textarea','button'].includes(tag);
-  overlay.style.pointerEvents = isInteractive ? 'none' : 'all';
-  _tutLiftedEls = el ? [el] : [];
-}
-
-function tutDropTarget() {
-  const overlay = document.getElementById('tut-screen-overlay');
-  if (overlay) overlay.style.pointerEvents = 'all';
-  _tutLiftedEls = [];
-}
-
 function positionBubble(step, resolvedTarget) {
   const bubble = document.getElementById('tut-bubble');
   const highlight = document.getElementById('tut-highlight');
@@ -1508,13 +1475,6 @@ function positionBubble(step, resolvedTarget) {
   } else {
     target = step.target ? document.querySelector(step.target) : null;
   }
-
-  // Lift the real DOM target above the overlay so it's interactable
-  tutDropTarget();
-  const realTarget = step.target ? document.querySelector(step.target) :
-                     step.targets ? document.querySelector(step.targets[0]) : null;
-  const liftEl = (realTarget && step.targetParent) ? realTarget.closest('.field-group') || realTarget : realTarget;
-  tutLiftTarget(liftEl);
 
   // Reset bubble classes
   bubble.className = 'tut-bubble';
@@ -1638,8 +1598,6 @@ function endTutorial() {
   tutActive = false;
   document.getElementById('tut-bubble').style.display = 'none';
   document.getElementById('tut-highlight').style.display = 'none';
-  document.getElementById('tut-screen-overlay').classList.remove('active');
-  tutDropTarget();
   // Run any pending end callback (e.g. close drawer after onboarding)
   if (typeof window._tutOnEnd === 'function') {
     window._tutOnEnd();
