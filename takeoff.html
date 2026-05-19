@@ -3919,21 +3919,48 @@ function showReport() {
       : (gPrices['cb_lr_fill'] > 0 ? gPrices['cb_lr_fill'] : 0.90);
 
     // ── Collect drywall data ──
-    let dwRows = [], plainSqft = 0, fivetSqft = 0, durockSqft = 0;
+    // dwGroups: { '48': [ {typeLabel, rows:[{lbl,sheets,sqft,unitPrice,matCost,key}]} ], '54': [...], 'special': [...] }
+    let dwGroups = { '48': [], '54': [], 'special': [] };
+    let dwRows = []; // kept for subtotal math
+    let plainSqft = 0, fivetSqft = 0, durockSqft = 0;
+
+    // Map type key → width bucket and clean label
+    const DW_TYPE_META = {
+      pl48:     { bucket: '48', typeLabel: '½" Plain' },
+      cd48:     { bucket: '48', typeLabel: '½" Ceiling Drywall' },
+      fg48:     { bucket: '48', typeLabel: '⅝" Type X' },
+      dl48:     { bucket: '48', typeLabel: '⅝" Double Layer' },
+      tc48:     { bucket: '48', typeLabel: '½" Type C' },
+      hdl48:    { bucket: '48', typeLabel: '½" Double Layer' },
+      pl54:     { bucket: '54', typeLabel: '½" Plain' },
+      fg54:     { bucket: '54', typeLabel: '⅝" Type X' },
+      durock48: { bucket: 'special', typeLabel: '½" Durock' },
+      dens48:   { bucket: 'special', typeLabel: '½" Denshield' },
+      dens58:   { bucket: 'special', typeLabel: '⅝" Denshield' },
+      wr48:     { bucket: 'special', typeLabel: '½" Water Resistant' },
+      wr58:     { bucket: 'special', typeLabel: '⅝" Water Resistant' },
+      flex48:   { bucket: 'special', typeLabel: '¼" Flex' },
+    };
+
     DRYWALL_TYPES.filter(t => !t.isItems).forEach(t => {
+      const meta = DW_TYPE_META[t.key];
+      if (!meta) return;
+      const typeRows = [];
       t.lengths.forEach(l => {
         const qty = a.counts[t.key]?.[l] || 0;
         if (!qty) return;
         const sf = sheetSqft(t.key, l) * qty;
         const up = gMatPrices[matKeyMap[t.key]] || 0;
         const lbl = t.labels ? t.labels[t.lengths.indexOf(l)] : l + "' sheets";
-        const prefix = t.labels ? '' : (t.key.includes('54') ? '54" \u00d7 ' : '48" \u00d7 ');
-        const cleanName = t.fullName.replace(/\s*\(48"\s*&\s*54"\)/g,'').replace(/^\d+"\s*\u00d7\s*/,'');
-        dwRows.push({ name:`${prefix}${cleanName} \u2014 ${lbl}`, sheets:qty, sqft:sf, unitPrice:up, matCost:sf*up, key:t.key });
+        typeRows.push({ lbl, sheets: qty, sqft: sf, unitPrice: up, matCost: sf * up, key: t.key });
+        dwRows.push({ sheets: qty, sqft: sf, matCost: sf * up, key: t.key });
         if (DW_DUROCK_KEYS.has(t.key)) durockSqft += sf;
         else if (DW_FIVET_KEYS.has(t.key)) fivetSqft += sf;
         else plainSqft += sf;
       });
+      if (typeRows.length) {
+        dwGroups[meta.bucket].push({ typeLabel: meta.typeLabel, rows: typeRows });
+      }
     });
     const allDwSqft = plainSqft + fivetSqft + durockSqft;
     if (allDwSqft > 0) hasAny = true;
@@ -3949,7 +3976,7 @@ function showReport() {
           const sqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
           const lc = sqft * insLabRate;
           const mc = sqft * (gMatPrices[blownMatKeys[r]]||0);
-          insRows.push({name:`${t.fullName} ${r}`,bags:null,sqft,unitPrice:gMatPrices[blownMatKeys[r]]||0,matCost:mc,labCost:lc});
+          insRows.push({name:`${t.fullName} ${r}`,bags:null,sqft,unitPrice:gMatPrices[blownMatKeys[r]]||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:r});
           insLabTotal += lc; insMatTotal += mc;
         });
       } else if (t.kind === 'foam') {
@@ -3959,15 +3986,15 @@ function showReport() {
           const keys = foamMatKeys[r]||['',''];
           const hs = Math.round((f.half||[]).reduce((s,m)=>s+m.l*m.w,0));
           const ts = Math.round((f.two||[]).reduce((s,m)=>s+m.l*m.w,0));
-          if (hs>0){const lc=hs*insLabRate,mc=hs*(gMatPrices[keys[0]]||0);insRows.push({name:`${t.fullName} ${r} \u00bd lb`,bags:null,sqft:hs,unitPrice:gMatPrices[keys[0]]||0,matCost:mc,labCost:lc});insLabTotal+=lc;insMatTotal+=mc;}
-          if (ts>0){const lc=ts*insLabRate,mc=ts*(gMatPrices[keys[1]]||0);insRows.push({name:`${t.fullName} ${r} 2lb`,bags:null,sqft:ts,unitPrice:gMatPrices[keys[1]]||0,matCost:mc,labCost:lc});insLabTotal+=lc;insMatTotal+=mc;}
+          if (hs>0){const lc=hs*insLabRate,mc=hs*(gMatPrices[keys[0]]||0);insRows.push({name:`${t.fullName} ${r} \u00bd lb`,bags:null,sqft:hs,unitPrice:gMatPrices[keys[0]]||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:`${r} \u00bd lb`});insLabTotal+=lc;insMatTotal+=mc;}
+          if (ts>0){const lc=ts*insLabRate,mc=ts*(gMatPrices[keys[1]]||0);insRows.push({name:`${t.fullName} ${r} 2lb`,bags:null,sqft:ts,unitPrice:gMatPrices[keys[1]]||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:`${r} 2lb`});insLabTotal+=lc;insMatTotal+=mc;}
         });
       } else if (t.kind === 'blanket') {
         const entries = a.counts['insulation'][t.key]||[];
         if (!entries.length) return;
         const sqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
         const lc=sqft*insLabRate,mc=sqft*(gMatPrices['mat_blanket']||0);
-        insRows.push({name:t.fullName,bags:null,sqft,unitPrice:gMatPrices['mat_blanket']||0,matCost:mc,labCost:lc});
+        insRows.push({name:t.fullName,bags:null,sqft,unitPrice:gMatPrices['mat_blanket']||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:null});
         insLabTotal+=lc;insMatTotal+=mc;
       } else {
         const rvals = t.rvals||INSULATION_RVALS;
@@ -3991,7 +4018,7 @@ function showReport() {
             const pricePerBag = gMatPrices[mmk]||0;
             const lc=tsqft*effRate, mc=ceilBags*pricePerBag;
             if (t.key==='pink'||t.key==='roxul') insEnergySqft+=tsqft;
-            insRows.push({name:`${t.fullName} ${rv.r} ${sz}`,bags:ceilBags,sqft,unitPrice:pricePerBag,matCost:mc,labCost:lc});
+            insRows.push({name:`${t.fullName} ${rv.r} ${sz}`,bags:ceilBags,sqft,unitPrice:pricePerBag,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:`${rv.r} ${sz}`});
             insLabTotal+=lc; insMatTotal+=mc;
           });
         });
@@ -4160,59 +4187,112 @@ function showReport() {
     </div>`;
 
     // ─────── MATERIALS SECTION ───────
-    if (dwRows.length || insRows.length) {
+    const dwHasAny = dwGroups['48'].length || dwGroups['54'].length || dwGroups['special'].length;
+    if (dwHasAny || insRows.length) {
       html += sectionHead('Materials','#15803d');
 
-      // Drywall
-      if (dwRows.length) {
+      // ── DRYWALL (grouped) ──
+      if (dwHasAny) {
         html += `<div class="modal-type-head" style="color:#1d4ed8">Drywall</div>`;
-        html += colHead([{label:'Sheets',w:44},{label:'Sq Ft',w:50},{label:'$/ft\u00b2',w:56},{label:'Mat Cost',w:70}]);
-        dwRows.forEach(r => {
-          html += `<div class="modal-row"><span>${r.name}</span>
-            <span style="display:flex;gap:6px">
-              <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.sheets}</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(r.sqft)}</span>
-              <span style="min-width:56px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
-            </span></div>`;
-        });
+        const dwColSpec = [{label:'Sheets',w:44},{label:'Sq Ft',w:50},{label:'$/ft\u00b2',w:56},{label:'Mat Cost',w:70}];
+
+        const renderDwTypeGroup = (typeLabel, rows) => {
+          html += `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:6px 0 2px;padding-left:2px">${typeLabel}</div>`;
+          html += colHead(dwColSpec);
+          rows.forEach(r => {
+            html += `<div class="modal-row"><span style="padding-left:8px">${r.lbl}</span>
+              <span style="display:flex;gap:6px">
+                <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.sheets}</span>
+                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(r.sqft)}</span>
+                <span style="min-width:56px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
+                <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
+              </span></div>`;
+          });
+        };
+
+        const renderDwWidthBucket = (bucketLabel, groups) => {
+          if (!groups.length) return;
+          html += `<div style="font-size:12px;font-weight:700;color:#1d4ed8;margin:8px 0 2px;padding:4px 8px;background:#eff4ff;border-radius:6px">${bucketLabel}</div>`;
+          groups.forEach(g => renderDwTypeGroup(g.typeLabel, g.rows));
+        };
+
+        renderDwWidthBucket('48"', dwGroups['48']);
+        renderDwWidthBucket('54"', dwGroups['54']);
+
+        if (dwGroups['special'].length) {
+          html += `<div style="font-size:12px;font-weight:700;color:#475569;margin:8px 0 2px;padding:4px 8px;background:#f1f5f9;border-radius:6px">Special</div>`;
+          dwGroups['special'].forEach(g => renderDwTypeGroup(g.typeLabel, g.rows));
+        }
+
         const dwTotalSheets = dwRows.reduce((s,r)=>s+r.sheets,0);
         const dwTotalSqft   = dwRows.reduce((s,r)=>s+r.sqft,0);
         html += subtotalRow('Drywall Subtotal', dwTotalSheets, Math.round(dwTotalSqft)+' ft\u00b2', areaDwMatCost);
       }
 
-      // Insulation
+      // ── INSULATION (grouped by type) ──
       if (insRows.length) {
         html += `<div class="modal-type-head" style="color:#db2777;margin-top:8px">Insulation</div>`;
-        html += colHead([{label:'Bags',w:36},{label:'Sq Ft',w:50},{label:'$/bag',w:50},{label:'Mat Cost',w:70}]);
+        const insColSpec = [{label:'Bags',w:36},{label:'Sq Ft',w:50},{label:'$/bag',w:50},{label:'Mat Cost',w:70}];
+
+        // Group rows by insGroup (fullName)
+        const insGroupOrder = ['Pink Insulation','Roxul','Blown-In','Spray-Foam','Blanket'];
+        const insGrouped = {};
         insRows.forEach(r => {
-          html += `<div class="modal-row"><span>${r.name}</span>
-            <span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.bags!=null?r.bags:''}</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.sqft} ft\u00b2</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
-            </span></div>`;
+          const g = r.insGroup || r.name;
+          if (!insGrouped[g]) insGrouped[g] = [];
+          insGrouped[g].push(r);
+        });
+        // Render in defined order, then any remaining
+        const insGroupKeys = [...insGroupOrder.filter(k=>insGrouped[k]), ...Object.keys(insGrouped).filter(k=>!insGroupOrder.includes(k))];
+        insGroupKeys.forEach(groupName => {
+          const gRows = insGrouped[groupName];
+          if (!gRows || !gRows.length) return;
+          html += `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:6px 0 2px;padding-left:2px">${groupName}</div>`;
+          html += colHead(insColSpec);
+          gRows.forEach(r => {
+            const rowLabel = r.insRowLabel || r.name;
+            html += `<div class="modal-row"><span style="padding-left:8px">${rowLabel}</span>
+              <span style="display:flex;gap:6px">
+                <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.bags!=null?r.bags:''}</span>
+                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.sqft} ft\u00b2</span>
+                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
+                <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
+              </span></div>`;
+          });
         });
       }
 
-      // Steel
-      const steelItems = STEEL_SUBTABS.flatMap(st=>st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0).map(item=>({item,st})));
-      if (steelItems.length) {
+      // ── STEEL (grouped by size) ──
+      const steelColSpec = [{label:'Qty',w:36},{label:'Lin Ft',w:50},{label:'$/lf',w:50},{label:'Mat Cost',w:70}];
+      const steelHasAny = STEEL_SUBTABS.some(st=>st.items.some(item=>(a.counts[st.key]?.[item]||0)>0));
+      if (steelHasAny) {
         html += `<div class="modal-type-head" style="color:#475569;margin-top:8px">Steel</div>`;
-        html += colHead([{label:'Qty',w:36},{label:'Lin Ft',w:50},{label:'$/lf',w:50},{label:'Mat Cost',w:70}]);
-        steelItems.forEach(({item,st})=>{
-          const qty=a.counts[st.key][item];
-          const lm=item.match(/(\d+)'/); const len=lm?parseInt(lm[1]):1;
-          const lower=item.toLowerCase();
-          const mk=lower.includes('track')?`mat_st_${st.key.replace('steel_','')}_trk`:lower.includes('resilient')?'mat_st_res_ch':lower.includes('hat')?'mat_st_hat_ch':lower.includes('furring')?'mat_st_fur_ch':lower.includes('cold roll')?'mat_st_cr_ch':lower.includes('1" x 2"')?'mat_st_ang_1x2':lower.includes('2" x 2"')?'mat_st_ang_2x2':`mat_st_${st.key.replace('steel_','')}_stud`;
-          const up=gMatPrices[mk]||0; const mc=qty*len*up;
-          html+=`<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
-            <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty*len} lf</span>
-            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${up>0?fmtC(up):''}</span>
-            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc>0?fmtC(mc):''}</span>
-          </span></div>`;
+        STEEL_SUBTABS.forEach(st => {
+          const activeItems = st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0);
+          if (!activeItems.length) return;
+          // Size header (e.g. "1 5/8"" or "Ch/Angle")
+          html += `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:6px 0 2px;padding-left:2px">${st.label}</div>`;
+          html += colHead(steelColSpec);
+          activeItems.forEach(item => {
+            const qty = a.counts[st.key][item];
+            const lm = item.match(/(\d+)'/); const len = lm ? parseInt(lm[1]) : 1;
+            const lower = item.toLowerCase();
+            const mk = lower.includes('track') ? `mat_st_${st.key.replace('steel_','')}_trk`
+              : lower.includes('resilient') ? 'mat_st_res_ch' : lower.includes('hat') ? 'mat_st_hat_ch'
+              : lower.includes('furring') ? 'mat_st_fur_ch' : lower.includes('cold roll') ? 'mat_st_cr_ch'
+              : lower.includes('1" x 2"') ? 'mat_st_ang_1x2' : lower.includes('2" x 2"') ? 'mat_st_ang_2x2'
+              : `mat_st_${st.key.replace('steel_','')}_stud`;
+            const up = gMatPrices[mk] || 0; const mc = qty * len * up;
+            // Row label: strip size prefix for studs/tracks since it's already the header
+            const isChannel = st.key === 'steel_ch';
+            const rowLabel = isChannel ? item : (lower.includes('track') ? 'Track' : `${lm?lm[1]:"?"}'`);
+            html += `<div class="modal-row"><span style="padding-left:8px">${rowLabel}</span><span style="display:flex;gap:6px">
+              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
+              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty*len} lf</span>
+              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${up>0?fmtC(up):''}</span>
+              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc>0?fmtC(mc):''}</span>
+            </span></div>`;
+          });
         });
       }
 
