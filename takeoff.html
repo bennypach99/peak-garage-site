@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.61</title>
+  <title>Drywall Tally v15.65</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -265,6 +265,34 @@
       position: fixed; inset: 0; background: rgba(0,0,0,0.55);
       z-index: 300; pointer-events: all;
     }
+    /* Tutorial input lock — intercepts all taps during active tutorial steps */
+    #tut-lock {
+      position: fixed; inset: 0; z-index: 300;
+      display: none; touch-action: none;
+    }
+    #tut-lock.active { display: block; }
+    /* Nudge toast — shown when user taps the lock */
+    #tut-nudge {
+      position: fixed; z-index: 303;
+      background: rgba(0,0,0,0.75); color: #fff;
+      font-size: 12px; font-weight: 600;
+      padding: 6px 14px; border-radius: 20px;
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    #tut-nudge.show { opacity: 1; }
+    /* Shake animation for bubble */
+    @keyframes tut-shake {
+      0%,100%{transform:translateX(0)} 20%{transform:translateX(-5px)} 60%{transform:translateX(5px)}
+    }
+    .tut-bubble.shake { animation: tut-shake 0.3s ease; }
+    /* Pulse animation for tappable targets during waitFor steps */
+    @keyframes tut-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(0,180,255,0.7); }
+      50%      { box-shadow: 0 0 0 8px rgba(0,180,255,0); }
+    }
+    .tut-pulse-target { animation: tut-pulse 1.2s ease-in-out infinite; border-radius: 8px; }
     .tut-bubble {
       position: fixed; z-index: 302;
       background: #00b4ff; border-radius: 16px;
@@ -566,7 +594,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.61 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.65 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -774,6 +802,10 @@
   </div>
 </div>
 
+<!-- Tutorial input lock — blocks all UI interaction during active tutorial steps -->
+<div id="tut-lock"></div>
+<div id="tut-nudge">👆 Tap Next to continue</div>
+
 <!-- Tutorial Bubble (dynamically positioned) -->
 <div id="tut-highlight" class="tut-highlight" style="display:none"></div>
 <div id="tut-bubble" class="tut-bubble" style="display:none">
@@ -927,10 +959,10 @@ const TUTORIALS = [
     steps: [
       {
         title: 'Add an Area',
-        body: 'Tap "+ Area" to open the form.',
+        body: 'The area form is now open. Each area tracks its own counts separately — you can have Main Floor, Basement, 2nd Floor, etc.',
         target: '.area-add-inline button',
         arrow: 'down',
-        waitForAreaOpen: true,
+        action: () => { if (typeof openAreaForm === 'function') openAreaForm(null); },
       },
       {
         title: 'Area Name',
@@ -962,12 +994,12 @@ const TUTORIALS = [
         noFocus: true,
       },
       {
-        title: 'Add Area',
-        body: 'Tap "Add Area" to save it.',
+        title: 'Save the Area',
+        body: 'Tap Next to save this area and continue.',
         target: '#area-form-footer .sheet-save-btn',
         arrow: 'up',
         noFocus: true,
-        waitForArea: true,
+        onNext: () => { if (typeof saveAreaForm === 'function') saveAreaForm(); },
       },
     ]
   },
@@ -1031,10 +1063,14 @@ const TUTORIALS = [
       },
       {
         title: '54" Sheets',
-        body: 'Wider 54" sheets are tallied separately in their own section below the 48" cards. Each has its own subtotal so you can order the right mix.',
+        body: 'Wider 54" sheets are tallied separately below the 48" cards — each with their own subtotal so you can order the right mix.',
         target: '#tally-header-54',
-        arrow: 'down',
-        scrollTo: '.tally-area',
+        arrow: 'up',
+        action: () => {
+          // Scroll the tally area so the 54" header is visible
+          const el = document.getElementById('tally-header-54');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        },
       },
       {
         title: 'Sheet Length Cards',
@@ -1100,12 +1136,14 @@ const TUTORIALS = [
     icon: '💰',
     steps: [
       {
-        title: 'Open Labor Prices',
-        body: 'Tap "Labor Prices" in the menu to open the prices sheet.',
-        target: '#drawer-labor-prices-btn',
-        arrow: 'up',
-        waitForPrices: true,
-        action: () => { openDrawer(); },
+        title: 'Labor Prices',
+        body: 'The Labor Prices sheet is now open. This is where you set your CBA union rates and profit margin.',
+        target: '#prices-tab-bar',
+        arrow: 'down',
+        action: () => {
+          closeDrawer();
+          setTimeout(() => openPricesSheet(), 300);
+        },
       },
       {
         title: 'Price Tabs',
@@ -1142,12 +1180,14 @@ const TUTORIALS = [
     icon: '🧱',
     steps: [
       {
-        title: 'Open Material Prices',
-        body: 'Tap "Material Prices" in the menu to open the material prices sheet.',
-        target: '#drawer-mat-prices-btn',
-        arrow: 'up',
-        waitForMatPrices: true,
-        action: () => { openDrawer(); },
+        title: 'Material Prices',
+        body: 'The Material Prices sheet is now open. This is where you set your supplier costs per sheet or unit.',
+        target: '#mat-prices-tab-bar',
+        arrow: 'down',
+        action: () => {
+          closeDrawer();
+          setTimeout(() => openMatPricesSheet(), 300);
+        },
       },
       {
         title: 'Material Categories',
@@ -1157,8 +1197,8 @@ const TUTORIALS = [
       },
       {
         title: 'Price Fields',
-        body: 'Each field shows the cost per sheet or unit for that material. Enter your supplier prices here — these feed directly into the material cost column on your report.',
-        target: '#matprices-body',
+        body: 'Each field shows the cost per sheet or unit. Enter your supplier prices here — they feed directly into the material cost column on your report.',
+        target: '#matprices-body .mat-price-row',
         arrow: 'down',
       },
       {
@@ -1184,10 +1224,11 @@ const TUTORIALS = [
     steps: [
       {
         title: 'Open the Side Menu',
-        body: 'Tap the hamburger menu (☰) to open the side drawer.',
+        body: 'Tap the hamburger menu (☰) at the top left to open the side drawer.',
         target: '.menu-btn',
         arrow: 'down',
         waitForDrawer: true,
+        pulseTarget: '.menu-btn',
       },
       {
         title: 'Sign Out',
@@ -1204,14 +1245,14 @@ const TUTORIALS = [
       {
         title: 'Jobs List',
         body: 'All your saved jobs appear here. Tap a job to switch to it. Tap the ✕ to delete it permanently.',
-        targets: ['#drawer-jobs-label', '#drawer-job-list'],
+        target: '#drawer-job-list',
         arrow: 'down',
       },
       {
         title: 'Labor & Material Prices',
         body: 'Tap "Labor Prices" to set your union rates. Tap "Material Prices" to set your supplier costs. Both feed directly into your report.',
         targets: ['#drawer-labor-prices-btn', '#drawer-mat-prices-btn'],
-        arrow: 'down',
+        arrow: 'up',
       },
       {
         title: 'My Info',
@@ -1236,7 +1277,7 @@ const TUTORIALS = [
       },
       {
         title: 'Insulation Types',
-        body: 'These tabs switch between insulation types — Pink batt, Roxul, Blown-In, Spray-Foam, Blanket, and Extras. Tap Pink or Roxul to start counting batt insulation.',
+        body: 'These tabs switch between types — Pink, Roxul, Blown-In, Spray-Foam, Blanket, and Extras. Tap Pink or Roxul to count batt insulation.',
         target: '#type-tabs',
         arrow: 'up',
         action: () => { if (typeof switchInsType === 'function') switchInsType(0); },
@@ -1248,15 +1289,22 @@ const TUTORIALS = [
         arrow: 'up',
       },
       {
-        title: 'Sheet Width',
-        body: 'The insulation section shows the sheet width (16" or 24") with the number of pieces and bags. These are the same counters as drywall — tap "+" or "−" to add or remove pieces.',
+        title: 'Width & Counter',
+        body: 'Each card shows a sheet width (16" or 24"). Tap "+" or "−" to count pieces, or tap the big number to type an exact count.',
         target: '.tally-header',
         arrow: 'down',
         scrollTo: '.tally-area',
       },
       {
-        title: 'Pieces & Bags',
-        body: 'As you count pieces, the app automatically calculates how many bags are needed and the total square footage. The totals strip at the bottom updates live.',
+        title: 'Pieces or Square Footage',
+        body: 'You can count by pieces or enter square footage directly — the app converts between them automatically. Bags are always rounded up to the nearest full bag.',
+        target: '.sheet-card',
+        arrow: 'up',
+        scrollTo: '.tally-area',
+      },
+      {
+        title: 'Live Totals',
+        body: 'The bottom strip updates live showing total bags, square footage, and a breakdown by type. Bags are always rounded up so your order covers the full area.',
         target: '.totals-strip',
         arrow: 'up',
       },
@@ -1280,26 +1328,31 @@ const TUTORIALS = [
         body: 'Tap Blown-In or Spray-Foam to tally those materials. Select the R-value, then enter the square footage directly. These are priced per ft² in the report.',
         target: '#type-tabs',
         arrow: 'up',
-        action: () => { if (typeof switchInsType === 'function') switchInsType(2); },
+        action: () => {
+          if (typeof switchInsType === 'function') {
+            switchInsType(2);
+            setTimeout(() => positionBubble(tutSteps[tutStep], document.querySelector('#type-tabs')), 500);
+          }
+        },
       },
       {
         title: 'Blanket Insulation',
-        body: 'Tap Blanket to tally blanket insulation. Enter the length and height of each section and tap Add — each entry is saved as L × H and the square footage adds to the running total automatically.',
+        body: 'Tap Blanket to tally blanket insulation. Enter the length and height of each section and tap Add — the square footage adds to the running total automatically.',
         target: '#type-tabs',
-        arrow: 'up',
+        arrow: 'down',
         action: () => { if (typeof switchInsType === 'function') switchInsType(4); },
       },
       {
         title: 'Multiple Entries',
-        body: 'Each L × H entry appears in a list below. Add as many entries as you need — the total square footage shown is the sum of all entries combined.',
+        body: 'Each L × H entry appears in a list below. Add as many entries as you need — the total shown is the sum of all entries combined.',
         target: '.tally-area',
         arrow: 'down',
       },
       {
         title: 'Insulation Extras',
-        body: 'Tap the Extras tab to count installation materials — Poly, Tuck Tape, Can Foam, Staples, Styro-Vents, and Acoustic Caulking. These items are paid by the installer and show as a separate line on the report.',
-        target: '#type-tabs',
-        arrow: 'up',
+        body: 'Tap the Extras tab to count Poly, Tuck Tape, Can Foam, Staples, Styro-Vents, and Acoustic Caulking. These show as a separate line on the report.',
+        target: '.type-tab:last-child',
+        arrow: 'down',
         action: () => { if (typeof switchInsSubTab === 'function') switchInsSubTab(1); },
       },
     ]
@@ -1345,6 +1398,7 @@ function startTutorial(id) {
         tutSteps = tut.steps;
         tutStep = 0;
         tutActive = true;
+        tutLock();
         history.pushState({ panel: 'tutorial' }, '');
         showTutStep();
       }, 350);
@@ -1371,6 +1425,7 @@ function startTutorial(id) {
   tutSteps = tut.steps;
   tutStep = 0;
   tutActive = true;
+  tutLock();
   history.pushState({ panel: 'tutorial' }, '');
   showTutStep();
 }
@@ -1378,6 +1433,18 @@ function startTutorial(id) {
 function showTutStep() {
   const step = tutSteps[tutStep];
   if (!step) { endTutorial(); return; }
+
+  // Lock or unlock input based on whether this step waits for user action
+  const needsInteraction = step.waitForArea || step.waitForAreaOpen || step.waitForReport ||
+    step.waitForPrices || step.waitForMatPrices || step.waitForDrawer;
+  if (needsInteraction) {
+    tutUnlock();
+    // Pulse the target element so user knows what to tap
+    tutPulse(step.pulseTarget || step.target);
+  } else {
+    tutLock();
+    tutUnpulse();
+  }
 
   // Run any setup action (e.g. switch tab)
   if (step.action) {
@@ -1603,11 +1670,57 @@ function endTutorial() {
   tutActive = false;
   document.getElementById('tut-bubble').style.display = 'none';
   document.getElementById('tut-highlight').style.display = 'none';
+  tutUnlock();
+  tutUnpulse();
   // Run any pending end callback (e.g. close drawer after onboarding)
   if (typeof window._tutOnEnd === 'function') {
     window._tutOnEnd();
   }
 }
+
+// ── Tutorial input lock ──────────────────────────────────────
+function tutLock() {
+  document.getElementById('tut-lock').classList.add('active');
+}
+function tutUnlock() {
+  document.getElementById('tut-lock').classList.remove('active');
+}
+function tutPulse(selector) {
+  tutUnpulse();
+  const el = selector ? document.querySelector(selector) : null;
+  if (el) el.classList.add('tut-pulse-target');
+}
+function tutUnpulse() {
+  document.querySelectorAll('.tut-pulse-target').forEach(el => el.classList.remove('tut-pulse-target'));
+}
+
+// When user taps the lock: shake the bubble and show nudge
+(function() {
+  let nudgeTimer = null;
+  document.getElementById('tut-lock').addEventListener('click', function(e) {
+    // Shake the bubble
+    const bubble = document.getElementById('tut-bubble');
+    bubble.classList.remove('shake');
+    void bubble.offsetWidth; // reflow to restart animation
+    bubble.classList.add('shake');
+    setTimeout(() => bubble.classList.remove('shake'), 350);
+    // Show nudge toast near the Next button
+    const nudge = document.getElementById('tut-nudge');
+    const btn = document.getElementById('tut-next-btn');
+    if (btn && btn.style.display !== 'none') {
+      const r = btn.getBoundingClientRect();
+      nudge.style.left = Math.round(r.left) + 'px';
+      nudge.style.top  = Math.round(r.top - 36) + 'px';
+    } else {
+      const vw = window.innerWidth, vh = window.innerHeight;
+      nudge.style.left = Math.round(vw/2 - 80) + 'px';
+      nudge.style.top  = Math.round(vh/2) + 'px';
+    }
+    nudge.classList.add('show');
+    clearTimeout(nudgeTimer);
+    nudgeTimer = setTimeout(() => nudge.classList.remove('show'), 1500);
+  });
+})();
 
 // Close tutorial on Escape
 document.addEventListener('keydown', e => {
