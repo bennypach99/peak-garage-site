@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.18</title>
+  <title>Drywall Tally v15.22</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.18 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.22 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3836,6 +3836,7 @@ function showReport() {
   let totalInsulatorMatDeduct = 0;
   let totalTaperMatDeduct = 0;
   let hasAny=false;
+  let laborCost = 0, matCost = 0;
 
   j.areas.forEach(a=>{
     let aHas=false;
@@ -4297,6 +4298,21 @@ function showReport() {
     }
 
       // ── Taping (only when Taping task is selected) ──
+      const ceilH = a.height || "9'";
+      // Compute insGross from insMatRows (already computed in display loop)
+      const insGross = insMatRows.reduce((s, r) => s + r.labCost, 0);
+      laborCost += insGross;
+      // taperAddOnGross: taper add-ons from jobExtras (skylights, stairs etc)
+      const TAPER_ADDON_KEYS = new Set(["2' × 4' Skylight","4' × 4' Skylight","Open Round Stairs"]);
+      const taperAddOnGross = JOB_EXTRAS_ITEMS.reduce((s, item) => {
+        if (!TAPER_ADDON_KEYS.has(item)) return s;
+        const qty = a.counts['jobExtras']?.[item] || 0;
+        if (!qty) return s;
+        const ADDON_RATE_MAP3 = {"2' × 4' Skylight":'skylight_2x4',"4' × 4' Skylight":'skylight_4x4','Open Round Stairs':'open_round_stairs'};
+        const rk = ADDON_RATE_MAP3[item];
+        const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
+        return s + qty * rate;
+      }, 0);
       const TAPING_EXCLUDE = new Set(['durock48','dens48','dens58']);
       const DOUBLE_LAYER_KEYS = new Set(['dl48','hdl48']);
       let tapingSqft = 0, tapingGross = 0, cbGross = 0, tapingExtras = 0;
@@ -4564,8 +4580,7 @@ function showReport() {
 
       // ── Local 675 base — boarding + insulation + steel + add-ons + town premium, minus mat deductions ──
       // Re-compute boarding, steel, durock, addOn gross for financial calc
-      const boardGross = (dwPlainSqft + dwFivetSqft) * dwBoardRate;
-      const fivetPremGross = dwFivetSqft * (dwFivetRate - dwBoardRate);
+      const boardGross = (dwPlainSqft * dwBoardRate) + (dwFivetSqft * dwFivetRate);
       const durockLaborSqft = DRYWALL_TYPES.filter(t => DW_DUROCK_KEYS.has(t.key))
         .reduce((s, t) => s + t.lengths.reduce((ss, l) => ss + sheetSqft(t.key, l) * (a.counts[t.key]?.[l] || 0), 0), 0);
       const durockRate2 = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
@@ -4585,7 +4600,8 @@ function showReport() {
         const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
         return s + qty * rate;
       }, 0);
-      laborCost += boardingExtras;
+      laborCost += boardGross;
+      laborCost += dwDurockSqft * dwDurockRate;
       const steelExtras = steelGross * (gPrices['steel_extra_1'] || 0);
       laborCost += steelExtras;
       laborCost += (gPrices['steel_extra_2'] || 0);
@@ -4595,8 +4611,7 @@ function showReport() {
       laborCost += (labExtra.insulation || 0);
       laborCost += (labExtra.steel || 0);
       laborCost += (labExtra.taping || 0);
-      const durockGross = durockLaborSqft * durockRate2;
-      laborCost += durockGross;
+      laborCost += durockLaborSqft * durockRate2;
       // ── Corner bead install — boarder (Local 675) gets $0.26/lf for all bead types ──
       const cbInstallRate = gPrices['cb_install'] > 0 ? gPrices['cb_install'] : CORNER_BEAD_INSTALL_RATES[gRateIdx];
       const cbInstallGross = CORNER_BEAD_ITEMS.reduce((s, item) => {
@@ -4608,6 +4623,8 @@ function showReport() {
       }, 0);
       laborCost += cbInstallGross;
 
+      const durockGross = dwDurockSqft * dwDurockRate;
+      const boardingExtras = 0; // removed — was board_extra_1 which has been eliminated
       const local675Base = Math.max(0,
         insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross + durockGross
         - boarderMatDeduct - insulatorMatDeduct
