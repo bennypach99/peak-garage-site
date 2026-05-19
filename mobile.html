@@ -13,7 +13,7 @@
 <style>
 /* ═══════════════════════════════════════════════
    PEAK GARAGE SOLUTIONS — MOBILE APP
-   Portrait-first · thumb-friendly · v1.0.3
+   Portrait-first · thumb-friendly · v1.0.5
    ═══════════════════════════════════════════════ */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -111,6 +111,7 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
   justify-content:center;text-align:center;pointer-events:none;gap:1px;}
 .m-hero-burst .bt-main{font-size:.7rem;line-height:1.05;}
 .m-hero-burst .bt-sub{font-size:.45rem;margin-top:1px;}
+
 /* ── CONFIGURATOR PAGE ── */
 .config-card{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);padding:1rem;margin-bottom:.85rem;}
 .clabel{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
@@ -192,58 +193,15 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
 .gallery-item-lbl{position:absolute;bottom:0;left:0;right:0;
   background:linear-gradient(transparent,rgba(0,0,0,.85));
   padding:.5rem .6rem .45rem;font-family:'Rajdhani',sans-serif;
-  font-size:.65rem;font-weight:600;color:var(--gold);letter-spacing:.05em;text-transform:uppercase;} 
-
-/* ── TOOLS PAGE ── */
-.burst-btn-wrap{
-  display:flex;flex-direction:column;align-items:center;
-  margin:1.2rem 0 1.5rem;
-}
-.burst-link{
-  position:relative;width:200px;height:200px;
-  text-decoration:none;display:block;
-  animation:burstPulse 2.2s ease-in-out infinite;
-}
-@keyframes burstPulse{
-  0%,100%{transform:scale(1) rotate(0deg);filter:drop-shadow(0 0 12px rgba(201,168,76,.5));}
-  50%{transform:scale(1.06) rotate(2deg);filter:drop-shadow(0 0 22px rgba(201,168,76,.85));}
-}
-.burst-link:active{animation:none;transform:scale(.94);}
-.burst-link img{width:100%;height:100%;object-fit:contain;}
-.burst-text{
-  position:absolute;
-  left:8%;right:12%;top:19%;bottom:26%;
-  display:flex;flex-direction:column;align-items:center;
-  justify-content:center;text-align:center;pointer-events:none;gap:1px;
-}
-.bt-main{font-family:'Rajdhani',sans-serif;font-size:.92rem;font-weight:700;
-  text-transform:uppercase;color:#1a1a1a;letter-spacing:.02em;line-height:1.05;}
-.bt-sub{font-family:'Open Sans',sans-serif;font-size:.58rem;font-weight:700;
-  color:#333;margin-top:2px;}
-.burst-caption{font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:600;
-  color:var(--muted);text-align:center;letter-spacing:.05em;margin-top:-.4rem;}
-
-.tools-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);
-  padding:1rem;margin-bottom:.75rem;}
-.tools-card h4{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;
-  color:var(--gold-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;}
-.tools-card p{font-size:.82rem;color:var(--muted);line-height:1.7;}
-
-.desktop-link{
-  display:flex;align-items:center;justify-content:center;gap:.5rem;
-  background:var(--ch2);border:1px solid var(--bstrong);border-radius:10px;
-  padding:.85rem;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.9rem;
-  color:var(--gold);text-decoration:none;letter-spacing:.06em;text-transform:uppercase;
-  margin-top:1rem;
-}
-.desktop-link:active{background:var(--gold-pale);}
+  font-size:.65rem;font-weight:600;color:var(--gold);letter-spacing:.05em;text-transform:uppercase;}
 
 /* ── TOOLS IFRAME ── */
-#page-tools { padding: 0 !important; }
+#page-tools { padding: 0 !important; display: none; }
 #page-tools.active { display: flex !important; height: 100%; overflow: hidden; }
 .tool-iframe { flex: 1; width: 100%; border: none; min-height: 0; }
 
-/* ── ABOUT PAGE ── */.about-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);
+/* ── ABOUT PAGE ── */
+.about-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);
   padding:1rem;margin-bottom:.75rem;}
 .about-card h4{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;
   color:var(--gold-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;}
@@ -451,18 +409,7 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
 
   <!-- ══ PAGE: TOOLS ══ -->
   <div class="page" id="page-tools">
-    <iframe src="bin-tracker.html" class="tool-iframe" allow="camera"></iframe>
-  </div>
-
-    <div class="tools-card">
-      <h4>Know What's In Every Bin</h4>
-      <p>Set up your shelf layout, assign items to bins, search across all your shelves, and print QR code labels so any bin is one scan away. Works right in your browser — no app, no login, no cost. Your data stays on your device.</p>
-    </div>
-
-    <a class="desktop-link" href="https://peakgaragesolutions.ca" target="_blank">
-      🖥️ View Full Desktop Site
-    </a>
-    <div class="version-tag">v1.0.3 · peakgaragesolutions.ca</div>
+    <iframe src="https://peakgaragesolutions.ca/bin-tracker.html" class="tool-iframe" allow="camera"></iframe>
   </div>
 
   <!-- ══ PAGE: ABOUT ══ -->
@@ -493,7 +440,7 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
       <h4>📍 Location</h4>
       <p>Burlington, Ontario, Canada<br>Serving Burlington, Hamilton &amp; surrounding areas.</p>
     </div>
-    <div class="version-tag">v1.0.3 · Peak Garage Solutions</div>
+    <div class="version-tag">v1.0.5 · Peak Garage Solutions</div>
   </div>
 
 </div><!-- /pages -->
@@ -511,7 +458,8 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
   </button>
   <button class="tab-btn" data-page="tools" onclick="switchTab(this)">
     <span class="tab-icon">🔧</span>
-<span class="tab-label">QR Tool</span>  </button>
+    <span class="tab-label">QR Tool</span>
+  </button>
   <button class="tab-btn" data-page="about" onclick="switchTab(this)">
     <span class="tab-icon">ℹ️</span>
     <span class="tab-label">About</span>
@@ -585,7 +533,6 @@ function mToggleAddon(card,key){
     MS.addons.delete(other);
     document.querySelectorAll('.addon-card').forEach(c=>{if(c.dataset.key===other)c.classList.remove('on');});
   MS.addons.add(key);card.classList.add('on');
-  // Fix: Immediately remove stain if switching to Basic Plywood
   if (key === 'basictop') {
       MS.addons.delete('stain');
       document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key==='stain') c.classList.remove('on'); });
@@ -637,7 +584,6 @@ function mCalc(){
 }
 
 function mConfigureFromGallery(cfg) {
-  // Reset double unit if active
   if(MS.doubleUnit) {
     MS.doubleUnit = false;
     ['m-du4','m-du3','m-du2'].forEach(id=>document.getElementById(id).classList.remove('sel'));
@@ -705,8 +651,8 @@ function mUpdateDU(){
   const hT=(MS.addons.has('basictop')?hBase-.25:hBase)+(MS.addons.has('casters')?4:0);
   const duBase=is4?(MS.addons.has('basictop')?530:600):is3?(MS.addons.has('basictop')?435:500):(MS.addons.has('basictop')?340:400);
   const sc=is4?100:is3?85:75;
-  const cc = 100; // Flat rate for 2 sets of wheels
-  const cn = 8; // Always 2 sets of wheels for double units
+  const cc = 100;
+  const cn = 8;
   const topN=MS.addons.has('basictop')?'Basic Top (incl.)':'Maple Top (incl.)';
   document.getElementById('m-lbl-basictop').textContent=MS.addons.has('basictop')?'Incl. in base':'Switch';
   document.getElementById('m-lbl-top').textContent=MS.addons.has('top')?'Incl. in base':'Switch';
@@ -813,7 +759,7 @@ function mDrawDU(){
   ctx.fillStyle=tc;ctx.strokeStyle=fa;ctx.lineWidth=.7;ctx.fillRect(ox-3,oy-topPx,totW+6,topPx-1);ctx.strokeRect(ox-3,oy-topPx,totW+6,topPx-1);
 if(castPx){
   const botY=oy+tuH;
-  const frontWheelCount = 4; // Always show 4 front casters for double units
+  const frontWheelCount = 4;
   for(let i=0; i<frontWheelCount; i++){
     const cx = ox + (totW / (frontWheelCount - 1)) * i;
     ctx.fillStyle='#555';ctx.strokeStyle='#333';ctx.lineWidth=.5;
