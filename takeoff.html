@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.34</title>
+  <title>Drywall Tally v15.35</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.34 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.35 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3767,6 +3767,7 @@ function handleDetailsTap(e) {
 
 /* ── Report ── */
 function showReport() {
+  try {
   const j=J();
   document.getElementById('modal-title').textContent=j.name+' — Report';
   const d=j.details;
@@ -4692,6 +4693,14 @@ function showReport() {
   // If tutorial is waiting for report to open, advance to next step
   if (tutActive && tutSteps[tutStep]?.waitForReport) {
     setTimeout(() => tutNext(), 400);
+  }
+  } catch(err) {
+    // Show error in modal so we can debug on phone
+    document.getElementById('modal-title').textContent = 'Report Error';
+    document.getElementById('modal-body').innerHTML =
+      `<div style="padding:20px;color:#dc2626;font-family:monospace;font-size:13px;white-space:pre-wrap">${err.message}\n\n${err.stack||''}</div>`;
+    document.getElementById('modal-overlay').classList.add('open');
+    history.pushState({ modal: 'report' }, '');
   }
 }
 
