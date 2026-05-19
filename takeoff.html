@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.47</title>
+  <title>Drywall Tally v15.48</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.47 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.48 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3919,48 +3919,21 @@ function showReport() {
       : (gPrices['cb_lr_fill'] > 0 ? gPrices['cb_lr_fill'] : 0.90);
 
     // ── Collect drywall data ──
-    // dwGroups: { '48': [ {typeLabel, rows:[{lbl,sheets,sqft,unitPrice,matCost,key}]} ], '54': [...], 'special': [...] }
-    let dwGroups = { '48': [], '54': [], 'special': [] };
-    let dwRows = []; // kept for subtotal math
-    let plainSqft = 0, fivetSqft = 0, durockSqft = 0;
-
-    // Map type key → width bucket and clean label
-    const DW_TYPE_META = {
-      pl48:     { bucket: '48', typeLabel: '½" Plain' },
-      cd48:     { bucket: '48', typeLabel: '½" Ceiling Drywall' },
-      fg48:     { bucket: '48', typeLabel: '⅝" Type X' },
-      dl48:     { bucket: '48', typeLabel: '⅝" Double Layer' },
-      tc48:     { bucket: '48', typeLabel: '½" Type C' },
-      hdl48:    { bucket: '48', typeLabel: '½" Double Layer' },
-      pl54:     { bucket: '54', typeLabel: '½" Plain' },
-      fg54:     { bucket: '54', typeLabel: '⅝" Type X' },
-      durock48: { bucket: 'special', typeLabel: '½" Durock' },
-      dens48:   { bucket: 'special', typeLabel: '½" Denshield' },
-      dens58:   { bucket: 'special', typeLabel: '⅝" Denshield' },
-      wr48:     { bucket: 'special', typeLabel: '½" Water Resistant' },
-      wr58:     { bucket: 'special', typeLabel: '⅝" Water Resistant' },
-      flex48:   { bucket: 'special', typeLabel: '¼" Flex' },
-    };
-
+    let dwRows = [], plainSqft = 0, fivetSqft = 0, durockSqft = 0;
     DRYWALL_TYPES.filter(t => !t.isItems).forEach(t => {
-      const meta = DW_TYPE_META[t.key];
-      if (!meta) return;
-      const typeRows = [];
       t.lengths.forEach(l => {
         const qty = a.counts[t.key]?.[l] || 0;
         if (!qty) return;
         const sf = sheetSqft(t.key, l) * qty;
         const up = gMatPrices[matKeyMap[t.key]] || 0;
         const lbl = t.labels ? t.labels[t.lengths.indexOf(l)] : l + "' sheets";
-        typeRows.push({ lbl, sheets: qty, sqft: sf, unitPrice: up, matCost: sf * up, key: t.key });
-        dwRows.push({ sheets: qty, sqft: sf, matCost: sf * up, key: t.key });
+        const prefix = t.labels ? '' : (t.key.includes('54') ? '54" \u00d7 ' : '48" \u00d7 ');
+        const cleanName = t.fullName.replace(/\s*\(48"\s*&\s*54"\)/g,'').replace(/^\d+"\s*\u00d7\s*/,'');
+        dwRows.push({ name:`${prefix}${cleanName} \u2014 ${lbl}`, sheets:qty, sqft:sf, unitPrice:up, matCost:sf*up, key:t.key });
         if (DW_DUROCK_KEYS.has(t.key)) durockSqft += sf;
         else if (DW_FIVET_KEYS.has(t.key)) fivetSqft += sf;
         else plainSqft += sf;
       });
-      if (typeRows.length) {
-        dwGroups[meta.bucket].push({ typeLabel: meta.typeLabel, rows: typeRows });
-      }
     });
     const allDwSqft = plainSqft + fivetSqft + durockSqft;
     if (allDwSqft > 0) hasAny = true;
@@ -3976,7 +3949,7 @@ function showReport() {
           const sqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
           const lc = sqft * insLabRate;
           const mc = sqft * (gMatPrices[blownMatKeys[r]]||0);
-          insRows.push({name:`${t.fullName} ${r}`,bags:null,sqft,unitPrice:gMatPrices[blownMatKeys[r]]||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:r});
+          insRows.push({name:`${t.fullName} ${r}`,bags:null,sqft,unitPrice:gMatPrices[blownMatKeys[r]]||0,matCost:mc,labCost:lc});
           insLabTotal += lc; insMatTotal += mc;
         });
       } else if (t.kind === 'foam') {
@@ -3986,15 +3959,15 @@ function showReport() {
           const keys = foamMatKeys[r]||['',''];
           const hs = Math.round((f.half||[]).reduce((s,m)=>s+m.l*m.w,0));
           const ts = Math.round((f.two||[]).reduce((s,m)=>s+m.l*m.w,0));
-          if (hs>0){const lc=hs*insLabRate,mc=hs*(gMatPrices[keys[0]]||0);insRows.push({name:`${t.fullName} ${r} \u00bd lb`,bags:null,sqft:hs,unitPrice:gMatPrices[keys[0]]||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:`${r} \u00bd lb`});insLabTotal+=lc;insMatTotal+=mc;}
-          if (ts>0){const lc=ts*insLabRate,mc=ts*(gMatPrices[keys[1]]||0);insRows.push({name:`${t.fullName} ${r} 2lb`,bags:null,sqft:ts,unitPrice:gMatPrices[keys[1]]||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:`${r} 2lb`});insLabTotal+=lc;insMatTotal+=mc;}
+          if (hs>0){const lc=hs*insLabRate,mc=hs*(gMatPrices[keys[0]]||0);insRows.push({name:`${t.fullName} ${r} \u00bd lb`,bags:null,sqft:hs,unitPrice:gMatPrices[keys[0]]||0,matCost:mc,labCost:lc});insLabTotal+=lc;insMatTotal+=mc;}
+          if (ts>0){const lc=ts*insLabRate,mc=ts*(gMatPrices[keys[1]]||0);insRows.push({name:`${t.fullName} ${r} 2lb`,bags:null,sqft:ts,unitPrice:gMatPrices[keys[1]]||0,matCost:mc,labCost:lc});insLabTotal+=lc;insMatTotal+=mc;}
         });
       } else if (t.kind === 'blanket') {
         const entries = a.counts['insulation'][t.key]||[];
         if (!entries.length) return;
         const sqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
         const lc=sqft*insLabRate,mc=sqft*(gMatPrices['mat_blanket']||0);
-        insRows.push({name:t.fullName,bags:null,sqft,unitPrice:gMatPrices['mat_blanket']||0,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:null});
+        insRows.push({name:t.fullName,bags:null,sqft,unitPrice:gMatPrices['mat_blanket']||0,matCost:mc,labCost:lc});
         insLabTotal+=lc;insMatTotal+=mc;
       } else {
         const rvals = t.rvals||INSULATION_RVALS;
@@ -4018,7 +3991,7 @@ function showReport() {
             const pricePerBag = gMatPrices[mmk]||0;
             const lc=tsqft*effRate, mc=ceilBags*pricePerBag;
             if (t.key==='pink'||t.key==='roxul') insEnergySqft+=tsqft;
-            insRows.push({name:`${t.fullName} ${rv.r} ${sz}`,bags:ceilBags,sqft,unitPrice:pricePerBag,matCost:mc,labCost:lc,insKind:t.key,insGroup:t.fullName,insRowLabel:`${rv.r} ${sz}`});
+            insRows.push({name:`${t.fullName} ${rv.r} ${sz}`,bags:ceilBags,sqft,unitPrice:pricePerBag,matCost:mc,labCost:lc});
             insLabTotal+=lc; insMatTotal+=mc;
           });
         });
@@ -4187,112 +4160,59 @@ function showReport() {
     </div>`;
 
     // ─────── MATERIALS SECTION ───────
-    const dwHasAny = dwGroups['48'].length || dwGroups['54'].length || dwGroups['special'].length;
-    if (dwHasAny || insRows.length) {
+    if (dwRows.length || insRows.length) {
       html += sectionHead('Materials','#15803d');
 
-      // ── DRYWALL (grouped) ──
-      if (dwHasAny) {
+      // Drywall
+      if (dwRows.length) {
         html += `<div class="modal-type-head" style="color:#1d4ed8">Drywall</div>`;
-        const dwColSpec = [{label:'Sheets',w:44},{label:'Sq Ft',w:50},{label:'$/ft\u00b2',w:56},{label:'Mat Cost',w:70}];
-
-        const renderDwTypeGroup = (typeLabel, rows) => {
-          html += `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:6px 0 2px;padding-left:2px">${typeLabel}</div>`;
-          html += colHead(dwColSpec);
-          rows.forEach(r => {
-            html += `<div class="modal-row"><span style="padding-left:8px">${r.lbl}</span>
-              <span style="display:flex;gap:6px">
-                <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.sheets}</span>
-                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(r.sqft)}</span>
-                <span style="min-width:56px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
-                <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
-              </span></div>`;
-          });
-        };
-
-        const renderDwWidthBucket = (bucketLabel, groups) => {
-          if (!groups.length) return;
-          html += `<div style="font-size:12px;font-weight:700;color:#1d4ed8;margin:8px 0 2px;padding:4px 8px;background:#eff4ff;border-radius:6px">${bucketLabel}</div>`;
-          groups.forEach(g => renderDwTypeGroup(g.typeLabel, g.rows));
-        };
-
-        renderDwWidthBucket('48"', dwGroups['48']);
-        renderDwWidthBucket('54"', dwGroups['54']);
-
-        if (dwGroups['special'].length) {
-          html += `<div style="font-size:12px;font-weight:700;color:#475569;margin:8px 0 2px;padding:4px 8px;background:#f1f5f9;border-radius:6px">Special</div>`;
-          dwGroups['special'].forEach(g => renderDwTypeGroup(g.typeLabel, g.rows));
-        }
-
+        html += colHead([{label:'Sheets',w:44},{label:'Sq Ft',w:50},{label:'$/ft\u00b2',w:56},{label:'Mat Cost',w:70}]);
+        dwRows.forEach(r => {
+          html += `<div class="modal-row"><span>${r.name}</span>
+            <span style="display:flex;gap:6px">
+              <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.sheets}</span>
+              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(r.sqft)}</span>
+              <span style="min-width:56px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
+              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
+            </span></div>`;
+        });
         const dwTotalSheets = dwRows.reduce((s,r)=>s+r.sheets,0);
         const dwTotalSqft   = dwRows.reduce((s,r)=>s+r.sqft,0);
         html += subtotalRow('Drywall Subtotal', dwTotalSheets, Math.round(dwTotalSqft)+' ft\u00b2', areaDwMatCost);
       }
 
-      // ── INSULATION (grouped by type) ──
+      // Insulation
       if (insRows.length) {
         html += `<div class="modal-type-head" style="color:#db2777;margin-top:8px">Insulation</div>`;
-        const insColSpec = [{label:'Bags',w:36},{label:'Sq Ft',w:50},{label:'$/bag',w:50},{label:'Mat Cost',w:70}];
-
-        // Group rows by insGroup (fullName)
-        const insGroupOrder = ['Pink Insulation','Roxul','Blown-In','Spray-Foam','Blanket'];
-        const insGrouped = {};
+        html += colHead([{label:'Bags',w:36},{label:'Sq Ft',w:50},{label:'$/bag',w:50},{label:'Mat Cost',w:70}]);
         insRows.forEach(r => {
-          const g = r.insGroup || r.name;
-          if (!insGrouped[g]) insGrouped[g] = [];
-          insGrouped[g].push(r);
-        });
-        // Render in defined order, then any remaining
-        const insGroupKeys = [...insGroupOrder.filter(k=>insGrouped[k]), ...Object.keys(insGrouped).filter(k=>!insGroupOrder.includes(k))];
-        insGroupKeys.forEach(groupName => {
-          const gRows = insGrouped[groupName];
-          if (!gRows || !gRows.length) return;
-          html += `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:6px 0 2px;padding-left:2px">${groupName}</div>`;
-          html += colHead(insColSpec);
-          gRows.forEach(r => {
-            const rowLabel = r.insRowLabel || r.name;
-            html += `<div class="modal-row"><span style="padding-left:8px">${rowLabel}</span>
-              <span style="display:flex;gap:6px">
-                <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.bags!=null?r.bags:''}</span>
-                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.sqft} ft\u00b2</span>
-                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
-                <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
-              </span></div>`;
-          });
+          html += `<div class="modal-row"><span>${r.name}</span>
+            <span style="display:flex;gap:6px">
+              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.bags!=null?r.bags:''}</span>
+              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.sqft} ft\u00b2</span>
+              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
+              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
+            </span></div>`;
         });
       }
 
-      // ── STEEL (grouped by size) ──
-      const steelColSpec = [{label:'Qty',w:36},{label:'Lin Ft',w:50},{label:'$/lf',w:50},{label:'Mat Cost',w:70}];
-      const steelHasAny = STEEL_SUBTABS.some(st=>st.items.some(item=>(a.counts[st.key]?.[item]||0)>0));
-      if (steelHasAny) {
+      // Steel
+      const steelItems = STEEL_SUBTABS.flatMap(st=>st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0).map(item=>({item,st})));
+      if (steelItems.length) {
         html += `<div class="modal-type-head" style="color:#475569;margin-top:8px">Steel</div>`;
-        STEEL_SUBTABS.forEach(st => {
-          const activeItems = st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0);
-          if (!activeItems.length) return;
-          // Size header (e.g. "1 5/8"" or "Ch/Angle")
-          html += `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:6px 0 2px;padding-left:2px">${st.label}</div>`;
-          html += colHead(steelColSpec);
-          activeItems.forEach(item => {
-            const qty = a.counts[st.key][item];
-            const lm = item.match(/(\d+)'/); const len = lm ? parseInt(lm[1]) : 1;
-            const lower = item.toLowerCase();
-            const mk = lower.includes('track') ? `mat_st_${st.key.replace('steel_','')}_trk`
-              : lower.includes('resilient') ? 'mat_st_res_ch' : lower.includes('hat') ? 'mat_st_hat_ch'
-              : lower.includes('furring') ? 'mat_st_fur_ch' : lower.includes('cold roll') ? 'mat_st_cr_ch'
-              : lower.includes('1" x 2"') ? 'mat_st_ang_1x2' : lower.includes('2" x 2"') ? 'mat_st_ang_2x2'
-              : `mat_st_${st.key.replace('steel_','')}_stud`;
-            const up = gMatPrices[mk] || 0; const mc = qty * len * up;
-            // Row label: strip size prefix for studs/tracks since it's already the header
-            const isChannel = st.key === 'steel_ch';
-            const rowLabel = isChannel ? item : (lower.includes('track') ? 'Track' : `${lm?lm[1]:"?"}'`);
-            html += `<div class="modal-row"><span style="padding-left:8px">${rowLabel}</span><span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty*len} lf</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${up>0?fmtC(up):''}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
-          });
+        html += colHead([{label:'Qty',w:36},{label:'Lin Ft',w:50},{label:'$/lf',w:50},{label:'Mat Cost',w:70}]);
+        steelItems.forEach(({item,st})=>{
+          const qty=a.counts[st.key][item];
+          const lm=item.match(/(\d+)'/); const len=lm?parseInt(lm[1]):1;
+          const lower=item.toLowerCase();
+          const mk=lower.includes('track')?`mat_st_${st.key.replace('steel_','')}_trk`:lower.includes('resilient')?'mat_st_res_ch':lower.includes('hat')?'mat_st_hat_ch':lower.includes('furring')?'mat_st_fur_ch':lower.includes('cold roll')?'mat_st_cr_ch':lower.includes('1" x 2"')?'mat_st_ang_1x2':lower.includes('2" x 2"')?'mat_st_ang_2x2':`mat_st_${st.key.replace('steel_','')}_stud`;
+          const up=gMatPrices[mk]||0; const mc=qty*len*up;
+          html+=`<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
+            <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
+            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty*len} lf</span>
+            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${up>0?fmtC(up):''}</span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc>0?fmtC(mc):''}</span>
+          </span></div>`;
         });
       }
 
@@ -4738,18 +4658,18 @@ const PRICE_FIELDS = [
   // ── Durock ──
   { key:'durock_labor',    label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Boarding', priceTab:'DW' },
   // ── Fireguard Boarding LR ──  // ── Fireguard Boarding HR ──  // ── Steel HR ──
-  { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
-  { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
-  { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
-  { key:'steel_hr_h11', label:">10' to ≤11'", rates:[0.405,0.413,0.421], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
-  { key:'steel_hr_h12', label:">11' to ≤12'", rates:[0.427,0.436,0.444], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
-  { key:'steel_lr_house', label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)', priceTab:'DW' },
-  { key:'suspended_ceil',     label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'DW' },
-  { key:'suspended_ceil_iso', label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'DW' },
+  { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'ST' },
+  { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'ST' },
+  { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'ST' },
+  { key:'steel_hr_h11', label:">10' to ≤11'", rates:[0.405,0.413,0.421], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'ST' },
+  { key:'steel_hr_h12', label:">11' to ≤12'", rates:[0.427,0.436,0.444], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'ST' },
+  { key:'steel_lr_house', label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)', priceTab:'ST' },
+  { key:'suspended_ceil',     label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'ST' },
+  { key:'suspended_ceil_iso', label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'ST' },
   // ── Steel Extras at bottom ──
-  { key:'steel_labor',   label:'Steel Labor ($/lf)',          rates:[0,0,0], col:'lr', group:'Steel', priceTab:'DW' },
-  { key:'steel_extra_1', label:'Steel Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', priceTab:'DW' },
-  { key:'steel_extra_2', label:'Steel Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', flat:true, priceTab:'DW' },
+  { key:'steel_labor',   label:'Steel Labor ($/lf)',          rates:[0,0,0], col:'lr', group:'Steel', priceTab:'ST' },
+  { key:'steel_extra_1', label:'Steel Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', priceTab:'ST' },
+  { key:'steel_extra_2', label:'Steel Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', flat:true, priceTab:'ST' },
   // ── Insulation LR ──
   { key:'ins_lr',         label:'All Insulation ($/ft²)',       rates:[0.617,0.629,0.642], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
   { key:'ins_r24_prem',   label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
@@ -4795,7 +4715,7 @@ const PRICE_FIELDS = [
   { key:'ceil_waffle',       label:'Waffle Ceiling (per room)',       rates:[76.50,  78.03,  79.59],  col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   { key:'ceil_tray',         label:'Tray Ceiling (per ceiling)',      rates:[76.50,  78.03,  79.59],  col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   // ── Corner Beads — Boarder install rate (CBA Art. 20.01(j)/20.02(l)) ──
-  { key:'cb_install',  label:'Bead install — boarder ($/lf)', rates:[0.26, 0.26, 0.27], col:'lr', group:'Corner Beads', priceTab:'DW' },
+  { key:'cb_install',  label:'Bead Install ($/lf)', rates:[0.26, 0.26, 0.27], col:'lr', group:'Corner Beads', priceTab:'TP' },
   // ── Extras (Local 675 boarder CBA rates) ──
   { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[82.00,  83.00,  85.00],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[174.00, 178.00, 181.00], col:'lr', group:'Extras', priceTab:'EX' },
@@ -5052,10 +4972,11 @@ async function saveMatPricesStorage(p) {
   try { await storageSet('mat_prices', JSON.stringify(p)); } catch(e) {}
 }
 
-let gPriceTab = 'DW'; // active prices tab: DW | IN | TP | EX
+let gPriceTab = 'DW'; // active prices tab: DW | ST | IN | TP | EX
 
 const PRICE_TABS = [
   { id:'DW', label:'Drywall' },
+  { id:'ST', label:'Steel' },
   { id:'IN', label:'Insulation' },
   { id:'TP', label:'Taping' },
   { id:'EX', label:'Extras' },
