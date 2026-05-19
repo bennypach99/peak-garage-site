@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.37</title>
+  <title>Drywall Tally v15.38</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.37 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.38 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4388,6 +4388,15 @@ function showReport() {
       if (plainFivetSqft > 0) {
         html += labRow('Boarding Base', Math.round(plainFivetSqft), ' ft²', fmtC(dwBoardRate * 1000) + '/MSF', '', plainFivetSqft * dwBoardRate);
       }
+      // Fireguard Premium — shown if any fireguard sqft
+      if (dwFivetSqft > 0) {
+        const fgPrem = gPrices['fivet_premium'] > 0 ? gPrices['fivet_premium'] : FIVET_PREMIUM[gRateIdx];
+        html += labRow('Fireguard Premium', Math.round(dwFivetSqft), ' ft²', fmtC(fgPrem * 1000) + '/MSF', '', dwFivetSqft * fgPrem);
+      }
+      // Durock — own full rate
+      if (dwDurockSqft > 0) {
+        html += labRow('Durock', Math.round(dwDurockSqft), ' ft²', fmtC(dwDurockRate * 1000) + '/MSF', '', dwDurockSqft * dwDurockRate);
+      }
 
       // Labour Extras — shown after boarding base
       {
@@ -4432,8 +4441,7 @@ function showReport() {
         }
 
         // Premiums
-        const hasPremiums = dwFivetSqft > 0 || dwDurockSqft > 0 ||
-          taperTownPremium > 0 || townPremiumCost > 0 ||
+        const hasPremiums = taperTownPremium > 0 || townPremiumCost > 0 ||
           (insEStarOn && areaEnergySqft > 0) || cbGross > 0 || cbInstallGross > 0 ||
           (ceilSqft > 0 && a.texture && a.texture !== 'none') ||
           (a.counts['ceilings']?.cathedral > 0) || (a.counts['ceilings']?.waffle > 0);
@@ -4442,15 +4450,6 @@ function showReport() {
           html += `<div class="modal-type-head" style="color:#7c3aed;margin-top:6px">Premiums</div>`;
           html += labColHead;
 
-          // Fireguard premium
-          if (dwFivetSqft > 0) {
-            const fgPrem = gPrices['fivet_premium'] > 0 ? gPrices['fivet_premium'] : FIVET_PREMIUM[gRateIdx];
-            html += labRow('Fireguard Premium', Math.round(dwFivetSqft), ' ft²', fmtC(fgPrem * 1000) + '/MSF', '', dwFivetSqft * fgPrem);
-          }
-          // Durock (full rate, not a premium on base)
-          if (dwDurockSqft > 0) {
-            html += labRow('Durock', Math.round(dwDurockSqft), ' ft²', fmtC(dwDurockRate * 1000) + '/MSF', '', dwDurockSqft * dwDurockRate);
-          }
           // Townhouse premium (boarders)
           if (townPremiumCost > 0) {
             const dwHouseType = j.details?.houseType || 'house';
