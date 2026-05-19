@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.56</title>
+  <title>Drywall Tally v15.59</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.56 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.59 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4899,111 +4899,147 @@ gPrices = defaultPrices();
 
 // ── Material Price Fields ──
 const MAT_PRICE_FIELDS = [
-  // ── Drywall ($/ft²) ──
-  { key:'mat_dw_half_plain',  label:'½" Plain',          unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_half_cd',     label:'½" Ceiling Drywall',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_fivet_tx',    label:'⅝" Type X',         unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_half_tc',     label:'½" Type C',         unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_half_dens',   label:'½" Denshield',      unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_fivet_dens',  label:'⅝" Denshield',      unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_half_wr',     label:'½" Water Resistant',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_58_wr',      label:'⅝" Water Resistant',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_quarter_flex',label:'¼" Flex',           unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_durock',      label:'½" Durock',         unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_screws',      label:'Drywall Screws',    unit:'$/box',  group:'Drywall', matTab:'DW', def:0 },
-  { key:'mat_dw_green_glue',  label:'Green Glue',        unit:'$/tube', group:'Drywall', matTab:'DW', def:0 },
-  // ── Insulation — Pink ($/bag) ──
-  { key:'mat_ins_r8',  label:'R8',   unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r12', label:'R12',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r14', label:'R14',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r20', label:'R20',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r22', label:'R22',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r24', label:'R24',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r28', label:'R28',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r31', label:'R31',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  { key:'mat_ins_r40', label:'R40',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:0 },
-  // ── Insulation — Roxul ($/bag) ──
-  { key:'mat_rox_15qz', label:'1½" QZ', unit:'$/bag', group:'Roxul', matTab:'IN', def:0 },
-  { key:'mat_rox_3qz',  label:'3" QZ',  unit:'$/bag', group:'Roxul', matTab:'IN', def:0 },
-  { key:'mat_rox_r14',  label:'R14',    unit:'$/bag', group:'Roxul', matTab:'IN', def:0 },
-  { key:'mat_rox_r225', label:'R22.5',  unit:'$/bag', group:'Roxul', matTab:'IN', def:0 },
-  { key:'mat_rox_r24',  label:'R24',    unit:'$/bag', group:'Roxul', matTab:'IN', def:0 },
+  // ── Drywall ($/ft²) — GTA/Mississauga 2025 pricing ──
+  // ½" Plain 4×8 ~$13.50/sheet=32ft²; 4×12 ~$17.50=48ft² → ~$0.55/ft²
+  { key:'mat_dw_half_plain',  label:'½" Plain',          unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0.55 },
+  // Ceiling drywall (sag-resistant) slight premium ~$0.60/ft²
+  { key:'mat_dw_half_cd',     label:'½" Ceiling Drywall',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0.60 },
+  // ⅝" Type X ~$18/sheet 4×8 → $0.70/ft²
+  { key:'mat_dw_fivet_tx',    label:'⅝" Type X',         unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0.70 },
+  // ½" Type C (fire code) ~$0.65/ft²
+  { key:'mat_dw_half_tc',     label:'½" Type C',         unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0.65 },
+  // ½" Denshield 4×5 ~$37 = $1.85/ft²
+  { key:'mat_dw_half_dens',   label:'½" Denshield',      unit:'$/ft²',  group:'Drywall', matTab:'DW', def:1.85 },
+  // ⅝" Denshield ~$2.25/ft²
+  { key:'mat_dw_fivet_dens',  label:'⅝" Denshield',      unit:'$/ft²',  group:'Drywall', matTab:'DW', def:2.25 },
+  // ½" Water Resistant (mould resistant) ~$1.05/ft²
+  { key:'mat_dw_half_wr',     label:'½" Water Resistant',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:1.05 },
+  // ⅝" Water Resistant ~$0.75/ft²
+  { key:'mat_dw_58_wr',       label:'⅝" Water Resistant',unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0.75 },
+  // ¼" Flex ~$0.88/ft²
+  { key:'mat_dw_quarter_flex',label:'¼" Flex',           unit:'$/ft²',  group:'Drywall', matTab:'DW', def:0.88 },
+  // Durock ½" 3×5=$33/15ft²=$2.20; 4×8=$68/32ft²=$2.13 → ~$2.10/ft²
+  { key:'mat_dw_durock',      label:'½" Durock',         unit:'$/ft²',  group:'Drywall', matTab:'DW', def:2.10 },
+  // Drywall screws box ~$30–35 → $32
+  { key:'mat_dw_screws',      label:'Drywall Screws',    unit:'$/box',  group:'Drywall', matTab:'DW', def:32.00 },
+  // Green Glue tube ~$18.50
+  { key:'mat_dw_green_glue',  label:'Green Glue',        unit:'$/tube', group:'Drywall', matTab:'DW', def:18.50 },
+  // ── Insulation — Pink Owens Corning ($/bag) — HD Canada 2025 ──
+  // R8 (smaller bag) ~$60
+  { key:'mat_ins_r8',  label:'R8',   unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:59.99 },
+  // R12 15"/16" ~$75–80; 23"/24" ~$80–85 → use $79.98 avg
+  { key:'mat_ins_r12', label:'R12',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:79.98 },
+  // R14 ~$65
+  { key:'mat_ins_r14', label:'R14',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:65.00 },
+  // R20 ~$105
+  { key:'mat_ins_r20', label:'R20',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:105.00 },
+  // R22 ~$72
+  { key:'mat_ins_r22', label:'R22',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:71.72 },
+  // R24 ~$119
+  { key:'mat_ins_r24', label:'R24',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:118.97 },
+  // R28 ~$98
+  { key:'mat_ins_r28', label:'R28',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:97.97 },
+  // R31 ~$60
+  { key:'mat_ins_r31', label:'R31',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:59.97 },
+  // R40 ~$90
+  { key:'mat_ins_r40', label:'R40',  unit:'$/bag', group:'Pink Insulation', matTab:'IN', def:89.87 },
+  // ── Insulation — Roxul/Rockwool ($/bag) ──
+  // Rockwool QZ acoustic ~$80/bag
+  { key:'mat_rox_15qz', label:'1½" QZ', unit:'$/bag', group:'Roxul', matTab:'IN', def:79.98 },
+  { key:'mat_rox_3qz',  label:'3" QZ',  unit:'$/bag', group:'Roxul', matTab:'IN', def:79.98 },
+  // Rockwool Comfortbatt R14 ~$65
+  { key:'mat_rox_r14',  label:'R14',    unit:'$/bag', group:'Roxul', matTab:'IN', def:65.00 },
+  // R22.5 ~$72
+  { key:'mat_rox_r225', label:'R22.5',  unit:'$/bag', group:'Roxul', matTab:'IN', def:71.72 },
+  // R24 ~$119
+  { key:'mat_rox_r24',  label:'R24',    unit:'$/bag', group:'Roxul', matTab:'IN', def:118.97 },
   // ── Insulation — Blown-In ($/ft²) ──
-  { key:'mat_blown_r20', label:'R20', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:0 },
-  { key:'mat_blown_r32', label:'R32', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:0 },
-  { key:'mat_blown_r40', label:'R40', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:0 },
-  { key:'mat_blown_r60', label:'R60', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:0 },
+  { key:'mat_blown_r20', label:'R20', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:0.55 },
+  { key:'mat_blown_r32', label:'R32', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:0.75 },
+  { key:'mat_blown_r40', label:'R40', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:0.90 },
+  { key:'mat_blown_r60', label:'R60', unit:'$/ft²', group:'Blown-In', matTab:'IN', def:1.10 },
   // ── Insulation — Spray Foam ($/ft²) ──
-  { key:'mat_foam_r12_half', label:'R12 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
-  { key:'mat_foam_r12_two',  label:'R12 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
-  { key:'mat_foam_r20_half', label:'R20 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
-  { key:'mat_foam_r20_two',  label:'R20 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
-  { key:'mat_foam_r22_half', label:'R22 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
-  { key:'mat_foam_r22_two',  label:'R22 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
-  { key:'mat_foam_r31_half', label:'R31 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
-  { key:'mat_foam_r31_two',  label:'R31 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:0 },
+  { key:'mat_foam_r12_half', label:'R12 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:1.80 },
+  { key:'mat_foam_r12_two',  label:'R12 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:4.00 },
+  { key:'mat_foam_r20_half', label:'R20 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:2.40 },
+  { key:'mat_foam_r20_two',  label:'R20 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:5.25 },
+  { key:'mat_foam_r22_half', label:'R22 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:2.60 },
+  { key:'mat_foam_r22_two',  label:'R22 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:6.00 },
+  { key:'mat_foam_r31_half', label:'R31 ½lb', unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:3.50 },
+  { key:'mat_foam_r31_two',  label:'R31 2lb',  unit:'$/ft²', group:'Spray Foam', matTab:'IN', def:5.90 },
   // ── Insulation — Blanket ($/ft²) ──
-  { key:'mat_blanket', label:'Blanket', unit:'$/ft²', group:'Blanket', matTab:'IN', def:0 },
+  { key:'mat_blanket', label:'Blanket', unit:'$/ft²', group:'Blanket', matTab:'IN', def:0.65 },
   // ── Insulation Consumables ──
+  // Poly roll ~$84 (HD Canada), tuck tape ~$12.61, acoustic caulk ~$11.44 (already set)
   { key:'mat_poly_roll',   label:"Poly Roll",           unit:'$/roll', group:'Consumables', matTab:'IN', def:84.00 },
   { key:'mat_tuck_tape',   label:'Tuck Tape',           unit:'$/roll', group:'Consumables', matTab:'IN', def:12.61 },
   { key:'mat_acous_caulk', label:'Acoustic Caulking',   unit:'$/tube', group:'Consumables', matTab:'IN', def:11.44 },
-  { key:'mat_can_foam',    label:'Can Foam',             unit:'$/can',  group:'Consumables', matTab:'IN', def:0 },
-  { key:'mat_staples',     label:'Staples',              unit:'$/box',  group:'Consumables', matTab:'IN', def:0 },
-  { key:'mat_styro_vents', label:'Styro-Vents',          unit:'$/each', group:'Consumables', matTab:'IN', def:0 },
-  // ── Steel ($/lf) ──
-  { key:'mat_st_158_stud', label:'1 5/8" Stud',         unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_158_trk',  label:'1 5/8" Track',        unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_212_stud', label:'2 1/2" Stud',         unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_212_trk',  label:'2 1/2" Track',        unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_358_stud', label:'3 5/8" Stud',         unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_358_trk',  label:'3 5/8" Track',        unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_6_stud',   label:'6" Stud',             unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_6_trk',    label:'6" Track',            unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_8_stud',   label:'8" Stud',             unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_8_trk',    label:'8" Track',            unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0 },
-  { key:'mat_st_res_ch',   label:'Resilient Channel',   unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0 },
-  { key:'mat_st_hat_ch',   label:'Hat Channel',         unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0 },
-  { key:'mat_st_fur_ch',   label:'Furring Channel',     unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0 },
-  { key:'mat_st_cr_ch',    label:'Cold Roll Channel',   unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0 },
-  { key:'mat_st_ang_1x2',  label:'1"×2" Angle',         unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0 },
-  { key:'mat_st_ang_2x2',  label:'2"×2" Angle',         unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0 },
-  { key:'mat_st_pan_screw',label:'Pan Head Screws',     unit:'$/box', group:'Steel Hardware', matTab:'ST', def:0 },
-  { key:'mat_st_sd_screw', label:'Self-Drilling Screws',unit:'$/box', group:'Steel Hardware', matTab:'ST', def:0 },
-  { key:'mat_st_hex_screw',label:'Hex-Head Screws',     unit:'$/box', group:'Steel Hardware', matTab:'ST', def:0 },
-  { key:'mat_st_tie_wire', label:'Tie-Wire',            unit:'$/box', group:'Steel Hardware', matTab:'ST', def:0 },
-  { key:'mat_st_hang_wire',label:'Hanger-Wire',         unit:'$/each',group:'Steel Hardware', matTab:'ST', def:0 },
-  { key:'mat_st_eyelag_c', label:'Eye-Lag (Concrete)',  unit:'$/box', group:'Steel Hardware', matTab:'ST', def:0 },
-  { key:'mat_st_eyelag_w', label:'Eye-Lag (Wood)',      unit:'$/box', group:'Steel Hardware', matTab:'ST', def:0 },
+  // Can foam ~$9.50/can
+  { key:'mat_can_foam',    label:'Can Foam',             unit:'$/can',  group:'Consumables', matTab:'IN', def:9.50 },
+  // Staples box ~$18
+  { key:'mat_staples',     label:'Staples',              unit:'$/box',  group:'Consumables', matTab:'IN', def:18.00 },
+  // Styro-vents ~$4.50/each
+  { key:'mat_styro_vents', label:'Styro-Vents',          unit:'$/each', group:'Consumables', matTab:'IN', def:4.50 },
+  // ── Steel studs & track ($/lf) — GTA 2025 ──
+  // 1 5/8" 25ga: 8'~$5.50 → $0.69/lf; 10'~$6.50→$0.65; 12'~$7.50→$0.63 → avg $0.65/lf
+  { key:'mat_st_158_stud', label:'1 5/8" Stud',         unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0.65 },
+  { key:'mat_st_158_trk',  label:'1 5/8" Track',        unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0.58 },
+  // 2 1/2" 25ga: slightly more → $0.72/lf stud, $0.65 track
+  { key:'mat_st_212_stud', label:'2 1/2" Stud',         unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0.72 },
+  { key:'mat_st_212_trk',  label:'2 1/2" Track',        unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0.65 },
+  // 3 5/8" 25ga: most common partition → $0.85/lf stud, $0.75 track
+  { key:'mat_st_358_stud', label:'3 5/8" Stud',         unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0.85 },
+  { key:'mat_st_358_trk',  label:'3 5/8" Track',        unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:0.75 },
+  // 6" 25ga: $1.25/lf stud, $1.10 track
+  { key:'mat_st_6_stud',   label:'6" Stud',             unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:1.25 },
+  { key:'mat_st_6_trk',    label:'6" Track',            unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:1.10 },
+  // 8" 25ga: $1.65/lf stud, $1.45 track
+  { key:'mat_st_8_stud',   label:'8" Stud',             unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:1.65 },
+  { key:'mat_st_8_trk',    label:'8" Track',            unit:'$/lf',  group:'Studs & Track', matTab:'ST', def:1.45 },
+  // Channels
+  { key:'mat_st_res_ch',   label:'Resilient Channel',   unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:1.45 },
+  { key:'mat_st_hat_ch',   label:'Hat Channel',         unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0.85 },
+  { key:'mat_st_fur_ch',   label:'Furring Channel',     unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0.75 },
+  { key:'mat_st_cr_ch',    label:'Cold Roll Channel',   unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:1.20 },
+  { key:'mat_st_ang_1x2',  label:'1"×2" Angle',         unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:0.95 },
+  { key:'mat_st_ang_2x2',  label:'2"×2" Angle',         unit:'$/lf',  group:'Channel & Angle', matTab:'ST', def:1.25 },
+  // Steel hardware
+  { key:'mat_st_pan_screw',label:'Pan Head Screws',     unit:'$/box', group:'Steel Hardware', matTab:'ST', def:28.00 },
+  { key:'mat_st_sd_screw', label:'Self-Drilling Screws',unit:'$/box', group:'Steel Hardware', matTab:'ST', def:32.00 },
+  { key:'mat_st_hex_screw',label:'Hex-Head Screws',     unit:'$/box', group:'Steel Hardware', matTab:'ST', def:35.00 },
+  { key:'mat_st_tie_wire', label:'Tie-Wire',            unit:'$/box', group:'Steel Hardware', matTab:'ST', def:18.00 },
+  { key:'mat_st_hang_wire',label:'Hanger-Wire',         unit:'$/each',group:'Steel Hardware', matTab:'ST', def:45.00 },
+  { key:'mat_st_eyelag_c', label:'Eye-Lag (Concrete)',  unit:'$/box', group:'Steel Hardware', matTab:'ST', def:28.00 },
+  { key:'mat_st_eyelag_w', label:'Eye-Lag (Wood)',      unit:'$/box', group:'Steel Hardware', matTab:'ST', def:22.00 },
   // ── Corner Bead ($/lf) ──
-  { key:'mat_cb_vinyl_90', label:"Vinyl 90°",     unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_vinyl_l',  label:"L-Bead Vinyl",  unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_vinyl_u',  label:"U-Bead Vinyl",  unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_vinyl_j',  label:"J-Bead Vinyl",  unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_metal_90', label:"Metal 90°",     unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_metal_l',  label:"L-Bead Metal",  unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_metal_u',  label:"U-Bead Metal",  unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_metal_j',  label:"J-Bead Metal",  unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0 },
-  { key:'mat_cb_bullnose', label:"Bullnose Metal", unit:'$/lf', group:'Bullnose/Misc', matTab:'CB', def:0 },
-  { key:'mat_cb_archway',  label:"Archway Bead",   unit:'$/lf', group:'Bullnose/Misc', matTab:'CB', def:0 },
-  { key:'mat_cb_paper_90', label:"Paper 90°",       unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.281 },
-  { key:'mat_cb_paper_j',  label:"Paper J-Trim",    unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.281 },
-  { key:'mat_cb_paper_l',  label:"Paper L-Trim",    unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.281 },
-  { key:'mat_cb_paper_bull',label:"Paper Bullnose", unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.438 },
-  { key:'mat_cb_paper_ic', label:"Paper Inside Corner",unit:'$/lf', group:'Paper Bead',matTab:'CB', def:0.263 },
+  { key:'mat_cb_vinyl_90', label:"Vinyl 90°",      unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0.28 },
+  { key:'mat_cb_vinyl_l',  label:"L-Bead Vinyl",   unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0.25 },
+  { key:'mat_cb_vinyl_u',  label:"U-Bead Vinyl",   unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0.25 },
+  { key:'mat_cb_vinyl_j',  label:"J-Bead Vinyl",   unit:'$/lf', group:'Vinyl Bead',    matTab:'CB', def:0.25 },
+  { key:'mat_cb_metal_90', label:"Metal 90°",      unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0.42 },
+  { key:'mat_cb_metal_l',  label:"L-Bead Metal",   unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0.38 },
+  { key:'mat_cb_metal_u',  label:"U-Bead Metal",   unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0.38 },
+  { key:'mat_cb_metal_j',  label:"J-Bead Metal",   unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0.38 },
+  { key:'mat_cb_bullnose', label:"Bullnose Metal",  unit:'$/lf', group:'Bullnose/Misc', matTab:'CB', def:0.58 },
+  { key:'mat_cb_archway',  label:"Archway Bead",    unit:'$/lf', group:'Bullnose/Misc', matTab:'CB', def:0.60 },
+  { key:'mat_cb_paper_90', label:"Paper 90°",       unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.50 },
+  { key:'mat_cb_paper_j',  label:"Paper J-Trim",    unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.45 },
+  { key:'mat_cb_paper_l',  label:"Paper L-Trim",    unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.45 },
+  { key:'mat_cb_paper_bull',label:"Paper Bullnose", unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.65 },
+  { key:'mat_cb_paper_ic', label:"Paper Inside Corner",unit:'$/lf', group:'Paper Bead',matTab:'CB', def:0.40 },
   // ── Mud ($/pail or $/bag) ──
-  { key:'mat_mud_ap17',    label:'All Purpose (17L)',    unit:'$/pail', group:'Mud', matTab:'MUD', def:0 },
-  { key:'mat_mud_mach17',  label:'Machine (17L)',        unit:'$/pail', group:'Mud', matTab:'MUD', def:0 },
-  { key:'mat_mud_lite17',  label:'Lite Finish (17L)',    unit:'$/pail', group:'Mud', matTab:'MUD', def:0 },
-  { key:'mat_mud_sr20',    label:'Sheetrock 20 (bag)',   unit:'$/bag',  group:'Mud', matTab:'MUD', def:0 },
-  { key:'mat_mud_sr45',    label:'Sheetrock 45 (bag)',   unit:'$/bag',  group:'Mud', matTab:'MUD', def:0 },
-  { key:'mat_mud_sr90',    label:'Sheetrock 90 (bag)',   unit:'$/bag',  group:'Mud', matTab:'MUD', def:0 },
-  { key:'mat_mud_db90',    label:'Durabond 90 (bag)',    unit:'$/bag',  group:'Mud', matTab:'MUD', def:0 },
+  { key:'mat_mud_ap17',    label:'All Purpose (17L)',    unit:'$/pail', group:'Mud', matTab:'MUD', def:38.00 },
+  { key:'mat_mud_mach17',  label:'Machine (17L)',        unit:'$/pail', group:'Mud', matTab:'MUD', def:35.00 },
+  { key:'mat_mud_lite17',  label:'Lite Finish (17L)',    unit:'$/pail', group:'Mud', matTab:'MUD', def:32.00 },
+  { key:'mat_mud_sr20',    label:'Sheetrock 20 (bag)',   unit:'$/bag',  group:'Mud', matTab:'MUD', def:30.00 },
+  { key:'mat_mud_sr45',    label:'Sheetrock 45 (bag)',   unit:'$/bag',  group:'Mud', matTab:'MUD', def:30.00 },
+  { key:'mat_mud_sr90',    label:'Sheetrock 90 (bag)',   unit:'$/bag',  group:'Mud', matTab:'MUD', def:32.00 },
+  { key:'mat_mud_db90',    label:'Durabond 90 (bag)',    unit:'$/bag',  group:'Mud', matTab:'MUD', def:30.00 },
   // ── Mud Tape ($/roll) ──
-  { key:'mat_tape_paper',  label:'Paper Tape',   unit:'$/roll', group:'Tape', matTab:'MUD', def:0 },
-  { key:'mat_tape_fibre',  label:'Fibre Tape',   unit:'$/roll', group:'Tape', matTab:'MUD', def:0 },
-  { key:'mat_tape_mesh',   label:'Mesh Tape',    unit:'$/roll', group:'Tape', matTab:'MUD', def:0 },
-  { key:'mat_tape_flex',   label:'Flexbead',     unit:'$/roll', group:'Tape', matTab:'MUD', def:0 },
+  { key:'mat_tape_paper',  label:'Paper Tape',   unit:'$/roll', group:'Tape', matTab:'MUD', def:6.00 },
+  { key:'mat_tape_fibre',  label:'Fibre Tape',   unit:'$/roll', group:'Tape', matTab:'MUD', def:11.00 },
+  { key:'mat_tape_mesh',   label:'Mesh Tape',    unit:'$/roll', group:'Tape', matTab:'MUD', def:11.00 },
+  { key:'mat_tape_flex',   label:'Flexbead',     unit:'$/roll', group:'Tape', matTab:'MUD', def:18.00 },
 ];
 
 let gMatPrices = {};
