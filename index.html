@@ -283,6 +283,12 @@ footer a:hover{color:var(--gold-light);}
 /* ── TAB SWITCHING ── */
 .nav-tab-link.active{color:var(--gold)!important;}
 
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:2rem;align-items:start;}
+@media(max-width:640px){.about-grid{grid-template-columns:1fr;}}
+.about-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;}
+.about-card h4{font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem;}
+.about-card p{font-size:.85rem;color:var(--muted);line-height:1.75;}
+.pickup-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(201,168,76,.1);border:1px solid var(--bstrong);border-radius:8px;padding:.75rem 1.1rem;margin-top:1.5rem;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:600;color:var(--gold);letter-spacing:.05em;}
 /* ── BIN TRACKER STYLES ── */
 /* Hide the bin tracker's own header-top (logo) since main nav handles it */
 #page-bintracker .site-header .header-top { display: none !important; }
@@ -493,7 +499,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
     <a href="#gallery" id="nav-gallery" class="nav-tab-link" onclick="switchToMain(event); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">Gallery</a>
     <a href="#configurator" id="nav-configure" class="nav-tab-link" onclick="switchToMain(event); document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure</a>
     <a href="#bin-tracker" id="nav-bintracker" class="nav-tab-link" onclick="switchToBinTracker(event)">Bin Tracker</a>
-    <a href="about.html" id="nav-about" target="_blank">About</a>
+    <a href="#about-page" id="nav-about" class="nav-tab-link" onclick="switchToAbout(event)">About</a>
   </div>
 </nav>
 
@@ -942,6 +948,29 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
      FIREBASE CONFIG — paste your firebaseConfig values below
 
 </div><!-- end #page-bintracker -->
+
+<!-- ══ ABOUT TAB ══ -->
+<div id="page-about" style="display:none;">
+  <div class="section-wrap">
+    <div class="section-label">About Us</div>
+    <div class="section-title">Who We Are</div>
+    <div class="section-sub">Peak Garage Solutions is a Burlington, Ontario-based business dedicated to helping Canadian homeowners take back their garage space with custom-built tote storage systems.</div>
+    <div class="about-grid">
+      <div class="about-card">
+        <h4>What We Build</h4>
+        <p>We design and hand-build solid wood tote rack systems sized exactly to your garage and your needs. Choose anywhere from 1 to 5 columns wide and 2 to 5 rows high — every unit is cut, glued, and assembled to order. Add a plywood top, a stain finish, heavy-duty casters, or a full set of 27-gallon storage totes, and we'll build it all in.</p>
+      </div>
+      <div class="about-card">
+        <h4>Our Commitment</h4>
+        <p>We believe garage storage should be tough, good-looking, and built to last. That's why every frame is glued solid wood construction — no particle board, no wobble. Our units are designed for real Canadian garages: they handle the cold, the weight, and the chaos of every season. We're proud to build locally and deliver throughout the Burlington and Hamilton area.</p>
+      </div>
+    </div>
+    <div class="pickup-badge">
+      <span>🏷️</span>
+      <span>Local Pickup Discount Available — Save on delivery by picking up at our Burlington location. Ask us when you request a quote!</span>
+    </div>
+  </div>
+</div>
 
 <!-- ══ FOOTER ══ -->
 <footer>
@@ -2364,12 +2393,23 @@ function switchToMain(e) {
   if (e) e.preventDefault();
   document.getElementById('page-main').style.display = '';
   document.getElementById('page-bintracker').style.display = 'none';
+  document.getElementById('page-about').style.display = 'none';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
+}
+function switchToAbout(e) {
+  if (e) e.preventDefault();
+  document.getElementById('page-main').style.display = 'none';
+  document.getElementById('page-bintracker').style.display = 'none';
+  document.getElementById('page-about').style.display = '';
+  document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
+  document.getElementById('nav-about').classList.add('active');
+  window.scrollTo(0,0);
 }
 function switchToBinTracker(e) {
   if (e) e.preventDefault();
   document.getElementById('page-main').style.display = 'none';
   document.getElementById('page-bintracker').style.display = '';
+  document.getElementById('page-about').style.display = 'none';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
   document.getElementById('nav-bintracker').classList.add('active');
   window.scrollTo(0,0);
