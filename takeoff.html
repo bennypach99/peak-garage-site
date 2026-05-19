@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.42</title>
+  <title>Drywall Tally v15.43</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.42 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.43 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3863,9 +3863,7 @@ function showReport() {
   const metaColor = '#7c3aed';
   html += `<div style="margin-bottom:16px">`;
   html += `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Rate Type</span><span style="font-weight:500">${isHR?'High-Rise':'Low-Rise'}</span></div>`;
-  const taskParts = ['Drywall','Insulation'];
-  if (hasTaping) taskParts.push('Taping');
-  html += `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Tasks</span><span style="font-weight:500">${taskParts.join(', ')}</span></div>`;
+  if (hasTaping) html += `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Tasks</span><span style="font-weight:500">Job includes taping</span></div>`;
   if (d.customer) html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Customer</span><span>${d.customer}</span></div>`;
   if (d.site)     html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Site</span><span>${d.site}</span></div>`;
   html += `</div><hr style="margin:8px 0 16px;border-color:var(--border)">`;
