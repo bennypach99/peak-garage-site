@@ -58,8 +58,7 @@ nav{
 
 /* ── HERO ── */
 .hero{
-  background:linear-gradient(rgba(0,0,0,0.70),rgba(0,0,0,0.70)),url('images/hero.jpg') center/cover no-repeat;
-  padding:5rem 2rem 4rem;
+background:linear-gradient(rgba(0,0,0,0.70),rgba(0,0,0,0.70)),url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/background.png') center/cover no-repeat;  padding:5rem 2rem 4rem;
   text-align:center;
   border-bottom:1px solid var(--bstrong);
   position:relative;overflow:hidden;
@@ -185,10 +184,6 @@ nav{
 /* ── DOUBLE UNIT ROW — wraps like other opt-rows on mobile ── */
 .opt-row .opt-btn-du{white-space:normal;}
 
-@media(max-width:640px){}
-
-.pickup-badge 
-
 /* ── FOOTER ── */
 footer{background:#111;border-top:1px solid var(--bstrong);text-align:center;padding:2.5rem 2rem;}
 .footer-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;}
@@ -204,21 +199,52 @@ footer a:hover{color:var(--gold-light);}
   z-index:10;
   text-decoration:none;
   display:block;
-  width:150px;
-  height:138px;
+  width:165px;
+  height:152px;
   transition:transform .25s cubic-bezier(.34,1.56,.64,1);
 }
 .comic-burst-wrap:hover{transform:scale(1.1) rotate(-4deg);}
-.comic-burst-wrap img{
+
+.comic-burst-wrap-left{
+  position:absolute;
+  top:1.1rem;
+  left:1.5rem;
+  z-index:10;
+  text-decoration:none;
+  display:block;
+  width:165px;
+  height:152px;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.comic-burst-wrap-left:hover{transform:scale(1.1) rotate(4deg);}
+.comic-burst-wrap-left img{
   width:100%;
   height:100%;
   object-fit:contain;
   position:absolute;
   top:0;left:0;
 }
-/* Text is absolutely positioned to sit inside the yellow oval zone.
-   Yellow zone approx: left 7.3%, right 88%, top 17.7%, bottom 72.8%
-   of the image dimensions — so we replicate that with % positioning. */
+.comic-burst-wrap-left .comic-burst-text{
+  position:absolute;
+  left:7%;
+  right:12%;
+  top:18%;
+  bottom:27%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  pointer-events:none;
+  gap:0;
+}
+  .comic-burst-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  position:absolute;
+  top:0;left:0;
+}
 .comic-burst-text{
   position:absolute;
   left:7%;
@@ -235,23 +261,24 @@ footer a:hover{color:var(--gold-light);}
 }
 .comic-burst-text .cbt-main{
   font-family:'Rajdhani',sans-serif;
-  font-size:clamp(.72rem,1.1vw,.92rem);
+  font-size:clamp(.58rem,0.9vw,.76rem);
   font-weight:700;
   text-transform:uppercase;
-  color:#1a1a1a;
+  color:#8b0000;
   letter-spacing:.02em;
   line-height:1.05;
 }
 .comic-burst-text .cbt-sub{
   font-family:'Open Sans',sans-serif;
-  font-size:clamp(.48rem,.72vw,.6rem);
+  font-size:clamp(.4rem,.6vw,.5rem);
   font-weight:700;
-  color:#333;
+  color:#8b0000;
   margin-top:3px;
   line-height:1.15;
 }
 @media(max-width:520px){
-  .comic-burst-wrap{width:112px;height:103px;top:.5rem;right:.5rem;}
+  .comic-burst-wrap{width:123px;height:113px;top:.5rem;right:.5rem;}
+  .comic-burst-wrap-left{width:123px;height:113px;top:.5rem;left:.5rem;}
 }
 </style>
 </head>
@@ -264,7 +291,7 @@ footer a:hover{color:var(--gold-light);}
   </div>
   <div class="nav-top">
     <a class="logo-wrap" href="#">
-      <img nope alt="Peak Garage Solutions Logo" style="height:62px;width:auto;" />
+      <img src="logo.png" alt="Peak Garage Solutions Logo" style="height:62px;width:auto;" />
       <div class="logo-text">Peak Garage Solutions<span>peakgaragesolutions.ca</span></div>
     </a>
   </div>
@@ -280,13 +307,19 @@ footer a:hover{color:var(--gold-light);}
 <div class="hero">
   <div class="hero-glow"></div>
   <!-- ══ COMIC BURST ══ -->
-  <a class="comic-burst-wrap" href="https://peakgaragesolutions.ca/bin-tracker.html" target="_blank" title="Try our free Bin Inventory Tracker!">
-    <img src="burst.png" alt="QR Bin Inventory Tool" />
-    <div class="comic-burst-text">
-      <span class="cbt-main">QR Bin<br>Inventory<br>Tool</span>
-      <span class="cbt-sub">Try Free!</span>
-    </div>
-  </a>
+<a class="comic-burst-wrap-left" href="https://peakgaragesolutions.ca/bin-tracker.html" target="_blank" title="Free QR Code Labels included with your shelves!">
+  <img src="burst.png" alt="Free QR Code Labels" />
+  <div class="comic-burst-text">
+    <span class="cbt-main">Free QR<br>Code Labels<br>included<br>with your<br>shelves!</span>
+  </div>
+</a>
+<a class="comic-burst-wrap" href="https://peakgaragesolutions.ca/bin-tracker.html" target="_blank" title="Try our free Bin Inventory Tracker!">
+  <img src="burst.png" alt="QR Bin Inventory Tool" />
+  <div class="comic-burst-text">
+    <span class="cbt-main">QR Bin<br>Inventory<br>Tool</span>
+    <span class="cbt-sub">Try Free!</span>
+  </div>
+</a>
   <div class="hero-badge">🇨🇦 Proudly Canadian &nbsp;·&nbsp; Burlington, Ontario</div>
   <h1>Tote Storage<br><span class="gold">Built Your Way</span></h1>
   <div class="gold-rule"></div>
@@ -520,7 +553,7 @@ footer a:hover{color:var(--gold-light);}
   <div class="modal">
     <button class="close-x" onclick="closeModal()">✕</button>
     <div class="modal-title">Request a Quote</div>
-    <div class="modal-sub">Fill in your details and we'll get back to you within 1 business day at <strong style="color:var(--gold)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="156674797066556570747e727467747270667a7960617c7a7b663b7674">[email&#160;protected]</a></strong></div>
+    <div class="modal-sub">Fill in your details and we'll get back to you within 1 business day at <strong style="color:var(--gold)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="15566a7a66556570747e727467747270667a7960617c7a7b663b7674">[email&#160;protected]</a></strong></div>
 
     <div class="modal-config">
       <strong>Your Selected Configuration</strong>
@@ -547,17 +580,14 @@ footer a:hover{color:var(--gold-light);}
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ============================================================
 //  ★★★  PASTE YOUR EMAILJS KEYS BELOW  ★★★
-//  1. Go to emailjs.com and sign in
-//  2. Replace each value below with your real keys
-//  3. Save the file — emails will start working instantly
 // ============================================================
-const EMAILJS_PUBLIC_KEY  = 'oNs9CbcPHf_Nhc4kH';    // e.g. 'abc123XYZ'
-const EMAILJS_SERVICE_ID  = 'service_4qiybvi';    // e.g. 'service_abc123'
-const EMAILJS_TEMPLATE_ID = 'template_ayvgsvb';   // e.g. 'template_abc123'
-const EMAILJS_TEMPLATE_ID2 = 'template_w5deyiz';   // e.g. 'template_abc123'
+const EMAILJS_PUBLIC_KEY  = 'oNs9CbcPHf_Nhc4kH';
+const EMAILJS_SERVICE_ID  = 'service_4qiybvi';
+const EMAILJS_TEMPLATE_ID = 'template_ayvgsvb';
+const EMAILJS_TEMPLATE_ID2 = 'template_w5deyiz';
 // ============================================================
 
 // ── REAL DIMENSION LOOKUP TABLES ──
@@ -578,11 +608,24 @@ function basicTopCost(c)    { return c*10; }
 function casterCost(c,r)    { const s=c*r; return s<12 ? 50 : s<16 ? 75 : 100; }
 function casterCount(c,r)   { const s=c*r; return s<12 ? 4 : s<16 ? 6 : 8; }
 
+// ── CANVAS HELPER (Safari/iOS Fix) ──
+function drawRoundRect(ctx, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 // ── STATE ──
 const S = {cols:3, rows:2, addons:new Set(), stainColor:'black', doubleUnit:false};
 
 function setSel(btn, key, val) {
-  if (S.doubleUnit) return; // blocked when double unit is active
+  if (S.doubleUnit) return;
   S[key] = val;
   btn.parentElement.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('sel'));
   btn.classList.add('sel');
@@ -590,25 +633,20 @@ function setSel(btn, key, val) {
 }
 
 function toggleDoubleUnit(btn, type) {
-  // If clicking the already-active DU type, turn it off
   const turningOff = (S.doubleUnit === type);
   S.doubleUnit = turningOff ? false : type;
 
-  // Sync all DU button sel states
   document.getElementById('double-unit-btn').classList.toggle('sel', S.doubleUnit === '4high');
   document.getElementById('double-unit-3h-btn').classList.toggle('sel', S.doubleUnit === '3high');
   document.getElementById('double-unit-2h-btn').classList.toggle('sel', S.doubleUnit === '2high');
 
   const isDU = !!S.doubleUnit;
-
-  // Deselect/dim col buttons (not DU buttons)
   const colRow = document.getElementById('cols-row');
   colRow.querySelectorAll('.opt-btn:not(.opt-btn-du)').forEach(b => {
     if (isDU) b.classList.remove('sel');
     b.style.opacity = isDU ? '.35' : '';
     b.style.pointerEvents = isDU ? 'none' : '';
   });
-  // Dim/enable row buttons
   const rowRow = document.getElementById('rows-row');
   rowRow.querySelectorAll('.opt-btn').forEach(b => {
     b.style.opacity = isDU ? '.35' : '';
@@ -621,7 +659,6 @@ function toggleDoubleUnit(btn, type) {
   if (isDU) {
     basictopCard.classList.remove('disabled');
     topCard.classList.remove('disabled');
-    // Default: 3/4" Maple selected
     S.addons.delete('basictop');
     basictopCard.classList.remove('on');
     S.addons.add('top');
@@ -631,7 +668,6 @@ function toggleDoubleUnit(btn, type) {
     S.addons.delete('basictop');
     topCard.classList.remove('on');
     basictopCard.classList.remove('on');
-    // Re-select the previously active col button
     colRow.querySelectorAll('.opt-btn:not(.opt-btn-du)').forEach(b => {
       if (parseInt(b.textContent) === S.cols) b.classList.add('sel');
     });
@@ -645,33 +681,95 @@ function setStainColor(val) {
 }
 
 function toggleAddon(card, key) {
-  // When Double Unit is on, top options act as a radio — can switch but not deselect
   if (!!S.doubleUnit && (key === 'top' || key === 'basictop')) {
-    if (S.addons.has(key)) return; // already selected, do nothing
-    // Switch to the clicked top
+    if (S.addons.has(key)) return;
     const other = key === 'top' ? 'basictop' : 'top';
     S.addons.delete(other);
     document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key===other) c.classList.remove('on'); });
     S.addons.add(key);
     card.classList.add('on');
+    
+    // Fix: Immediately remove stain if switching to Basic Plywood
+    if (key === 'basictop') {
+        S.addons.delete('stain');
+        document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key==='stain') c.classList.remove('on'); });
+    }
     update();
     return;
   }
-  // Mutual exclusion: top options
+  
   if (key==='top' || key==='basictop') {
     const other = key==='top' ? 'basictop' : 'top';
     S.addons.delete(other);
     document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key===other) c.classList.remove('on'); });
   }
-  // If basictop selected, remove stain
   if (key==='basictop' && !S.addons.has('basictop')) {
     S.addons.delete('stain');
     document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key==='stain') c.classList.remove('on'); });
   }
-  // Toggle the clicked addon
+  
   if (S.addons.has(key)) { S.addons.delete(key); card.classList.remove('on'); }
   else                   { S.addons.add(key);    card.classList.add('on'); }
   update();
+}
+
+// ── CENTRALIZED DOUBLE UNIT LOGIC (DRY Principle) ──
+function getDoubleUnitConfig() {
+  const is4h = S.doubleUnit === '4high';
+  const is3h = S.doubleUnit === '3high';
+  const duLabel = is4h ? '4' : is3h ? '3' : '2';
+  const duSlots = is4h ? 16 : is3h ? 12 : 8;
+  const duRows  = is4h ? 4 : is3h ? 3 : 2;
+  const hasBasic = S.addons.has('basictop');
+  const hasMaple = S.addons.has('top');
+  const hasCasters = S.addons.has('casters');
+  const hasTotes = S.addons.has('totes');
+  const hasStain = S.addons.has('stain') && !hasBasic;
+
+  const hInBase = is4h ? 68.75 : is3h ? 52.75 : 36.75;
+  const hIn = hasBasic ? hInBase - 0.25 : hInBase;
+  const hInFinal = hasCasters ? hIn + CASTER_ADD : hIn;
+  const wIn = 133.5;
+
+  const duBase = is4h ? (hasBasic ? 530 : 600) : is3h ? (hasBasic ? 435 : 500) : (hasBasic ? 340 : 400);
+  const topLabel = hasBasic ? '1/2" Basic Plywood Top (included)' : '3/4" Sanded Maple Top (included)';
+  const topName = hasBasic ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
+  const basicSave = is4h ? 70 : is3h ? 65 : 60;
+
+  const duCasterCount = 8; // Always 2 sets of wheels for double units
+  const duCasterCost = 100; // Flat rate for 2 sets of wheels
+  const duStainCost = is4h ? 100 : is3h ? 85 : 75;
+
+  let total = duBase;
+  const lines = [{ label: duLabel + ' High Double Unit (' + topLabel + ')', val: duBase }];
+  const names = [topName];
+
+  if (hasStain) {
+    total += duStainCost;
+    lines.push({label:'Stain ('+S.stainColor.charAt(0).toUpperCase()+S.stainColor.slice(1)+')', val:duStainCost});
+    names.push('Stain');
+  }
+  if (hasCasters) {
+    total += duCasterCost;
+    lines.push({label:'Casters ('+duCasterCount+' wheels)', val:duCasterCost});
+    names.push('Casters');
+  }
+  if (hasTotes) {
+    total += duSlots*15;
+    lines.push({label:duSlots+' totes × $15', val:duSlots*15});
+    names.push('Storage Totes ('+duSlots+')');
+  }
+
+  const summary = duLabel+' High Double Unit (2+Shelf+2) · '+duSlots+' tote slots · 133.5" wide × '+hInFinal+'" tall × 28.5" deep'
+    +(names.length > 1 ? ' · Add-ons: '+names.slice(1).join(', ') : '')
+    +' · Total: $'+total+' CAD';
+
+  return {
+    duLabel, duSlots, duRows, hasBasic, hasMaple, hasCasters, hasTotes, hasStain,
+    hIn, hInFinal, wIn, duBase, topLabel, topName, basicSave,
+    duCasterCount, duCasterCost, duStainCost,
+    total, lines, names, summary
+  };
 }
 
 function calcPrice() {
@@ -700,57 +798,31 @@ function getAddonNames() {
 
 function update() {
   if (S.doubleUnit) {
-    const is4h     = S.doubleUnit === '4high';
-    const is3h     = S.doubleUnit === '3high';
-    const is2h     = S.doubleUnit === '2high';
-    const duLabel  = is4h ? '4' : is3h ? '3' : '2';
-    const wIn        = 133.5;
-    const hasBasic   = S.addons.has('basictop');
-    const hInBase    = is4h ? 68.75 : is3h ? 52.75 : 36.75;
-    const hIn        = hasBasic ? hInBase - 0.25 : hInBase;
-    const duSlots    = is4h ? 16 : is3h ? 12 : 8;
-    const duRows     = is4h ? 4 : is3h ? 3 : 2;
-    const hasCasters = S.addons.has('casters');
-    const hasTotes   = S.addons.has('totes');
-    const hasStain   = S.addons.has('stain');
-    const hasMaple   = S.addons.has('top');
-    // Base prices: 4high maple/basic, 3high maple/basic, 2high maple/basic
-    const duBase     = is4h ? (hasBasic ? 530 : 600) : is3h ? (hasBasic ? 435 : 500) : (hasBasic ? 340 : 400);
-    const basicSave  = is4h ? 70 : is3h ? 65 : 60;
-    const topLabel   = hasBasic ? '1/2" Basic Plywood Top (included)' : '3/4" Sanded Maple Top (included)';
-    const duCasterCount = is4h ? casterCount(4, 4) : is3h ? 6 : 6;
-    const duCasterCost  = is4h ? casterCost(4, 4)  : is3h ? 75 : 75;
-    const duStainCost   = is4h ? 100 : is3h ? 85 : 75;
+    const cfg = getDoubleUnitConfig();
 
-    document.getElementById('lbl-basictop').textContent = hasBasic ? 'Included in base price ($'+(is4h?530:is3h?435:340)+')' : 'Switch — saves $'+basicSave;
-    document.getElementById('lbl-top').textContent      = hasMaple  ? 'Included in base price ($'+(is4h?600:is3h?500:400)+')' : 'Switch — adds $'+basicSave;
-    document.getElementById('lbl-stain').textContent    = '$'+duStainCost;
-    document.getElementById('lbl-casters').textContent  = '$'+duCasterCost+' · '+duCasterCount+' wheels';
-    document.getElementById('lbl-totes').textContent    = '$15 × '+duSlots+' = $'+(duSlots*15);
+    document.getElementById('lbl-basictop').textContent = cfg.hasBasic ? 'Included in base price ($'+cfg.duBase+')' : 'Switch — saves $'+cfg.basicSave;
+    document.getElementById('lbl-top').textContent = cfg.hasMaple ? 'Included in base price ($'+cfg.duBase+')' : 'Switch — adds $'+cfg.basicSave;
+    document.getElementById('lbl-stain').textContent = '$'+cfg.duStainCost;
+    document.getElementById('lbl-casters').textContent = '$'+cfg.duCasterCost+' · '+cfg.duCasterCount+' wheels';
+    document.getElementById('lbl-totes').textContent = '$15 × '+cfg.duSlots+' = $'+(cfg.duSlots*15);
 
     const stainCard = document.getElementById('card-stain');
-    if (hasBasic) {
+    if (cfg.hasBasic) {
       stainCard.classList.add('disabled');
       S.addons.delete('stain');
       stainCard.classList.remove('on');
     } else {
       stainCard.classList.remove('disabled');
     }
-    document.getElementById('stain-color-wrap').style.display = (hasStain && !hasBasic) ? 'block' : 'none';
+    document.getElementById('stain-color-wrap').style.display = cfg.hasStain ? 'block' : 'none';
 
-    let total = duBase;
-    const lines = [{ label: duLabel+' High Double Unit ('+topLabel+')', val: duBase }];
-    const names = [hasBasic ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top'];
-    if(hasStain && !hasBasic) { total+=duStainCost; lines.push({label:'Stain ('+S.stainColor.charAt(0).toUpperCase()+S.stainColor.slice(1)+')',val:duStainCost}); names.push('Stain'); }
-    if(hasCasters)            { total+=duCasterCost; lines.push({label:'Casters ('+duCasterCount+' wheels)',val:duCasterCost}); names.push('Casters'); }
-    if(hasTotes)              { total+=duSlots*15;   lines.push({label:duSlots+' totes × $15',val:duSlots*15}); names.push('Storage Totes ('+duSlots+')'); }
-    document.getElementById('p-amt').textContent = '$'+total;
+    document.getElementById('p-amt').textContent = '$'+cfg.total;
     document.getElementById('p-break').innerHTML =
-      lines.map(l=>`<div class="line"><span>${l.label}</span><span>$${l.val}</span></div>`).join('')+
-      `<div class="line" style="border-top:1px solid rgba(201,168,76,.25);margin-top:.4rem;padding-top:.4rem;color:var(--gold-light)"><span>Total</span><span>$${total}</span></div>`;
-    const hInDisplay = hasCasters ? hIn + CASTER_ADD : hIn;
+      cfg.lines.map(l=>`<div class="line"><span>${l.label}</span><span>$${l.val}</span></div>`).join('')+
+      `<div class="line" style="border-top:1px solid rgba(201,168,76,.25);margin-top:.4rem;padding-top:.4rem;color:var(--gold-light)"><span>Total</span><span>$${cfg.total}</span></div>`;
+
     document.getElementById('pvLabel').innerHTML =
-      duLabel+' High Double Unit: 2+Shelf+2 &nbsp;·&nbsp; '+duSlots+' slots<br>133.5" W &nbsp;×&nbsp; '+hInDisplay+'" H &nbsp;×&nbsp; 28.5" D';
+      cfg.duLabel+' High Double Unit: 2+Shelf+2 &nbsp;·&nbsp; '+cfg.duSlots+' slots<br>133.5" W &nbsp;×&nbsp; '+cfg.hInFinal+'" H &nbsp;×&nbsp; 28.5" D';
 
     drawPreviewDU();
     return;
@@ -759,13 +831,9 @@ function update() {
   const {cols,rows} = S;
   const slots = cols*rows;
   const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
-
-  // Top thickness adds to total height; casters add 4"
   const topThick  = S.addons.has('basictop') ? 0.5 : S.addons.has('top') ? 0.75 : 0;
   const hasCasters = S.addons.has('casters');
   const hInTotal  = hIn + topThick + (hasCasters ? CASTER_ADD : 0);
-
-  const names = getAddonNames();
 
   document.getElementById('lbl-basictop').textContent   = '$'+basicTopCost(cols)+' ($10 × '+cols+' wide)';
   document.getElementById('lbl-top').textContent        = '$'+topCost(cols)+' ($25 × '+cols+' wide)';
@@ -773,7 +841,6 @@ function update() {
   document.getElementById('lbl-casters').textContent    = '$'+casterCost(cols,rows)+' · '+casterCount(cols,rows)+' wheels';
   document.getElementById('lbl-totes').textContent      = '$15 × '+slots+' = $'+(slots*15);
 
-  // Stain disabled when basictop is selected
   const basicOn = S.addons.has('basictop');
   const stainCard = document.getElementById('card-stain');
   if (basicOn) {
@@ -782,11 +849,8 @@ function update() {
     stainCard.classList.remove('disabled');
   }
 
-  // Show/hide stain colour picker
   const stainOn = S.addons.has('stain') && !basicOn;
   document.getElementById('stain-color-wrap').style.display = stainOn ? 'block' : 'none';
-
-  // Keep canvas stain colour in sync — drawPreview reads S.stainColor directly
 
   const {total,lines} = calcPrice();
   document.getElementById('p-amt').textContent = '$'+total;
@@ -805,30 +869,7 @@ function update() {
 function openModal() {
   let summary;
   if (S.doubleUnit) {
-    const is4h    = S.doubleUnit === '4high';
-    const is3h    = S.doubleUnit === '3high';
-    const duLabel = is4h ? '4' : is3h ? '3' : '2';
-    const duSlots = is4h ? 16 : is3h ? 12 : 8;
-    const hInBase  = is4h ? 68.75 : is3h ? 52.75 : 36.75;
-    const hIn      = S.addons.has('basictop') ? hInBase - 0.25 : hInBase;
-    const hInFinal = S.addons.has('casters') ? hIn + CASTER_ADD : hIn;
-    const duRows  = is4h ? 4 : is3h ? 3 : 2;
-    const duBase  = is4h ? (S.addons.has('basictop') ? 530 : 600) : is3h ? (S.addons.has('basictop') ? 435 : 500) : (S.addons.has('basictop') ? 340 : 400);
-    const topName = S.addons.has('basictop') ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
-    const mCasterCount = is4h ? casterCount(4,4) : 6;
-    const mCasterCost  = is4h ? casterCost(4,4)  : 75;
-    const duStainCost  = is4h ? 100 : is3h ? 85 : 75;
-    const names   = [topName+' (included)'];
-    if(S.addons.has('stain') && !S.addons.has('basictop')) names.push('Stain ('+S.stainColor.charAt(0).toUpperCase()+S.stainColor.slice(1)+')');
-    if(S.addons.has('casters')) names.push('Casters ('+mCasterCount+' wheels)');
-    if(S.addons.has('totes'))   names.push('Storage Totes ('+duSlots+')');
-    let total = duBase;
-    if(S.addons.has('stain') && !S.addons.has('basictop')) total += duStainCost;
-    if(S.addons.has('casters')) total += mCasterCost;
-    if(S.addons.has('totes'))   total += duSlots*15;
-    summary = duLabel+' High Double Unit (2+Shelf+2) · '+duSlots+' tote slots · 133.5" wide × '+hInFinal+'" tall × 28.5" deep'
-      +(names.length?' · Add-ons: '+names.join(', '):'')
-      +' · Total: $'+total+' CAD';
+    summary = getDoubleUnitConfig().summary;
   } else {
     const {cols,rows} = S;
     const slots = cols*rows;
@@ -845,9 +886,11 @@ function openModal() {
   document.getElementById('sendBtn').disabled = false;
   document.getElementById('sendBtn').textContent = 'Send Quote Request';
 }
+
 function closeModal() {
   document.getElementById('modalBackdrop').classList.remove('open');
 }
+
 function handleBackdropClick(e) {
   if (e.target === document.getElementById('modalBackdrop')) closeModal();
 }
@@ -872,39 +915,18 @@ function submitQuote() {
     showAlert('Please enter a valid email address.');
     return;
   }
-  if (EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') {
-    status.className = 'status-msg error';
-    status.textContent = 'EmailJS not configured yet. Open this file in Notepad and replace the 3 keys at the top of the script.';
-    return;
-  }
 
   let summary, cols, rows, slots, wIn, hIn, names_arr, total_val;
   if (S.doubleUnit) {
-    const is4h    = S.doubleUnit === '4high';
-    const is3h    = S.doubleUnit === '3high';
-    const duLabel = is4h ? '4' : is3h ? '3' : '2';
-    const duSlots = is4h ? 16 : is3h ? 12 : 8;
-    const duHBase  = is4h ? 68.75 : is3h ? 52.75 : 36.75;
-    const duH      = (S.addons.has('basictop') ? duHBase - 0.25 : duHBase) + (S.addons.has('casters') ? CASTER_ADD : 0);
-    const duRows  = is4h ? 4 : is3h ? 3 : 2;
-    const duBase  = is4h ? (S.addons.has('basictop') ? 530 : 600) : is3h ? (S.addons.has('basictop') ? 435 : 500) : (S.addons.has('basictop') ? 340 : 400);
-    const topName = S.addons.has('basictop') ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
-    const duNames = [topName+' (included)'];
-    if(S.addons.has('stain') && !S.addons.has('basictop')) duNames.push('Stain ('+S.stainColor.charAt(0).toUpperCase()+S.stainColor.slice(1)+')');
-    const sqCasterCount = is4h ? casterCount(4,4) : 6;
-    const sqCasterCost  = is4h ? casterCost(4,4)  : 75;
-    if(S.addons.has('casters')) duNames.push('Casters ('+sqCasterCount+' wheels)');
-    if(S.addons.has('totes'))   duNames.push('Storage Totes ('+duSlots+')');
-    let duTotal = duBase;
-    const duStainCost2 = is4h ? stainCost(4,duRows) : is3h ? 85 : 75;
-    if(S.addons.has('stain') && !S.addons.has('basictop')) duTotal += duStainCost2;
-    if(S.addons.has('casters')) duTotal += sqCasterCost;
-    if(S.addons.has('totes'))   duTotal += duSlots*15;
-    summary = duLabel+' High Double Unit (2+Shelf+2) · '+duSlots+' tote slots · 133.5" wide × '+duH+'" tall × 28.5" deep'
-      +' · Add-ons: '+duNames.join(', ')
-      +' · Total: $'+duTotal+' CAD';
-    cols='Double(2+S+2,'+duLabel+'H)'; rows=duRows+' high'; slots=duSlots; wIn='133.5"'; hIn=duH+'"';
-    names_arr = duNames; total_val = '$'+duTotal;
+    const cfg = getDoubleUnitConfig();
+    summary = cfg.summary;
+    cols = 'Double(2+S+2,'+cfg.duLabel+'H)';
+    rows = cfg.duRows+' high';
+    slots = cfg.duSlots;
+    wIn = cfg.wIn+'"';
+    hIn = cfg.hInFinal+'"';
+    names_arr = cfg.names;
+    total_val = '$'+cfg.total;
   } else {
     cols = S.cols; rows = S.rows;
     slots = cols*rows;
@@ -922,40 +944,35 @@ function submitQuote() {
   btn.textContent = 'Sending…';
   status.className = 'status-msg';
 
-emailjs.init(EMAILJS_PUBLIC_KEY);
+  emailjs.init(EMAILJS_PUBLIC_KEY);
 
-   // 1. Send the Detailed Order to BENNY
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID2, {
-        to_email:       'benny@peakgaragesolutions.ca',
-        from_name:      name,
-        from_email:     email || '(not provided)',
-        phone:          phone || '(not provided)',
-        config_cols:    cols + ' wide',
-        config_rows:    rows + ' high',
-        config_slots:   slots + ' tote slots',
-        config_width:   wIn,
-        config_height:  hIn,
-        config_depth:   '28.5"',
-        config_addons:  names_arr.length ? names_arr.join(', ') : 'None',
-        config_total:   total_val + ' CAD',
-        config_summary: summary,
-        notes:          notes || 'None'})
-       .then(() => {
-        // 2. Send auto-reply to customer only if they provided an email
-        if (email) {
-          return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-              to_email:       email,
-              from_name:      name,
-              config_summary: summary
-          });
-        }
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID2, {
+      to_email:       'benny@peakgaragesolutions.ca',
+      from_name:      name,
+      from_email:     email || '(not provided)',
+      phone:          phone || '(not provided)',
+      config_cols:    cols + ' wide',
+      config_rows:    rows + ' high',
+      config_slots:   slots + ' tote slots',
+      config_width:   wIn,
+      config_height:  hIn,
+      config_depth:   '28.5"',
+      config_addons:  names_arr.length ? names_arr.join(', ') : 'None',
+      config_total:   total_val + ' CAD',
+      config_summary: summary,
+      notes:          notes || 'None'})
+     .then(() => {
+      if (email) {
+        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+            to_email:       email,
+            from_name:      name,
+            config_summary: summary
+        });
+      }
     }).then(() => {
-        // SUCCESS: Both emails sent
         status.className = 'status-msg success';
         status.textContent = '✓ Quote sent! We\'ll be in touch within 1 business day.';
         btn.textContent = 'Sent!';
-        
-        // Clear the form
         document.getElementById('f-name').value = '';
         document.getElementById('f-phone').value = '';
         document.getElementById('f-email').value = '';
@@ -967,7 +984,8 @@ emailjs.init(EMAILJS_PUBLIC_KEY);
         btn.textContent = 'Send Quote Request';
         console.error('EmailJS error:', err);
     });
-} // This is the final bracket for the whole function
+}
+
 // ── DOUBLE UNIT CANVAS PREVIEW ──
 function drawPreviewDU() {
   const canvas = document.getElementById('cvs');
@@ -1017,10 +1035,10 @@ function drawPreviewDU() {
       const bx=startX+c*cellW+ft/2+2, by=oy+r*cellH+ft/2+2;
       const bw=cellW-ft-4, bh=cellH-ft-4;
       if(bw<4||bh<4) continue;
-      ctx.fillStyle='#222'; ctx.beginPath(); ctx.roundRect(bx,by+bh*0.24,bw,bh*0.76,2); ctx.fill();
+      ctx.fillStyle='#222'; drawRoundRect(ctx, bx,by+bh*0.24,bw,bh*0.76,2); ctx.fill();
       ctx.strokeStyle='#3a3a3a'; ctx.lineWidth=0.5; ctx.stroke();
       const lidH=Math.max(3,bh*0.17);
-      ctx.fillStyle='#D4A017'; ctx.beginPath(); ctx.roundRect(bx+bw*0.04,by+bh*0.13,bw*0.92,lidH,2); ctx.fill();
+      ctx.fillStyle='#D4A017'; drawRoundRect(ctx, bx+bw*0.04,by+bh*0.13,bw*0.92,lidH,2); ctx.fill();
       ctx.strokeStyle='#A87C10'; ctx.lineWidth=0.4; ctx.stroke();
       if(bw>18){
         ctx.fillStyle='#A87C10';
@@ -1034,7 +1052,6 @@ function drawPreviewDU() {
   drawToteUnit(ox);
   drawToteUnit(rightX);
 
-  // ── Middle shelf section ──
   const mx = ox + toteUnitPxW;
   const shelfColor = isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';
 
@@ -1047,7 +1064,6 @@ function drawPreviewDU() {
   ctx.fillStyle=frameColor; ctx.fillRect(mx,oy+toteUnitPxH-ft/2,midPxW,ft);
   ctx.strokeStyle=frameAccent; ctx.lineWidth=0.7; ctx.strokeRect(mx,oy+toteUnitPxH-ft/2,midPxW,ft);
 
-  // 4-high: 1 shelf at mid-height; 3-high: 2 shelves at 1/3 and 2/3; 2-high: no middle shelf
   if (is4h) {
     const sy = oy + toteUnitPxH * 0.5;
     ctx.fillStyle=shelfColor; ctx.fillRect(mx,sy-3,midPxW,6);
@@ -1064,7 +1080,6 @@ function drawPreviewDU() {
     });
   }
 
-  // ── Plywood top (full width) ──
   const tc = isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';
   ctx.fillStyle=tc; ctx.strokeStyle=frameAccent; ctx.lineWidth=0.8;
   ctx.fillRect(ox-4,oy-topPx,totalPxW+8,topPx-1);
@@ -1072,12 +1087,13 @@ function drawPreviewDU() {
   ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=0.5;
   for(let i=1;i<4;i++){const gy=oy-topPx+i*(topPx/4);ctx.beginPath();ctx.moveTo(ox-4,gy);ctx.lineTo(ox+totalPxW+4,gy);ctx.stroke();}
 
-  // ── Casters: 4H = 4 front wheels at corners; 2H = 3 front wheels (left, centre, right) ──
   if (hasCasters) {
     const botY = oy+toteUnitPxH;
-    const pts = is4h
-      ? [ox, ox+toteUnitPxW, rightX, rightX+toteUnitPxW]
-      : [ox, ox+totalPxW/2, ox+totalPxW];
+    const frontWheelCount = 4; // Always show 4 front casters for double units
+    const pts = [];
+    for(let i = 0; i < frontWheelCount; i++) {
+        pts.push(ox + (totalPxW / (frontWheelCount - 1)) * i);
+    }
     pts.forEach(cx => {
       ctx.fillStyle='#555'; ctx.strokeStyle='#333'; ctx.lineWidth=0.6;
       ctx.beginPath(); ctx.ellipse(cx,botY+5,5,5,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
@@ -1099,7 +1115,6 @@ function drawPreview() {
   const isGreen = stainOn && stainColor==='green';
   const isGrey  = stainOn && stainColor==='grey';
   const wIn = WIDTH_IN[cols], hIn = HEIGHT_IN[rows];
-  // Add real top thickness to the rendered height so the frame grows visually
   const topThickIn = addons.has('basictop') ? 0.5 : addons.has('top') ? 0.75 : 0;
   const unitPxW = wIn*SCALE_X, unitPxH = (hIn + topThickIn)*SCALE_Y;
   const topPx = hasTop ? 14 : 0, castPx = hasCasters ? 14 : 0;
@@ -1113,29 +1128,26 @@ function drawPreview() {
   const frameAccent = '#C9A84C';
   const ft = Math.max(3, Math.round(unitPxW/(cols*7)));
 
-  // vertical posts
   for (let c=0; c<=cols; c++) {
     const x = ox + (unitPxW/cols)*c;
     ctx.fillStyle = frameColor; ctx.fillRect(x-ft/2, oy, ft, unitPxH);
     ctx.strokeStyle = frameAccent; ctx.lineWidth = 0.7; ctx.strokeRect(x-ft/2, oy, ft, unitPxH);
   }
-  // horizontal rails
   for (let r=0; r<=rows; r++) {
     const y = oy + (unitPxH/rows)*r;
     ctx.fillStyle = frameColor; ctx.fillRect(ox, y-ft/2, unitPxW, ft);
     ctx.strokeStyle = frameAccent; ctx.lineWidth = 0.7; ctx.strokeRect(ox, y-ft/2, unitPxW, ft);
   }
-  // totes
   const cellW = unitPxW/cols, cellH = unitPxH/rows;
   for (let r=0; r<rows; r++) {
     for (let c=0; c<cols; c++) {
       const bx = ox+c*cellW+ft/2+2, by = oy+r*cellH+ft/2+2;
       const bw = cellW-ft-4, bh = cellH-ft-4;
       if (bw<4||bh<4) continue;
-      ctx.fillStyle='#222'; ctx.beginPath(); ctx.roundRect(bx,by+bh*0.24,bw,bh*0.76,2); ctx.fill();
+      ctx.fillStyle='#222'; drawRoundRect(ctx, bx,by+bh*0.24,bw,bh*0.76,2); ctx.fill();
       ctx.strokeStyle='#3a3a3a'; ctx.lineWidth=0.5; ctx.stroke();
       const lidH = Math.max(3,bh*0.17);
-      ctx.fillStyle='#D4A017'; ctx.beginPath(); ctx.roundRect(bx+bw*0.04,by+bh*0.13,bw*0.92,lidH,2); ctx.fill();
+      ctx.fillStyle='#D4A017'; drawRoundRect(ctx, bx+bw*0.04,by+bh*0.13,bw*0.92,lidH,2); ctx.fill();
       ctx.strokeStyle='#A87C10'; ctx.lineWidth=0.4; ctx.stroke();
       if (bw>18) {
         ctx.fillStyle='#A87C10';
@@ -1144,7 +1156,6 @@ function drawPreview() {
       }
     }
   }
-  // plywood top
   if (hasTop) {
     const tc = isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';
     ctx.fillStyle=tc; ctx.strokeStyle=frameAccent; ctx.lineWidth=0.8;
@@ -1153,45 +1164,45 @@ function drawPreview() {
     ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=0.5;
     for(let i=1;i<4;i++){const gy=oy-topPx+i*(topPx/4);ctx.beginPath();ctx.moveTo(ox-4,gy);ctx.lineTo(ox+unitPxW+4,gy);ctx.stroke();}
   }
-  // casters — draw front wheels only (back wheels hidden behind unit)
   if (hasCasters) {
     const totalCount = casterCount(cols,rows);
-    const frontCount = Math.ceil(totalCount / 2); // front row only; odd totals show extra front wheel
+    const frontCount = Math.ceil(totalCount / 2);
     const botY = oy+unitPxH;
-    for(let i=0;i<frontCount;i++){
-      const cx = ox+(unitPxW/(frontCount-1))*i;
+    const pts = [];
+    if (frontCount > 1) {
+        for (let i=0; i<frontCount; i++) {
+            pts.push(ox + (unitPxW / (frontCount - 1)) * i);
+        }
+    } else {
+        pts.push(ox + unitPxW / 2);
+    }
+    pts.forEach(cx => {
       ctx.fillStyle='#555';
       ctx.strokeStyle='#333'; ctx.lineWidth=0.6;
       ctx.beginPath(); ctx.ellipse(cx, botY+5, 5, 5, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
       ctx.strokeStyle=frameAccent; ctx.lineWidth=0.5;
       ctx.beginPath(); ctx.ellipse(cx, botY+5, 3, 3, 0, 0, Math.PI*2); ctx.stroke();
-    }
+    });
   }
 }
 
 // ── CONFIGURE FROM GALLERY ──
 function configureFromGallery(cfg) {
-  // cfg: { cols, rows, addons:[], doubleUnit: false|'4high'|'2high' }
-
-  // 1. Reset double-unit state
   if (S.doubleUnit) toggleDoubleUnit(
     document.getElementById(S.doubleUnit==='4high'?'double-unit-btn':S.doubleUnit==='3high'?'double-unit-3h-btn':'double-unit-2h-btn'),
     S.doubleUnit
   );
 
-  // 2. Set double unit if needed
   if (cfg.doubleUnit) {
     const duBtn = document.getElementById(cfg.doubleUnit==='4high'?'double-unit-btn':cfg.doubleUnit==='3high'?'double-unit-3h-btn':'double-unit-2h-btn');
     toggleDoubleUnit(duBtn, cfg.doubleUnit);
   } else {
-    // Set cols
     const colBtns = document.querySelectorAll('#cols-row .opt-btn:not(.opt-btn-du)');
     colBtns.forEach(b => {
       const v = parseInt(b.textContent);
       b.classList.toggle('sel', v === cfg.cols);
       if (v === cfg.cols) S.cols = cfg.cols;
     });
-    // Set rows
     const rowBtns = document.querySelectorAll('#rows-row .opt-btn');
     rowBtns.forEach(b => {
       const v = parseInt(b.textContent);
@@ -1200,18 +1211,15 @@ function configureFromGallery(cfg) {
     });
   }
 
-  // 3. Clear all addons
   S.addons.clear();
   document.querySelectorAll('.addon-card').forEach(c => c.classList.remove('on'));
 
-  // 4. Apply desired addons
   cfg.addons.forEach(key => {
     S.addons.add(key);
     const card = document.querySelector('.addon-card[data-key="'+key+'"]');
     if (card) card.classList.add('on');
   });
 
-  // 5. Update & scroll
   update();
   document.getElementById('configurator').scrollIntoView({behavior:'smooth', block:'start'});
 }
