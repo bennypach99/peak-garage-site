@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.40</title>
+  <title>Drywall Tally v15.42</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.40 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.42 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3779,7 +3779,7 @@ function showReport() {
 
   // ── Helper: pick the right taping rate for a ceiling height ──
   function getTapingRate(h) {
-    const map = isHR ? TAPE_HR_RATES : TAPE_LR_RATES;
+    const map = isHR ? TAPING_HR_RATES : TAPING_LR_RATES;
     const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
     const key = hMap[h] || 'h9';
     const bracket = map[key] || map['h9'] || map['h8'];
@@ -4353,18 +4353,22 @@ function showReport() {
     const total = subtotal+hst;
 
     const fmtRow = (label, val, bold) =>
-      `<div class="modal-summary-row${bold?' modal-grand':''}"><span>${label}</span><span>${fmt(val)}</span></div>`;
+      `<div class="modal-row" style="${bold?'font-weight:700;border-top:2px solid var(--border-md);':''}">
+        <span style="${bold?'color:var(--text)':''}">${label}</span>
+        <span style="font-family:'DM Mono',monospace;font-weight:${bold?'700':'500'};color:var(--text)">${fmt(val)}</span>
+      </div>`;
 
-    html += `<div class="modal-summary">`;
+    html += `<div style="margin-top:12px">`;
+    html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:6px">Financial Summary</div>`;
     html += fmtRow('Material Cost', totalMatDisplay);
     html += fmtRow('Labor Cost', totalLabor);
-    html += fmtRow(`Local 675 Union Dues (26.5% of gross)`, totalLocal675);
-    html += fmtRow(`Tapers Union Dues (23.0% of gross)`, totalTapers);
-    html += fmtRow(`WSIB (6.17% on net labor)`, wsib);
-    html += `<div class="modal-summary-row" style="font-weight:700;border-top:1.5px solid var(--border-md);margin-top:4px"><span>Subtotal Labor + Material</span><span>${fmt(subtotalLM)}</span></div>`;
+    html += fmtRow('Local 675 Union Dues (26.5% of gross)', totalLocal675);
+    html += fmtRow('Tapers Union Dues (23.0% of gross)', totalTapers);
+    html += fmtRow('WSIB (6.17% on net labor)', wsib);
+    html += fmtRow('Subtotal Labor + Material', subtotalLM, true);
     html += fmtRow(`Profit (${gProfitPct}%)`, profit);
     html += fmtRow('Subtotal', subtotal);
-    html += fmtRow(`HST (13%)`, hst);
+    html += fmtRow('HST (13%)', hst);
     html += `<div class="modal-grand"><span>Total</span><span>${fmt(total)}</span></div>`;
     html += `</div>`;
   }
