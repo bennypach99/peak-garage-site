@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.49</title>
+  <title>Drywall Tally v15.51</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.49 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.51 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4739,24 +4739,19 @@ const PRICE_FIELDS = [
   { key:'steel_lr_house', label:'Steel Framed House ($/ft²)', rates:[0.405,0.413,0.421], col:'lr', group:'Steel', sub:'Low-Rise ($/ft²)', priceTab:'ST' },
   { key:'suspended_ceil',     label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'ST' },
   { key:'suspended_ceil_iso', label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'ST' },
-  // ── Steel Extras at bottom ──
+  // ── Steel Labor at bottom ──
   { key:'steel_labor',   label:'Steel Labor ($/lf)',          rates:[0,0,0], col:'lr', group:'Steel', priceTab:'ST' },
-  { key:'steel_extra_1', label:'Steel Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', priceTab:'ST' },
-  { key:'steel_extra_2', label:'Steel Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', flat:true, priceTab:'ST' },
   // ── Insulation LR ──
   { key:'ins_lr',         label:'All Insulation ($/ft²)',       rates:[0.617,0.629,0.642], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
-  { key:'ins_r24_prem',   label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
-  { key:'ins_rockwool_prem',label:'Rockwool Premium ($/ft²)',   rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
-  { key:'ins_energy_star',label:'Energy Star Premium ($/ft²)',  rates:[0.079,0.080,0.082], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
-  { key:'ins_r24_prem',  label:'R24 Premium ($/ft²)',          rates:[0.060,0.061,0.063], col:'lr', group:'Insulation', sub:'Low-Rise all-in', priceTab:'IN' },
   { key:'ins_hr_int',     label:'Interior Walls ($/ft²)',       rates:[0.328,0.335,0.342], col:'hr', group:'Insulation', sub:'High-Rise labor', priceTab:'IN' },
   { key:'ins_hr_ext',     label:'Exterior Walls ($/ft²)',       rates:[0.389,0.396,0.404], col:'hr', group:'Insulation', sub:'High-Rise labor', priceTab:'IN' },
   { key:'blanket_r12',    label:'Blanket R12 ($/ft²)',          rates:[0.2142,0.2184,0.2227], col:'lr', group:'Insulation', sub:'Blanket', priceTab:'IN' },
   { key:'blanket_r20',    label:'Blanket R20 ($/ft²)',          rates:[0.2416,0.2464,0.2513], col:'lr', group:'Insulation', sub:'Blanket', priceTab:'IN' },
   { key:'blanket_highwall',label:'High Walls >8.5ft ($/wall)',  rates:[24.70,25.19,25.69],    col:'lr', group:'Insulation', sub:'Blanket', priceTab:'IN' },
-  // ── Insulation Extras at bottom ──
-  { key:'ins_extra_1',    label:'Insulation Extra 1 ($/ft²)',   rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras', priceTab:'IN' },
-  { key:'ins_extra_2',    label:'Insulation Extra 2 (flat $)',  rates:[0,0,0], col:'lr', group:'Insulation', sub:'Extras', flat:true, priceTab:'IN' },
+  // ── Insulation Premiums ──
+  { key:'ins_r24_prem',      label:'R24 Premium ($/ft²)',       rates:[0.060,0.061,0.063], col:'lr', group:'Insulation Premiums', priceTab:'IN' },
+  { key:'ins_rockwool_prem', label:'Rockwool Premium ($/ft²)',  rates:[0.079,0.080,0.082], col:'lr', group:'Insulation Premiums', priceTab:'IN' },
+  { key:'ins_energy_star',   label:'Energy Star Premium ($/ft²)', rates:[0.079,0.080,0.082], col:'lr', group:'Insulation Premiums', priceTab:'IN' },
   // ── Taping ──
   { key:'tape_lr_h8',   label:"≤8'",           rates:[0.38078,0.38839,0.39616], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)', priceTab:'TP' },
   { key:'tape_lr_h9',   label:"8' – 9'",        rates:[0.39986,0.40786,0.41601], col:'lr', group:'Taping', sub:'Low-Rise ($/ft²)', priceTab:'TP' },
@@ -4768,8 +4763,6 @@ const PRICE_FIELDS = [
   { key:'tape_hr_h10',  label:"9' – 10'",       rates:[0.39168,0.39951,0.40750], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
   { key:'tape_hr_h11',  label:"10' – 11'",      rates:[0.41610,0.42442,0.43291], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
   { key:'tape_hr_h12',  label:"11' – 12'",      rates:[0.43350,0.44217,0.45101], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
-  { key:'taping_extra_1', label:'Taping Extra 1 ($/ft²)',    rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', priceTab:'TP' },
-  { key:'taping_extra_2', label:'Taping Extra 2 (flat $)',   rates:[0,0,0], col:'lr', group:'Taping', sub:'Extras', flat:true, priceTab:'TP' },
   // ── Corner Beads — Taper fill rates (CBA Art. 20.01/20.02) ──
   { key:'cb_lr_fill',  label:'LR Regular filled ($/lf)',  rates:[0.90, 0.90, 0.90], col:'lr', group:'Corner Beads', priceTab:'TP' },
   { key:'cb_lr_bull',  label:'LR Bullnose ($/lf)',         rates:[0.78, 0.79, 0.81], col:'lr', group:'Corner Beads', priceTab:'TP' },
@@ -4789,6 +4782,9 @@ const PRICE_FIELDS = [
   { key:'ceil_tray',         label:'Tray Ceiling (per ceiling)',      rates:[76.50,  78.03,  79.59],  col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   // ── Corner Beads — Boarder install rate (CBA Art. 20.01(j)/20.02(l)) ──
   { key:'cb_install',  label:'Bead Install ($/lf)', rates:[0.26, 0.26, 0.27], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  // ── Taping Premiums ──
+  { key:'taper_town',  label:'Townhouse premium — taper ($/MSF)', rates:[20.00, 20.40, 20.81], col:'lr', group:'Taping Premiums', priceTab:'TP' },
+  { key:'taper_stack', label:'Stack T/H premium — taper ($/MSF)', rates:[85.15, 86.85, 88.59], col:'lr', group:'Taping Premiums', priceTab:'TP' },
   // ── Extras (Local 675 boarder CBA rates) ──
   { key:'skylight_2x4',    label:"Skylight 2×4 ($)",            rates:[82.00,  83.00,  85.00],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'skylight_4x4',    label:"Skylight 4×4 ($)",            rates:[174.00, 178.00, 181.00], col:'lr', group:'Extras', priceTab:'EX' },
@@ -4800,16 +4796,12 @@ const PRICE_FIELDS = [
   { key:'taper_sky24',     label:'Skylight 2×4 — taper ($)',        rates:[141.83, 144.67, 147.56], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'taper_sky44',     label:'Skylight 4×4 — taper ($)',        rates:[234.19, 238.88, 243.65], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'taper_stairs',    label:'Open Round Stairs — taper ($)',   rates:[162.93, 166.19, 169.52], col:'lr', group:'Extras', priceTab:'EX' },
-  { key:'taper_town',      label:'Townhouse premium — taper ($/MSF)', rates:[20.00, 20.40, 20.81],  col:'lr', group:'Extras', priceTab:'EX' },
-  { key:'taper_stack',     label:'Stack T/H premium — taper ($/MSF)', rates:[85.15, 86.85, 88.59],  col:'lr', group:'Extras', priceTab:'EX' },
-  { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,   4.37,   4.46],   col:'lr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00, 174.00, 174.00], col:'hr', group:'Extras', priceTab:'EX' },
-  { key:'fivc_premium',    label:'⅝" Fire Code C ($/MSF)',     rates:[105.00, 107.00, 109.00], col:'lr', group:'Extras', priceTab:'EX' },
-  // ── Premiums (on boarding sqft — DW tab) ──
-  { key:'fivet_premium',    label:'Fireguard Premium ($/ft²)',       rates:[0.105,0.107,0.109],   col:'lr', group:'Premiums', priceTab:'DW' },
-  { key:'townhouse_premium',label:'Townhouse premium ($/MSF)',       rates:[14.02, 14.30, 14.60], col:'lr', group:'Premiums', priceTab:'DW' },
-  { key:'stack_townhouse',  label:'Stack/B2B Townhouse premium ($/MSF)', rates:[40.80, 41.60, 42.40], col:'lr', group:'Premiums', priceTab:'DW' },
+  // ── Drywall Premiums (on boarding sqft — DW tab) ──
+  { key:'fivet_premium',    label:'Fireguard Premium ($/ft²)',       rates:[0.105,0.107,0.109],   col:'lr', group:'Drywall Premiums', priceTab:'DW' },
+  { key:'townhouse_premium',label:'Townhouse premium ($/MSF)',       rates:[14.02, 14.30, 14.60], col:'lr', group:'Drywall Premiums', priceTab:'DW' },
+  { key:'stack_townhouse',  label:'Stack/B2B Townhouse premium ($/MSF)', rates:[40.80, 41.60, 42.40], col:'lr', group:'Drywall Premiums', priceTab:'DW' },
   // ── Job Costs ──
   { key:'scaffolding',     label:'Scaffolding ($)',             rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
   { key:'cleaning',        label:'Cleaning ($)',                rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
