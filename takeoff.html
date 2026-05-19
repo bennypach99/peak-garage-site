@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.59</title>
+  <title>Drywall Tally v15.61</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -337,18 +337,20 @@
       background: var(--surface); border-radius: 20px 20px 0 0;
       width: 100%; padding-bottom: calc(20px + var(--safe-bottom));
       transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+      max-height: 85vh; display: flex; flex-direction: column;
     }
     .tut-list-overlay.open .tut-list-sheet { transform: translateY(0); }
     .tut-list-header {
       padding: 14px 20px 10px; border-bottom: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
     }
     .tut-list-header h3 { font-size: 16px; font-weight: 700; color: var(--text); }
     .tut-list-close {
       width: 30px; height: 30px; border-radius: 50%; background: var(--bg);
       border: none; font-size: 15px; color: var(--muted); cursor: pointer;
     }
-    .tut-list-items { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .tut-list-items { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
     .tut-list-item {
       display: flex; align-items: center; gap: 14px;
       background: var(--bg); border: 1px solid var(--border);
@@ -564,7 +566,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.59 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.61 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4422,67 +4424,175 @@ function showReport() {
     }
 
     // ─────── LABOR SECTION ───────
-    if (allDwSqft > 0 || insRows.length) {
+    if (allDwSqft > 0 || insRows.length || steelLabGross > 0 || hasTaping) {
       html += sectionHead('Labor','#1d4ed8');
-      html += `<div class="modal-type-head" style="color:#1d4ed8">Base Rates</div>`;
-      html += labColHead;
 
-      // Boarding base (all dw except durock)
-      const boardBase = plainSqft + fivetSqft;
-      if (boardBase > 0) html += labRow('Boarding Base', Math.round(boardBase)+' ft\u00b2', fmtC(boardRate*1000)+'/MSF', boardingBase);
-      // Fireguard premium
-      if (fivetSqft > 0) html += labRow('Fire Code Type C', Math.round(fivetSqft)+' ft\u00b2', fmtC(fivetPrem*1000)+'/MSF', fivetPremTotal);
-      // Durock
-      if (durockSqft > 0) html += labRow('Durock', Math.round(durockSqft)+' ft\u00b2', fmtC(durockRate*1000)+'/MSF', durockLabor);
+      // helper — trade section header
+      const tradeHead = (label, color) =>
+        `<div class="modal-type-head" style="color:${color};margin-top:6px">${label}</div>`;
+      // helper — sub-group label
+      const subHead = (label) =>
+        `<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:5px 0 2px;padding-left:2px">${label}</div>`;
 
-      // Labour Extras
-      if (allJobExtras.length || Object.values(labExtra).some(v=>v>0)) {
-        html += `<div class="modal-type-head" style="color:#0891b2;margin-top:4px">Labour Extras</div>`;
-        allJobExtras.forEach(item=>{
-          const qty=a.counts['jobExtras'][item];
-          const rk=ADDON_RATE_MAP[item];
-          const rate=rk?(gPrices[rk]||EXTRAS_RATES[rk]?.[gRateIdx]||0):0;
-          html+=labRow(`${item} (\u00d7${qty})`, qty+'', fmtC(rate)+' ea', qty*rate);
-        });
-        const trades=[{k:'drywall',l:'Drywall Labour Extra'},{k:'insulation',l:'Insulation Labour Extra'},{k:'steel',l:'Steel Labour Extra'},{k:'taping',l:'Taping Labour Extra'}];
-        trades.forEach(({k,l})=>{const v=labExtra[k]||0;if(v>0)html+=labRow(l,v+' units','$1.00/unit',v);});
-      }
+      // ── DRYWALLER (Local 675) ──────────────────────────────
+      const hasDwLabor = boardingBase>0||fivetPremTotal>0||durockLabor>0||townPremAmt>0||cbBoarderInstallGross>0||perliteGross>0||addOnGross>0||(labExtra.drywall||0)>0;
+      if (hasDwLabor) {
+        html += tradeHead('Drywaller','#1d4ed8');
 
-      // Insulation base
-      if (insLabTotal > 0) html += labRow('Insulation Base', insRows.reduce((s,r)=>s+r.sqft,0)+' ft\u00b2', fmtC(insLabRate*1000)+'/MSF', insLabTotal);
-
-      // Taping
-      if (hasTaping) {
-        if (tapingGross > 0) html += labRow('Taping Base', tapingSqft+' ft\u00b2', fmtC(tapingRate*1000)+'/MSF', tapingGross);
+        // Base rate
+        if (boardingBase > 0) {
+          html += subHead('Base Rate');
+          html += labColHead;
+          html += labRow('Boarding Base', Math.round(boardingBase/boardRate)+' ft²', fmtC(boardRate*1000)+'/MSF', boardingBase);
+        }
 
         // Premiums
-        const hasPrem = townPremAmt>0||eStarAmt>0||cbFillGross>0||cbInstallGross>0||ceilPremAmt>0||cathAmt>0||waffleAmt>0;
-        if (hasPrem) {
-          html += `<div class="modal-type-head" style="color:#7c3aed;margin-top:4px">Premiums</div>`;
+        const hasDwPrem = fivetPremTotal>0||townPremAmt>0||cbBoarderInstallGross>0||perliteGross>0;
+        if (hasDwPrem) {
+          html += subHead('Premiums');
           html += labColHead;
+          if (fivetPremTotal > 0)        html += labRow('Fire Code Type C', Math.round(fivetSqft)+' ft²', fmtC(fivetPrem*1000)+'/MSF', fivetPremTotal);
           if (townPremAmt > 0) {
-            const tLabel = houseType==='stacked'?'Stack Town Premium':'Townhouse Premium';
-            const tRate = houseType==='stacked'?(gPrices['stack_townhouse']||EXTRAS_RATES.stack_townhouse[gRateIdx]):(gPrices['townhouse_premium']||EXTRAS_RATES.townhouse_premium[gRateIdx]);
-            html += labRow(tLabel, Math.round(allDwBoardable)+' ft\u00b2', fmtC(tRate)+'/MSF', townPremAmt);
+            const tLabel = houseType==='stacked'?'Stack/B2B Townhouse':'Townhouse';
+            const tRate  = houseType==='stacked'?(gPrices['stack_townhouse']||EXTRAS_RATES.stack_townhouse[gRateIdx]):(gPrices['townhouse_premium']||EXTRAS_RATES.townhouse_premium[gRateIdx]);
+            html += labRow(tLabel, Math.round(allDwBoardable)+' ft²', fmtC(tRate)+'/MSF', townPremAmt);
           }
-          if (eStarAmt > 0)     html += labRow('Energy Star', Math.round(insEnergySqft)+' ft\u00b2', fmtC(insEStarRate*1000)+'/MSF', eStarAmt);
-          if (cbBoarderInstallGross>0) html += labRow('Corner Bead Install — boarder', cbBoarderLf+' lf', fmtC(cbBoarderInstallRate)+'/lf', cbBoarderInstallGross);
-          if (cbInstallGross>0) html += labRow('Corner Beads Installed — paper', cbInstallLf+' lf', fmtC(cbInstallRate)+'/lf', cbInstallGross);
-          if (cbFillGross > 0)  html += labRow('Corner Beads Filled', cbFillLf+' lf', fmtC(cbFillRate)+'/lf', cbFillGross);
-          if (perliteGross > 0) html += labRow('Premium Perlite', perliteQty+' boxes', fmtC(perliteRate)+'/box', perliteGross);
-          if (ceilPremAmt > 0)  html += labRow(texLabelMap[a.texture]||a.texture, ceilSqft.toFixed(0)+' ft\u00b2', fmtC(ceilPremRate)+'/MSF', ceilPremAmt);
-          if (cathAmt > 0)      html += labRow('Cathedral Ceiling', '', fmtC(cathAmt)+' each', cathAmt);
-          if (waffleAmt > 0)    html += labRow('Waffle / Tray Ceiling', '', fmtC(waffleAmt)+' each', waffleAmt);
+          if (cbBoarderInstallGross > 0) html += labRow('Corner Bead Install', cbBoarderLf+' lf', fmtC(cbBoarderInstallRate)+'/lf', cbBoarderInstallGross);
+          if (perliteGross > 0)          html += labRow('Premium Perlite', perliteQty+' boxes', fmtC(perliteRate)+'/box', perliteGross);
+        }
+
+        // Extras — boarder items
+        const boarderExtras = [
+          { item:"2' × 4' Skylight", rk:'skylight_2x4' },
+          { item:"4' × 4' Skylight", rk:'skylight_4x4' },
+          { item:'Peak',             rk:'peak_niche' },
+          { item:'Niche',            rk:'peak_niche' },
+          { item:"OTA <64'",         rk:'ota_under64' },
+          { item:"OTA >64'",         rk:'ota_over64' },
+          { item:'Door Frame Single',rk:'entry_door_single' },
+          { item:'Door Frame Double',rk:'entry_door_double' },
+          { item:'Open Round Stairs',rk:'open_round_stairs' },
+          { item:'Pot Lights / Sprinkler Heads', rk:'pot_lights' },
+        ];
+        const hasDurockExtra = durockLabor > 0;
+        const activeBoarderExtras = boarderExtras.filter(({item})=>(a.counts['jobExtras']?.[item]||0)>0);
+        const hasDwExtras = hasDurockExtra || activeBoarderExtras.length > 0 || (labExtra.drywall||0)>0;
+        if (hasDwExtras) {
+          html += subHead('Extras');
+          html += labColHead;
+          if (hasDurockExtra) html += labRow('Durock', Math.round(durockSqft)+' ft²', fmtC(durockRate*1000)+'/MSF', durockLabor);
+          activeBoarderExtras.forEach(({item,rk})=>{
+            const qty=a.counts['jobExtras'][item];
+            const rate=gPrices[rk]||EXTRAS_RATES[rk]?.[gRateIdx]||0;
+            html += labRow(`${item} (×${qty})`, qty+'', fmtC(rate)+' ea', qty*rate);
+          });
+          if ((labExtra.drywall||0)>0) html += labRow('Drywall Labour Extra', labExtra.drywall+' units','$1.00/unit',labExtra.drywall);
         }
       }
 
-      // Ceiling measurements reference
-      if (ceilSqft > 0) {
-        html += `<div class="modal-type-head" style="color:#92400e;margin-top:6px">Ceiling Measurements</div>`;
-        ceilEntries.forEach(e=>html+=`<div class="modal-row"><span>${e.l} \u00d7 ${e.w} ft</span><span style="font-family:'DM Mono',monospace">${(e.l*e.w).toFixed(1)} ft\u00b2</span></div>`);
-        html+=`<div class="modal-row" style="font-weight:600"><span>Total</span><span style="font-family:'DM Mono',monospace">${ceilSqft.toFixed(1)} ft\u00b2</span></div>`;
-        if (a.notes) html+=`<div class="modal-row" style="color:var(--muted);font-style:italic"><span>Notes</span><span>${a.notes}</span></div>`;
+      // ── INSULATION ─────────────────────────────────────────
+      if (insLabTotal > 0 || eStarAmt > 0 || (labExtra.insulation||0)>0) {
+        html += tradeHead('Insulation','#db2777');
+
+        // Base
+        html += subHead('Base Rate');
+        html += labColHead;
+        if (insLabTotal > 0) html += labRow('Insulation Base', insRows.reduce((s,r)=>s+r.sqft,0)+' ft²', fmtC(insLabRate*1000)+'/MSF', insLabTotal);
+
+        // Premiums
+        if (eStarAmt > 0) {
+          html += subHead('Premiums');
+          html += labColHead;
+          html += labRow('Energy Star', Math.round(insEnergySqft)+' ft²', fmtC(insEStarRate*1000)+'/MSF', eStarAmt);
+        }
+
+        // Extras
+        if ((labExtra.insulation||0)>0) {
+          html += subHead('Extras');
+          html += labColHead;
+          html += labRow('Insulation Labour Extra', labExtra.insulation+' units','$1.00/unit',labExtra.insulation);
+        }
       }
+
+      // ── STEEL ──────────────────────────────────────────────
+      if (steelLabGross > 0 || (labExtra.steel||0)>0) {
+        html += tradeHead('Steel','#475569');
+        html += subHead('Base Rate');
+        html += labColHead;
+        if (steelLabGross > 0) html += labRow('Steel Labor', '', fmtC(steelLabRate)+'/lf', steelLabGross);
+        if ((labExtra.steel||0)>0) {
+          html += subHead('Extras');
+          html += labColHead;
+          html += labRow('Steel Labour Extra', labExtra.steel+' units','$1.00/unit',labExtra.steel);
+        }
+      }
+
+      // ── CORNER BEAD ─────────────────────────────────────────
+      // Boarder installs metal/vinyl bead (no paper, no archway)
+      if (cbBoarderInstallGross > 0) {
+        html += tradeHead('Corner Bead','#92400e');
+        html += subHead('Boarder — Install (metal & vinyl)');
+        html += labColHead;
+        html += labRow('Bead Install', cbBoarderLf+' lf', fmtC(cbBoarderInstallRate)+'/lf', cbBoarderInstallGross);
+      }
+
+      // ── TAPER ──────────────────────────────────────────────
+      if (hasTaping) {
+        html += tradeHead('Taper','#7c3aed');
+
+        // Base
+        if (tapingGross > 0) {
+          html += subHead('Base Rate');
+          html += labColHead;
+          html += labRow('Taping Base', tapingSqft+' ft²', fmtC(tapingRate*1000)+'/MSF', tapingGross);
+        }
+
+        // Premiums
+        const hasTapePrem = taperTownAmt>0||cbInstallGross>0||cbFillGross>0||ceilPremAmt>0||cathAmt>0||waffleAmt>0;
+        if (hasTapePrem) {
+          html += subHead('Premiums');
+          html += labColHead;
+          if (taperTownAmt > 0) {
+            const ttLabel = houseType==='stacked'?'Stack/B2B Townhouse — taper':'Townhouse — taper';
+            const ttRate  = houseType==='stacked'?(gPrices['taper_stack']||EXTRAS_RATES.taper_stack?.[gRateIdx]||0):(gPrices['taper_town']||EXTRAS_RATES.taper_town?.[gRateIdx]||0);
+            html += labRow(ttLabel, Math.round(plainSqft+fivetSqft+durockSqft)+' ft²', fmtC(ttRate)+'/MSF', taperTownAmt);
+          }
+          if (cbInstallGross > 0) html += labRow('Corner Beads Installed — paper', cbInstallLf+' lf', fmtC(cbInstallRate)+'/lf', cbInstallGross);
+          if (cbFillGross > 0)    html += labRow('Corner Beads Filled', cbFillLf+' lf', fmtC(cbFillRate)+'/lf', cbFillGross);
+          if (ceilPremAmt > 0)    html += labRow(texLabelMap[a.texture]||a.texture, ceilSqft.toFixed(0)+' ft²', fmtC(ceilPremRate)+'/MSF', ceilPremAmt);
+          if (cathAmt > 0)        html += labRow('Cathedral Ceiling', '', fmtC(cathAmt)+' each', cathAmt);
+          if (waffleAmt > 0)      html += labRow('Waffle / Tray Ceiling', '', fmtC(waffleAmt)+' each', waffleAmt);
+        }
+
+        // Extras — taper items (items that tapers get paid for separately)
+        const taperExtras = [
+          { item:"2' × 4' Skylight", rk:'taper_sky24' },
+          { item:"4' × 4' Skylight", rk:'taper_sky44' },
+          { item:'Open Round Stairs', rk:'taper_stairs' },
+        ];
+        const activeTaperExtras = taperExtras.filter(({item})=>(a.counts['jobExtras']?.[item]||0)>0);
+        const hasTapeExtras = activeTaperExtras.length > 0 || (labExtra.taping||0)>0;
+        if (hasTapeExtras) {
+          html += subHead('Extras');
+          html += labColHead;
+          activeTaperExtras.forEach(({item,rk})=>{
+            const qty=a.counts['jobExtras'][item];
+            const rate=gPrices[rk]||EXTRAS_RATES[rk]?.[gRateIdx]||0;
+            html += labRow(`${item} (×${qty})`, qty+'', fmtC(rate)+' ea', qty*rate);
+          });
+          if ((labExtra.taping||0)>0) html += labRow('Taping Labour Extra', labExtra.taping+' units','$1.00/unit',labExtra.taping);
+        }
+
+        // Ceiling Measurements
+        if (ceilSqft > 0) {
+          html += subHead('Ceiling Measurements');
+          ceilEntries.forEach(e=>html+=`<div class="modal-row"><span style="padding-left:8px">${e.l} × ${e.w} ft</span><span style="font-family:'DM Mono',monospace">${(e.l*e.w).toFixed(1)} ft²</span></div>`);
+          html+=`<div class="modal-row" style="font-weight:600"><span style="padding-left:8px">Total</span><span style="font-family:'DM Mono',monospace">${ceilSqft.toFixed(1)} ft²</span></div>`;
+        }
+      }
+
+      // ── NOTES ──
+      if (a.notes) html+=`<div class="modal-row" style="color:var(--muted);font-style:italic;margin-top:4px"><span>Notes</span><span>${a.notes}</span></div>`;
     }
     html += `<div style="height:16px"></div>`;
   }); // end j.areas.forEach
