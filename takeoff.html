@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.44</title>
+  <title>Drywall Tally v15.46</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.44 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.46 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -5427,54 +5427,82 @@ async function exportToPDF() {
   const j = J();
   const reportBody = document.getElementById('modal-body').innerHTML;
   const title = j.name + ' \u2014 Report';
-  const fileName = (j.name || 'Report').replace(/[^a-z0-9]/gi, '_') + '_Report.html';
+  const fileName = (j.name || 'Report').replace(/[^a-z0-9]/gi, '_') + '_Report';
 
   const css = [
     '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }',
-    ':root { --bg: #f0ede8; --surface: #fff; --border: rgba(0,0,0,0.09); --border-md: rgba(0,0,0,0.15); --text: #111; --muted: #777; --accent: #1d4ed8; --purple: #7c3aed; --green: #15803d; }',
-    'body { font-family: "DM Sans", sans-serif; background: #fff; color: #111; padding: 24px; max-width: 720px; margin: 0 auto; }',
-    'h1 { font-size: 20px; font-weight: 700; margin-bottom: 16px; color: #111; }',
-    '.modal-area-head { font-size: 14px; font-weight: 600; color: #7c3aed; margin: 18px 0 6px; padding-bottom: 6px; border-bottom: 1.5px solid #ede9fe; display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }',
-    '.modal-type-head { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; margin: 10px 0 4px; display:flex; justify-content:space-between; padding-right:4px; }',
-    '.modal-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,0.09); font-size: 14px; color: #777; }',
+    'body { font-family: -apple-system, "DM Sans", sans-serif; background: #fff; color: #111; padding: 20px 24px; max-width: 720px; margin: 0 auto; font-size: 14px; }',
+    'h1 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }',
+    '.modal-type-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin: 10px 0 3px; display:flex; justify-content:space-between; }',
+    '.modal-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.08); font-size: 13px; color: #555; }',
     '.modal-row:last-of-type { border-bottom: none; }',
-    '.modal-row span:last-child { font-family: "DM Mono", monospace; font-weight: 500; color: #111; }',
-    '.modal-grand { background: #f0ede8; border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }',
-    '.modal-grand span:first-child { font-size: 14px; font-weight: 500; }',
-    '.modal-grand span:last-child { font-family: "DM Mono", monospace; font-size: 22px; font-weight: 500; }',
-    '@media print { body { padding: 0; } @page { margin: 18mm 14mm; } }',
+    '.modal-row span:last-child { font-family: "DM Mono", ui-monospace, monospace; font-weight: 500; color: #111; }',
+    '.modal-grand { background: #f0ede8; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }',
+    '.modal-grand span:first-child { font-size: 14px; font-weight: 600; }',
+    '.modal-grand span:last-child { font-family: "DM Mono", ui-monospace, monospace; font-size: 20px; font-weight: 600; }',
+    '@media print { body { padding: 0; } @page { margin: 16mm 14mm; size: letter portrait; } }',
   ].join('\n');
 
-  const fullHTML = '<!DOCTYPE html><html><head>\n'
-    + '<meta charset="UTF-8">\n'
-    + '<title>' + title + '</title>\n'
-    + '<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">\n'
-    + '<style>' + css + '</style>\n'
-    + '</head><body>\n'
-    + '<h1>' + title + '</h1>\n'
-    + reportBody
-    + '\n</body></html>';
+  const fullHTML = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${title}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>${css}</style>
+</head><body>
+<h1>${title}</h1>
+${reportBody}
+</body></html>`;
 
   const blob = new Blob([fullHTML], { type: 'text/html' });
-  const file = new File([blob], fileName, { type: 'text/html' });
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-  // Try Web Share API with file (native share sheet on Android/iOS)
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], title });
-      return;
-    } catch(e) {
-      if (e.name === 'AbortError') return; // user cancelled
+  if (isIOS) {
+    // ── iPhone: Web Share API → iOS share sheet → Save to Files ──
+    const file = new File([blob], fileName + '.html', { type: 'text/html' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title });
+        return;
+      } catch(e) {
+        if (e.name === 'AbortError') return;
+      }
     }
-  }
+    // Fallback for older iOS: open blob URL and let user use Share button
+    const url = URL.createObjectURL(blob);
+    window.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
 
-  // Fallback: trigger download
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  } else {
+    // ── Android / Desktop: open in new tab → auto print dialog → Save as PDF ──
+    const printHTML = `<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>${css}</style>
+</head><body>
+<h1>${title}</h1>
+${reportBody}
+<script>
+  window.addEventListener('load', function() {
+    setTimeout(function() { window.print(); }, 800);
+  });
+<\/script>
+</body></html>`;
+
+    const printBlob = new Blob([printHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(printBlob);
+    const printWin = window.open(url, '_blank');
+
+    if (!printWin) {
+      // Popup blocked — fall back to direct download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName + '.html';
+      a.click();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
 }
 
 /* ── Init ── */
