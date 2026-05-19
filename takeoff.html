@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.65</title>
+  <title>Drywall Tally v15.68</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -594,7 +594,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.65 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.68 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -1066,10 +1066,20 @@ const TUTORIALS = [
         body: 'Wider 54" sheets are tallied separately below the 48" cards — each with their own subtotal so you can order the right mix.',
         target: '#tally-header-54',
         arrow: 'up',
+        noFocus: true,
         action: () => {
-          // Scroll the tally area so the 54" header is visible
           const el = document.getElementById('tally-header-54');
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (el) {
+            const scrollParent = findScrollParent(el) || document.querySelector('.tally-area');
+            if (scrollParent) {
+              const parentRect = scrollParent.getBoundingClientRect();
+              const elRect = el.getBoundingClientRect();
+              const relTop = elRect.top - parentRect.top + scrollParent.scrollTop;
+              scrollParent.scrollTo({ top: relTop - scrollParent.clientHeight / 2 + elRect.height / 2, behavior: 'smooth' });
+            } else {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
         },
       },
       {
@@ -1308,6 +1318,30 @@ const TUTORIALS = [
         target: '.totals-strip',
         arrow: 'up',
       },
+      {
+        title: 'Enter Bags Directly',
+        body: 'Tap the "bags" number at the top of each card to type in an exact bag count. The sq ft and piece count update automatically.',
+        target: '[id^="ins-bags-"]',
+        arrow: 'down',
+        noFocus: true,
+        scrollTo: '.tally-area',
+      },
+      {
+        title: 'Enter Square Footage',
+        body: 'Tap the SQ FT box to enter exact square footage. The app calculates how many bags you need and rounds up automatically.',
+        target: '[id^="ins-sf-"]',
+        arrow: 'down',
+        noFocus: true,
+        scrollTo: '.tally-area',
+      },
+      {
+        title: 'Count by Pieces',
+        body: 'Tap the PCS box or use the +/− buttons to count individual pieces. Each piece adds its sq ft to the total — bags are calculated and rounded up for you.',
+        target: '[id^="ins-pc-"]',
+        arrow: 'up',
+        noFocus: true,
+        scrollTo: '.tally-area',
+      },
     ]
   },
   {
@@ -1328,10 +1362,12 @@ const TUTORIALS = [
         body: 'Tap Blown-In or Spray-Foam to tally those materials. Select the R-value, then enter the square footage directly. These are priced per ft² in the report.',
         target: '#type-tabs',
         arrow: 'up',
+        noFocus: true,
         action: () => {
           if (typeof switchInsType === 'function') {
             switchInsType(2);
-            setTimeout(() => positionBubble(tutSteps[tutStep], document.querySelector('#type-tabs')), 500);
+            // Blur any focused input the tab switch may have opened
+            setTimeout(() => { if (document.activeElement) document.activeElement.blur(); }, 100);
           }
         },
       },
