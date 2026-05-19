@@ -648,3 +648,21 @@ function configureFromGallery(cfg) {
 
 update();
 </script>
+<!-- Custom Alert Toast -->
+<div id="customAlert" style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,.65);">
+  <div style="background:var(--ch2);border:1px solid var(--bstrong);border-radius:12px;padding:1.6rem 1.8rem;max-width:320px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.6);">
+    <div style="font-family:'Rajdhani',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.7rem;" id="customAlertMsg"></div>
+    <button onclick="document.getElementById('customAlert').style.display='none';" style="margin-top:.4rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.6rem 2rem;border-radius:6px;font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;">OK</button>
+  </div>
+</div>
+<script>
+function showAlert(msg) {
+  document.getElementById('customAlertMsg').textContent = msg;
+  document.getElementById('customAlert').style.display = 'flex';
+}
+document.getElementById('customAlert').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+</script>
+</body>
+</html>
