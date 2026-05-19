@@ -1,3 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  if (/Mobi|Android|iPhone|iPod/i.test(navigator.userAgent)) {
+    window.location.replace('mobile.html');
+  }
+</script>
+<link rel="icon" type="image/png" href="logo.png">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Peak Garage Solutions – Custom Tote Storage</title>
+
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet"/>
+
+<style>
+/* ============================================================
+   PEAK GARAGE SOLUTIONS — peakgaragesolutions.ca
+   ============================================================ */
+
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --gold:#C9A84C;
+  --gold-light:#E8C96A;
+  --gold-dark:#A07830;
+  --gold-pale:#2a2210;
+  --ch:#1a1a1a;
+  --ch2:#222222;
+  --ch3:#2d2d2d;
+  --text:#f0e6cc;
+  --muted:#9a8a6a;
+  --border:rgba(201,168,76,0.2);
+  --bstrong:rgba(201,168,76,0.45);
+  --radius:10px;
+}
+body{font-family:'Open Sans',sans-serif;color:var(--text);background:var(--ch);}
+h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+
+/* ── NAV ── */
+nav{
+  background:var(--ch2);
+  border-bottom:1px solid var(--bstrong);
+  padding:.7rem 2rem .5rem;
+  display:flex;flex-direction:column;gap:.5rem;
+  position:sticky;top:0;z-index:100;
+}
+.nav-top{display:flex;align-items:center;justify-content:center;position:relative;}
+.logo-wrap{display:flex;align-items:center;gap:14px;text-decoration:none;}
+.logo-text{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.55rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;line-height:1.1;}
+.logo-text span{display:block;font-size:.72rem;font-weight:500;color:var(--muted);letter-spacing:.14em;text-align:center;}
+.nav-links{display:flex;gap:2rem;justify-content:center;border-top:1px solid var(--border);padding-top:.45rem;}
+.nav-links a{text-decoration:none;color:var(--muted);font-size:.85rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;transition:color .2s;}
+.nav-links a:hover{color:var(--gold);}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(rgba(0,0,0,0.70),rgba(0,0,0,0.70)),url('images/hero.jpg') center/cover no-repeat;
+  padding:5rem 2rem 4rem;
+  text-align:center;
+  border-bottom:1px solid var(--bstrong);
+  position:relative;overflow:hidden;
+}
+.hero-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:700px;height:320px;background:radial-gradient(ellipse,rgba(201,168,76,.11) 0%,transparent 70%);pointer-events:none;}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.08);border:1px solid var(--bstrong);border-radius:999px;padding:.35rem 1.1rem;font-size:.74rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.8rem;font-family:'Rajdhani',sans-serif;}
+.hero h1{font-size:3rem;font-weight:700;line-height:1.1;color:#fff;text-transform:uppercase;margin-bottom:.5rem;}
+.hero h1 .gold{background:linear-gradient(90deg,var(--gold-dark),var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.gold-rule{width:80px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1rem auto 1.2rem;}
+.hero p{font-size:1rem;color:var(--muted);max-width:500px;margin:0 auto 2.5rem;line-height:1.75;}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+.btn-gold{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.8rem 2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;}
+.btn-gold:hover{opacity:.88;}
+.btn-outline{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--gold);border:1px solid var(--bstrong);padding:.8rem 2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;text-decoration:none;}
+.btn-outline:hover{background:rgba(201,168,76,.08);}
+
+/* ── TRUST BAR ── */
+.trust-bar{background:var(--ch2);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:center;gap:2.5rem;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:center;gap:.5rem;font-size:.76rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;}
+.trust-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+
+/* ── SECTIONS ── */
+.section-wrap{max-width:1000px;margin:0 auto;padding:4rem 2rem;}
+.section-label{font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;font-family:'Rajdhani',sans-serif;}
+.section-title{font-size:1.9rem;font-weight:700;color:#fff;text-transform:uppercase;margin-bottom:.5rem;}
+.section-sub{color:var(--muted);font-size:.9rem;line-height:1.7;max-width:520px;}
+
+/* ── SCROLL OFFSET for sticky nav ── */
+#features, #gallery, #about, #configurator { scroll-margin-top: 110px; }
+#about { padding-top: 0; }
+
+/* ── FEATURES ── */
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:2.5rem;}
+.feature-card{background:var(--ch2);padding:1.5rem;transition:background .2s;}
+.feature-card:hover{background:var(--ch3);}
+.f-icon{font-size:1.5rem;margin-bottom:.75rem;}
+.feature-card h4{font-size:1rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;}
+.feature-card p{font-size:.83rem;color:var(--muted);line-height:1.6;}
+
+/* ── GALLERY ── */
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:2rem;}
+.gallery-card{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);background:var(--ch3);aspect-ratio:4/3;position:relative;cursor:pointer;}
+.gallery-card:hover{border-color:var(--bstrong);}
+.gallery-card .gallery-tap-hint{position:absolute;top:.55rem;right:.6rem;background:rgba(201,168,76,.18);border:1px solid var(--bstrong);border-radius:999px;font-family:'Rajdhani',sans-serif;font-size:.65rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;padding:.18rem .6rem;opacity:0;transition:opacity .2s;pointer-events:none;}
+.gallery-card:hover .gallery-tap-hint{opacity:1;}
+.gallery-img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;}
+.gallery-card:hover .gallery-img{transform:scale(1.03);}
+.gallery-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));padding:.8rem 1rem .65rem;font-family:'Rajdhani',sans-serif;font-size:.8rem;font-weight:600;color:var(--gold);letter-spacing:.06em;text-transform:uppercase;}
+
+/* ── CONFIGURATOR ── */
+.config-outer{background:var(--ch2);border:1px solid var(--bstrong);border-radius:14px;padding:2rem;margin-top:2rem;}
+.clabel{font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;font-family:'Rajdhani',sans-serif;margin-top:1.4rem;}
+.clabel:first-child{margin-top:0;}
+.opt-row{display:flex;gap:.45rem;flex-wrap:wrap;}
+.opt-btn{padding:.38rem .9rem;border:1px solid var(--border);border-radius:5px;background:transparent;font-size:.83rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
+.opt-btn.sel{border-color:var(--gold);background:var(--gold-pale);color:var(--gold-light);}
+.opt-btn:hover:not(.sel){border-color:rgba(201,168,76,.4);color:var(--text);}
+
+.addon-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:.65rem;margin-top:.6rem;}
+.addon-card{border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;cursor:pointer;transition:all .2s;background:transparent;position:relative;}
+.addon-card.on{border-color:var(--gold);background:var(--gold-pale);}
+.addon-card:hover:not(.on){border-color:rgba(201,168,76,.4);}
+.addon-name{font-family:'Rajdhani',sans-serif;font-size:.9rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
+.addon-price{font-size:.73rem;color:var(--muted);margin-top:.18rem;}
+.addon-check{position:absolute;top:.5rem;right:.6rem;width:16px;height:16px;border-radius:50%;background:var(--gold);display:none;align-items:center;justify-content:center;}
+.addon-card.on .addon-check{display:flex;}
+.addon-check::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--ch);}
+.addon-card.disabled{opacity:.38;cursor:not-allowed;pointer-events:none;}
+.addon-note{font-size:.73rem;color:var(--muted);font-style:italic;margin-bottom:.6rem;font-family:'Open Sans',sans-serif;}
+.stain-select-wrap select{background:var(--ch);border:1px solid var(--bstrong);border-radius:6px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.92rem;font-weight:600;letter-spacing:.04em;padding:.45rem 2rem .45rem .9rem;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .65rem center;}
+.stain-select-wrap select:focus{border-color:var(--gold);}
+.stain-select-wrap select option{background:var(--ch2);color:var(--text);}
+
+.config-body{display:flex;flex-direction:column;gap:1.5rem;margin-top:1.75rem;}
+.config-bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start;}
+@media(max-width:620px){.config-bottom-row{grid-template-columns:1fr;}}
+
+.preview-box{background:var(--ch);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;}
+.preview-label{font-size:.68rem;color:var(--muted);margin-top:.7rem;letter-spacing:.06em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;text-align:center;line-height:1.8;}
+
+.price-box{margin-top:1.1rem;background:linear-gradient(135deg,rgba(201,168,76,.09),rgba(201,168,76,.04));border:1px solid var(--bstrong);border-radius:var(--radius);padding:1.15rem 1.3rem;}
+.price-label{font-size:.66rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;margin-bottom:.2rem;}
+.price-amt{font-size:2.3rem;font-weight:700;color:var(--gold-light);font-family:'Rajdhani',sans-serif;}
+.price-note{font-size:.71rem;color:var(--muted);margin-top:.18rem;}
+.price-breakdown{margin-top:.75rem;font-size:.77rem;font-family:'Rajdhani',sans-serif;line-height:1.9;border-top:1px solid var(--border);padding-top:.65rem;}
+.price-breakdown .line{display:flex;justify-content:space-between;}
+.price-breakdown .line span:first-child{color:var(--muted);}
+.price-breakdown .line span:last-child{color:var(--text);font-weight:600;}
+
+.quote-btn{width:100%;margin-top:1rem;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.8rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;}
+.quote-btn:hover{opacity:.88;}
+
+/* ── MODAL ── */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:center;justify-content:center;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--ch2);border:1px solid var(--bstrong);border-radius:14px;padding:2rem;width:100%;max-width:500px;margin:1rem;position:relative;max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem;}
+.modal-sub{font-size:.82rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.65;}
+.modal-config{background:var(--ch);border:1px solid var(--border);border-radius:8px;padding:.95rem 1rem;margin-bottom:1.3rem;font-size:.79rem;color:var(--muted);font-family:'Rajdhani',sans-serif;line-height:1.9;}
+.modal-config strong{color:var(--gold-light);display:block;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.35rem;}
+.field-label{font-size:.68rem;font-weight:600;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;font-family:'Rajdhani',sans-serif;margin-bottom:.38rem;margin-top:1.1rem;display:block;}
+.field-label:first-of-type{margin-top:0;}
+.field-input{width:100%;background:var(--ch);border:1px solid var(--border);border-radius:6px;padding:.62rem .85rem;color:var(--text);font-family:'Open Sans',sans-serif;font-size:.9rem;transition:border-color .2s;outline:none;}
+.field-input:focus{border-color:var(--gold);}
+.field-input::placeholder{color:var(--muted);}
+.modal-actions{display:flex;gap:.75rem;margin-top:1.5rem;}
+.send-btn{flex:1;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:.72rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.95rem;cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:opacity .2s;}
+.send-btn:hover{opacity:.88;}
+.send-btn:disabled{opacity:.45;cursor:not-allowed;}
+.cancel-btn{background:transparent;color:var(--muted);border:1px solid var(--border);padding:.72rem 1.2rem;border-radius:7px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:.9rem;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;transition:all .2s;}
+.cancel-btn:hover{border-color:var(--gold);color:var(--text);}
+.close-x{position:absolute;top:1rem;right:1rem;background:transparent;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;line-height:1;padding:.2rem .4rem;}
+.close-x:hover{color:var(--text);}
+.status-msg{margin-top:1rem;padding:.78rem 1rem;border-radius:7px;font-size:.83rem;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.04em;display:none;}
+.status-msg.success{background:rgba(39,180,100,.12);border:1px solid rgba(39,180,100,.35);color:#5fda8a;display:block;}
+.status-msg.error{background:rgba(220,60,60,.12);border:1px solid rgba(220,60,60,.35);color:#f07070;display:block;}
+
+/* ── DOUBLE UNIT BUTTON ── */
+.opt-btn-du{border-color:rgba(201,168,76,.35);color:var(--gold);}
+.opt-btn-du.sel{border-color:var(--gold);background:var(--gold-pale);color:var(--gold-light);}
+.opt-btn-du:hover:not(.sel){border-color:var(--gold);background:rgba(201,168,76,.06);color:var(--gold-light);}
+
+/* ── DOUBLE UNIT ROW — wraps like other opt-rows on mobile ── */
+.opt-row .opt-btn-du{white-space:normal;}
+
+/* ── FOOTER ── */
+footer{background:#111;border-top:1px solid var(--bstrong);text-align:center;padding:2.5rem 2rem;}
+.footer-logo{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem;}
+footer p{color:var(--muted);font-size:.8rem;margin-top:.3rem;}
+footer a{color:var(--gold);text-decoration:none;}
+footer a:hover{color:var(--gold-light);}
+
+/* ── COMIC BURST ── */
+.comic-burst-wrap{
+  position:absolute;
+  top:1.1rem;
+  right:1.5rem;
+  z-index:10;
+  text-decoration:none;
+  display:block;
+  width:150px;
+  height:138px;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.comic-burst-wrap:hover{transform:scale(1.1) rotate(-4deg);}
+.comic-burst-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  position:absolute;
+  top:0;left:0;
+}
+.comic-burst-text{
+  position:absolute;
+  left:7%;
+  right:12%;
+  top:18%;
+  bottom:27%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  pointer-events:none;
+  gap:0;
+}
+.comic-burst-text .cbt-main{
+  font-family:'Rajdhani',sans-serif;
+  font-size:clamp(.72rem,1.1vw,.92rem);
+  font-weight:700;
+  text-transform:uppercase;
+  color:#1a1a1a;
+  letter-spacing:.02em;
+  line-height:1.05;
+}
+.comic-burst-text .cbt-sub{
+  font-family:'Open Sans',sans-serif;
+  font-size:clamp(.48rem,.72vw,.6rem);
+  font-weight:700;
+  color:#333;
+  margin-top:3px;
+  line-height:1.15;
+}
+@media(max-width:520px){
+  .comic-burst-wrap{width:112px;height:103px;top:.5rem;right:.5rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div style="text-align:center;padding:.3rem 0 .1rem;font-family:'Rajdhani',sans-serif;font-size:.95rem;letter-spacing:.08em;">
+    <a href="tel:2897074755" style="color:var(--gold-light);font-weight:700;text-decoration:none;">📞 (289) 707-4755</a>
+  </div>
+  <div class="nav-top">
+    <a class="logo-wrap" href="#">
+      <img src="logo.png" alt="Peak Garage Solutions Logo" style="height:62px;width:auto;" />
+      <div class="logo-text">Peak Garage Solutions<span>peakgaragesolutions.ca</span></div>
+    </a>
+  </div>
+  <div class="nav-links">
+    <a href="#features" onclick="event.preventDefault();document.getElementById('features').scrollIntoView({behavior:'smooth'})">Features</a>
+    <a href="#gallery" onclick="event.preventDefault();document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">Gallery</a>
+    <a href="#configurator" onclick="event.preventDefault();document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure</a>
+    <a href="about.html" target="_blank">About</a>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <!-- ══ COMIC BURST ══ -->
+  <a class="comic-burst-wrap" href="https://peakgaragesolutions.ca/bin-tracker.html" target="_blank" title="Try our free Bin Inventory Tracker!">
+    <img src="burst.png" alt="QR Bin Inventory Tool" />
+    <div class="comic-burst-text">
+      <span class="cbt-main">QR Bin<br>Inventory<br>Tool</span>
+      <span class="cbt-sub">Try Free!</span>
+    </div>
+  </a>
+  <div class="hero-badge">🇨🇦 Proudly Canadian &nbsp;·&nbsp; Burlington, Ontario</div>
+  <h1>Tote Storage<br><span class="gold">Built Your Way</span></h1>
+  <div class="gold-rule"></div>
+  <p>Custom-built tote rack systems sized to fit your garage and your life. Choose your columns, rows, and add-ons — get an instant price and dimensions.</p>
+  <div class="hero-btns">
+    <button class="btn-gold" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure for Price & Dimensions</button>
+    <button class="btn-outline" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">See the Work</button>
+    <a class="btn-outline" href="https://peakgaragesolutions.ca/bin-tracker.html">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+      QR Bin Inventory Tool
+    </a>
+  </div>
+</div>
+
+<!-- ══ TRUST BAR ══ -->
+<div class="trust-bar">
+  <div class="trust-item"><div class="trust-dot"></div>Canadian owned</div>
+  <div class="trust-item"><div class="trust-dot"></div>Solid wood glued frame</div>
+  <div class="trust-item"><div class="trust-dot"></div>Custom built to order</div>
+  <div class="trust-item"><div class="trust-dot"></div>28.5" deep</div>
+  <div class="trust-item"><div class="trust-dot"></div>Optional casters</div>
+  <div class="trust-item"><div class="trust-dot"></div>Totes included option</div>
+  <div class="trust-item"><div class="trust-dot"></div>Local delivery included</div>
+  <div class="trust-item"><div class="trust-dot"></div>Set-up included</div>
+</div>
+
+<!-- ══ FEATURES ══ -->
+<div class="section-wrap" id="features">
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="f-icon">💪</div>
+      <h4>Heavy-duty build</h4>
+      <p>Solid wood glued frame construction built to hold full totes season after season.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🎨</div>
+      <h4>Stain options</h4>
+      <p>Choose black or brown stain for a clean, finished look in any garage.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">🛞</div>
+      <h4>Mobile option</h4>
+      <p>Add heavy-duty locking casters to roll your unit wherever you need it.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon">📐</div>
+      <h4>Custom sizing</h4>
+      <p>1–6 wide, 2–6 high. Every unit is built to your exact specification.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GALLERY ══ -->
+<div class="section-wrap" id="gallery" style="padding-top:0;">
+  <div class="section-title">See Our Work</div>
+  <div class="gallery-grid">
+    <div class="gallery-card" onclick="configureFromGallery({cols:2,rows:3,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery1.jpg" alt="2-wide 3-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">2-wide · 3-high · casters · stain · $232</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:2,rows:4,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery2.jpg" alt="2-wide 4-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">2-wide · 4-high · casters · stain · $276</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({doubleUnit:'4high',addons:['top']})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery3.jpg" alt="double 2-wide 4-high with shelves" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">double · 2-wide · 4-high · with maple shelves · $600</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:3,rows:2,addons:['casters','stain','top'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery4.jpg" alt="3-wide 2-high with casters + stain + top" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">3-wide · 2-high · casters · stain · maple top · $307</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:4,rows:2,addons:['casters','stain','top'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery5.jpg" alt="4-wide 2-high with casters + stain + top" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">4-wide · 2-high · casters · stain · maple Top · $376</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({doubleUnit:'2high',addons:['top']})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery6.jpg" alt="double 2-wide 2-high with shelves" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">double · 2-wide · 2-high · with maple shelves · $400</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:4,rows:4,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery7.jpg" alt="4-wide 4-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">4-wide · 4-high · casters · stain · $527</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:4,rows:5,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery8.jpg" alt="4-wide 5-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">4-wide · 5-high · casters · stain · $640</div>
+    </div>
+    <div class="gallery-card" onclick="configureFromGallery({cols:5,rows:5,addons:['casters','stain'],doubleUnit:false})">
+      <div class="gallery-tap-hint">Configure this</div>
+      <img class="gallery-img" src="images/gallery9.jpg" alt="5-wide 5-high with casters + stain" onerror="this.parentElement.style.background='#2d2d2d'"/>
+      <div class="gallery-label">5-wide · 5-high · casters · stain · $800</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIGURATOR ══ -->
+<div class="section-wrap" id="configurator" style="padding-top:0;">
+  <div class="section-label">Configurator</div>
+  <div class="section-title">Design your unit</div>
+  <div class="section-sub">Pick your columns, rows, and add-ons — real dimensions and pricing update instantly.</div>
+
+  <div class="config-outer">
+        <div class="clabel" style="margin-top:0;">Columns — totes wide (1–6)</div>
+        <div class="opt-row" id="cols-row">
+          <button class="opt-btn" onclick="setSel(this,'cols',1)">1 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',2)">2 wide</button>
+          <button class="opt-btn sel" onclick="setSel(this,'cols',3)">3 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',4)">4 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',5)">5 wide</button>
+          <button class="opt-btn" onclick="setSel(this,'cols',6)">6 wide</button>
+        </div>
+
+        <div class="clabel">Rows — totes high (2–6)</div>
+        <div class="opt-row" id="rows-row">
+          <button class="opt-btn sel" onclick="setSel(this,'rows',2)">2 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',3)">3 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',4)">4 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',5)">5 high</button>
+          <button class="opt-btn" onclick="setSel(this,'rows',6)">6 high</button>
+        </div>
+
+        <div class="clabel">Double Units with Shelves</div>
+        <div class="opt-row">
+          <button class="opt-btn opt-btn-du" id="double-unit-btn" onclick="toggleDoubleUnit(this,'4high')">4 High Double Unit w/Shelves</button>
+          <button class="opt-btn opt-btn-du" id="double-unit-3h-btn" onclick="toggleDoubleUnit(this,'3high')">3 High Double Unit w/Shelves</button>
+          <button class="opt-btn opt-btn-du" id="double-unit-2h-btn" onclick="toggleDoubleUnit(this,'2high')">2 High Double Unit w/Shelves</button>
+        </div>
+
+    <div class="clabel">Add-ons (optional)</div>
+    <div class="addon-note">* 1/2" Basic Plywood Top option does not allow for stain option.</div>
+    <div class="addon-grid">
+      <div class="addon-card" onclick="toggleAddon(this,'basictop')" data-key="basictop">
+        <div class="addon-name">1/2" Basic Plywood Top</div>
+        <div class="addon-price" id="lbl-basictop">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" onclick="toggleAddon(this,'top')" data-key="top">
+        <div class="addon-name">3/4" Sanded Maple Top</div>
+        <div class="addon-price" id="lbl-top">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" id="card-stain" onclick="toggleAddon(this,'stain')" data-key="stain">
+        <div class="addon-name">Stain</div>
+        <div class="addon-price" id="lbl-stain">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" onclick="toggleAddon(this,'casters')" data-key="casters">
+        <div class="addon-name">Wheel Casters</div>
+        <div class="addon-price" id="lbl-casters">—</div>
+        <div class="addon-check"></div>
+      </div>
+      <div class="addon-card" onclick="toggleAddon(this,'totes')" data-key="totes">
+        <div class="addon-name">27 Gal Storage Totes</div>
+        <div class="addon-price" id="lbl-totes">—</div>
+        <div class="addon-check"></div>
+      </div>
+    </div>
+
+    <!-- Stain colour picker — shown only when Stain is selected -->
+    <div id="stain-color-wrap" style="display:none;margin-top:.9rem;">
+      <div class="clabel" style="margin-top:0;">Stain Colour</div>
+      <div class="stain-select-wrap">
+        <select id="stain-color-select" onchange="setStainColor(this.value)">
+          <option value="black">Black</option>
+          <option value="brown">Brown</option>
+          <option value="green">Green</option>
+          <option value="grey">Grey</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="config-body">
+      <div class="preview-box">
+        <canvas id="cvs"></canvas>
+        <div class="preview-label" id="pvLabel"></div>
+      </div>
+      <div class="config-bottom-row">
+        <div class="price-box">
+          <div class="price-label">Total Estimated Price (CAD)</div>
+          <div class="price-amt" id="p-amt">—</div>
+          <div class="price-note">+ taxes included &nbsp;·&nbsp; delivery and setup available</div>
+          <div class="price-breakdown" id="p-break"></div>
+        </div>
+      </div>
+      <button class="quote-btn" onclick="openModal()">Request a Quote ↗</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ABOUT ══ -->
+<!-- ══ BIN TRACKER PROMO ══ -->
+<div style="background:var(--ch2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:3.5rem 2rem;text-align:center;">
+  <div style="max-width:620px;margin:0 auto;">
+    <div style="font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:.6rem;font-family:'Rajdhani',sans-serif;">Free Tool</div>
+    <h2 style="font-family:'Rajdhani',sans-serif;font-size:1.9rem;font-weight:700;text-transform:uppercase;color:#fff;margin-bottom:.6rem;letter-spacing:.04em;">Know What's In Every Bin</h2>
+    <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:.8rem auto 1.2rem;"></div>
+    <p style="color:var(--muted);font-size:.9rem;line-height:1.75;margin-bottom:.8rem;">Once your rack is built, keeping track of what's inside every tote is easy with our free <strong style="color:var(--gold-light);">QR Bin Inventory Tool</strong>. Set up your shelf layout, assign items to bins, search across all your shelves, and even print QR code labels so any bin is one scan away.</p>
+    <p style="color:var(--muted);font-size:.85rem;line-height:1.7;margin-bottom:2rem;">Works right in your browser — no app, no login, no cost. Your data stays on your device.</p>
+    <a href="https://peakgaragesolutions.ca/bin-tracker.html" target="_blank"
+       style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:1rem 2.5rem;border-radius:8px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1.1rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:opacity .2s;">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+      Open QR Bin Inventory Tool
+    </a>
+  </div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-logo">Peak Garage Solutions</div>
+  <p>Custom-built in Ontario, Canada</p>
+  <p><a href="https://peakgaragesolutions.ca">peakgaragesolutions.ca</a></p>
+  <p style="margin-top:.4rem;"><a href="/cdn-cgi/l/email-protection#344755585147744451555f535546555351475b5841405d5b5a471a5755"><span class="__cf_email__" data-cfemail="d1a2b0bdb4a291a1b4b0bab6b0a3b0b6b4a2bebda4a5b8bebfa2ffb2b0">[email&#160;protected]</span></a></p>
+  <p style="margin-top:1.2rem;font-size:1.05rem;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.08em;">
+    <a href="tel:2897074755" style="color:var(--gold-light);text-decoration:none;">📞 (289) 707-4755</a>
+  </p>
+  <p style="margin-top:1.2rem;font-size:.7rem;opacity:.35;">© 2026 Peak Garage Solutions. All rights reserved.</p>
+  <p style="margin-top:.3rem;font-size:.65rem;opacity:.25;font-family:'Rajdhani',sans-serif;letter-spacing:.1em;">v1.0.5</p>
+</footer>
+
+<!-- ══ QUOTE MODAL ══ -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="handleBackdropClick(event)">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal()">✕</button>
+    <div class="modal-title">Request a Quote</div>
+    <div class="modal-sub">Fill in your details and we'll get back to you within 1 business day at <strong style="color:var(--gold)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="15566a7a66556570747e727467747270667a7960617c7a7b663b7674">[email&#160;protected]</a></strong></div>
+
+    <div class="modal-config">
+      <strong>Your Selected Configuration</strong>
+      <span id="modal-config-text">—</span>
+    </div>
+
+    <label class="field-label" for="f-name">Name *</label>
+    <input class="field-input" id="f-name" type="text" placeholder="Jane Smith"/>
+
+    <label class="field-label" for="f-phone">Phone Number</label>
+    <input class="field-input" id="f-phone" type="tel" placeholder="(416) 555-0123"/>
+
+    <label class="field-label" for="f-email">Email Address</label>
+    <input class="field-input" id="f-email" type="email" placeholder="jane@email.com"/>
+
+    <label class="field-label" for="f-notes">Additional Notes (optional)</label>
+    <input class="field-input" id="f-notes" type="text" placeholder="Any special requests or questions…"/>
+
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="closeModal()">Cancel</button>
+      <button class="send-btn" id="sendBtn" onclick="submitQuote()">Send Quote Request</button>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</div>
+
 <script>
 // ============================================================
 //  ★★★  PASTE YOUR EMAILJS KEYS BELOW  ★★★
