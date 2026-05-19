@@ -551,8 +551,13 @@ function mToggleAddon(card,key){
     const other=key==='top'?'basictop':'top';
     MS.addons.delete(other);
     document.querySelectorAll('.addon-card').forEach(c=>{if(c.dataset.key===other)c.classList.remove('on');});
-    MS.addons.add(key);card.classList.add('on');mUpdate();return;
+  MS.addons.add(key);card.classList.add('on');
+  // Fix: Immediately remove stain if switching to Basic Plywood
+  if (key === 'basictop') {
+      MS.addons.delete('stain');
+      document.querySelectorAll('.addon-card').forEach(c => { if(c.dataset.key==='stain') c.classList.remove('on'); });
   }
+  mUpdate();return;  }
   if(key==='top'||key==='basictop'){
     const other=key==='top'?'basictop':'top';
     MS.addons.delete(other);
@@ -567,8 +572,20 @@ function mToggleAddon(card,key){
   mUpdate();
 }
 
-function mStainCost(c,r){const s=c*r;return s<=8?50:s<=16?75:s<=24?100:150;}
-function mTopCost(c){return c*25;}
+// ── CANVAS HELPER (Safari/iOS Fix) ──
+function drawRoundRect(ctx, x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function mStainCost(c,r){const s=c*r;return s<=8?50:s<=16?75:s<=24?100:150;}function mTopCost(c){return c*25;}
 function mBasicTopCost(c){return c*10;}
 function mCasterCost(c,r){const s=c*r;return s<12?50:s<16?75:100;}
 function mCasterCount(c,r){const s=c*r;return s<12?4:s<16?6:8;}
@@ -619,8 +636,8 @@ function mUpdateDU(){
   const hT=(MS.addons.has('basictop')?hBase-.25:hBase)+(MS.addons.has('casters')?4:0);
   const duBase=is4?(MS.addons.has('basictop')?530:600):is3?(MS.addons.has('basictop')?435:500):(MS.addons.has('basictop')?340:400);
   const sc=is4?100:is3?85:75;
-  const cc=is4?mCasterCost(4,4):75;
-  const cn=is4?mCasterCount(4,4):6;
+  const cc = 100; // Flat rate for 2 sets of wheels
+  const cn = 8; // Always 2 sets of wheels for double units
   const topN=MS.addons.has('basictop')?'Basic Top (incl.)':'Maple Top (incl.)';
   document.getElementById('m-lbl-basictop').textContent=MS.addons.has('basictop')?'Incl. in base':'Switch';
   document.getElementById('m-lbl-top').textContent=MS.addons.has('top')?'Incl. in base':'Switch';
@@ -674,9 +691,9 @@ function mDraw(){
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
     const bx=ox+c*cW+ft/2+1,by=oy+r*cH+ft/2+1,bw=cW-ft-2,bh=cH-ft-2;
     if(bw<3||bh<3)continue;
-    ctx.fillStyle='#222';ctx.beginPath();ctx.roundRect(bx,by+bh*.24,bw,bh*.76,2);ctx.fill();
+    ctx.fillStyle='#222';drawRoundRect(ctx,bx,by+bh*.24,bw,bh*.76,2);ctx.fill();
     const lh=Math.max(2,bh*.17);
-    ctx.fillStyle='#D4A017';ctx.beginPath();ctx.roundRect(bx+bw*.04,by+bh*.13,bw*.92,lh,2);ctx.fill();
+    ctx.fillStyle='#D4A017';drawRoundRect(ctx,bx+bw*.04,by+bh*.13,bw*.92,lh,2);ctx.fill();
   }
   if(topPx){const tc=isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';ctx.fillStyle=tc;ctx.strokeStyle=fa;ctx.lineWidth=.7;ctx.fillRect(ox-3,oy-topPx,wPx+6,topPx-1);ctx.strokeRect(ox-3,oy-topPx,wPx+6,topPx-1);}
   if(castPx){const botY=oy+hPx;const n=Math.ceil(mCasterCount(cols,rows)/2);for(let i=0;i<n;i++){const cx=ox+(wPx/(n-1||1))*i;ctx.fillStyle='#555';ctx.strokeStyle='#333';ctx.lineWidth=.5;ctx.beginPath();ctx.ellipse(cx,botY+5,4,4,0,0,Math.PI*2);ctx.fill();ctx.stroke();}}
@@ -709,8 +726,8 @@ function mDrawDU(){
     for(let r=0;r<rows;r++)for(let c=0;c<2;c++){
       const bx=sx+c*cW+ft/2+1,by=oy+r*cH+ft/2+1,bw=cW-ft-2,bh=cH-ft-2;
       if(bw<3||bh<3)continue;
-      ctx.fillStyle='#222';ctx.beginPath();ctx.roundRect(bx,by+bh*.24,bw,bh*.76,2);ctx.fill();
-      ctx.fillStyle='#D4A017';ctx.beginPath();ctx.roundRect(bx+bw*.04,by+bh*.13,bw*.92,Math.max(2,bh*.17),2);ctx.fill();
+      ctx.fillStyle='#222';drawRoundRect(ctx,bx,by+bh*.24,bw,bh*.76,2);ctx.fill();
+      ctx.fillStyle='#D4A017';drawRoundRect(ctx,bx+bw*.04,by+bh*.13,bw*.92,Math.max(2,bh*.17),2);ctx.fill();
     }
   };
   drawUnit(ox);drawUnit(ox+tuW+midW);
@@ -725,8 +742,15 @@ function mDrawDU(){
   });
   const tc=isBlack?'#1e1e1e':isBrown?'#4a2810':isGreen?'#1a3a1a':isGrey?'#333336':'#b89c72';
   ctx.fillStyle=tc;ctx.strokeStyle=fa;ctx.lineWidth=.7;ctx.fillRect(ox-3,oy-topPx,totW+6,topPx-1);ctx.strokeRect(ox-3,oy-topPx,totW+6,topPx-1);
-  if(castPx){const botY=oy+tuH;[ox,ox+totW/2,ox+totW].forEach(cx=>{ctx.fillStyle='#555';ctx.strokeStyle='#333';ctx.lineWidth=.5;ctx.beginPath();ctx.ellipse(cx,botY+5,4,4,0,0,Math.PI*2);ctx.fill();ctx.stroke();})}
-}
+if(castPx){
+  const botY=oy+tuH;
+  const frontWheelCount = 4; // Always show 4 front casters for double units
+  for(let i=0; i<frontWheelCount; i++){
+    const cx = ox + (totW / (frontWheelCount - 1)) * i;
+    ctx.fillStyle='#555';ctx.strokeStyle='#333';ctx.lineWidth=.5;
+    ctx.beginPath();ctx.ellipse(cx,botY+5,4,4,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  }
+}}
 
 mUpdate();
 setTimeout(updateIndicator,100);
