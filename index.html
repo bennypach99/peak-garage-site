@@ -508,13 +508,13 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 <div class="hero">
   <div class="hero-glow"></div>
   <!-- ══ COMIC BURST ══ -->
-<a class="comic-burst-wrap-left" href="https://peakgaragesolutions.ca/bin-tracker.html" title="Free QR Code Labels included with your shelves!">
+<a class="comic-burst-wrap-left" href="#bin-tracker" onclick="switchToBinTracker(event)" title="Free QR Code Labels included with your shelves!">
   <img src="burst.png" alt="Free QR Code Labels" />
   <div class="comic-burst-text">
     <span class="cbt-main">Free QR<br>Code Labels<br>included<br>with your<br>shelves!</span>
   </div>
 </a>
-<a class="comic-burst-wrap" href="https://peakgaragesolutions.ca/bin-tracker.html" title="Try our free Bin Inventory Tracker!">
+<a class="comic-burst-wrap" href="#bin-tracker" onclick="switchToBinTracker(event)" title="Try our free Bin Inventory Tracker!">
   <img src="burst.png" alt="QR Bin Inventory Tool" />
   <div class="comic-burst-text">
     <span class="cbt-main">QR Bin<br>Inventory<br>Tool</span>
@@ -528,7 +528,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
   <div class="hero-btns">
     <button class="btn-gold" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure for Price & Dimensions</button>
     <button class="btn-outline" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">See the Work</button>
-    <a class="btn-outline" href="https://peakgaragesolutions.ca/bin-tracker.html">
+    <a class="btn-outline" href="#bin-tracker" onclick="switchToBinTracker(event)">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       QR Bin Inventory Tool
     </a>
@@ -728,7 +728,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
     <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:.8rem auto 1.2rem;"></div>
     <p style="color:var(--muted);font-size:.9rem;line-height:1.75;margin-bottom:.8rem;">Once your rack is built, keeping track of what's inside every tote is easy with our free <strong style="color:var(--gold-light);">QR Bin Inventory Tool</strong>. Set up your shelf layout, assign items to bins, search across all your shelves, and even print QR code labels so any bin is one scan away.</p>
     <p style="color:var(--muted);font-size:.85rem;line-height:1.7;margin-bottom:2rem;">Works right in your browser — no app, no login, no cost. Your data stays on your device.</p>
-    <a href="https://peakgaragesolutions.ca/bin-tracker.html"
+    <a href="#bin-tracker" onclick="switchToBinTracker(event)"
        style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:1rem 2.5rem;border-radius:8px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1.1rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:opacity .2s;">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       Open QR Bin Inventory Tool
@@ -982,7 +982,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
     <a href="tel:2897074755" style="color:var(--gold-light);text-decoration:none;">📞 (289) 707-4755</a>
   </p>
   <p style="margin-top:1.2rem;font-size:.7rem;opacity:.35;">© 2026 Peak Garage Solutions. All rights reserved.</p>
-  <p style="margin-top:.3rem;font-size:.65rem;opacity:.25;font-family:'Rajdhani',sans-serif;letter-spacing:.1em;">v1.0.5</p>
+  <p style="margin-top:.3rem;font-size:.65rem;opacity:.25;font-family:'Rajdhani',sans-serif;letter-spacing:.1em;">v1.0.6</p>
 </footer>
 
 <!-- ══ QUOTE MODAL ══ -->
@@ -2391,7 +2391,7 @@ if (savedCode) {
 // ── TAB SWITCHING ──
 function switchToMain(e) {
   if (e) e.preventDefault();
-  document.getElementById('page-main').style.display = '';
+  document.getElementById('page-main').style.display = 'block';
   document.getElementById('page-bintracker').style.display = 'none';
   document.getElementById('page-about').style.display = 'none';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
@@ -2408,7 +2408,7 @@ function switchToAbout(e) {
 function switchToBinTracker(e) {
   if (e) e.preventDefault();
   document.getElementById('page-main').style.display = 'none';
-  document.getElementById('page-bintracker').style.display = '';
+  document.getElementById('page-bintracker').style.display = 'block';
   document.getElementById('page-about').style.display = 'none';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
   document.getElementById('nav-bintracker').classList.add('active');
