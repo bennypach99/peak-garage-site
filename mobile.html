@@ -303,6 +303,11 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
       </div>
     </div>
 
+    <div class="preview-wrap">
+      <canvas id="m-cvs"></canvas>
+      <div class="preview-dim" id="m-dim">—</div>
+    </div>
+
     <div class="config-card">
       <div class="clabel">Add-ons</div>
       <div class="addon-note">* Basic plywood top cannot be stained.</div>
@@ -346,11 +351,6 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
       </div>
     </div>
 
-    <div class="preview-wrap">
-      <canvas id="m-cvs"></canvas>
-      <div class="preview-dim" id="m-dim">—</div>
-    </div>
-
     <div class="price-box" style="margin-top:.85rem;">
       <div class="price-lbl">Estimated Price (CAD)</div>
       <div class="price-amt" id="m-price">—</div>
@@ -374,44 +374,43 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
     <div class="stitle">Gallery</div>
     <div class="gold-rule"></div>
     <div class="gallery-grid">
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({cols:2,rows:3,addons:['casters','stain']})">
         <img src="images/gallery1.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="2W 3H"/>
         <div class="gallery-item-lbl">2W · 3H · $232</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({cols:2,rows:4,addons:['casters','stain']})">
         <img src="images/gallery2.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="2W 4H"/>
         <div class="gallery-item-lbl">2W · 4H · $276</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({doubleUnit:'4high',addons:['top']})">
         <img src="images/gallery3.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="Double 4H"/>
         <div class="gallery-item-lbl">Double · 4H · $600</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({cols:3,rows:2,addons:['casters','stain','top']})">
         <img src="images/gallery4.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="3W 2H"/>
         <div class="gallery-item-lbl">3W · 2H · $307</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({cols:4,rows:2,addons:['casters','stain','top']})">
         <img src="images/gallery5.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="4W 2H"/>
         <div class="gallery-item-lbl">4W · 2H · $376</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({doubleUnit:'2high',addons:['top']})">
         <img src="images/gallery6.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="Double 2H"/>
         <div class="gallery-item-lbl">Double · 2H · $400</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({cols:4,rows:4,addons:['casters','stain']})">
         <img src="images/gallery7.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="4W 4H"/>
         <div class="gallery-item-lbl">4W · 4H · $527</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({cols:4,rows:5,addons:['casters','stain']})">
         <img src="images/gallery8.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="4W 5H"/>
         <div class="gallery-item-lbl">4W · 5H · $640</div>
       </div>
-      <div class="gallery-item">
+      <div class="gallery-item" onclick="mConfigureFromGallery({cols:5,rows:5,addons:['casters','stain']})">
         <img src="images/gallery9.jpg" onerror="this.parentElement.style.background='#2d2d2d';this.style.display='none'" alt="5W 5H"/>
         <div class="gallery-item-lbl">5W · 5H · $800</div>
       </div>
     </div>
-  </div>
 
   <!-- ══ PAGE: TOOLS ══ -->
   <div class="page" id="page-tools">
@@ -487,8 +486,7 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
   </button>
   <button class="tab-btn" data-page="tools" onclick="switchTab(this)">
     <span class="tab-icon">🔧</span>
-    <span class="tab-label">Tools</span>
-  </button>
+<span class="tab-label">QR Tool</span>  </button>
   <button class="tab-btn" data-page="about" onclick="switchTab(this)">
     <span class="tab-icon">ℹ️</span>
     <span class="tab-label">About</span>
@@ -613,8 +611,44 @@ function mCalc(){
   return{total,lines};
 }
 
-function mUpdate(){
-  if(MS.doubleUnit){mUpdateDU();return;}
+function mConfigureFromGallery(cfg) {
+  // Reset double unit if active
+  if(MS.doubleUnit) {
+    MS.doubleUnit = false;
+    ['m-du4','m-du3','m-du2'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+    document.querySelectorAll('#m-cols-row .opt-btn, #m-rows-row .opt-btn').forEach(b=>{
+      b.style.opacity=''; b.style.pointerEvents='';
+    });
+  }
+  
+  if(cfg.doubleUnit) {
+    const btnId = cfg.doubleUnit==='4high'?'m-du4':cfg.doubleUnit==='3high'?'m-du3':'m-du2';
+    mToggleDU(document.getElementById(btnId), cfg.doubleUnit);
+  } else {
+    MS.cols = cfg.cols; MS.rows = cfg.rows;
+    document.querySelectorAll('#m-cols-row .opt-btn').forEach(b => {
+      b.classList.toggle('sel', parseInt(b.textContent) === cfg.cols);
+    });
+    document.querySelectorAll('#m-rows-row .opt-btn').forEach(b => {
+      b.classList.toggle('sel', parseInt(b.textContent) === cfg.rows);
+    });
+  }
+  
+  MS.addons.clear();
+  document.querySelectorAll('.addon-card').forEach(c => c.classList.remove('on'));
+  if(cfg.addons) {
+    cfg.addons.forEach(key => {
+      MS.addons.add(key);
+      const card = document.querySelector('.addon-card[data-key="'+key+'"]');
+      if(card) card.classList.add('on');
+    });
+  }
+  
+  mUpdate();
+  switchTab(document.querySelector('.tab-btn[data-page="config"]'));
+}
+
+function mUpdate(){  if(MS.doubleUnit){mUpdateDU();return;}
   const {cols,rows,addons,stainColor}=MS;
   const slots=cols*rows;
   const topThick=addons.has('basictop')?0.5:addons.has('top')?0.75:0;
