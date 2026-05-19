@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.38</title>
+  <title>Drywall Tally v15.40</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.38 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.40 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3768,934 +3768,615 @@ function handleDetailsTap(e) {
 /* ── Report ── */
 function showReport() {
   try {
-  const j=J();
-  document.getElementById('modal-title').textContent=j.name+' — Report';
-  const d=j.details;
+  const j = J();
+  document.getElementById('modal-title').textContent = j.name + ' \u2014 Report';
+  const d = j.details;
+  const isHR = (d.rate || 'lowrise') === 'highrise';
+  const hasTaping = !!d.tasks?.taping;
+  const fmtC = v => '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const fmt  = v => '$' + v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const fmtDate = iso => iso ? new Date(iso).toLocaleString('en-CA',{dateStyle:'medium',timeStyle:'short'}) : '';
 
-  // Dates in top bar
-  const datesEl = document.getElementById('modal-dates');
-  if (j.createdAt || j.modifiedAt) {
-    datesEl.style.display = '';
-    datesEl.innerHTML = [
-      j.createdAt  ? `Created: ${fmtDate(j.createdAt)}`  : '',
-      j.modifiedAt ? `Modified: ${fmtDate(j.modifiedAt)}` : '',
-    ].filter(Boolean).join('&ensp;·&ensp;');
-  } else {
-    datesEl.style.display = 'none';
+  // ── Helper: pick the right taping rate for a ceiling height ──
+  function getTapingRate(h) {
+    const map = isHR ? TAPE_HR_RATES : TAPE_LR_RATES;
+    const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
+    const key = hMap[h] || 'h9';
+    const bracket = map[key] || map['h9'] || map['h8'];
+    const priceKey = (isHR ? 'tape_hr_' : 'tape_lr_') + key;
+    return gPrices[priceKey] > 0 ? gPrices[priceKey] : (bracket ? bracket.rates[gRateIdx] : 0.38);
   }
 
-  // My Info header
+  // ── Helper: boarding base rate for a ceiling height ──
+  function getBoardRate(h) {
+    const map = isHR ? BOARD_HR_RATES : BOARD_LR_RATES;
+    const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
+    const key = hMap[h] || 'h9';
+    const bracket = map[key] || map['h9'] || map['h8'];
+    const priceKey = (isHR ? 'board_hr_' : 'board_lr_') + key;
+    return gPrices[priceKey] > 0 ? gPrices[priceKey] : (bracket ? bracket.rates[gRateIdx] : 0.38);
+  }
+
+  const DW_FIVET_KEYS  = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58','wr58']);
+  const DW_DUROCK_KEYS = new Set(['durock48']);
+  const DW_PLAIN_KEYS  = new Set(['pl48','pl54','cd48','wr48','flex48','dens48']);
+  const TAPING_EXCLUDE = new Set(['durock48','dens48','dens58']);
+  const DOUBLE_LAYER   = new Set(['dl48','hdl48']);
+  const matKeyMap = {
+    pl48:'mat_dw_half_plain', pl54:'mat_dw_half_plain', cd48:'mat_dw_half_cd',
+    dens48:'mat_dw_half_dens', dens58:'mat_dw_fivet_dens',
+    wr48:'mat_dw_half_wr', wr58:'mat_dw_58_wr',
+    fg48:'mat_dw_fivet_tx', dl48:'mat_dw_fivet_tx', fg54:'mat_dw_fivet_tx',
+    durock48:'mat_dw_durock', flex48:'mat_dw_quarter_flex',
+    tc48:'mat_dw_half_tc', hdl48:'mat_dw_half_plain'
+  };
+  const cbMatKeys = {
+    "Vinyl 90° (8')":'mat_cb_vinyl_90',"Vinyl 90° (10')":'mat_cb_vinyl_90',
+    "L-Bead Vinyl (8')":'mat_cb_vinyl_l',"L-Bead Vinyl (10')":'mat_cb_vinyl_l',
+    "U-Bead Vinyl (8')":'mat_cb_vinyl_u',"U-Bead Vinyl (10')":'mat_cb_vinyl_u',
+    "J-Bead Vinyl (8')":'mat_cb_vinyl_j',"J-Bead Vinyl (10')":'mat_cb_vinyl_j',
+    "Metal 90° (8')":'mat_cb_metal_90',"Metal 90° (10')":'mat_cb_metal_90',
+    "L-Bead Metal (8')":'mat_cb_metal_l',"L-Bead Metal (10')":'mat_cb_metal_l',
+    "U-Bead Metal (8')":'mat_cb_metal_u',"U-Bead Metal (10')":'mat_cb_metal_u',
+    "J-Bead Metal (8')":'mat_cb_metal_j',"J-Bead Metal (10')":'mat_cb_metal_j',
+    "Bullnose Metal (8')":'mat_cb_bullnose',"Bullnose Metal (10')":'mat_cb_bullnose',
+    "Archway Bead (8')":'mat_cb_archway',"Archway Bead (10')":'mat_cb_archway',
+  };
+  const mudMatKeys = {
+    'All Purpose (17L)':'mat_mud_ap17','Machine (17L)':'mat_mud_mach17',
+    'Lite Finish (17L)':'mat_mud_lite17','Sheetrock 20 (bag)':'mat_mud_sr20',
+    'Sheetrock 45 (bag)':'mat_mud_sr45','Sheetrock 90 (bag)':'mat_mud_sr90',
+    'Durabond 90 (Bag)':'mat_mud_db90',
+  };
+  const mudExtrasMatKeys = {'Paper Tape (roll)':'mat_tape_paper','Fibre Tape (roll)':'mat_tape_fibre','Mesh Tape (roll)':'mat_tape_mesh','Flexbead (roll)':'mat_tape_flex'};
+  const insExtrasMatKeys = {
+    "8' Poly":'mat_poly_8',"9' Poly":'mat_poly_9',"10' Poly":'mat_poly_10',"12' Poly":'mat_poly_12',
+    'Tuck Tape':'mat_tuck_tape','Can Foam':'mat_can_foam','Staples':'mat_staples',
+    'Styro-Vents':'mat_styro_vents','Acoustic Caulking':'mat_acous_caulk',
+  };
+  const extraMatKeys = {'Green Glue':'mat_dw_green_glue','Drywall Screws (Box)':'mat_dw_screws'};
+  const steelExtrasMatKeys = {
+    'Pan Head Screws (Box)':'mat_st_pan_screw','Self-Drilling Screws (Box)':'mat_st_sd_screw',
+    'Hex-Head Screws (Box)':'mat_st_hex_screw','Tie-Wire (Box)':'mat_st_tie_wire',
+    'Hanger-Wire':'mat_st_hang_wire','Eye-Lag (Concrete)':'mat_st_eyelag_c','Eye-Lag (Wood)':'mat_st_eyelag_w'
+  };
+  const ADDON_RATE_MAP = {
+    "2' \u00d7 4' Skylight":'skylight_2x4',"4' \u00d7 4' Skylight":'skylight_4x4',
+    'Peak':'tray_waffle_ceil','Niche':'tray_waffle_ceil',
+    "OTA <64'":'ota_under64',"OTA >64'":'ota_over64',
+    'Door Frame Single':'entry_door_single','Door Frame Double':'entry_door_double',
+    'Open Round Stairs':'open_round_stairs','Pot Lights':'pot_lights',
+  };
+  const texLabelMap = { smooth:'Smooth (L5)', spray:'Texture Spray', knockdown:'Knockdown Spray' };
+
+  // ── Totals accumulated across all areas ──
+  let totalLabor = 0, totalMaterial = 0;
+  let totalLocal675 = 0, totalTapers = 0;
+  let totalBoarderMatDeduct = 0, totalInsulatorMatDeduct = 0, totalTaperMatDeduct = 0;
+  let totalEnergyStar = 0, totalTownPremium = 0, totalCeilPremium = 0;
+  let hasAny = false;
+
+  // ── Report HTML ──
   let html = '';
-  if (gMyInfo.name||gMyInfo.company) {
-    html += `<div style="background:#f0f9ff;border-radius:10px;padding:12px 14px;margin-bottom:14px;border:1px solid #bae6fd">`;
-    if(gMyInfo.name)    html+=`<div style="font-size:14px;font-weight:600;color:#0369a1">${gMyInfo.name}</div>`;
-    if(gMyInfo.company) html+=`<div style="font-size:13px;color:#0369a1;opacity:0.85">${gMyInfo.company}</div>`;
-    if(gMyInfo.hst)     html+=`<div style="font-size:12px;color:var(--muted);margin-top:2px">HST: ${gMyInfo.hst}</div>`;
-    if(gMyInfo.email)   html+=`<div style="font-size:12px;color:var(--muted)">${gMyInfo.email}</div>`;
-    if(gMyInfo.phone)   html+=`<div style="font-size:12px;color:var(--muted)">${gMyInfo.phone}</div>`;
-    html += `</div>`;
-  }
 
-  // Job details block — full info from job details form
-  const houseLabel = { house: 'House', townhouse: 'Townhouse', stacked: 'Stacked Townhouse' }[d.houseType] || '';
-  const rateLabel = d.rate === 'highrise' ? 'High-Rise' : ('Low-Rise' + (houseLabel ? ' — ' + houseLabel : ''));
-  const tasksList = d.tasks?.taping ? 'Drywall, Insulation, Taping' : 'Drywall, Insulation';
-  const togglesList = [d.energyStar && 'Energy Star', d.scaffolding && 'Scaffolding', d.cleaning && 'Cleaning', d.touchup && 'Touchup'].filter(Boolean).join(', ');
+  // Report header
+  const metaColor = '#7c3aed';
+  html += `<div style="margin-bottom:16px">`;
+  html += `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Rate Type</span><span style="font-weight:500">${isHR?'High-Rise':'Low-Rise'}</span></div>`;
+  const taskParts = ['Drywall','Insulation'];
+  if (hasTaping) taskParts.push('Taping');
+  html += `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">Tasks</span><span style="font-weight:500">${taskParts.join(', ')}</span></div>`;
+  if (d.customer) html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Customer</span><span>${d.customer}</span></div>`;
+  if (d.site)     html += `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">Site</span><span>${d.site}</span></div>`;
+  html += `</div><hr style="margin:8px 0 16px;border-color:var(--border)">`;
 
-  const detailRows = [
-    d.customer    ? ['Customer',      d.customer]    : null,
-    d.site        ? ['Site',          d.site]        : null,
-    d.contactName ? ['Site Contact',  d.contactName] : null,
-    d.contactPhone? ['Phone',         d.contactPhone]: null,
-    d.contactEmail? ['Email',         d.contactEmail]: null,
-    d.lockbox     ? ['Lockbox',       d.lockbox]     : null,
-    ['Rate Type',   rateLabel],
-    tasksList     ? ['Tasks',         tasksList]     : null,
-    togglesList   ? ['Options',       togglesList]   : null,
-    d.notes       ? ['Notes',         d.notes]       : null,
-  ].filter(Boolean);
-
-  if (detailRows.length) {
-    html += `<div style="margin-bottom:16px;padding-bottom:14px;border-bottom:1.5px solid var(--border-md)">`;
-    html += detailRows.map(([label,val])=>`
-      <div class="modal-row">
-        <span style="color:var(--muted)">${label}</span>
-        <span style="font-family:inherit;font-weight:400;color:var(--text);text-align:right;max-width:60%;word-break:break-word">${val}</span>
-      </div>`).join('');
-    html += `</div>`;
-  }
-
-  // ── Per-area tally ──
-  let totalLabor = 0;
-  let totalMaterial = 0;
-  let totalEnergyStar = 0;
-  let totalTownPremium = 0;
-  let totalCeilPremium = 0;
-  let totalLocal675 = 0;
-  let totalTapers = 0;
-  let totalBoarderMatDeduct = 0;
-  let totalInsulatorMatDeduct = 0;
-  let totalTaperMatDeduct = 0;
-  let hasAny=false;
-  let laborCost = 0, matCost = 0;
-
-  j.areas.forEach(a=>{
-    let aHas=false;
-    DRYWALL_TYPES.forEach(t=>{
-      if(t.isItems){ if(getItemsForKey(t.key).some(item=>a.counts[t.key][item]>0))aHas=true; }
-      else { if(t.lengths.some(l=>a.counts[t.key][l]>0))aHas=true; }
-    });
-    INSULATION_TYPES.forEach(t=>{
-      if(t.kind==='blown'){ if(BLOWN_RVALS.some(r=>(a.counts['insulation'][t.key][r]||[]).length>0))aHas=true; }
-      else if(t.kind==='foam'){ if(FOAM_RVALS.some(r=>((a.counts['insulation'][t.key][r]||{}).half||[]).length>0||((a.counts['insulation'][t.key][r]||{}).two||[]).length>0))aHas=true; }
-      else if(t.kind==='blanket'){ if((a.counts['insulation'][t.key]||[]).length>0)aHas=true; }
-      else {
-        const rvals=t.rvals||INSULATION_RVALS;
-        rvals.forEach(rv=>INSULATION_SIZES.forEach((_,si)=>{
-          const cell=a.counts['insulation'][t.key]?.[rv.r]?.[si];
-          if(cell&&((cell.bags||0)>0||(cell.extraSqft||0)>0))aHas=true;
-        }));
-      }
-    });
-    STEEL_SUBTABS.forEach(st=>{ if(st.items.some(item=>(a.counts[st.key]?.[item]||0)>0))aHas=true; });
-    if(STEEL_EXTRAS_ITEMS.some(item=>(a.counts['steelExtras']?.[item]||0)>0))aHas=true;
-    if(INSULATION_EXTRAS_ITEMS.some(item=>(a.counts['insExtras']?.[item]||0)>0))aHas=true;
-    if(MUD_ITEMS.some(item=>(a.counts['mud']?.[item]||0)>0))aHas=true;
-    if(CORNER_BEAD_ITEMS.some(item=>(a.counts['cornerBead']?.[item]||0)>0))aHas=true;
-    if(MUD_EXTRAS_ITEMS.some(item=>(a.counts['mudExtras']?.[item]||0)>0))aHas=true;
-    if(JOB_EXTRAS_ITEMS.some(item=>(a.counts['jobExtras']?.[item]||0)>0))aHas=true;
-    if(JOB_COSTS_ITEMS.some(item=>(a.counts['jobCosts']?.[item]||0)>0))aHas=true;
-    const ceilData = a.counts['ceilings'];
-    if(ceilData && ((ceilData.entries||[]).length>0 || ceilData.cathedral>0 || ceilData.waffle>0))aHas=true;
-    if(!aHas)return;
-    hasAny=true;
-
-    const ceilingSqft=Object.entries(a.counts['cd48']).reduce((s,[l,q])=>s+sheetSqft('cd48',Number(l))*q,0);
-    const doubleSqft=Object.entries(a.counts['dl48']).reduce((s,[l,q])=>s+sheetSqft('dl48',Number(l))*q,0);
-    const texLabelMap = { smooth: 'Smooth (L5)', spray: 'Texture Spray', knockdown: 'Knockdown Spray', none: '' };
-    const texDisplay = texLabelMap[a.texture] ?? a.texture ?? '';
-    const metaParts=[a.height, texDisplay].filter(Boolean).map(s=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${s}</span>`);
-    const sqftParts=[
-      ceilingSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${ceilingSqft} ft² ceiling</span>`:'',
-      doubleSqft>0?`<span style="font-weight:400;font-size:12px;color:var(--muted)">${doubleSqft} ft² double</span>`:'',
-    ].filter(Boolean);
-    html+=`<div class="modal-area-head" style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
-      <span>Area - ${a.name}</span>
-      ${metaParts.map(p=>`<span style="font-size:14px;font-weight:600;color:var(--purple)">${p.replace(/<[^>]*>/g,'').trim()}</span>`).join('<span style="color:var(--purple);opacity:0.4">·</span>')}
-      ${sqftParts.map(p=>`<span style="font-weight:400;font-size:12px;color:var(--muted)">${p.replace(/<[^>]*>/g,'').trim()}</span>`).join('')}
+  // ── Per-area loop ──
+  const sectionHead = (label, color) =>
+    `<div style="margin:14px 0 6px;padding:8px 10px;background:${color}18;border-left:3px solid ${color};border-radius:4px">
+      <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${color}">${label}</span>
     </div>`;
+  const colHead = (cols) =>
+    `<div style="display:flex;justify-content:flex-end;gap:6px;padding:0 4px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">
+      ${cols.map(c=>`<span style="min-width:${c.w}px;text-align:right">${c.label}</span>`).join('')}
+    </div>`;
+  const matRow = (name, c1, c2, c3, c4, cols) =>
+    `<div class="modal-row"><span>${name}</span>
+      <span style="display:flex;gap:6px">
+        ${cols.map((c,i)=>`<span style="min-width:${c.w}px;text-align:right;font-family:'DM Mono',monospace;font-size:${i===cols.length-1?'13':'12'}px;font-weight:${i===cols.length-1?'500':'400'};color:${i===cols.length-1?'#15803d':'var(--muted)'}">${[c1,c2,c3,c4][i]||''}</span>`).join('')}
+      </span></div>`;
+  const labColSpec = [{label:'Sq Ft / Qty',w:64},{label:'Rate',w:70},{label:'Lab Cost',w:70}];
+  const labColHead = colHead(labColSpec);
+  const labRow = (name, qty, rate, cost) =>
+    `<div class="modal-row"><span>${name}</span>
+      <span style="display:flex;gap:6px">
+        <span style="min-width:64px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty}</span>
+        <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate}</span>
+        <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${cost>0?fmtC(cost):''}</span>
+      </span></div>`;
+  const subtotalRow = (name, sheets, sqft, cost, color) =>
+    `<div class="modal-row" style="font-weight:600;border-top:1.5px solid var(--border-md)">
+      <span>${name}</span>
+      <span style="display:flex;gap:6px">
+        <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:600">${sheets||''}</span>
+        <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${sqft||''}</span>
+        <span style="min-width:56px;text-align:right"></span>
+        <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${color||'#15803d'}">${cost>0?fmtC(cost):''}</span>
+      </span></div>`;
 
-    // ── Rate calculations (used by both material and labor sections) ──
-    const dwCeilH = a.height || "9'";
-    const isHR = (J()?.details?.rate || 'lowrise') === 'highrise';
-    const dwBoardRate = (() => {
-      const map = isHR ? BOARD_HR_RATES : BOARD_LR_RATES;
-      const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":"h12"};
-      const key = hMap[dwCeilH] || 'h9';
-      const bracket = map[key] || map['h9'] || map['h8'];
-      const priceKey = (isHR ? 'board_hr_' : 'board_lr_') + key;
-      return gPrices[priceKey] > 0 ? gPrices[priceKey] : (bracket ? bracket.rates[gRateIdx] : 0.39);
-    })();
-    const dwFivetRate = (() => {
-      const prem = gPrices['fivet_premium'] > 0 ? gPrices['fivet_premium'] : FIVET_PREMIUM[gRateIdx];
-      return dwBoardRate + prem;
-    })();
-    const DW_FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58','wr58']);
-    const DW_DUROCK_KEYS = new Set(['durock48']);
-    const dwDurockRate = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
-    const fmtC = v => '$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-    const insIsHR = isHR;
-    const insLabRate = insIsHR
+  j.areas.forEach(a => {
+    const h = a.height || "9'";
+    const boardRate = getBoardRate(h);
+    const fivetPrem = gPrices['fivet_premium'] > 0 ? gPrices['fivet_premium'] : FIVET_PREMIUM[gRateIdx];
+    const fivetRate = boardRate + fivetPrem;
+    const durockRate = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
+    const tapingRate = hasTaping ? getTapingRate(h) : 0;
+    const insLabRate = isHR
       ? (gPrices['ins_hr_int'] > 0 ? gPrices['ins_hr_int'] : INS_HR_INT_RATES[gRateIdx])
-      : (gPrices['ins_lr'] > 0 ? gPrices['ins_lr'] : INS_LR_RATES[gRateIdx]);
+      : (gPrices['ins_lr']     > 0 ? gPrices['ins_lr']     : INS_LR_RATES[gRateIdx]);
     const insEStarRate = gPrices['ins_energy_star'] > 0 ? gPrices['ins_energy_star'] : INS_ENERGY_STAR_RATES[gRateIdx];
-    const insEStarOn = j.details?.energyStar;
-    const insRateMap = {'R8':'ins_r8','R12':'ins_r12','R14':'ins_r14','R20':'ins_r20','R22':'ins_r22','R24':'ins_r24','R28':'ins_r28','R31':'ins_r31','R40':'ins_r40','1½" QZ':'ins_r12','3" QZ':'ins_r12','R22.5':'ins_r22'};
+    const insEStarOn = d.energyStar;
+    const cbInstallRate = gPrices['cb_install'] > 0 ? gPrices['cb_install'] : CORNER_BEAD_INSTALL_RATES[gRateIdx];
+    const cbFillRate = isHR
+      ? (gPrices['cb_hr_fill'] > 0 ? gPrices['cb_hr_fill'] : 0.42)
+      : (gPrices['cb_lr_fill'] > 0 ? gPrices['cb_lr_fill'] : 0.90);
 
-    const PLAIN_KEYS = new Set(['pl48','pl54','cd48','wr48','flex48','dens48']);
-    const FIVET_KEYS = DW_FIVET_KEYS;
-    const DUROCK_KEYS = DW_DUROCK_KEYS;
-
-    const matKeyMap2 = {
-      pl48:'mat_dw_half_plain', pl54:'mat_dw_half_plain', cd48:'mat_dw_half_cd',
-      dens48:'mat_dw_half_dens', dens58:'mat_dw_fivet_dens',
-      wr48:'mat_dw_half_wr', wr58:'mat_dw_58_wr',
-      fg48:'mat_dw_fivet_tx', dl48:'mat_dw_fivet_tx', fg54:'mat_dw_fivet_tx',
-      durock48:'mat_dw_durock', flex48:'mat_dw_quarter_flex',
-      tc48:'mat_dw_half_tc', hdl48:'mat_dw_half_plain'
-    };
-
-    function steelItemMatKey(stKey, item) {
-      const STEEL_MAT_KEYS = {
-        'steel_158': { stud:'mat_st_158_stud', track:'mat_st_158_trk' },
-        'steel_212': { stud:'mat_st_212_stud', track:'mat_st_212_trk' },
-        'steel_358': { stud:'mat_st_358_stud', track:'mat_st_358_trk' },
-        'steel_6':   { stud:'mat_st_6_stud',   track:'mat_st_6_trk'   },
-        'steel_8':   { stud:'mat_st_8_stud',   track:'mat_st_8_trk'   },
-        'steel_ch':  { channel:'mat_st_res_ch', hat:'mat_st_hat_ch', furring:'mat_st_fur_ch', coldroll:'mat_st_cr_ch', angle1x2:'mat_st_ang_1x2', angle2x2:'mat_st_ang_2x2' },
-      };
-      const lower = item.toLowerCase();
-      const matGroup = STEEL_MAT_KEYS[stKey];
-      if (!matGroup) return null;
-      if (lower.includes('track')) return matGroup.track;
-      if (lower.includes('resilient')) return 'mat_st_res_ch';
-      if (lower.includes('hat')) return 'mat_st_hat_ch';
-      if (lower.includes('furring')) return 'mat_st_fur_ch';
-      if (lower.includes('cold roll')) return 'mat_st_cr_ch';
-      if (lower.includes('1\" x 2\"')) return 'mat_st_ang_1x2';
-      if (lower.includes('2\" x 2\"')) return 'mat_st_ang_2x2';
-      return matGroup.stud || null;
-    }
-    function steelItemLength(item) { const m = item.match(/(\d+)'/); return m ? parseInt(m[1]) : 1; }
-    function cbLength(item) { const m = item.match(/\((\d+)'/); return m ? parseInt(m[1]) : 8; }
-
-    const cbMatKeys = {
-      "Vinyl 90° (8')":'mat_cb_vinyl_90',"Vinyl 90° (10')":'mat_cb_vinyl_90',
-      "L-Bead Vinyl (8')":'mat_cb_vinyl_l',"L-Bead Vinyl (10')":'mat_cb_vinyl_l',
-      "U-Bead Vinyl (8')":'mat_cb_vinyl_u',"U-Bead Vinyl (10')":'mat_cb_vinyl_u',
-      "J-Bead Vinyl (8')":'mat_cb_vinyl_j',"J-Bead Vinyl (10')":'mat_cb_vinyl_j',
-      "Metal 90° (8')":'mat_cb_metal_90',"Metal 90° (10')":'mat_cb_metal_90',
-      "L-Bead Metal (8')":'mat_cb_metal_l',"L-Bead Metal (10')":'mat_cb_metal_l',
-      "U-Bead Metal (8')":'mat_cb_metal_u',"U-Bead Metal (10')":'mat_cb_metal_u',
-      "J-Bead Metal (8')":'mat_cb_metal_j',"J-Bead Metal (10')":'mat_cb_metal_j',
-      "Bullnose Metal (8')":'mat_cb_bullnose',"Bullnose Metal (10')":'mat_cb_bullnose',
-      "Archway Bead (8')":'mat_cb_archway',"Archway Bead (10')":'mat_cb_archway',
-    };
-    const mudMatKeys = {
-      'All Purpose (17L)':'mat_mud_ap17','Machine (17L)':'mat_mud_mach17','Lite Finish (17L)':'mat_mud_lite17',
-      'Sheetrock 20 (bag)':'mat_mud_sr20','Sheetrock 45 (bag)':'mat_mud_sr45',
-      'Sheetrock 90 (bag)':'mat_mud_sr90','Durabond 90 (Bag)':'mat_mud_db90',
-    };
-    const mudExtrasMatKeys = {'Paper Tape (roll)':'mat_tape_paper','Fibre Tape (roll)':'mat_tape_fibre','Mesh Tape (roll)':'mat_tape_mesh','Flexbead (roll)':'mat_tape_flex'};
-    const insExtrasMatKeys = {
-      "8' Poly":'mat_poly_8',"9' Poly":'mat_poly_9',"10' Poly":'mat_poly_10',"12' Poly":'mat_poly_12',
-      'Tuck Tape':'mat_tuck_tape','Can Foam':'mat_can_foam','Staples':'mat_staples',
-      'Styro-Vents':'mat_styro_vents','Acoustic Caulking':'mat_acous_caulk',
-    };
-    const extraMatKeys = {'Green Glue':'mat_dw_green_glue','Drywall Screws (Box)':'mat_dw_screws'};
-    const ADDON_RATE_MAP = {
-      "2' × 4' Skylight": 'skylight_2x4', "4' × 4' Skylight": 'skylight_4x4',
-      'Peak': 'tray_waffle_ceil', 'Niche': 'tray_waffle_ceil',
-      "OTA <64'": 'ota_under64', "OTA >64'": 'ota_over64',
-      'Door Frame Single': 'entry_door_single', 'Door Frame Double': 'entry_door_double',
-      'Open Round Stairs': 'open_round_stairs', 'Pot Lights': 'pot_lights',
-    };
-
-    // ── Collect all data needed for both sections ──
-    // Drywall material data
-    let dwMatRows = []; // {name, sheets, sqft, unitPrice, matCost, key}
-    let dwPlainSqft = 0, dwFivetSqft = 0, dwDurockSqft = 0;
+    // ── Collect drywall data ──
+    let dwRows = [], plainSqft = 0, fivetSqft = 0, durockSqft = 0;
     DRYWALL_TYPES.filter(t => !t.isItems).forEach(t => {
       t.lengths.forEach(l => {
         const qty = a.counts[t.key]?.[l] || 0;
         if (!qty) return;
         const sf = sheetSqft(t.key, l) * qty;
-        const matRate = gMatPrices[matKeyMap2[t.key]] || 0;
-        const mc = sf * matRate;
+        const up = gMatPrices[matKeyMap[t.key]] || 0;
         const lbl = t.labels ? t.labels[t.lengths.indexOf(l)] : l + "' sheets";
-        const widthPrefix = t.labels ? '' : (t.key.includes('54') ? '54" × ' : '48" × ');
-        const cleanName = t.fullName
-          .replace(/\s*\(48"\s*&\s*54"\)/g, '')
-          .replace(/^\d+"\s*×\s*/,'');
-        dwMatRows.push({ name: `${widthPrefix}${cleanName} — ${lbl}`, sheets: qty, sqft: sf, unitPrice: matRate, matCost: mc, key: t.key });
-        if (DUROCK_KEYS.has(t.key)) dwDurockSqft += sf;
-        else if (FIVET_KEYS.has(t.key)) dwFivetSqft += sf;
-        else dwPlainSqft += sf;
+        const prefix = t.labels ? '' : (t.key.includes('54') ? '54" \u00d7 ' : '48" \u00d7 ');
+        const cleanName = t.fullName.replace(/\s*\(48"\s*&\s*54"\)/g,'').replace(/^\d+"\s*\u00d7\s*/,'');
+        dwRows.push({ name:`${prefix}${cleanName} \u2014 ${lbl}`, sheets:qty, sqft:sf, unitPrice:up, matCost:sf*up, key:t.key });
+        if (DW_DUROCK_KEYS.has(t.key)) durockSqft += sf;
+        else if (DW_FIVET_KEYS.has(t.key)) fivetSqft += sf;
+        else plainSqft += sf;
       });
     });
+    const allDwSqft = plainSqft + fivetSqft + durockSqft;
+    if (allDwSqft > 0) hasAny = true;
 
-    // Insulation material data
-    let insMatRows = []; // {name, bags, sqft, unitPrice, matCost, labRate, labCost, isEligible}
-    let areaEnergySqft = 0;
+    // ── Collect insulation data ──
+    let insRows = [], insLabTotal = 0, insMatTotal = 0, insEnergySqft = 0;
     INSULATION_TYPES.forEach(t => {
+      const blownMatKeys = {'R20':'mat_blown_r20','R32':'mat_blown_r32','R40':'mat_blown_r40','R60':'mat_blown_r60'};
       if (t.kind === 'blown') {
-        const blownMatKeys = {'R20':'mat_blown_r20','R32':'mat_blown_r32','R40':'mat_blown_r40','R60':'mat_blown_r60'};
         BLOWN_RVALS.forEach(r => {
           const entries = a.counts['insulation'][t.key][r] || [];
           if (!entries.length) return;
-          const sqft = Math.round(entries.reduce((s,m) => s+m.l*m.w, 0));
-          const mc = sqft * (gMatPrices[blownMatKeys[r]] || 0);
-          insMatRows.push({ name: `${t.fullName} ${r}`, bags: null, sqft, unitPrice: gMatPrices[blownMatKeys[r]]||0, matCost: mc, labRate: insLabRate, labCost: sqft * insLabRate });
+          const sqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+          const lc = sqft * insLabRate;
+          const mc = sqft * (gMatPrices[blownMatKeys[r]]||0);
+          insRows.push({name:`${t.fullName} ${r}`,bags:null,sqft,unitPrice:gMatPrices[blownMatKeys[r]]||0,matCost:mc,labCost:lc});
+          insLabTotal += lc; insMatTotal += mc;
         });
       } else if (t.kind === 'foam') {
         const foamMatKeys = {'R12':['mat_foam_r12_half','mat_foam_r12_two'],'R20':['mat_foam_r20_half','mat_foam_r20_two'],'R22':['mat_foam_r22_half','mat_foam_r22_two'],'R31':['mat_foam_r31_half','mat_foam_r31_two']};
         FOAM_RVALS.forEach(r => {
-          const f = a.counts['insulation'][t.key][r] || {};
-          const keys = foamMatKeys[r] || ['',''];
-          const halfSqft = Math.round((f.half||[]).reduce((s,m)=>s+m.l*m.w,0));
-          const twoSqft  = Math.round((f.two||[]).reduce((s,m)=>s+m.l*m.w,0));
-          if (halfSqft > 0) insMatRows.push({ name:`${t.fullName} ${r} ½lb`, bags:null, sqft:halfSqft, unitPrice:gMatPrices[keys[0]]||0, matCost:halfSqft*(gMatPrices[keys[0]]||0), labRate:insLabRate, labCost:halfSqft*insLabRate });
-          if (twoSqft  > 0) insMatRows.push({ name:`${t.fullName} ${r} 2lb`,  bags:null, sqft:twoSqft,  unitPrice:gMatPrices[keys[1]]||0, matCost:twoSqft*(gMatPrices[keys[1]]||0),  labRate:insLabRate, labCost:twoSqft*insLabRate });
+          const f = a.counts['insulation'][t.key][r]||{};
+          const keys = foamMatKeys[r]||['',''];
+          const hs = Math.round((f.half||[]).reduce((s,m)=>s+m.l*m.w,0));
+          const ts = Math.round((f.two||[]).reduce((s,m)=>s+m.l*m.w,0));
+          if (hs>0){const lc=hs*insLabRate,mc=hs*(gMatPrices[keys[0]]||0);insRows.push({name:`${t.fullName} ${r} \u00bd lb`,bags:null,sqft:hs,unitPrice:gMatPrices[keys[0]]||0,matCost:mc,labCost:lc});insLabTotal+=lc;insMatTotal+=mc;}
+          if (ts>0){const lc=ts*insLabRate,mc=ts*(gMatPrices[keys[1]]||0);insRows.push({name:`${t.fullName} ${r} 2lb`,bags:null,sqft:ts,unitPrice:gMatPrices[keys[1]]||0,matCost:mc,labCost:lc});insLabTotal+=lc;insMatTotal+=mc;}
         });
       } else if (t.kind === 'blanket') {
-        const entries = a.counts['insulation'][t.key] || [];
+        const entries = a.counts['insulation'][t.key]||[];
         if (!entries.length) return;
-        const sqft = Math.round(entries.reduce((s,m) => s+m.l*m.w, 0));
-        insMatRows.push({ name: t.fullName, bags: null, sqft, unitPrice: gMatPrices['mat_blanket']||0, matCost: sqft*(gMatPrices['mat_blanket']||0), labRate: insLabRate, labCost: sqft*insLabRate });
+        const sqft = Math.round(entries.reduce((s,m)=>s+m.l*m.w,0));
+        const lc=sqft*insLabRate,mc=sqft*(gMatPrices['mat_blanket']||0);
+        insRows.push({name:t.fullName,bags:null,sqft,unitPrice:gMatPrices['mat_blanket']||0,matCost:mc,labCost:lc});
+        insLabTotal+=lc;insMatTotal+=mc;
       } else {
-        const rvals = t.rvals || INSULATION_RVALS;
+        const rvals = t.rvals||INSULATION_RVALS;
+        const insRateMap = {'R8':'ins_r8','R12':'ins_r12','R14':'ins_r14','R20':'ins_r20','R22':'ins_r22','R24':'ins_r24','R28':'ins_r28','R31':'ins_r31','R40':'ins_r40'};
         rvals.forEach(rv => {
           INSULATION_SIZES.forEach((sz, si) => {
-            if (rv.sqft[si] === null) return;
+            if (rv.sqft[si]===null) return;
             const cell = a.counts['insulation'][t.key]?.[rv.r]?.[si];
             if (!cell) return;
-            const totalSqft = (cell.bags||0)*rv.sqft[si] + (cell.extraSqft||0);
-            const bags = rv.sqft[si] > 0 ? totalSqft/rv.sqft[si] : 0;
-            const ceilBags = Math.ceil(bags);
-            const pcs = rv.pcs[si] > 0 ? Math.round(bags*rv.pcs[si]) : 0;
-            if (bags <= 0) return;
-            const roxulPrem = gPrices['ins_rockwool_prem'] > 0 ? gPrices['ins_rockwool_prem'] : INS_ROCKWOOL_PREMIUM_RATES[gRateIdx];
-            const r24Prem2 = rv.r === 'R24' ? (gPrices['ins_r24_prem'] > 0 ? gPrices['ins_r24_prem'] : INS_R24_PREMIUM_RATES[gRateIdx]) : 0;
-            const effLabRate = t.key === 'roxul' ? insLabRate + roxulPrem + r24Prem2 : insLabRate + r24Prem2;
-            const matKey = insRateMap[rv.r] || 'ins_r12';
-            const mc = totalSqft * (MAT_RATES[matKey] || 0);
-            const isEligible = t.key === 'pink' || t.key === 'roxul';
-            if (isEligible) areaEnergySqft += totalSqft;
-            insMatRows.push({ name:`${t.fullName} ${rv.r} ${sz}`, bags:ceilBags, pcs, sqft:Math.round(totalSqft), unitPrice:MAT_RATES[matKey]||0, matCost:mc, labRate:effLabRate, labCost:totalSqft*effLabRate });
+            const tsqft = (cell.bags||0)*rv.sqft[si]+(cell.extraSqft||0);
+            const bags = rv.sqft[si]>0 ? tsqft/rv.sqft[si] : 0;
+            if (bags<=0) return;
+            const roxulPrem = gPrices['ins_rockwool_prem']>0?gPrices['ins_rockwool_prem']:INS_ROCKWOOL_PREMIUM_RATES[gRateIdx];
+            const r24Prem = rv.r==='R24'?(gPrices['ins_r24_prem']>0?gPrices['ins_r24_prem']:INS_R24_PREMIUM_RATES[gRateIdx]):0;
+            const effRate = t.key==='roxul'?insLabRate+roxulPrem+r24Prem:insLabRate+r24Prem;
+            const sqft = Math.round(tsqft);
+            const mk = insRateMap[rv.r]||'ins_r12';
+            const lc=tsqft*effRate, mc=tsqft*(gMatPrices[mk]||0);
+            if (t.key==='pink'||t.key==='roxul') insEnergySqft+=tsqft;
+            insRows.push({name:`${t.fullName} ${rv.r} ${sz}`,bags:Math.ceil(bags),sqft,unitPrice:gMatPrices[mk]||0,matCost:mc,labCost:lc});
+            insLabTotal+=lc; insMatTotal+=mc;
           });
         });
       }
     });
+    if (insRows.length) hasAny = true;
 
-    // ── Pre-compute values needed by Labor section ──
-    const dwHouseType2 = j.details?.houseType || 'house';
-    const totalDwSqft2 = dwPlainSqft + dwFivetSqft;
-    let townPremiumCost = 0;
-    let taperTownPremium = 0;
+    // ── Taping sqft ──
+    let tapingSqft = 0, cbFillLf = 0;
+    if (hasTaping) {
+      DRYWALL_TYPES.filter(t=>!t.isItems&&!t.hidden).forEach(t => {
+        if (TAPING_EXCLUDE.has(t.key)) return;
+        const sf = t.lengths.reduce((s,l)=>s+sheetSqft(t.key,l)*(a.counts[t.key][l]||0),0);
+        if (DOUBLE_LAYER.has(t.key)) tapingSqft -= sf; else tapingSqft += sf;
+        if (t.combined && t.combinedKey) {
+          const sf54 = t.combinedLengths.reduce((s,l)=>s+sheetSqft(t.combinedKey,l)*(a.counts[t.combinedKey]?.[l]||0),0);
+          tapingSqft += sf54;
+        }
+      });
+      tapingSqft = Math.max(0, tapingSqft);
+      CORNER_BEAD_ITEMS.forEach(item => {
+        const qty = a.counts['cornerBead']?.[item]||0;
+        if (!qty) return;
+        const lm = item.match(/\((\d+)'/);
+        cbFillLf += qty * (lm ? parseInt(lm[1]) : 8);
+      });
+    }
+    const tapingGross = tapingSqft * tapingRate;
+    const cbFillGross = cbFillLf * cbFillRate;
+
+    // ── Ceiling premium ──
+    const ceilEntries = a.counts['ceilings']?.entries || [];
+    const ceilSqft = ceilEntries.reduce((s,e)=>s+(e.l*e.w),0);
+    let ceilPremRate = 0;
+    if (hasTaping && ceilSqft > 0 && a.texture && a.texture !== 'none') {
+      if (a.texture==='smooth')    ceilPremRate = gPrices[isHR?'ceil_smooth_hr':'ceil_smooth_lr']||(isHR?375:450);
+      if (a.texture==='spray')     ceilPremRate = gPrices[isHR?'ceil_spray_hr':'ceil_spray_lr']||([321.79,328.23,334.79][gRateIdx]);
+      if (a.texture==='knockdown') ceilPremRate = gPrices[isHR?'ceil_knockdown_hr':'ceil_knockdown_lr']||([552.40,563.45,574.72][gRateIdx]);
+    }
+    const ceilPremAmt = (ceilSqft / 1000) * ceilPremRate;
+
+    // Flat ceiling items
+    const cathAmt = hasTaping && (a.counts['ceilings']?.cathedral||0)>0
+      ? (gPrices[isHR?'ceil_cathedral_hr':'ceil_cathedral_lr']||[216.90,221.24,225.67][gRateIdx]) : 0;
+    const waffleAmt = hasTaping && (a.counts['ceilings']?.waffle||0)>0
+      ? (gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx]) : 0;
+
+    // ── CB install (boarder) ──
+    let cbInstallLf = 0;
+    CORNER_BEAD_ITEMS.forEach(item => {
+      const qty = a.counts['cornerBead']?.[item]||0;
+      if (!qty) return;
+      const lm = item.match(/\((\d+)'/);
+      cbInstallLf += qty * (lm ? parseInt(lm[1]) : 8);
+    });
+    const cbInstallGross = cbInstallLf * cbInstallRate;
+
+    // ── Steel gross ──
+    let steelLabGross = 0;
+    const steelLabRate = gPrices['steel_labor'] || 0;
+    STEEL_SUBTABS.forEach(st => {
+      st.items.forEach(item => {
+        const qty = a.counts[st.key]?.[item]||0;
+        if (!qty) return;
+        const lm = item.match(/(\d+)'/); const len = lm?parseInt(lm[1]):1;
+        steelLabGross += qty * len * steelLabRate;
+      });
+    });
+
+    // ── Town premium ──
+    const houseType = d.houseType || 'house';
+    const allDwBoardable = plainSqft + fivetSqft;
+    let townPremAmt = 0, taperTownAmt = 0;
     if (!isHR) {
-      if (dwHouseType2 === 'townhouse') {
-        const tpr = gPrices['townhouse_premium'] || EXTRAS_RATES.townhouse_premium[gRateIdx];
-        townPremiumCost = totalDwSqft2 * tpr / 1000;
-        taperTownPremium = totalDwSqft2 * (gPrices['taper_stack'] > 0 ? 0 : TAPER_TOWN_RATES[gRateIdx]) / 1000;
-      } else if (dwHouseType2 === 'stacked') {
-        const spr = gPrices['stack_townhouse'] || EXTRAS_RATES.stack_townhouse[gRateIdx];
-        townPremiumCost = totalDwSqft2 * spr / 1000;
-        taperTownPremium = totalDwSqft2 * (gPrices['taper_stack'] > 0 ? gPrices['taper_stack'] : TAPER_STACK_RATES[gRateIdx]) / 1000;
+      if (houseType==='townhouse') {
+        townPremAmt = allDwBoardable * (gPrices['townhouse_premium']||EXTRAS_RATES.townhouse_premium[gRateIdx]) / 1000;
+        taperTownAmt = (plainSqft+fivetSqft+durockSqft) * (gPrices['taper_town']||EXTRAS_RATES.taper_town?.[gRateIdx]||0) / 1000;
+      } else if (houseType==='stacked') {
+        townPremAmt = allDwBoardable * (gPrices['stack_townhouse']||EXTRAS_RATES.stack_townhouse[gRateIdx]) / 1000;
+        taperTownAmt = (plainSqft+fivetSqft+durockSqft) * (gPrices['taper_stack']||EXTRAS_RATES.taper_stack?.[gRateIdx]||0) / 1000;
       }
     }
-    const cbInstallRate2 = gPrices['cb_install'] > 0 ? gPrices['cb_install'] : CORNER_BEAD_INSTALL_RATES[gRateIdx];
-    const cbInstallGross2 = CORNER_BEAD_ITEMS.reduce((s, item) => {
-      const qty = a.counts['cornerBead']?.[item] || 0;
-      if (!qty) return s;
-      const lm = item.match(/\((\d+)'/);
-      const lf = qty * (lm ? parseInt(lm[1]) : 8);
-      return s + lf * cbInstallRate2;
-    }, 0);
 
-    // ─────────────────────────────────────────────
-    // MATERIAL SECTION
-    // ─────────────────────────────────────────────
-    const matCol = '#15803d';
-    const sectionHead = (label, color) =>
-      `<div style="margin:14px 0 6px;padding:8px 10px;background:${color}18;border-left:3px solid ${color};border-radius:4px">
-        <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${color}">${label}</span>
-      </div>`;
-    const colHead = (cols) =>
-      `<div style="display:flex;justify-content:flex-end;gap:6px;padding:0 4px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">
-        ${cols.map(c => `<span style="min-width:${c.w}px;text-align:right">${c.label}</span>`).join('')}
-      </div>`;
+    // ── Add-ons gross ──
+    const allJobExtras = JOB_EXTRAS_ITEMS.filter(item=>(a.counts['jobExtras']?.[item]||0)>0);
+    const addOnGross = allJobExtras.reduce((s,item)=>{
+      const qty=a.counts['jobExtras'][item];
+      const rk=ADDON_RATE_MAP[item];
+      return s+qty*(rk?(gPrices[rk]||EXTRAS_RATES[rk]?.[gRateIdx]||0):0);
+    },0);
 
-    if (dwMatRows.length) {
-      html += sectionHead('Materials', matCol);
+    // ── Labour extras ──
+    const labExtra = a.counts['labourExtra']||{};
+    const labExtraTotal = Object.values(labExtra).reduce((s,v)=>s+(v||0),0);
+
+    // ── Material deductions ──
+    const screwBoxes = a.counts['extras']?.['Drywall Screws (Box)']||0;
+    const boarderMatDeduct = screwBoxes*(gMatPrices['mat_dw_screws']||0);
+    const polyBoxes = ['mat_poly_8','mat_poly_9','mat_poly_10','mat_poly_12']
+      .reduce((s,k)=>s+(gMatPrices[k]||0),0);
+    const ttRate=gMatPrices['mat_tuck_tape']||0, cfRate=gMatPrices['mat_can_foam']||0;
+    const insulatorMatDeduct = (a.counts['insExtras']?.["8' Poly"]||0)*(gMatPrices['mat_poly_8']||0)
+      +(a.counts['insExtras']?.["9' Poly"]||0)*(gMatPrices['mat_poly_9']||0)
+      +(a.counts['insExtras']?.["10' Poly"]||0)*(gMatPrices['mat_poly_10']||0)
+      +(a.counts['insExtras']?.["12' Poly"]||0)*(gMatPrices['mat_poly_12']||0)
+      +(a.counts['insExtras']?.['Tuck Tape']||0)*ttRate
+      +(a.counts['insExtras']?.['Can Foam']||0)*cfRate;
+    const mudBoxes = MUD_ITEMS.reduce((s,item)=>s+(a.counts['mud']?.[item]||0),0);
+    const taperMatDeduct = mudBoxes*(gMatPrices['mat_mud_ap17']||0);
+
+    // ── Material cost total for area ──
+    const areaDwMatCost = dwRows.reduce((s,r)=>s+r.matCost,0);
+    const areaInsMat = insRows.reduce((s,r)=>s+r.matCost,0);
+    let areaMudMat=0; MUD_ITEMS.forEach(item=>{const q=a.counts['mud']?.[item]||0;areaMudMat+=q*(gMatPrices[mudMatKeys[item]]||0);});
+    let areaCbMat=0; CORNER_BEAD_ITEMS.forEach(item=>{const q=a.counts['cornerBead']?.[item]||0;const lm=item.match(/\((\d+)'/);areaCbMat+=q*(lm?parseInt(lm[1]):8)*(gMatPrices[cbMatKeys[item]]||0);});
+    let areaSteelMat=0;
+    STEEL_SUBTABS.forEach(st=>st.items.forEach(item=>{
+      const q=a.counts[st.key]?.[item]||0; if(!q) return;
+      const lm=item.match(/(\d+)'/); const len=lm?parseInt(lm[1]):1;
+      const mk = (() => { const lower=item.toLowerCase();
+        if(lower.includes('track')) return st.key==='steel_158'?'mat_st_158_trk':st.key==='steel_212'?'mat_st_212_trk':st.key==='steel_358'?'mat_st_358_trk':st.key==='steel_6'?'mat_st_6_trk':'mat_st_8_trk';
+        if(lower.includes('resilient')) return 'mat_st_res_ch'; if(lower.includes('hat')) return 'mat_st_hat_ch';
+        if(lower.includes('furring')) return 'mat_st_fur_ch'; if(lower.includes('cold roll')) return 'mat_st_cr_ch';
+        if(lower.includes('1" x 2"')) return 'mat_st_ang_1x2'; if(lower.includes('2" x 2"')) return 'mat_st_ang_2x2';
+        return st.key==='steel_158'?'mat_st_158_stud':st.key==='steel_212'?'mat_st_212_stud':st.key==='steel_358'?'mat_st_358_stud':st.key==='steel_6'?'mat_st_6_stud':'mat_st_8_stud';
+      })();
+      areaSteelMat+=q*len*(gMatPrices[mk]||0);
+    }));
+    const areaMatTotal = areaDwMatCost+areaInsMat+areaMudMat+areaCbMat+areaSteelMat;
+
+    // ── Labor cost total for area ──
+    const boardingBase = (plainSqft+fivetSqft)*boardRate;
+    const fivetPremTotal = fivetSqft*fivetPrem;
+    const durockLabor = durockSqft*durockRate;
+    const eStarAmt = insEStarOn ? insEnergySqft*(gPrices['ins_energy_star']>0?gPrices['ins_energy_star']:INS_ENERGY_STAR_RATES[gRateIdx]) : 0;
+    const areaLabTotal = boardingBase+fivetPremTotal+durockLabor+insLabTotal+eStarAmt
+      +steelLabGross+cbInstallGross+addOnGross+townPremAmt+labExtraTotal
+      +(hasTaping?tapingGross+cbFillGross+ceilPremAmt+cathAmt+waffleAmt+taperTownAmt:0);
+
+    totalLabor += areaLabTotal;
+    totalMaterial += areaMatTotal;
+    totalBoarderMatDeduct += boarderMatDeduct;
+    totalInsulatorMatDeduct += insulatorMatDeduct;
+    totalTaperMatDeduct += taperMatDeduct;
+    totalCeilPremium += ceilPremAmt;
+    totalTownPremium += townPremAmt;
+    totalEnergyStar += eStarAmt;
+
+    // ── Union dues per area ──
+    const local675Base = boardingBase+fivetPremTotal+durockLabor+insLabTotal+eStarAmt
+      +steelLabGross+cbInstallGross+addOnGross+townPremAmt+labExtraTotal;
+    const tapersBase = hasTaping ? tapingGross+cbFillGross+ceilPremAmt+cathAmt+waffleAmt+taperTownAmt : 0;
+    const local675Pct = gPrices['local675_union_pct']>0 ? gPrices['local675_union_pct']/100 : 0.265;
+    const tapersPct   = gPrices['tapers_union_pct']>0  ? gPrices['tapers_union_pct']/100  : 0.23;
+    const l675dues = local675Base * local675Pct;
+    const tapDues  = tapersBase * tapersPct;
+    totalLocal675 += l675dues;
+    totalTapers   += tapDues;
+
+    // ── Area header ──
+    const areaHeaderParts = [a.height, a.texture ? (texLabelMap[a.texture]||a.texture) : null].filter(Boolean);
+    html += `<div style="margin:18px 0 10px">
+      <span style="font-weight:700;color:${metaColor};font-size:15px">Area \u2014 ${a.name||'Unnamed'}</span>
+      ${areaHeaderParts.map(p=>`<span style="font-size:13px;font-weight:400;color:var(--muted);margin-left:8px">\u00b7 ${p}</span>`).join('')}
+      ${ceilSqft>0?`<span style="font-size:12px;color:var(--muted);margin-left:8px">${ceilSqft.toFixed(0)} ft\u00b2 ceiling</span>`:''}
+    </div>`;
+
+    // ─────── MATERIALS SECTION ───────
+    if (dwRows.length || insRows.length) {
+      html += sectionHead('Materials','#15803d');
+
       // Drywall
-      html += `<div class="modal-type-head" style="color:#1d4ed8">Drywall</div>`;
-      html += colHead([{label:'Sheets',w:44},{label:'Sq Ft',w:50},{label:'$/Sheet',w:56},{label:'Mat Cost',w:70}]);
-      dwMatRows.forEach(r => {
-        html += `<div class="modal-row"><span>${r.name}</span>
-          <span style="display:flex;gap:6px">
-            <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.sheets}</span>
-            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(r.sqft)}</span>
-            <span style="min-width:56px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
-            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${r.matCost>0?fmtC(r.matCost):''}</span>
-          </span></div>`;
-      });
-
-      // Drywall material subtotal
-      const dwMatTotal = dwMatRows.reduce((s, r) => s + r.matCost, 0);
-      const dwSheetTotal = dwMatRows.reduce((s, r) => s + r.sheets, 0);
-      const dwSqftTotal = dwMatRows.reduce((s, r) => s + r.sqft, 0);
-      if (dwMatRows.length > 0) {
-        html += `<div class="modal-row" style="font-weight:600;border-top:1.5px solid var(--border-md);margin-top:2px">
-          <span>Drywall Subtotal</span>
-          <span style="display:flex;gap:6px">
-            <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:600">${dwSheetTotal}</span>
-            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(dwSqftTotal)}</span>
-            <span style="min-width:56px;text-align:right"></span>
-            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${matCol}">${dwMatTotal>0?fmtC(dwMatTotal):''}</span>
-          </span>
-        </div>`;
+      if (dwRows.length) {
+        html += `<div class="modal-type-head" style="color:#1d4ed8">Drywall</div>`;
+        html += colHead([{label:'Sheets',w:44},{label:'Sq Ft',w:50},{label:'$/ft\u00b2',w:56},{label:'Mat Cost',w:70}]);
+        dwRows.forEach(r => {
+          html += `<div class="modal-row"><span>${r.name}</span>
+            <span style="display:flex;gap:6px">
+              <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.sheets}</span>
+              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(r.sqft)}</span>
+              <span style="min-width:56px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
+              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
+            </span></div>`;
+        });
+        const dwTotalSheets = dwRows.reduce((s,r)=>s+r.sheets,0);
+        const dwTotalSqft   = dwRows.reduce((s,r)=>s+r.sqft,0);
+        html += subtotalRow('Drywall Subtotal', dwTotalSheets, Math.round(dwTotalSqft)+' ft\u00b2', areaDwMatCost);
       }
 
       // Insulation
-      if (insMatRows.length) {
+      if (insRows.length) {
         html += `<div class="modal-type-head" style="color:#db2777;margin-top:8px">Insulation</div>`;
-        html += colHead([{label:'Bags',w:36},{label:'Sq Ft',w:50},{label:'$/ft²',w:50},{label:'Mat Cost',w:70}]);
-        insMatRows.forEach(r => {
+        html += colHead([{label:'Bags',w:36},{label:'Sq Ft',w:50},{label:'$/ft\u00b2',w:50},{label:'Mat Cost',w:70}]);
+        insRows.forEach(r => {
           html += `<div class="modal-row"><span>${r.name}</span>
             <span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.bags !== null ? r.bags : ''}</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.sqft} ft²</span>
+              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${r.bags!=null?r.bags:''}</span>
+              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.sqft} ft\u00b2</span>
               <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${r.unitPrice>0?fmtC(r.unitPrice):''}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${r.matCost>0?fmtC(r.matCost):''}</span>
+              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${r.matCost>0?fmtC(r.matCost):''}</span>
             </span></div>`;
         });
       }
 
       // Steel
-      let hasSteel = false;
-      let steelHtml = '';
-      STEEL_SUBTABS.forEach(st => {
-        const entries = st.items.filter(item => (a.counts[st.key]?.[item]||0) > 0);
-        if (!entries.length) return;
-        if (!hasSteel) { steelHtml += colHead([{label:'Qty',w:36},{label:'Lin Ft',w:50},{label:'$/lf',w:50},{label:'Mat Cost',w:70}]); hasSteel = true; }
-        entries.forEach(item => {
-          const qty = a.counts[st.key][item];
-          const mk = steelItemMatKey(st.key, item);
-          const len = steelItemLength(item);
-          const rate = mk ? (gMatPrices[mk]||0) : 0;
-          const mc = qty * len * rate;
-          html += `<div class="modal-row"><span>${item}</span>
-            <span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty*len} lf</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate>0?fmtC(rate):''}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
-        });
-      });
-      if (hasSteel) { html = html.replace('</div>' + steelHtml, steelHtml); } // no-op guard
-      // Actually render steel header if any
-      const steelEntries = STEEL_SUBTABS.flatMap(st => st.items.filter(item => (a.counts[st.key]?.[item]||0)>0));
-      if (steelEntries.length) {
+      const steelItems = STEEL_SUBTABS.flatMap(st=>st.items.filter(item=>(a.counts[st.key]?.[item]||0)>0).map(item=>({item,st})));
+      if (steelItems.length) {
         html += `<div class="modal-type-head" style="color:#475569;margin-top:8px">Steel</div>`;
         html += colHead([{label:'Qty',w:36},{label:'Lin Ft',w:50},{label:'$/lf',w:50},{label:'Mat Cost',w:70}]);
-        STEEL_SUBTABS.forEach(st => {
-          const entries = st.items.filter(item => (a.counts[st.key]?.[item]||0)>0);
-          entries.forEach(item => {
-            const qty = a.counts[st.key][item];
-            const mk = steelItemMatKey(st.key, item);
-            const len = steelItemLength(item);
-            const rate = mk ? (gMatPrices[mk]||0) : 0;
-            const mc = qty * len * rate;
-            html += `<div class="modal-row"><span>${item}</span>
-              <span style="display:flex;gap:6px">
-                <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty*len} lf</span>
-                <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate>0?fmtC(rate):''}</span>
-                <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-              </span></div>`;
-          });
+        steelItems.forEach(({item,st})=>{
+          const qty=a.counts[st.key][item];
+          const lm=item.match(/(\d+)'/); const len=lm?parseInt(lm[1]):1;
+          const lower=item.toLowerCase();
+          const mk=lower.includes('track')?`mat_st_${st.key.replace('steel_','')}_trk`:lower.includes('resilient')?'mat_st_res_ch':lower.includes('hat')?'mat_st_hat_ch':lower.includes('furring')?'mat_st_fur_ch':lower.includes('cold roll')?'mat_st_cr_ch':lower.includes('1" x 2"')?'mat_st_ang_1x2':lower.includes('2" x 2"')?'mat_st_ang_2x2':`mat_st_${st.key.replace('steel_','')}_stud`;
+          const up=gMatPrices[mk]||0; const mc=qty*len*up;
+          html+=`<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
+            <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
+            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty*len} lf</span>
+            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${up>0?fmtC(up):''}</span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${mc>0?fmtC(mc):''}</span>
+          </span></div>`;
         });
       }
 
       // Corner Bead
-      const cbEntries = CORNER_BEAD_ITEMS.filter(item => (a.counts['cornerBead']?.[item]||0)>0);
-      if (cbEntries.length) {
+      const cbItems = CORNER_BEAD_ITEMS.filter(item=>(a.counts['cornerBead']?.[item]||0)>0);
+      if (cbItems.length) {
         html += `<div class="modal-type-head" style="color:#92400e;margin-top:8px">Corner Bead</div>`;
         html += colHead([{label:'Qty',w:36},{label:'Lin Ft',w:50},{label:'$/lf',w:50},{label:'Mat Cost',w:70}]);
-        cbEntries.forEach(item => {
-          const qty = a.counts['cornerBead'][item];
-          const mk = cbMatKeys[item];
-          const rate = mk ? (gMatPrices[mk]||0) : 0;
-          const lf = qty * cbLength(item);
-          const mc = lf * rate;
-          html += `<div class="modal-row"><span>${item}</span>
-            <span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${lf} lf</span>
-              <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate>0?fmtC(rate):''}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
+        cbItems.forEach(item=>{
+          const qty=a.counts['cornerBead'][item];
+          const lm=item.match(/\((\d+)'/); const lf=qty*(lm?parseInt(lm[1]):8);
+          const up=gMatPrices[cbMatKeys[item]]||0;
+          html+=`<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
+            <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
+            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${lf} lf</span>
+            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${up>0?fmtC(up):''}</span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${up>0?fmtC(lf*up):''}</span>
+          </span></div>`;
         });
       }
 
       // Mud
-      const mudEntries = MUD_ITEMS.filter(item => (a.counts['mud']?.[item]||0)>0);
-      if (mudEntries.length) {
+      const mudItems = MUD_ITEMS.filter(item=>(a.counts['mud']?.[item]||0)>0);
+      if (mudItems.length) {
         html += `<div class="modal-type-head" style="color:#92400e;margin-top:8px">Mud</div>`;
         html += colHead([{label:'Qty',w:36},{label:'Unit Price',w:70},{label:'Mat Cost',w:70}]);
-        mudEntries.forEach(item => {
-          const qty = a.counts['mud'][item];
-          const mk = mudMatKeys[item];
-          const rate = mk ? (gMatPrices[mk]||0) : 0;
-          const mc = qty * rate;
-          html += `<div class="modal-row"><span>${item}</span>
-            <span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate>0?fmtC(rate):''}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
+        mudItems.forEach(item=>{
+          const qty=a.counts['mud'][item]; const up=gMatPrices[mudMatKeys[item]]||0;
+          html+=`<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
+            <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${up>0?fmtC(up):''}</span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${qty>0&&up>0?fmtC(qty*up):''}</span>
+          </span></div>`;
         });
       }
 
-      // Extras sub-section
-      const extrasEntries = EXTRAS_ITEMS.filter(item => a.counts['extras'][item]>0);
-      const insExtrasEntries = INSULATION_EXTRAS_ITEMS.filter(item => (a.counts['insExtras']?.[item]||0)>0);
-      const steelExtrasEntries = STEEL_EXTRAS_ITEMS.filter(item => (a.counts['steelExtras']?.[item]||0)>0);
-      const mudExtrasEntries = MUD_EXTRAS_ITEMS.filter(item => (a.counts['mudExtras']?.[item]||0)>0);
-      const hasExtras = extrasEntries.length || insExtrasEntries.length || steelExtrasEntries.length || mudExtrasEntries.length;
-      if (hasExtras) {
+      // Extras (material only — drywall, insulation, steel, taping)
+      const extrasEntries      = EXTRAS_ITEMS.filter(item=>a.counts['extras']?.[item]>0);
+      const insExtrasEntries   = INSULATION_EXTRAS_ITEMS.filter(item=>(a.counts['insExtras']?.[item]||0)>0);
+      const steelExtrasEntries = STEEL_EXTRAS_ITEMS.filter(item=>(a.counts['steelExtras']?.[item]||0)>0);
+      const mudExtrasEntries   = MUD_EXTRAS_ITEMS.filter(item=>(a.counts['mudExtras']?.[item]||0)>0);
+      if (extrasEntries.length||insExtrasEntries.length||steelExtrasEntries.length||mudExtrasEntries.length) {
         html += `<div class="modal-type-head" style="color:#0891b2;margin-top:8px">Extras</div>`;
-        const extrasColHead = colHead([{label:'Qty',w:36},{label:'Mat Cost',w:70}]);
-
-        if (extrasEntries.length) {
-          html += `<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Drywall Extras</div>`;
-          html += extrasColHead;
-          extrasEntries.forEach(item => {
-            const qty = a.counts['extras'][item];
-            const mk = extraMatKeys[item];
-            const rate = mk ? (gMatPrices[mk]||0) : 0;
-            const mc = qty * rate;
-            html += `<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
-          });
-        }
-        if (insExtrasEntries.length) {
-          html += `<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Insulation Extras</div>`;
-          html += extrasColHead;
-          insExtrasEntries.forEach(item => {
-            const qty = a.counts['insExtras'][item];
-            const mk = insExtrasMatKeys[item];
-            const rate = mk ? (gMatPrices[mk]||0) : 0;
-            const mc = qty * rate;
-            html += `<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
-          });
-        }
-        if (steelExtrasEntries.length) {
-          const steelExtrasMatKeys2 = {'Pan Head Screws (Box)':'mat_st_pan_screw','Self-Drilling Screws (Box)':'mat_st_sd_screw','Hex-Head Screws (Box)':'mat_st_hex_screw','Tie-Wire (Box)':'mat_st_tie_wire','Hanger-Wire':'mat_st_hang_wire','Eye-Lag (Concrete)':'mat_st_eyelag_c','Eye-Lag (Wood)':'mat_st_eyelag_w'};
-          html += `<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Steel Extras</div>`;
-          html += extrasColHead;
-          steelExtrasEntries.forEach(item => {
-            const qty = a.counts['steelExtras'][item];
-            const mk = steelExtrasMatKeys2[item];
-            const rate = mk ? (gMatPrices[mk]||0) : 0;
-            const mc = qty * rate;
-            html += `<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
-          });
-        }
-        if (mudExtrasEntries.length) {
-          html += `<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Taping Extras</div>`;
-          html += extrasColHead;
-          mudExtrasEntries.forEach(item => {
-            const qty = a.counts['mudExtras'][item];
-            const mk = mudExtrasMatKeys[item];
-            const rate = mk ? (gMatPrices[mk]||0) : 0;
-            const mc = qty * rate;
-            html += `<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
-              <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
-            </span></div>`;
-          });
-        }
+        const eColHead = colHead([{label:'Qty',w:36},{label:'Mat Cost',w:70}]);
+        const eRow = (item, qty, mk, priceMap) => {
+          const up = priceMap ? (priceMap[item]?(gMatPrices[priceMap[item]]||0):0) : 0;
+          return `<div class="modal-row"><span>${item}</span><span style="display:flex;gap:6px">
+            <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#15803d">${qty>0&&up>0?fmtC(qty*up):''}</span>
+          </span></div>`;
+        };
+        if (extrasEntries.length) { html+=`<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Drywall Extras</div>`+eColHead; extrasEntries.forEach(item=>html+=eRow(item,a.counts['extras'][item],null,extraMatKeys)); }
+        if (insExtrasEntries.length) { html+=`<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Insulation Extras</div>`+eColHead; insExtrasEntries.forEach(item=>html+=eRow(item,a.counts['insExtras'][item],null,insExtrasMatKeys)); }
+        if (steelExtrasEntries.length) { html+=`<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Steel Extras</div>`+eColHead; steelExtrasEntries.forEach(item=>html+=eRow(item,a.counts['steelExtras'][item],null,steelExtrasMatKeys)); }
+        if (mudExtrasEntries.length) { html+=`<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Taping Extras</div>`+eColHead; mudExtrasEntries.forEach(item=>html+=eRow(item,a.counts['mudExtras'][item],null,mudExtrasMatKeys)); }
       }
-      html += `<div style="height:6px"></div>`;
     }
 
-      // ── Taping (only when Taping task is selected) ──
-      const ceilH = a.height || "9'";
-      // Compute insGross from insMatRows (already computed in display loop)
-      const insGross = insMatRows.reduce((s, r) => s + r.labCost, 0);
-      laborCost += insGross;
-      // taperAddOnGross: taper add-ons from jobExtras (skylights, stairs etc)
-      const TAPER_ADDON_KEYS = new Set(["2' × 4' Skylight","4' × 4' Skylight","Open Round Stairs"]);
-      const taperAddOnGross = JOB_EXTRAS_ITEMS.reduce((s, item) => {
-        if (!TAPER_ADDON_KEYS.has(item)) return s;
-        const qty = a.counts['jobExtras']?.[item] || 0;
-        if (!qty) return s;
-        const ADDON_RATE_MAP3 = {"2' × 4' Skylight":'skylight_2x4',"4' × 4' Skylight":'skylight_4x4','Open Round Stairs':'open_round_stairs'};
-        const rk = ADDON_RATE_MAP3[item];
-        const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
-        return s + qty * rate;
-      }, 0);
-      const TAPING_EXCLUDE = new Set(['durock48','dens48','dens58']);
-      const DOUBLE_LAYER_KEYS = new Set(['dl48','hdl48']);
-      let tapingSqft = 0, tapingGross = 0, cbGross = 0, tapingExtras = 0;
-      let tapingRate2 = 0; // declared here so it's in scope for display section
-      if (j.details?.tasks?.taping) {
-        DRYWALL_TYPES.filter(t=>!t.isItems && !t.hidden).forEach(t => {
-          if (TAPING_EXCLUDE.has(t.key)) return;
-          const sf = t.lengths.reduce((s,l)=>s+sheetSqft(t.key,l)*(a.counts[t.key][l]||0),0);
-          if (DOUBLE_LAYER_KEYS.has(t.key)) tapingSqft -= sf;
-          else tapingSqft += sf;
-          // Also count 54" partner sheets (stored separately under combinedKey, hidden in UI)
-          if (t.combined && t.combinedKey) {
-            const sf54 = t.combinedLengths.reduce((s,l)=>s+sheetSqft(t.combinedKey,l)*(a.counts[t.combinedKey]?.[l]||0),0);
-            tapingSqft += sf54;
-          }
-        });
-        tapingSqft = Math.max(0, tapingSqft);
-        tapingRate2 = (() => {
-          const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
-          const hKey = hMap[ceilH] || 'h8';
-          const priceKey = (isHR ? 'tape_hr_' : 'tape_lr_') + hKey;
-          if (gPrices[priceKey] > 0) return gPrices[priceKey];
-          const bracket = isHR ? TAPING_HR_RATES[hKey] : TAPING_LR_RATES[hKey];
-          return bracket ? bracket.rates[gRateIdx] : 0.38078;
-        })();
-        tapingGross = tapingSqft * tapingRate2;
-        const BULLNOSE_ITEMS = new Set(["Bullnose Metal (8')", "Bullnose Metal (10')"]);
-        // Taper fill rates — split by LR/HR and bead type
-        const cbFillRate = isHR
-          ? (gPrices['cb_hr_fill'] > 0 ? gPrices['cb_hr_fill'] : CORNER_BEAD_HR_FILL_RATES[gRateIdx])
-          : (gPrices['cb_lr_fill'] > 0 ? gPrices['cb_lr_fill'] : CORNER_BEAD_LR_FILL_RATES[gRateIdx]);
-        const cbBullRate = isHR
-          ? (gPrices['cb_hr_bull'] > 0 ? gPrices['cb_hr_bull'] : CORNER_BEAD_HR_BULL_RATES[gRateIdx])
-          : (gPrices['cb_lr_bull'] > 0 ? gPrices['cb_lr_bull'] : CORNER_BEAD_LR_BULL_RATES[gRateIdx]);
-        cbGross = CORNER_BEAD_ITEMS.reduce((s, item) => {
-          const qty = a.counts['cornerBead']?.[item] || 0;
-          if (!qty) return s;
-          const lenMatch = item.match(/\((\d+)'/);
-          const lf = qty * (lenMatch ? parseInt(lenMatch[1]) : 8);
-          return s + lf * (BULLNOSE_ITEMS.has(item) ? cbBullRate : cbFillRate);
-        }, 0);
-        tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
-        laborCost += (gPrices['taping_extra_2'] || 0);
-        laborCost += tapingGross + cbGross + tapingExtras;
-      }
-
-      // ── LABOR SECTION — always shown ──
-      const labCol = '#1d4ed8';
-      const sectionHeadLab = `<div style="margin:14px 0 6px;padding:8px 10px;background:${labCol}18;border-left:3px solid ${labCol};border-radius:4px">
-        <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${labCol}">Labor</span>
-      </div>`;
-      const labColHead = `<div style="display:flex;justify-content:flex-end;gap:6px;padding:0 4px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">
-        <span style="min-width:60px;text-align:right">Sq Ft / Qty</span>
-        <span style="min-width:60px;text-align:right">Rate</span>
-        <span style="min-width:70px;text-align:right">Lab Cost</span>
-      </div>`;
-      const labRow = (label, qty, qtyUnit, rate, rateUnit, cost, color) =>
-        `<div class="modal-row"><span>${label}</span>
-          <span style="display:flex;gap:6px">
-            <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty}${qtyUnit}</span>
-            <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate}</span>
-            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${color||labCol}">${cost>0?fmtC(cost):''}</span>
-          </span></div>`;
-
-      html += sectionHeadLab;
+    // ─────── LABOR SECTION ───────
+    if (allDwSqft > 0 || insRows.length) {
+      html += sectionHead('Labor','#1d4ed8');
       html += `<div class="modal-type-head" style="color:#1d4ed8">Base Rates</div>`;
       html += labColHead;
 
-      // Boarding base — always shown
-      const plainFivetSqft = dwPlainSqft + dwFivetSqft;
-      if (plainFivetSqft > 0) {
-        html += labRow('Boarding Base', Math.round(plainFivetSqft), ' ft²', fmtC(dwBoardRate * 1000) + '/MSF', '', plainFivetSqft * dwBoardRate);
-      }
-      // Fireguard Premium — shown if any fireguard sqft
-      if (dwFivetSqft > 0) {
-        const fgPrem = gPrices['fivet_premium'] > 0 ? gPrices['fivet_premium'] : FIVET_PREMIUM[gRateIdx];
-        html += labRow('Fireguard Premium', Math.round(dwFivetSqft), ' ft²', fmtC(fgPrem * 1000) + '/MSF', '', dwFivetSqft * fgPrem);
-      }
-      // Durock — own full rate
-      if (dwDurockSqft > 0) {
-        html += labRow('Durock', Math.round(dwDurockSqft), ' ft²', fmtC(dwDurockRate * 1000) + '/MSF', '', dwDurockSqft * dwDurockRate);
+      // Boarding base (all dw except durock)
+      const boardBase = plainSqft + fivetSqft;
+      if (boardBase > 0) html += labRow('Boarding Base', Math.round(boardBase)+' ft\u00b2', fmtC(boardRate*1000)+'/MSF', boardingBase);
+      // Fireguard premium
+      if (fivetSqft > 0) html += labRow('Fireguard Premium', Math.round(fivetSqft)+' ft\u00b2', fmtC(fivetPrem*1000)+'/MSF', fivetPremTotal);
+      // Durock
+      if (durockSqft > 0) html += labRow('Durock', Math.round(durockSqft)+' ft\u00b2', fmtC(durockRate*1000)+'/MSF', durockLabor);
+
+      // Labour Extras
+      if (allJobExtras.length || Object.values(labExtra).some(v=>v>0)) {
+        html += `<div class="modal-type-head" style="color:#0891b2;margin-top:4px">Labour Extras</div>`;
+        allJobExtras.forEach(item=>{
+          const qty=a.counts['jobExtras'][item];
+          const rk=ADDON_RATE_MAP[item];
+          const rate=rk?(gPrices[rk]||EXTRAS_RATES[rk]?.[gRateIdx]||0):0;
+          html+=labRow(`${item} (\u00d7${qty})`, qty+'', fmtC(rate)+' ea', qty*rate);
+        });
+        const trades=[{k:'drywall',l:'Drywall Labour Extra'},{k:'insulation',l:'Insulation Labour Extra'},{k:'steel',l:'Steel Labour Extra'},{k:'taping',l:'Taping Labour Extra'}];
+        trades.forEach(({k,l})=>{const v=labExtra[k]||0;if(v>0)html+=labRow(l,v+' units','$1.00/unit',v);});
       }
 
-      // Labour Extras — shown after boarding base
-      {
-        const jobCostsEntries2 = JOB_COSTS_ITEMS.filter(item => (a.counts['jobCosts']?.[item]||0)>0);
-        const labExtra2 = a.counts['labourExtra'] || {};
-        const allJobExtras = JOB_EXTRAS_ITEMS.filter(item => (a.counts['jobExtras']?.[item]||0)>0);
-        const hasLabExtras = allJobExtras.length > 0 || jobCostsEntries2.length > 0 ||
-          Object.values(labExtra2).some(v => v > 0);
-        if (hasLabExtras) {
-          html += `<div class="modal-type-head" style="color:#0891b2;margin-top:6px">Labour Extras</div>`;
-          // All job extras (skylights, OTA, pot lights, door frames, stairs, peak, niche)
-          allJobExtras.forEach(item => {
-            const qty = a.counts['jobExtras'][item];
-            const rk = ADDON_RATE_MAP[item];
-            const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
-            html += labRow(`${item} (×${qty})`, qty, '', fmtC(rate) + ' ea', '', qty * rate);
-          });
-          jobCostsEntries2.forEach(item => {
-            const JOB_COSTS_RATE_MAP2 = {'Scaffolding':'scaffolding','Cleaning':'cleaning','Touchup & Year End Service Calls':'tpy_flat'};
-            const rk = JOB_COSTS_RATE_MAP2[item] || 'scaffolding';
-            const rate = gPrices[rk] || 0;
-            html += labRow(item, '', '', fmtC(rate), '', rate);
-          });
-          const trades = [{key:'drywall',label:'Drywall Labour Extra'},{key:'insulation',label:'Insulation Labour Extra'},{key:'steel',label:'Steel Labour Extra'},{key:'taping',label:'Taping Labour Extra'}];
-          trades.forEach(tr => {
-            const val = labExtra2[tr.key] || 0;
-            if (val > 0) html += labRow(tr.label, val, ' units', '$1.00/unit', '', val);
-          });
-        }
-      }
-      // Insulation base — always shown
-      const insBaseSqft = insMatRows.reduce((s, r) => s + r.sqft, 0);
-      const insBaseCost = insMatRows.reduce((s, r) => s + r.labCost, 0);
-      if (insBaseSqft > 0) {
-        html += labRow('Insulation Base', Math.round(insBaseSqft), ' ft²', fmtC(insLabRate * 1000) + '/MSF', '', insBaseCost);
-      }
+      // Insulation base
+      if (insLabTotal > 0) html += labRow('Insulation Base', insRows.reduce((s,r)=>s+r.sqft,0)+' ft\u00b2', fmtC(insLabRate*1000)+'/MSF', insLabTotal);
 
-      if (j.details?.tasks?.taping) {
-        // Taping base
-        if (tapingSqft > 0) {
-          html += labRow('Taping Base', tapingSqft, ' ft²', fmtC(tapingRate2 * 1000) + '/MSF', '', tapingGross);
-        }
+      // Taping
+      if (hasTaping) {
+        if (tapingGross > 0) html += labRow('Taping Base', tapingSqft+' ft\u00b2', fmtC(tapingRate*1000)+'/MSF', tapingGross);
 
         // Premiums
-        const hasPremiums = taperTownPremium > 0 || townPremiumCost > 0 ||
-          (insEStarOn && areaEnergySqft > 0) || cbGross > 0 || cbInstallGross > 0 ||
-          (ceilSqft > 0 && a.texture && a.texture !== 'none') ||
-          (a.counts['ceilings']?.cathedral > 0) || (a.counts['ceilings']?.waffle > 0);
-
-        if (hasPremiums) {
-          html += `<div class="modal-type-head" style="color:#7c3aed;margin-top:6px">Premiums</div>`;
+        const hasPrem = townPremAmt>0||eStarAmt>0||cbFillGross>0||cbInstallGross>0||ceilPremAmt>0||cathAmt>0||waffleAmt>0;
+        if (hasPrem) {
+          html += `<div class="modal-type-head" style="color:#7c3aed;margin-top:4px">Premiums</div>`;
           html += labColHead;
-
-          // Townhouse premium (boarders)
-          if (townPremiumCost > 0) {
-            const dwHouseType = j.details?.houseType || 'house';
-            const townLabel = dwHouseType === 'stacked' ? 'Stack Town Premium' : 'Townhouse Premium';
-            const townRate = dwHouseType === 'stacked'
-              ? (gPrices['stack_townhouse'] || EXTRAS_RATES.stack_townhouse[gRateIdx])
-              : (gPrices['townhouse_premium'] || EXTRAS_RATES.townhouse_premium[gRateIdx]);
-            html += labRow(townLabel, Math.round(boardingBaseSqft), ' ft²', fmtC(townRate) + '/MSF', '', townPremiumCost);
+          if (townPremAmt > 0) {
+            const tLabel = houseType==='stacked'?'Stack Town Premium':'Townhouse Premium';
+            const tRate = houseType==='stacked'?(gPrices['stack_townhouse']||EXTRAS_RATES.stack_townhouse[gRateIdx]):(gPrices['townhouse_premium']||EXTRAS_RATES.townhouse_premium[gRateIdx]);
+            html += labRow(tLabel, Math.round(allDwBoardable)+' ft\u00b2', fmtC(tRate)+'/MSF', townPremAmt);
           }
-          // Energy Star
-          if (insEStarOn && areaEnergySqft > 0) {
-            html += labRow('Energy Star', Math.round(areaEnergySqft), ' ft²', fmtC(insEStarRate * 1000) + '/MSF', '', areaEnergySqft * insEStarRate);
-          }
-          // Corner bead install (boarder)
-          if (cbInstallGross2 > 0) {
-            const totalCBLf = CORNER_BEAD_ITEMS.reduce((s, item) => {
-              const qty = a.counts['cornerBead']?.[item] || 0;
-              const lm = item.match(/\((\d+)'/);
-              return s + qty * (lm ? parseInt(lm[1]) : 8);
-            }, 0);
-            html += labRow('CB Install (Boarder)', totalCBLf, ' lf', fmtC(cbInstallRate2), '/lf', cbInstallGross2);
-          }
-          // Corner bead fill (taper)
-          if (cbGross > 0) {
-            html += labRow('CB Fill (Taper)', '', '', '', '', cbGross);
-          }
-          // Ceiling premium
-          const ceilEntriesDisp = a.counts['ceilings']?.entries || [];
-          const ceilSqftDisp = ceilEntriesDisp.reduce((s, e) => s + (e.l * e.w), 0);
-          if (ceilSqftDisp > 0 && a.texture && a.texture !== 'none') {
-            const texMap2 = { smooth: 'Smooth (L5)', spray: 'Texture Spray', knockdown: 'Knockdown Spray' };
-            let dispPrem = 0;
-            if (a.texture === 'smooth')    dispPrem = gPrices[isHR?'ceil_smooth_hr':'ceil_smooth_lr']||(isHR?375:450);
-            if (a.texture === 'spray')     dispPrem = gPrices[isHR?'ceil_spray_hr':'ceil_spray_lr']||([321.79,328.23,334.79][gRateIdx]);
-            if (a.texture === 'knockdown') dispPrem = gPrices[isHR?'ceil_knockdown_hr':'ceil_knockdown_lr']||([552.40,563.45,574.72][gRateIdx]);
-            const dispPremAmt = (ceilSqftDisp / 1000) * dispPrem;
-            html += labRow(texMap2[a.texture]||a.texture, Math.round(ceilSqftDisp), ' ft²', fmtC(dispPrem) + '/MSF', '', dispPremAmt);
-          }
-          // Cathedral
-          if ((a.counts['ceilings']?.cathedral||0) > 0) {
-            const rate = gPrices[isHR?'ceil_cathedral_hr':'ceil_cathedral_lr']||[216.90,221.24,225.67][gRateIdx];
-            html += labRow('Cathedral Ceiling', '', '', fmtC(rate) + ' each', '', rate);
-          }
-          // Waffle/Tray
-          if ((a.counts['ceilings']?.waffle||0) > 0) {
-            const rate = gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx];
-            html += labRow('Waffle / Tray Ceiling', '', '', fmtC(rate) + ' each', '', rate);
-          }
+          if (eStarAmt > 0)     html += labRow('Energy Star', Math.round(insEnergySqft)+' ft\u00b2', fmtC(insEStarRate*1000)+'/MSF', eStarAmt);
+          if (cbInstallGross>0) html += labRow('CB Install (Boarder)', cbInstallLf+' lf', fmtC(cbInstallRate)+'/lf', cbInstallGross);
+          if (cbFillGross > 0)  html += labRow('CB Fill (Taper)', cbFillLf+' lf', fmtC(cbFillRate)+'/lf', cbFillGross);
+          if (ceilPremAmt > 0)  html += labRow(texLabelMap[a.texture]||a.texture, ceilSqft.toFixed(0)+' ft\u00b2', fmtC(ceilPremRate)+'/MSF', ceilPremAmt);
+          if (cathAmt > 0)      html += labRow('Cathedral Ceiling', '', fmtC(cathAmt)+' each', cathAmt);
+          if (waffleAmt > 0)    html += labRow('Waffle / Tray Ceiling', '', fmtC(waffleAmt)+' each', waffleAmt);
         }
-
-        html += `<div style="height:8px"></div>`;
-        // Ceilings measurements (reference only)
-        const ceilEntriesR = a.counts['ceilings']?.entries || [];
-        const ceilSqftR = ceilEntriesR.reduce((s, e) => s + (e.l * e.w), 0);
-        if (ceilSqftR > 0) {
-          html += `<div class="modal-type-head" style="color:#92400e">Ceiling Measurements</div>`;
-          ceilEntriesR.forEach(e => {
-            html += `<div class="modal-row"><span>${e.l} × ${e.w} ft</span><span style="font-family:'DM Mono',monospace;font-weight:500">${(e.l*e.w).toFixed(1)} ft²</span></div>`;
-          });
-          html += `<div class="modal-row" style="font-weight:500"><span>Total Ceiling</span><span style="font-family:'DM Mono',monospace;font-weight:500">${ceilSqftR.toFixed(1)} ft²</span></div>`;
-          if (a.notes) html += `<div class="modal-row" style="color:var(--muted);font-style:italic"><span>Notes</span><span>${a.notes}</span></div>`;
-          html += `<div style="height:8px"></div>`;
-        }
-
-        // ── Ceiling premiums (based on area texture and manually entered ceiling sqft) ──
-        const ceilEntries = a.counts['ceilings']?.entries || [];
-        const ceilSqft = ceilEntries.reduce((s, e) => s + (e.l * e.w), 0);
-        if (ceilSqft > 0 && a.texture && a.texture !== 'none') {
-          let ceilPremRate = 0;
-          if (a.texture === 'smooth') {
-            const key = isHR ? 'ceil_smooth_hr' : 'ceil_smooth_lr';
-            const def = isHR ? 375 : 450;
-            ceilPremRate = gPrices[key] > 0 ? gPrices[key] : def;
-          } else if (a.texture === 'spray') {
-            const key = isHR ? 'ceil_spray_hr' : 'ceil_spray_lr';
-            const def = isHR ? [321.79,328.23,334.79][gRateIdx] : [350,357,364.14][gRateIdx];
-            ceilPremRate = gPrices[key] > 0 ? gPrices[key] : def;
-          } else if (a.texture === 'knockdown') {
-            const key = isHR ? 'ceil_knockdown_hr' : 'ceil_knockdown_lr';
-            const def = isHR ? [552.40,563.45,574.72][gRateIdx] : [566.11,577.43,588.98][gRateIdx];
-            ceilPremRate = gPrices[key] > 0 ? gPrices[key] : def;
-          }
-          const ceilPremAmt = (ceilSqft / 1000) * ceilPremRate;
-          laborCost += ceilPremAmt;
-          totalCeilPremium += ceilPremAmt;
-        }
-
-        // ── Ceiling flat-rate items ──
-        const ceilCounts = a.counts['ceilings'] || {};
-        if (ceilCounts.cathedral > 0) {
-          const key = isHR ? 'ceil_cathedral_hr' : 'ceil_cathedral_lr';
-          const def = [216.90, 221.24, 225.67][gRateIdx];
-          laborCost += (gPrices[key] > 0 ? gPrices[key] : def);
-        }
-        if (ceilCounts.waffle > 0) {
-          const def = [76.50, 78.03, 79.59][gRateIdx];
-          laborCost += (gPrices['ceil_waffle'] > 0 ? gPrices['ceil_waffle'] : def);
-        }
-
       }
 
-      // ── Material deductions — subs buy consumables from contractor ──
-      // These are deducted from the gross before union dues and WSIB are calculated
+      // Ceiling measurements reference
+      if (ceilSqft > 0) {
+        html += `<div class="modal-type-head" style="color:#92400e;margin-top:6px">Ceiling Measurements</div>`;
+        ceilEntries.forEach(e=>html+=`<div class="modal-row"><span>${e.l} \u00d7 ${e.w} ft</span><span style="font-family:'DM Mono',monospace">${(e.l*e.w).toFixed(1)} ft\u00b2</span></div>`);
+        html+=`<div class="modal-row" style="font-weight:600"><span>Total</span><span style="font-family:'DM Mono',monospace">${ceilSqft.toFixed(1)} ft\u00b2</span></div>`;
+        if (a.notes) html+=`<div class="modal-row" style="color:var(--muted);font-style:italic"><span>Notes</span><span>${a.notes}</span></div>`;
+      }
+    }
+    html += `<div style="height:16px"></div>`;
+  }); // end j.areas.forEach
 
-      // Boarder deduction: drywall screws
-      const screwBoxes = a.counts['extras']?.['Drywall Screws (Box)'] || 0;
-      const boarderMatDeduct = screwBoxes * (gMatPrices['mat_dw_screws'] || 0);
+  // ─────── FINANCIAL SUMMARY ───────
+  if (!hasAny) {
+    html += `<div class="empty-msg">No sheets tallied yet.</div>`;
+  } else {
+    // Job-level costs
+    const jd = d;
+    if (jd.scaffolding) totalLabor += gPrices['scaffolding']>0?gPrices['scaffolding']:100;
+    if (jd.cleaning)    totalLabor += gPrices['cleaning']>0?gPrices['cleaning']:300;
+    if (jd.touchup)     totalLabor += gPrices['tpy_flat']>0?gPrices['tpy_flat']:280;
 
-      // Insulator deduction: poly rolls (all sizes) + tuck tape + can foam + staples + acoustic caulking
-      const polyKeys = ["8' Poly","9' Poly","10' Poly","12' Poly"];
-      const polyCount = polyKeys.reduce((s,k) => s+(a.counts['insExtras']?.[k]||0), 0);
-      const insulatorMatDeduct =
-        polyCount             * (gMatPrices['mat_poly_roll']   || 0) +
-        (a.counts['insExtras']?.['Tuck Tape']         ||0) * (gMatPrices['mat_tuck_tape']   || 0) +
-        (a.counts['insExtras']?.['Can Foam']           ||0) * (gMatPrices['mat_can_foam']    || 0) +
-        (a.counts['insExtras']?.['Staples']            ||0) * (gMatPrices['mat_staples']     || 0) +
-        (a.counts['insExtras']?.['Acoustic Caulking']  ||0) * (gMatPrices['mat_acous_caulk'] || 0);
-
-      // Taper deduction: taper buys mud + tape from contractor — deducted from gross before dues/WSIB
-      const mudMatDeduct =
-        (a.counts['mud']?.['All Purpose (17L)']    ||0) * (gMatPrices['mat_mud_ap17']   || 0) +
-        (a.counts['mud']?.['Machine (17L)']         ||0) * (gMatPrices['mat_mud_mach17'] || 0) +
-        (a.counts['mud']?.['Lite Finish (17L)']     ||0) * (gMatPrices['mat_mud_lite17'] || 0) +
-        (a.counts['mud']?.['Sheetrock 20 (bag)']    ||0) * (gMatPrices['mat_mud_sr20']   || 0) +
-        (a.counts['mud']?.['Sheetrock 45 (bag)']    ||0) * (gMatPrices['mat_mud_sr45']   || 0) +
-        (a.counts['mud']?.['Sheetrock 90 (bag)']    ||0) * (gMatPrices['mat_mud_sr90']   || 0) +
-        (a.counts['mud']?.['Durabond 90 (Bag)']     ||0) * (gMatPrices['mat_mud_db90']   || 0) +
-        (a.counts['mudExtras']?.['Paper Tape (roll)']||0) * (gMatPrices['mat_tape_paper'] || 0) +
-        (a.counts['mudExtras']?.['Fibre Tape (roll)']||0) * (gMatPrices['mat_tape_fibre'] || 0) +
-        (a.counts['mudExtras']?.['Mesh Tape (roll)'] ||0) * (gMatPrices['mat_tape_mesh']  || 0) +
-        (a.counts['mudExtras']?.['Flexbead (roll)']  ||0) * (gMatPrices['mat_tape_flex']  || 0);
-      const taperMatDeduct = mudMatDeduct;
-
-      totalBoarderMatDeduct   += boarderMatDeduct;
-      totalInsulatorMatDeduct += insulatorMatDeduct;
-      totalTaperMatDeduct     += taperMatDeduct;
-
-      // ── Local 675 base — boarding + insulation + steel + add-ons + town premium, minus mat deductions ──
-      // Re-compute boarding, steel, durock, addOn gross for financial calc
-      const boardGross = (dwPlainSqft * dwBoardRate) + (dwFivetSqft * dwFivetRate);
-      const durockLaborSqft = DRYWALL_TYPES.filter(t => DW_DUROCK_KEYS.has(t.key))
-        .reduce((s, t) => s + t.lengths.reduce((ss, l) => ss + sheetSqft(t.key, l) * (a.counts[t.key]?.[l] || 0), 0), 0);
-      const durockRate2 = gPrices['durock_labor'] > 0 ? gPrices['durock_labor'] : DUROCK_LABOR_RATES[gRateIdx];
-      const steelGross = STEEL_SUBTABS.reduce((s, st) => {
-        return s + st.items.reduce((ss, item) => {
-          const qty = a.counts[st.key]?.[item] || 0;
-          if (!qty) return ss;
-          const lm = item.match(/(\d+)'/); const len = lm ? parseInt(lm[1]) : 1;
-          return ss + qty * len * (gPrices['steel_labor'] || 0);
-        }, 0);
-      }, 0);
-      const addOnGross = JOB_EXTRAS_ITEMS.reduce((s, item) => {
-        const qty = a.counts['jobExtras']?.[item] || 0;
-        if (!qty) return s;
-        const ADDON_RATE_MAP2 = {"2' × 4' Skylight":'skylight_2x4',"4' × 4' Skylight":'skylight_4x4','Peak':'tray_waffle_ceil','Niche':'tray_waffle_ceil',"OTA <64'":'ota_under64',"OTA >64'":'ota_over64','Door Frame Single':'entry_door_single','Door Frame Double':'entry_door_double','Open Round Stairs':'open_round_stairs','Pot Lights':'pot_lights'};
-        const rk = ADDON_RATE_MAP2[item];
-        const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
-        return s + qty * rate;
-      }, 0);
-      const durockGross = dwDurockSqft * dwDurockRate;
-      laborCost += boardGross + durockGross;
-      const steelExtras = steelGross * (gPrices['steel_extra_1'] || 0);
-      laborCost += steelExtras;
-      laborCost += (gPrices['steel_extra_2'] || 0);
-      // Per-trade labour extra dollar counters (1 unit = $1)
-      const labExtra = a.counts['labourExtra'] || {};
-      laborCost += (labExtra.drywall || 0);
-      laborCost += (labExtra.insulation || 0);
-      laborCost += (labExtra.steel || 0);
-      laborCost += (labExtra.taping || 0);
-      laborCost += durockLaborSqft * durockRate2;
-      // ── Corner bead install — boarder (Local 675) gets $0.26/lf for all bead types ──
-      const cbInstallRate = gPrices['cb_install'] > 0 ? gPrices['cb_install'] : CORNER_BEAD_INSTALL_RATES[gRateIdx];
-      const cbInstallGross = CORNER_BEAD_ITEMS.reduce((s, item) => {
-        const qty = a.counts['cornerBead']?.[item] || 0;
-        if (!qty) return s;
-        const lenMatch = item.match(/\((\d+)'/);
-        const lf = qty * (lenMatch ? parseInt(lenMatch[1]) : 8);
-        return s + lf * cbInstallRate;
-      }, 0);
-      laborCost += cbInstallGross;
-
-      const local675Base = Math.max(0,
-        insGross + boardGross + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross + durockGross
-        - boarderMatDeduct - insulatorMatDeduct
-      );
-
-      // ── Tapers base — subtract taper material purchases ──
-      const tapersBase = Math.max(0, tapingGross + tapingExtras + cbGross + taperAddOnGross + taperTownPremium + totalCeilPremium - taperMatDeduct);
-
-      const local675Pct = (gPrices['local675_dues'] ?? 0.265);
-      const tapersPct   = (gPrices['tapers_union']  ?? 0.230);
-      const local675Amount = local675Base * local675Pct;
-      const tapersAmount   = tapersBase   * tapersPct;
-      laborCost += local675Amount;
-      laborCost += tapersAmount;
-      totalLocal675 += local675Amount;
-      totalTapers   += tapersAmount;
-
-
-    }); // end j.areas.forEach for laborCost
-
-    // ── Job costs — added once per job, not per area ──
-    const jd = J()?.details || {};
-    if (jd.scaffolding) laborCost += gPrices['scaffolding'] > 0 ? gPrices['scaffolding'] : 100;
-    if (jd.cleaning)    laborCost += gPrices['cleaning']    > 0 ? gPrices['cleaning']    : 300;
-    if (jd.touchup)     laborCost += gPrices['tpy_flat']    > 0 ? gPrices['tpy_flat']    : 280;
-
-    totalLabor = laborCost;
-    totalMaterial = matCost;
-    // WSIB base = total labor MINUS all material deductions (subs buy from contractor)
-    const totalMatDisplay = totalMaterial + totalBoarderMatDeduct + totalInsulatorMatDeduct + totalTaperMatDeduct;
-    const wsibBase = Math.max(0, totalLabor - totalBoarderMatDeduct - totalInsulatorMatDeduct - totalTaperMatDeduct);
+    const totalMatDisplay = totalMaterial+totalBoarderMatDeduct+totalInsulatorMatDeduct+totalTaperMatDeduct;
+    const wsibBase = Math.max(0, totalLabor-totalBoarderMatDeduct-totalInsulatorMatDeduct-totalTaperMatDeduct);
     const wsib = wsibBase * WSIB_RATE;
-    const subtotalLM = totalLabor + totalMatDisplay + wsib;
-    const profit = subtotalLM * (gProfitPct/100);
-    const subtotal = subtotalLM + profit;
-    const hst = subtotal * 0.13;
-    const total = subtotal + hst;
+    const subtotalLM = totalLabor+totalMatDisplay+wsib;
+    const profit = subtotalLM*(gProfitPct/100);
+    const subtotal = subtotalLM+profit;
+    const hst = subtotal*0.13;
+    const total = subtotal+hst;
 
-    const fmt = v => '$'+v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    const fmtRow = (label, val, bold) =>
+      `<div class="modal-summary-row${bold?' modal-grand':''}"><span>${label}</span><span>${fmt(val)}</span></div>`;
 
-    html += `<div style="margin-top:16px;border-top:2px solid var(--border-md);padding-top:16px">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text);margin-bottom:10px">Financial Summary</div>`;
-
-    html += `<div class="modal-row"><span>Material Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalMatDisplay)}</span></div>`;
-    html += `<div class="modal-row"><span>Labor Cost</span><span style="font-family:'DM Mono',monospace;font-weight:500;color:var(--text)">${fmt(totalLabor)}</span></div>`;
-    html += `<div class="modal-row"><span>Local 675 Union Dues (${((gPrices['local675_dues']??0.265)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalLocal675)}</span></div>`;
-    html += `<div class="modal-row"><span>Tapers Union Dues (${((gPrices['tapers_union']??0.230)*100).toFixed(1)}% of gross)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(totalTapers)}</span></div>`;
-    html += `<div class="modal-row"><span>WSIB (${(WSIB_RATE*100).toFixed(2)}% on net labor)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(wsib)}</span></div>`;
-    html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal Labor + Material</span><span style="font-family:'DM Mono',monospace">${fmt(subtotalLM)}</span></div>`;
-    html += `<div class="modal-row"><span>Profit (${gProfitPct}%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(profit)}</span></div>`;
-    html += `<div class="modal-row" style="font-weight:600;color:var(--text)"><span>Subtotal</span><span style="font-family:'DM Mono',monospace">${fmt(subtotal)}</span></div>`;
-    html += `<div class="modal-row"><span>HST (13%)</span><span style="font-family:'DM Mono',monospace;font-weight:500">${fmt(hst)}</span></div>`;
-    html += `<div class="modal-grand" style="margin-top:8px"><span>Total</span><span>${fmt(total)}</span></div>`;
+    html += `<div class="modal-summary">`;
+    html += fmtRow('Material Cost', totalMatDisplay);
+    html += fmtRow('Labor Cost', totalLabor);
+    html += fmtRow(`Local 675 Union Dues (26.5% of gross)`, totalLocal675);
+    html += fmtRow(`Tapers Union Dues (23.0% of gross)`, totalTapers);
+    html += fmtRow(`WSIB (6.17% on net labor)`, wsib);
+    html += `<div class="modal-summary-row" style="font-weight:700;border-top:1.5px solid var(--border-md);margin-top:4px"><span>Subtotal Labor + Material</span><span>${fmt(subtotalLM)}</span></div>`;
+    html += fmtRow(`Profit (${gProfitPct}%)`, profit);
+    html += fmtRow('Subtotal', subtotal);
+    html += fmtRow(`HST (13%)`, hst);
+    html += `<div class="modal-grand"><span>Total</span><span>${fmt(total)}</span></div>`;
     html += `</div>`;
+  }
+  html += `</div>`;
 
-  document.getElementById('modal-body').innerHTML=html;
+  document.getElementById('modal-body').innerHTML = html;
   document.getElementById('modal-overlay').classList.add('open');
   history.pushState({ modal: 'report' }, '');
-  // If tutorial is waiting for report to open, advance to next step
   if (tutActive && tutSteps[tutStep]?.waitForReport) {
     setTimeout(() => tutNext(), 400);
   }
   } catch(err) {
-    // Show error in modal so we can debug on phone
     document.getElementById('modal-title').textContent = 'Report Error';
     document.getElementById('modal-body').innerHTML =
       `<div style="padding:20px;color:#dc2626;font-family:monospace;font-size:13px;white-space:pre-wrap">${err.message}\n\n${err.stack||''}</div>`;
@@ -4703,6 +4384,7 @@ function showReport() {
     history.pushState({ modal: 'report' }, '');
   }
 }
+
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
