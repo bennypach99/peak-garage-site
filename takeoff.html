@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.35</title>
+  <title>Drywall Tally v15.37</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.35 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.37 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4318,6 +4318,7 @@ function showReport() {
       const TAPING_EXCLUDE = new Set(['durock48','dens48','dens58']);
       const DOUBLE_LAYER_KEYS = new Set(['dl48','hdl48']);
       let tapingSqft = 0, tapingGross = 0, cbGross = 0, tapingExtras = 0;
+      let tapingRate2 = 0; // declared here so it's in scope for display section
       if (j.details?.tasks?.taping) {
         DRYWALL_TYPES.filter(t=>!t.isItems && !t.hidden).forEach(t => {
           if (TAPING_EXCLUDE.has(t.key)) return;
@@ -4331,7 +4332,7 @@ function showReport() {
           }
         });
         tapingSqft = Math.max(0, tapingSqft);
-        const tapingRate2 = (() => {
+        tapingRate2 = (() => {
           const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":'h12'};
           const hKey = hMap[ceilH] || 'h8';
           const priceKey = (isHR ? 'tape_hr_' : 'tape_lr_') + hKey;
@@ -4609,6 +4610,7 @@ function showReport() {
         const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
         return s + qty * rate;
       }, 0);
+      const durockGross = dwDurockSqft * dwDurockRate;
       laborCost += boardGross + durockGross;
       const steelExtras = steelGross * (gPrices['steel_extra_1'] || 0);
       laborCost += steelExtras;
@@ -4631,7 +4633,6 @@ function showReport() {
       }, 0);
       laborCost += cbInstallGross;
 
-      const durockGross = dwDurockSqft * dwDurockRate;
       const local675Base = Math.max(0,
         insGross + boardGross + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross + durockGross
         - boarderMatDeduct - insulatorMatDeduct
