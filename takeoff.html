@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.48</title>
+  <title>Drywall Tally v15.49</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.48 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.49 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4065,7 +4065,7 @@ function showReport() {
     const waffleAmt = hasTaping && (a.counts['ceilings']?.waffle||0)>0
       ? (gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx]) : 0;
 
-    // ── CB install (boarder) ──
+    // ── CB install ──
     let cbInstallLf = 0;
     CORNER_BEAD_ITEMS.forEach(item => {
       const qty = a.counts['cornerBead']?.[item]||0;
@@ -4390,7 +4390,7 @@ function showReport() {
             html += labRow(tLabel, Math.round(allDwBoardable)+' ft\u00b2', fmtC(tRate)+'/MSF', townPremAmt);
           }
           if (eStarAmt > 0)     html += labRow('Energy Star', Math.round(insEnergySqft)+' ft\u00b2', fmtC(insEStarRate*1000)+'/MSF', eStarAmt);
-          if (cbInstallGross>0) html += labRow('CB Install (Boarder)', cbInstallLf+' lf', fmtC(cbInstallRate)+'/lf', cbInstallGross);
+          if (cbInstallGross>0) html += labRow('CB Install', cbInstallLf+' lf', fmtC(cbInstallRate)+'/lf', cbInstallGross);
           if (cbFillGross > 0)  html += labRow('CB Fill (Taper)', cbFillLf+' lf', fmtC(cbFillRate)+'/lf', cbFillGross);
           if (ceilPremAmt > 0)  html += labRow(texLabelMap[a.texture]||a.texture, ceilSqft.toFixed(0)+' ft\u00b2', fmtC(ceilPremRate)+'/MSF', ceilPremAmt);
           if (cathAmt > 0)      html += labRow('Cathedral Ceiling', '', fmtC(cathAmt)+' each', cathAmt);
@@ -4727,7 +4727,6 @@ const PRICE_FIELDS = [
   { key:'board_hr_h10', label:">9' to ≤10'",  rates:[0.397,0.405,0.413], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
   { key:'board_hr_h11', label:">10' to ≤11'", rates:[0.416,0.424,0.433], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
   { key:'board_hr_h12', label:">11' to ≤12'", rates:[0.434,0.442,0.451], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
-  { key:'fivet_premium', label:'Fireguard Premium ($/ft²)', rates:[0.105,0.107,0.109], col:'lr', group:'Boarding', priceTab:'DW' },
   // ── Boarding Extras at bottom ──
   // ── Durock ──
   { key:'durock_labor',    label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Boarding', priceTab:'DW' },
@@ -4807,9 +4806,10 @@ const PRICE_FIELDS = [
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00, 174.00, 174.00], col:'hr', group:'Extras', priceTab:'EX' },
   { key:'fivc_premium',    label:'⅝" Fire Code C ($/MSF)',     rates:[105.00, 107.00, 109.00], col:'lr', group:'Extras', priceTab:'EX' },
-  // ── Townhouse Premiums (on boarding sqft — DW tab) ──
-  { key:'townhouse_premium',label:'Townhouse premium ($/MSF)',      rates:[14.02, 14.30, 14.60], col:'lr', group:'Townhouse', priceTab:'DW' },
-  { key:'stack_townhouse',  label:'Stack/B2B Townhouse premium ($/MSF)', rates:[40.80, 41.60, 42.40], col:'lr', group:'Townhouse', priceTab:'DW' },
+  // ── Premiums (on boarding sqft — DW tab) ──
+  { key:'fivet_premium',    label:'Fireguard Premium ($/ft²)',       rates:[0.105,0.107,0.109],   col:'lr', group:'Premiums', priceTab:'DW' },
+  { key:'townhouse_premium',label:'Townhouse premium ($/MSF)',       rates:[14.02, 14.30, 14.60], col:'lr', group:'Premiums', priceTab:'DW' },
+  { key:'stack_townhouse',  label:'Stack/B2B Townhouse premium ($/MSF)', rates:[40.80, 41.60, 42.40], col:'lr', group:'Premiums', priceTab:'DW' },
   // ── Job Costs ──
   { key:'scaffolding',     label:'Scaffolding ($)',             rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
   { key:'cleaning',        label:'Cleaning ($)',                rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
