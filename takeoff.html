@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.43</title>
+  <title>Drywall Tally v15.44</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.43 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.44 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3830,7 +3830,7 @@ function showReport() {
   };
   const mudExtrasMatKeys = {'Paper Tape (roll)':'mat_tape_paper','Fibre Tape (roll)':'mat_tape_fibre','Mesh Tape (roll)':'mat_tape_mesh','Flexbead (roll)':'mat_tape_flex'};
   const insExtrasMatKeys = {
-    "8' Poly":'mat_poly_8',"9' Poly":'mat_poly_9',"10' Poly":'mat_poly_10',"12' Poly":'mat_poly_12',
+    "8' Poly":'mat_poly_roll',"9' Poly":'mat_poly_roll',"10' Poly":'mat_poly_roll',"12' Poly":'mat_poly_roll',
     'Tuck Tape':'mat_tuck_tape','Can Foam':'mat_can_foam','Staples':'mat_staples',
     'Styro-Vents':'mat_styro_vents','Acoustic Caulking':'mat_acous_caulk',
   };
@@ -3972,6 +3972,7 @@ function showReport() {
       } else {
         const rvals = t.rvals||INSULATION_RVALS;
         const insRateMap = {'R8':'ins_r8','R12':'ins_r12','R14':'ins_r14','R20':'ins_r20','R22':'ins_r22','R24':'ins_r24','R28':'ins_r28','R31':'ins_r31','R40':'ins_r40'};
+        const insMatKeyMap = {'R8':'mat_ins_r8','R12':'mat_ins_r12','R14':'mat_ins_r14','R20':'mat_ins_r20','R22':'mat_ins_r22','R24':'mat_ins_r24','R28':'mat_ins_r28','R31':'mat_ins_r31','R40':'mat_ins_r40','1½" QZ':'mat_ins_r12','3" QZ':'mat_ins_r12','R22.5':'mat_ins_r22'};
         rvals.forEach(rv => {
           INSULATION_SIZES.forEach((sz, si) => {
             if (rv.sqft[si]===null) return;
@@ -3985,9 +3986,10 @@ function showReport() {
             const effRate = t.key==='roxul'?insLabRate+roxulPrem+r24Prem:insLabRate+r24Prem;
             const sqft = Math.round(tsqft);
             const mk = insRateMap[rv.r]||'ins_r12';
-            const lc=tsqft*effRate, mc=tsqft*(gMatPrices[mk]||0);
+            const mmk = insMatKeyMap[rv.r]||'mat_ins_r12';
+            const lc=tsqft*effRate, mc=tsqft*(gMatPrices[mmk]||0);
             if (t.key==='pink'||t.key==='roxul') insEnergySqft+=tsqft;
-            insRows.push({name:`${t.fullName} ${rv.r} ${sz}`,bags:Math.ceil(bags),sqft,unitPrice:gMatPrices[mk]||0,matCost:mc,labCost:lc});
+            insRows.push({name:`${t.fullName} ${rv.r} ${sz}`,bags:Math.ceil(bags),sqft,unitPrice:gMatPrices[mmk]||0,matCost:mc,labCost:lc});
             insLabTotal+=lc; insMatTotal+=mc;
           });
         });
