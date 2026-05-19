@@ -2394,6 +2394,8 @@ function switchToMain(e) {
   document.getElementById('page-main').style.display = 'block';
   document.getElementById('page-bintracker').style.display = 'none';
   document.getElementById('page-about').style.display = 'none';
+  var hs = document.getElementById('householdScreen');
+  if (hs) hs.style.display = 'none';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
 }
 function switchToAbout(e) {
@@ -2401,6 +2403,8 @@ function switchToAbout(e) {
   document.getElementById('page-main').style.display = 'none';
   document.getElementById('page-bintracker').style.display = 'none';
   document.getElementById('page-about').style.display = 'block';
+  var hs = document.getElementById('householdScreen');
+  if (hs) hs.style.display = 'none';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
   document.getElementById('nav-about').classList.add('active');
   window.scrollTo(0,0);
@@ -2410,6 +2414,9 @@ function switchToBinTracker(e) {
   document.getElementById('page-main').style.display = 'none';
   document.getElementById('page-bintracker').style.display = 'block';
   document.getElementById('page-about').style.display = 'none';
+  // Restore household screen if no code is saved
+  var hs = document.getElementById('householdScreen');
+  if (hs && !localStorage.getItem('peakHouseholdCode')) hs.style.display = 'flex';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
   document.getElementById('nav-bintracker').classList.add('active');
   window.scrollTo(0,0);
