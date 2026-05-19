@@ -233,8 +233,11 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
 }
 .desktop-link:active{background:var(--gold-pale);}
 
-/* ── ABOUT PAGE ── */
-.about-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);
+/* ── TOOLS IFRAME ── */
+#page-tools { padding: 0 !important; display: flex; height: 100%; overflow: hidden; }
+.tool-iframe { flex: 1; width: 100%; border: none; min-height: 0; }
+
+/* ── ABOUT PAGE ── */.about-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);
   padding:1rem;margin-bottom:.75rem;}
 .about-card h4{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;
   color:var(--gold-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;}
@@ -434,20 +437,8 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
 
   <!-- ══ PAGE: TOOLS ══ -->
   <div class="page" id="page-tools">
-    <div class="slabel">Free Tool</div>
-    <div class="stitle">QR Bin Inventory</div>
-    <div class="gold-rule"></div>
-
-    <div class="burst-btn-wrap">
-      <a class="burst-link" href="https://peakgaragesolutions.ca/bin-tracker.html" target="_blank">
-        <img src="burst.png" alt="QR Bin Inventory Tool"/>
-        <div class="burst-text">
-          <span class="bt-main">QR Bin<br>Inventory<br>Tool</span>
-          <span class="bt-sub">Try Free!</span>
-        </div>
-      </a>
-      <div class="burst-caption">Tap to open the free tool</div>
-    </div>
+    <iframe src="bin-tracker.html" class="tool-iframe" allow="camera"></iframe>
+  </div>
 
     <div class="tools-card">
       <h4>Know What's In Every Bin</h4>
