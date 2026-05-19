@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.55</title>
+  <title>Drywall Tally v15.56</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.55 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.56 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -2369,6 +2369,9 @@ function renderAreaInfoBar() {
 /* ── Type tabs (drywall + insulation) ── */
 function renderTypeTabs() {
   const wrap = document.getElementById('type-bar-wrap');
+  // Always clean up cb-subgroup-tabs when re-rendering type tabs
+  const existingSubBar = document.getElementById('cb-subgroup-tabs');
+  if (existingSubBar) existingSubBar.remove();
   // Always hide rval bar unless insulation batt — renderInsTypeTabs will show it if needed
   const rvalBar = document.getElementById('ins-rval-bar');
   if (curCat !== 'insulation' && rvalBar) rvalBar.style.display = 'none';
@@ -2441,13 +2444,10 @@ function renderTypeTabs() {
         return `<button style="font-size:11px;padding:4px 10px;border:none;border-bottom:2px solid ${active?col:'transparent'};background:transparent;color:${active?col:'var(--color-text-secondary)'};font-weight:${active?'600':'400'};cursor:pointer;white-space:nowrap" onclick="switchCbSubSubTab(${i})">${sg.label}</button>`;
       }).join('');
     } else {
-      const bar = document.getElementById('cb-subgroup-tabs');
-      if (bar) bar.style.display = 'none';
+      // no subGroups for this group — bar already removed at top
     }
   } else {
     wrap.style.display = 'none';
-    const bar = document.getElementById('cb-subgroup-tabs');
-    if (bar) bar.style.display = 'none';
   }
 }
 function renderInsTypeTabs() {
