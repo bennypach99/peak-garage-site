@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.16</title>
+  <title>Drywall Tally v15.17</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.16 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.17 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -4015,6 +4015,31 @@ function showReport() {
       }
     });
 
+    // ── Pre-compute values needed by Labor section ──
+    const dwHouseType2 = j.details?.houseType || 'house';
+    const totalDwSqft2 = dwPlainSqft + dwFivetSqft;
+    let townPremiumCost = 0;
+    let taperTownPremium = 0;
+    if (!isHR) {
+      if (dwHouseType2 === 'townhouse') {
+        const tpr = gPrices['townhouse_premium'] || EXTRAS_RATES.townhouse_premium[gRateIdx];
+        townPremiumCost = totalDwSqft2 * tpr / 1000;
+        taperTownPremium = totalDwSqft2 * (gPrices['taper_stack'] > 0 ? 0 : TAPER_TOWN_RATES[gRateIdx]) / 1000;
+      } else if (dwHouseType2 === 'stacked') {
+        const spr = gPrices['stack_townhouse'] || EXTRAS_RATES.stack_townhouse[gRateIdx];
+        townPremiumCost = totalDwSqft2 * spr / 1000;
+        taperTownPremium = totalDwSqft2 * (gPrices['taper_stack'] > 0 ? gPrices['taper_stack'] : TAPER_STACK_RATES[gRateIdx]) / 1000;
+      }
+    }
+    const cbInstallRate2 = gPrices['cb_install'] > 0 ? gPrices['cb_install'] : CORNER_BEAD_INSTALL_RATES[gRateIdx];
+    const cbInstallGross2 = CORNER_BEAD_ITEMS.reduce((s, item) => {
+      const qty = a.counts['cornerBead']?.[item] || 0;
+      if (!qty) return s;
+      const lm = item.match(/\((\d+)'/);
+      const lf = qty * (lm ? parseInt(lm[1]) : 8);
+      return s + lf * cbInstallRate2;
+    }, 0);
+
     // ─────────────────────────────────────────────
     // MATERIAL SECTION
     // ─────────────────────────────────────────────
@@ -4349,13 +4374,13 @@ function showReport() {
             html += labRow('Energy Star', Math.round(areaEnergySqft), ' ft²', fmtC(insEStarRate * 1000) + '/MSF', '', areaEnergySqft * insEStarRate);
           }
           // Corner bead install (boarder)
-          if (cbInstallGross > 0) {
+          if (cbInstallGross2 > 0) {
             const totalCBLf = CORNER_BEAD_ITEMS.reduce((s, item) => {
               const qty = a.counts['cornerBead']?.[item] || 0;
               const lm = item.match(/\((\d+)'/);
               return s + qty * (lm ? parseInt(lm[1]) : 8);
             }, 0);
-            html += labRow('CB Install (Boarder)', totalCBLf, ' lf', fmtC(cbInstallRate), '/lf', cbInstallGross);
+            html += labRow('CB Install (Boarder)', totalCBLf, ' lf', fmtC(cbInstallRate2), '/lf', cbInstallGross2);
           }
           // Corner bead fill (taper)
           if (cbGross > 0) {
