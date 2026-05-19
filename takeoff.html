@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.52</title>
+  <title>Drywall Tally v15.55</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.52 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.55 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -1719,12 +1719,30 @@ const MUD_ITEMS = [
 // Mud — Corner Bead sub-tab, grouped by material
 const CORNER_BEAD_GROUPS = [
   { label: 'Vinyl',    items: ["Vinyl 90° (8')", "Vinyl 90° (10')", "L-Bead Vinyl (8')", "L-Bead Vinyl (10')", "U-Bead Vinyl (8')", "U-Bead Vinyl (10')", "J-Bead Vinyl (8')", "J-Bead Vinyl (10')"] },
-  { label: 'Metal',    items: ["Metal 90° (8')", "Metal 90° (10')", "L-Bead Metal (8')", "L-Bead Metal (10')", "U-Bead Metal (8')", "U-Bead Metal (10')", "J-Bead Metal (8')", "J-Bead Metal (10')"] },
-  { label: 'Bullnose', items: ["Bullnose Metal (8')", "Bullnose Metal (10')"] },
-  { label: 'Misc',     items: ["Archway Bead (8')", "Archway Bead (10')"] },
+  { label: 'Metal',
+    subGroups: [
+      { label: '90°',      items: ["Metal 90° (8')", "Metal 90° (9')", "Metal 90° (10')", "Metal 90° (12')"] },
+      { label: 'L-Bead',   items: ["L-Bead Metal (8')", "L-Bead Metal (10')", "L-Bead Metal (12')"] },
+      { label: 'U-Bead',   items: ["U-Bead Metal (8')", "U-Bead Metal (10')", "U-Bead Metal (12')"] },
+      { label: 'J-Bead',   items: ["J-Bead Metal (8')", "J-Bead Metal (10')", "J-Bead Metal (12')"] },
+      { label: 'Bullnose', items: ["Bullnose Metal (8')", "Bullnose Metal (10')", "Bullnose Metal (12')"] },
+      { label: 'Archway',  items: ["Archway Bead (8')", "Archway Bead (10')"] },
+    ],
+  },
+  { label: 'Paper',
+    subGroups: [
+      { label: '90°',           items: ["Paper 90° (8')", "Paper 90° (9')", "Paper 90° (10')", "Paper 90° (12')"] },
+      { label: 'J-Trim',        items: ["Paper J-Trim (8')", "Paper J-Trim (10')"] },
+      { label: 'L-Trim',        items: ["Paper L-Trim (8')", "Paper L-Trim (10')"] },
+      { label: 'Bullnose',      items: ["Paper Bullnose (8')", "Paper Bullnose (9')"] },
+      { label: 'Inside Corner', items: ["Paper Inside Corner (8')", "Paper Inside Corner (10')"] },
+    ],
+  },
 ];
 // Flat list of all corner bead items (for blankCounts / report / export)
-const CORNER_BEAD_ITEMS = CORNER_BEAD_GROUPS.flatMap(g => g.items);
+const CORNER_BEAD_ITEMS = CORNER_BEAD_GROUPS.flatMap(g =>
+  g.subGroups ? g.subGroups.flatMap(sg => sg.items) : g.items
+);
 
 // Mud category — Extras sub-tab items
 const MUD_EXTRAS_ITEMS = [
@@ -1967,7 +1985,8 @@ let curBlownRval = 0;  // active R-value index for Blown-In
 let curFoamRval  = 0;  // active R-value index for Spray-Foam
 let curSteelSubTab = 0; // 0 = Steel, 1 = Extras
 let curMudSubTab = 0; // 0 = Mud, 1 = Extras
-let curCbSubTab  = 0; // 0=Vinyl, 1=Metal, 2=Bullnose, 3=Misc
+let curCbSubTab  = 0; // 0=Vinyl, 1=Metal, 2=Paper, 3=Misc
+let curCbSubSubTab = 0; // 3rd level: sub-group index within Metal or Paper
 
 /* ── Blank counts ── */
 function blankCounts() {
@@ -2396,12 +2415,39 @@ function renderTypeTabs() {
   } else if (curCat === 'cornerBead') {
     wrap.style.display = '';
     const col = '#92400e';
-    document.getElementById('type-tabs').innerHTML = CORNER_BEAD_GROUPS.map((g, i) => {
-      const active = i === curCbSubTab;
-      return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchCbSubTab(${i})">${g.label}</button>`;
-    }).join('');
+    const group = CORNER_BEAD_GROUPS[curCbSubTab];
+    // Level 2: main group tabs
+    document.getElementById('type-tabs').innerHTML = CORNER_BEAD_GROUPS
+      .filter(g => (g.subGroups ? g.subGroups.some(sg=>sg.items.length>0) : g.items.length>0))
+      .map((g, i) => {
+        const realIdx = CORNER_BEAD_GROUPS.indexOf(g);
+        const active = realIdx === curCbSubTab;
+        return `<button class="type-tab" style="${active?`border-bottom-color:${col};color:${col}`:''}" onclick="switchCbSubTab(${realIdx})">${g.label}</button>`;
+      }).join('');
+    // Level 3: sub-group tabs (only for groups that have subGroups)
+    const subTabBar = document.getElementById('cb-subgroup-tabs');
+    if (group && group.subGroups) {
+      let bar = subTabBar;
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'cb-subgroup-tabs';
+        bar.style.cssText = 'display:flex;gap:4px;padding:4px 12px 0;overflow-x:auto;border-bottom:1px solid var(--color-border-tertiary);background:var(--color-background-secondary)';
+        const typeTabs = document.getElementById('type-tabs');
+        typeTabs.parentNode.insertBefore(bar, typeTabs.nextSibling);
+      }
+      bar.style.display = 'flex';
+      bar.innerHTML = group.subGroups.map((sg, i) => {
+        const active = i === curCbSubSubTab;
+        return `<button style="font-size:11px;padding:4px 10px;border:none;border-bottom:2px solid ${active?col:'transparent'};background:transparent;color:${active?col:'var(--color-text-secondary)'};font-weight:${active?'600':'400'};cursor:pointer;white-space:nowrap" onclick="switchCbSubSubTab(${i})">${sg.label}</button>`;
+      }).join('');
+    } else {
+      const bar = document.getElementById('cb-subgroup-tabs');
+      if (bar) bar.style.display = 'none';
+    }
   } else {
     wrap.style.display = 'none';
+    const bar = document.getElementById('cb-subgroup-tabs');
+    if (bar) bar.style.display = 'none';
   }
 }
 function renderInsTypeTabs() {
@@ -2480,7 +2526,8 @@ function switchDwType(visIdx) {
 
 function switchSteelSubTab(n) { curSteelSubTab=n; renderTypeTabs(); renderTally(); }
 function switchMudSubTab(n) { curMudSubTab=n; renderTypeTabs(); renderTally(); }
-function switchCbSubTab(n)  { curCbSubTab=n;  renderTypeTabs(); renderTally(); renderStrip(); }
+function switchCbSubTab(n)    { curCbSubTab=n; curCbSubSubTab=0; renderTypeTabs(); renderTally(); renderStrip(); }
+function switchCbSubSubTab(n) { curCbSubSubTab=n; renderTypeTabs(); renderTally(); renderStrip(); }
 
 /* ── Counts ── */
 function encodeKey(str) { return String(str).replace(/[^a-zA-Z0-9]/g,'_'); }
@@ -2836,15 +2883,21 @@ function renderCornerBead() {
   const col = '#92400e';
   const c = A().counts['cornerBead'];
   const group = CORNER_BEAD_GROUPS[curCbSubTab] || CORNER_BEAD_GROUPS[0];
-  const groupTotal = group.items.reduce((s, item) => s + (c[item]||0), 0);
+
+  // If this group has sub-groups, render the active sub-group
+  const items = group.subGroups
+    ? (group.subGroups[curCbSubSubTab] || group.subGroups[0]).items
+    : group.items;
+
+  const groupTotal = items.reduce((s, item) => s + (c[item]||0), 0);
 
   let html = `<div class="tally-header">
-    <div class="tally-type-label" style="color:${col}">${group.label}</div>
+    <div class="tally-type-label" style="color:${col}">${group.label}${group.subGroups ? ' — ' + (group.subGroups[curCbSubSubTab]||group.subGroups[0]).label : ''}</div>
     ${groupTotal > 0 ? `<div class="tally-subtotal">Total: <strong>${groupTotal}</strong></div>` : ''}
   </div>
   <div class="sheet-grid">`;
 
-  group.items.forEach(item => {
+  items.forEach(item => {
     const globalIdx = CORNER_BEAD_ITEMS.indexOf(item);
     html += `<div class="sheet-card" style="border-color:${col}22">
       <div class="sheet-card-top" style="background:${col}12">
@@ -3453,7 +3506,8 @@ function renderStrip() {
     const c = A()?.counts['cornerBead'] || {};
     const cbTotal = CORNER_BEAD_ITEMS.reduce((s,item) => s+(c[item]||0), 0);
     const chips = CORNER_BEAD_GROUPS.map(g => {
-      const n = g.items.reduce((s,item) => s+(c[item]||0), 0);
+      const allItems = g.subGroups ? g.subGroups.flatMap(sg=>sg.items) : g.items;
+      const n = allItems.reduce((s,item) => s+(c[item]||0), 0);
       return n > 0 ? `<div class="strip-chip">${g.label} <strong>${n}</strong></div>` : '';
     }).join('');
     document.getElementById('totals-strip').innerHTML=
@@ -3815,12 +3869,17 @@ function showReport() {
     "L-Bead Vinyl (8')":'mat_cb_vinyl_l',"L-Bead Vinyl (10')":'mat_cb_vinyl_l',
     "U-Bead Vinyl (8')":'mat_cb_vinyl_u',"U-Bead Vinyl (10')":'mat_cb_vinyl_u',
     "J-Bead Vinyl (8')":'mat_cb_vinyl_j',"J-Bead Vinyl (10')":'mat_cb_vinyl_j',
-    "Metal 90° (8')":'mat_cb_metal_90',"Metal 90° (10')":'mat_cb_metal_90',
-    "L-Bead Metal (8')":'mat_cb_metal_l',"L-Bead Metal (10')":'mat_cb_metal_l',
-    "U-Bead Metal (8')":'mat_cb_metal_u',"U-Bead Metal (10')":'mat_cb_metal_u',
-    "J-Bead Metal (8')":'mat_cb_metal_j',"J-Bead Metal (10')":'mat_cb_metal_j',
-    "Bullnose Metal (8')":'mat_cb_bullnose',"Bullnose Metal (10')":'mat_cb_bullnose',
+    "Metal 90° (8')":'mat_cb_metal_90',"Metal 90° (9')":'mat_cb_metal_90',"Metal 90° (10')":'mat_cb_metal_90',"Metal 90° (12')":'mat_cb_metal_90',
+    "L-Bead Metal (8')":'mat_cb_metal_l',"L-Bead Metal (10')":'mat_cb_metal_l',"L-Bead Metal (12')":'mat_cb_metal_l',
+    "U-Bead Metal (8')":'mat_cb_metal_u',"U-Bead Metal (10')":'mat_cb_metal_u',"U-Bead Metal (12')":'mat_cb_metal_u',
+    "J-Bead Metal (8')":'mat_cb_metal_j',"J-Bead Metal (10')":'mat_cb_metal_j',"J-Bead Metal (12')":'mat_cb_metal_j',
+    "Bullnose Metal (8')":'mat_cb_bullnose',"Bullnose Metal (10')":'mat_cb_bullnose',"Bullnose Metal (12')":'mat_cb_bullnose',
     "Archway Bead (8')":'mat_cb_archway',"Archway Bead (10')":'mat_cb_archway',
+    "Paper 90° (8')":'mat_cb_paper_90',"Paper 90° (9')":'mat_cb_paper_90',"Paper 90° (10')":'mat_cb_paper_90',"Paper 90° (12')":'mat_cb_paper_90',
+    "Paper J-Trim (8')":'mat_cb_paper_j',"Paper J-Trim (10')":'mat_cb_paper_j',
+    "Paper L-Trim (8')":'mat_cb_paper_l',"Paper L-Trim (10')":'mat_cb_paper_l',
+    "Paper Bullnose (8')":'mat_cb_paper_bull',"Paper Bullnose (9')":'mat_cb_paper_bull',
+    "Paper Inside Corner (8')":'mat_cb_paper_ic',"Paper Inside Corner (10')":'mat_cb_paper_ic',
   };
   const mudMatKeys = {
     'All Purpose (17L)':'mat_mud_ap17','Machine (17L)':'mat_mud_mach17',
@@ -4065,9 +4124,10 @@ function showReport() {
     const waffleAmt = hasTaping && (a.counts['ceilings']?.waffle||0)>0
       ? (gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx]) : 0;
 
-    // ── CB install (taper paper bead + boarder steel/vinyl bead) ──
+    // ── CB install (taper paper bead only — $0.26/lf rate from tapers agreement) ──
     let cbInstallLf = 0;
     CORNER_BEAD_ITEMS.forEach(item => {
+      if (!item.startsWith('Paper')) return; // only paper bead installed by taper at this rate
       const qty = a.counts['cornerBead']?.[item]||0;
       if (!qty) return;
       const lm = item.match(/\((\d+)'/);
@@ -4076,10 +4136,10 @@ function showReport() {
     const cbInstallGross = cbInstallLf * cbInstallRate; // taper paper bead install
     const cbBoarderInstallRate = gPrices['cb_boarder_install'] > 0 ? gPrices['cb_boarder_install'] : 0.285;
     const cbBoarderBullnoseRate = gPrices['cb_boarder_bullnose'] > 0 ? gPrices['cb_boarder_bullnose'] : 0.443;
-    // Count only non-Archway vinyl/metal beads for boarder (not paper/archway)
+    // Count only non-Archway, non-Paper beads for boarder (steel/vinyl installed by boarder)
     let cbBoarderLf = 0;
     CORNER_BEAD_ITEMS.forEach(item => {
-      if (item.startsWith('Archway')) return;
+      if (item.startsWith('Archway') || item.startsWith('Paper')) return;
       const qty = a.counts['cornerBead']?.[item]||0;
       if (!qty) return;
       const lm = item.match(/\((\d+)'/);
@@ -4926,6 +4986,11 @@ const MAT_PRICE_FIELDS = [
   { key:'mat_cb_metal_j',  label:"J-Bead Metal",  unit:'$/lf', group:'Metal Bead',    matTab:'CB', def:0 },
   { key:'mat_cb_bullnose', label:"Bullnose Metal", unit:'$/lf', group:'Bullnose/Misc', matTab:'CB', def:0 },
   { key:'mat_cb_archway',  label:"Archway Bead",   unit:'$/lf', group:'Bullnose/Misc', matTab:'CB', def:0 },
+  { key:'mat_cb_paper_90', label:"Paper 90°",       unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.281 },
+  { key:'mat_cb_paper_j',  label:"Paper J-Trim",    unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.281 },
+  { key:'mat_cb_paper_l',  label:"Paper L-Trim",    unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.281 },
+  { key:'mat_cb_paper_bull',label:"Paper Bullnose", unit:'$/lf', group:'Paper Bead',   matTab:'CB', def:0.438 },
+  { key:'mat_cb_paper_ic', label:"Paper Inside Corner",unit:'$/lf', group:'Paper Bead',matTab:'CB', def:0.263 },
   // ── Mud ($/pail or $/bag) ──
   { key:'mat_mud_ap17',    label:'All Purpose (17L)',    unit:'$/pail', group:'Mud', matTab:'MUD', def:0 },
   { key:'mat_mud_mach17',  label:'Machine (17L)',        unit:'$/pail', group:'Mud', matTab:'MUD', def:0 },
