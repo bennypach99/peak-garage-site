@@ -696,8 +696,8 @@ function getDoubleUnitConfig() {
   const topName = hasBasic ? '1/2" Basic Plywood Top' : '3/4" Sanded Maple Top';
   const basicSave = is4h ? 70 : is3h ? 65 : 60;
 
-  const duCasterCount = casterCount(4, duRows);
-  const duCasterCost = casterCost(4, duRows);
+  const duCasterCount = 8; // Always 2 sets of wheels for double units
+  const duCasterCost = 100; // Flat rate for 2 sets of wheels
   const duStainCost = is4h ? 100 : is3h ? 85 : 75;
 
   let total = duBase;
@@ -1049,14 +1049,10 @@ function drawPreviewDU() {
 
   if (hasCasters) {
     const botY = oy+toteUnitPxH;
-    const frontWheelCount = casterCount(4, duRows) / 2;
+    const frontWheelCount = 4; // Always show 4 front casters for double units
     const pts = [];
-    if (frontWheelCount > 1) {
-        for(let i = 0; i < frontWheelCount; i++) {
-            pts.push(ox + (totalPxW / (frontWheelCount - 1)) * i);
-        }
-    } else {
-        pts.push(ox + totalPxW / 2);
+    for(let i = 0; i < frontWheelCount; i++) {
+        pts.push(ox + (totalPxW / (frontWheelCount - 1)) * i);
     }
     pts.forEach(cx => {
       ctx.fillStyle='#555'; ctx.strokeStyle='#333'; ctx.lineWidth=0.6;
