@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.51</title>
+  <title>Drywall Tally v15.52</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.51 · May 19, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.52 · May 19, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -1660,7 +1660,7 @@ const DRYWALL_TYPES = [
   { label: 'Extras',        fullName: 'Extras',                     key: 'extras',   lengths: [],            color: '#0891b2', group: 'Extras',    isItems: true },
 ];
 
-const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)'];
+const EXTRAS_ITEMS = ['Green Glue', 'Drywall Screws (Box)', 'Premium Perlite (Box)'];
 
 // Returns sq ft per sheet given a drywall type key and length in feet
 // 54" types = 4.5 ft wide; durock48 3x5 panel = 15 sqft; all others = 4 ft wide
@@ -1673,7 +1673,7 @@ function sheetSqft(typeKey, lengthFt) {
 }
 
 // Extras category items
-const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights', 'Door Frame Single', 'Door Frame Double', 'Open Round Stairs'];
+const JOB_EXTRAS_ITEMS = ["2' × 4' Skylight", "4' × 4' Skylight", 'Peak', 'Niche', "OTA <64'", "OTA >64'", 'Pot Lights / Sprinkler Heads', 'Door Frame Single', 'Door Frame Double', 'Open Round Stairs'];
 // Job Costs — items contractor pays installer but doesn't purchase material
 const JOB_COSTS_ITEMS = ['Scaffolding', 'Cleaning', 'Touchup & Year End Service Calls'];
 
@@ -2335,7 +2335,7 @@ function renderAreaInfoBar() {
 
   JOB_EXTRAS_ITEMS.forEach(item=>{
     const v=A().counts['jobExtras']?.[item]||0;
-    if(v>0) chips.push(chip(item===('Pot Lights')?'Pot Lights':item, v));
+    if(v>0) chips.push(chip(item===('Pot Lights / Sprinkler Heads')?'Pot Lights / Sprinkler Heads':item, v));
   });
   const greenGlue=A().counts['extras']?.['Green Glue']||0;
   if(greenGlue>0) chips.push(chip('Green Glue', greenGlue));
@@ -3845,7 +3845,7 @@ function showReport() {
     'Peak':'tray_waffle_ceil','Niche':'tray_waffle_ceil',
     "OTA <64'":'ota_under64',"OTA >64'":'ota_over64',
     'Door Frame Single':'entry_door_single','Door Frame Double':'entry_door_double',
-    'Open Round Stairs':'open_round_stairs','Pot Lights':'pot_lights',
+    'Open Round Stairs':'open_round_stairs','Pot Lights / Sprinkler Heads':'pot_lights',
   };
   const texLabelMap = { smooth:'Smooth (L5)', spray:'Texture Spray', knockdown:'Knockdown Spray' };
 
@@ -4065,7 +4065,7 @@ function showReport() {
     const waffleAmt = hasTaping && (a.counts['ceilings']?.waffle||0)>0
       ? (gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx]) : 0;
 
-    // ── CB install ──
+    // ── CB install (taper paper bead + boarder steel/vinyl bead) ──
     let cbInstallLf = 0;
     CORNER_BEAD_ITEMS.forEach(item => {
       const qty = a.counts['cornerBead']?.[item]||0;
@@ -4073,7 +4073,23 @@ function showReport() {
       const lm = item.match(/\((\d+)'/);
       cbInstallLf += qty * (lm ? parseInt(lm[1]) : 8);
     });
-    const cbInstallGross = cbInstallLf * cbInstallRate;
+    const cbInstallGross = cbInstallLf * cbInstallRate; // taper paper bead install
+    const cbBoarderInstallRate = gPrices['cb_boarder_install'] > 0 ? gPrices['cb_boarder_install'] : 0.285;
+    const cbBoarderBullnoseRate = gPrices['cb_boarder_bullnose'] > 0 ? gPrices['cb_boarder_bullnose'] : 0.443;
+    // Count only non-Archway vinyl/metal beads for boarder (not paper/archway)
+    let cbBoarderLf = 0;
+    CORNER_BEAD_ITEMS.forEach(item => {
+      if (item.startsWith('Archway')) return;
+      const qty = a.counts['cornerBead']?.[item]||0;
+      if (!qty) return;
+      const lm = item.match(/\((\d+)'/);
+      cbBoarderLf += qty * (lm ? parseInt(lm[1]) : 8);
+    });
+    const cbBoarderInstallGross = cbBoarderLf * cbBoarderInstallRate;
+    // Perlite premium
+    const perliteQty = a.counts['extras']?.['Premium Perlite (Box)'] || 0;
+    const perliteRate = gPrices['perlite_premium'] > 0 ? gPrices['perlite_premium'] : 4.00;
+    const perliteGross = perliteQty * perliteRate;
 
     // ── Steel gross ──
     let steelLabGross = 0;
@@ -4154,7 +4170,7 @@ function showReport() {
     const durockLabor = durockSqft*durockRate;
     const eStarAmt = insEStarOn ? insEnergySqft*(gPrices['ins_energy_star']>0?gPrices['ins_energy_star']:INS_ENERGY_STAR_RATES[gRateIdx]) : 0;
     const areaLabTotal = boardingBase+fivetPremTotal+durockLabor+insLabTotal+eStarAmt
-      +steelLabGross+cbInstallGross+addOnGross+townPremAmt+labExtraTotal
+      +steelLabGross+cbInstallGross+cbBoarderInstallGross+perliteGross+addOnGross+townPremAmt+labExtraTotal
       +(hasTaping?tapingGross+cbFillGross+ceilPremAmt+cathAmt+waffleAmt+taperTownAmt:0);
 
     totalLabor += areaLabTotal;
@@ -4168,7 +4184,7 @@ function showReport() {
 
     // ── Union dues per area ──
     const local675Base = boardingBase+fivetPremTotal+durockLabor+insLabTotal+eStarAmt
-      +steelLabGross+cbInstallGross+addOnGross+townPremAmt+labExtraTotal;
+      +steelLabGross+cbInstallGross+cbBoarderInstallGross+perliteGross+addOnGross+townPremAmt+labExtraTotal;
     const tapersBase = hasTaping ? tapingGross+cbFillGross+ceilPremAmt+cathAmt+waffleAmt+taperTownAmt : 0;
     const local675Pct = gPrices['local675_union_pct']>0 ? gPrices['local675_union_pct']/100 : 0.265;
     const tapersPct   = gPrices['tapers_union_pct']>0  ? gPrices['tapers_union_pct']/100  : 0.23;
@@ -4355,7 +4371,7 @@ function showReport() {
       const boardBase = plainSqft + fivetSqft;
       if (boardBase > 0) html += labRow('Boarding Base', Math.round(boardBase)+' ft\u00b2', fmtC(boardRate*1000)+'/MSF', boardingBase);
       // Fireguard premium
-      if (fivetSqft > 0) html += labRow('Fireguard Premium', Math.round(fivetSqft)+' ft\u00b2', fmtC(fivetPrem*1000)+'/MSF', fivetPremTotal);
+      if (fivetSqft > 0) html += labRow('Fire Code Type C', Math.round(fivetSqft)+' ft\u00b2', fmtC(fivetPrem*1000)+'/MSF', fivetPremTotal);
       // Durock
       if (durockSqft > 0) html += labRow('Durock', Math.round(durockSqft)+' ft\u00b2', fmtC(durockRate*1000)+'/MSF', durockLabor);
 
@@ -4390,8 +4406,10 @@ function showReport() {
             html += labRow(tLabel, Math.round(allDwBoardable)+' ft\u00b2', fmtC(tRate)+'/MSF', townPremAmt);
           }
           if (eStarAmt > 0)     html += labRow('Energy Star', Math.round(insEnergySqft)+' ft\u00b2', fmtC(insEStarRate*1000)+'/MSF', eStarAmt);
-          if (cbInstallGross>0) html += labRow('CB Install', cbInstallLf+' lf', fmtC(cbInstallRate)+'/lf', cbInstallGross);
-          if (cbFillGross > 0)  html += labRow('CB Fill (Taper)', cbFillLf+' lf', fmtC(cbFillRate)+'/lf', cbFillGross);
+          if (cbBoarderInstallGross>0) html += labRow('Corner Bead Install — boarder', cbBoarderLf+' lf', fmtC(cbBoarderInstallRate)+'/lf', cbBoarderInstallGross);
+          if (cbInstallGross>0) html += labRow('Corner Beads Installed — paper', cbInstallLf+' lf', fmtC(cbInstallRate)+'/lf', cbInstallGross);
+          if (cbFillGross > 0)  html += labRow('Corner Beads Filled', cbFillLf+' lf', fmtC(cbFillRate)+'/lf', cbFillGross);
+          if (perliteGross > 0) html += labRow('Premium Perlite', perliteQty+' boxes', fmtC(perliteRate)+'/box', perliteGross);
           if (ceilPremAmt > 0)  html += labRow(texLabelMap[a.texture]||a.texture, ceilSqft.toFixed(0)+' ft\u00b2', fmtC(ceilPremRate)+'/MSF', ceilPremAmt);
           if (cathAmt > 0)      html += labRow('Cathedral Ceiling', '', fmtC(cathAmt)+' each', cathAmt);
           if (waffleAmt > 0)    html += labRow('Waffle / Tray Ceiling', '', fmtC(waffleAmt)+' each', waffleAmt);
@@ -4763,11 +4781,12 @@ const PRICE_FIELDS = [
   { key:'tape_hr_h10',  label:"9' – 10'",       rates:[0.39168,0.39951,0.40750], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
   { key:'tape_hr_h11',  label:"10' – 11'",      rates:[0.41610,0.42442,0.43291], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
   { key:'tape_hr_h12',  label:"11' – 12'",      rates:[0.43350,0.44217,0.45101], col:'hr', group:'Taping', sub:'High-Rise ($/ft²)', priceTab:'TP' },
-  // ── Corner Beads — Taper fill rates (CBA Art. 20.01/20.02) ──
-  { key:'cb_lr_fill',  label:'LR Regular filled ($/lf)',  rates:[0.90, 0.90, 0.90], col:'lr', group:'Corner Beads', priceTab:'TP' },
-  { key:'cb_lr_bull',  label:'LR Bullnose ($/lf)',         rates:[0.78, 0.79, 0.81], col:'lr', group:'Corner Beads', priceTab:'TP' },
-  { key:'cb_hr_fill',  label:'HR Regular filled ($/lf)',  rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
-  { key:'cb_hr_bull',  label:'HR Bullnose ($/lf)',         rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
+  // ── Corner Beads — Taper rates (CBA Art. 20.01/20.02) ──
+  { key:'cb_lr_fill',   label:'Corner Beads Filled — LR ($/lf)',       rates:[0.90, 0.90, 0.90], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  { key:'cb_lr_bull',   label:'Bullnose Beads — LR ($/lf)',             rates:[0.78, 0.79, 0.81], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  { key:'cb_lr_nocoat', label:'Nocoat Bead — LR ($/lf)',                rates:[0.67, 0.69, 0.70], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  { key:'cb_hr_fill',   label:'Corner Beads Filled — HR ($/lf)',        rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
+  { key:'cb_hr_bull',   label:'Nocoat Bead — HR ($/lf)',                rates:[0.42, 0.43, 0.44], col:'hr', group:'Corner Beads', priceTab:'TP' },
   // ── Ceiling Premiums (CBA Art. 20.01 / 20.02) ──
   { key:'ceil_smooth_lr',    label:'LR Smooth Ceiling ($/MSF)',       rates:[450.00, 450.00, 450.00], col:'lr', group:'Ceiling Premiums', priceTab:'TP' },
   { key:'ceil_smooth_hr',    label:'HR Smooth Ceiling ($/MSF)',       rates:[375.00, 375.00, 375.00], col:'hr', group:'Ceiling Premiums', priceTab:'TP' },
@@ -4775,13 +4794,14 @@ const PRICE_FIELDS = [
   { key:'ceil_spray_hr',     label:'HR Texture Spray ($/MSF)',        rates:[321.79, 328.23, 334.79], col:'hr', group:'Ceiling Premiums', priceTab:'TP' },
   { key:'ceil_knockdown_lr', label:'LR Knockdown Spray ($/MSF)',      rates:[566.11, 577.43, 588.98], col:'lr', group:'Ceiling Premiums', priceTab:'TP' },
   { key:'ceil_knockdown_hr', label:'HR Knockdown Spray ($/MSF)',      rates:[552.40, 563.45, 574.72], col:'hr', group:'Ceiling Premiums', priceTab:'TP' },
+  { key:'spray_min_lr',      label:'Spray Minimum — half house ($/MSF)', rates:[142.80, 145.66, 148.57], col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   // ── Ceiling Flat Rates (CBA Art. 20.02) ──
   { key:'ceil_cathedral_lr', label:'LR Cathedral Ceiling (each)',     rates:[216.90, 221.24, 225.67], col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   { key:'ceil_cathedral_hr', label:'HR Cathedral Ceiling (each)',     rates:[216.90, 221.24, 225.67], col:'hr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   { key:'ceil_waffle',       label:'Waffle Ceiling (per room)',       rates:[76.50,  78.03,  79.59],  col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
   { key:'ceil_tray',         label:'Tray Ceiling (per ceiling)',      rates:[76.50,  78.03,  79.59],  col:'lr', group:'Ceiling Premiums', flat:true, priceTab:'TP' },
-  // ── Corner Beads — Boarder install rate (CBA Art. 20.01(j)/20.02(l)) ──
-  { key:'cb_install',  label:'Bead Install ($/lf)', rates:[0.26, 0.26, 0.27], col:'lr', group:'Corner Beads', priceTab:'TP' },
+  // ── Corner Beads — paper install (taper) ──
+  { key:'cb_install',   label:'Corner Beads Installed — paper ($/lf)', rates:[0.26, 0.26, 0.27], col:'lr', group:'Corner Beads', priceTab:'TP' },
   // ── Taping Premiums ──
   { key:'taper_town',  label:'Townhouse premium — taper ($/MSF)', rates:[20.00, 20.40, 20.81], col:'lr', group:'Taping Premiums', priceTab:'TP' },
   { key:'taper_stack', label:'Stack T/H premium — taper ($/MSF)', rates:[85.15, 86.85, 88.59], col:'lr', group:'Taping Premiums', priceTab:'TP' },
@@ -4799,15 +4819,19 @@ const PRICE_FIELDS = [
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00, 174.00, 174.00], col:'hr', group:'Extras', priceTab:'EX' },
   // ── Drywall Premiums (on boarding sqft — DW tab) ──
-  { key:'fivet_premium',    label:'Fireguard Premium ($/ft²)',       rates:[0.105,0.107,0.109],   col:'lr', group:'Drywall Premiums', priceTab:'DW' },
-  { key:'townhouse_premium',label:'Townhouse premium ($/MSF)',       rates:[14.02, 14.30, 14.60], col:'lr', group:'Drywall Premiums', priceTab:'DW' },
-  { key:'stack_townhouse',  label:'Stack/B2B Townhouse premium ($/MSF)', rates:[40.80, 41.60, 42.40], col:'lr', group:'Drywall Premiums', priceTab:'DW' },
+  { key:'fivet_premium',      label:'Fire Code Type C ($/MSF)',              rates:[0.105,0.107,0.109],     col:'lr', group:'Drywall Premiums', priceTab:'DW' },
+  { key:'cb_boarder_install', label:'Corner Bead Install — boarder ($/lf)',  rates:[0.285,0.290,0.295],     col:'lr', group:'Drywall Premiums', priceTab:'DW' },
+  { key:'cb_boarder_bullnose',label:'Bullnose Corner Bead — boarder ($/lf)', rates:[0.443,0.451,0.460],     col:'lr', group:'Drywall Premiums', priceTab:'DW' },
+  { key:'perlite_premium',    label:'Premium Perlite ($/box)',                rates:[4.00, 4.08, 4.16],      col:'lr', group:'Drywall Premiums', flat:true, priceTab:'DW' },
+  { key:'townhouse_premium',  label:'Townhouse premium ($/MSF)',              rates:[14.02, 14.30, 14.60],   col:'lr', group:'Drywall Premiums', priceTab:'DW' },
+  { key:'stack_townhouse',    label:'Stack/B2B Townhouse premium ($/MSF)',    rates:[40.80, 41.60, 42.40],   col:'lr', group:'Drywall Premiums', priceTab:'DW' },
   // ── Job Costs ──
   { key:'scaffolding',     label:'Scaffolding ($)',             rates:[100.0,100.0,100.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
   { key:'cleaning',        label:'Cleaning ($)',                rates:[300.0,300.0,300.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
   { key:'tpy_flat',        label:'Touchup & Year End ($)',      rates:[280.0,280.0,280.0],   col:'lr', group:'Job Costs', priceTab:'EX' },
   { key:'local675_dues',   label:'Local 675 Union Dues',        rates:[26.5,26.5,26.5],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
   { key:'tapers_union',    label:'Tapers Union Dues',           rates:[22.1,23.0,23.9],      col:'lr', group:'Job Costs', pct:true, priceTab:'EX' },
+  { key:'pot_lights',      label:'Pot Lights / Sprinkler Heads ($/each)', rates:[4.28, 4.37, 4.46], col:'lr', group:'Extras', priceTab:'EX' },
 
 ];
 // Now that PRICE_FIELDS is defined, populate gPrices defaults
