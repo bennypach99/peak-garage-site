@@ -88,12 +88,24 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
 
 /* ── MOBILE HERO ── */
 .m-hero{
+  position:relative;
   background:linear-gradient(rgba(0,0,0,0.70),rgba(0,0,0,0.70)),url('https://raw.githubusercontent.com/bennypach99/peak-garage-site/main/images/background.png') center/cover no-repeat;
   margin:-1rem -1rem 1rem -1rem;
   padding:3.5rem 1rem 1.5rem;
   border-bottom:1px solid var(--bstrong);
 }
 .m-hero .gold-rule{margin:.6rem 0 0;}
+.m-hero-burst{
+  position:absolute;top:.5rem;right:.5rem;
+  width:110px;height:101px;
+  text-decoration:none;display:block;z-index:2;
+}
+.m-hero-burst img{width:100%;height:100%;object-fit:contain;}
+.m-hero-burst .burst-text{position:absolute;left:8%;right:12%;top:19%;bottom:26%;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;pointer-events:none;gap:1px;}
+.m-hero-burst .bt-main{font-size:.7rem;line-height:1.05;}
+.m-hero-burst .bt-sub{font-size:.45rem;margin-top:1px;}
 /* ── CONFIGURATOR PAGE ── */
 .config-card{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);padding:1rem;margin-bottom:.85rem;}
 .clabel{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
@@ -270,6 +282,13 @@ h1,h2,h3,h4{font-family:'Rajdhani',sans-serif;letter-spacing:.04em;}
   <!-- ══ PAGE: CONFIGURATOR ══ -->
   <div class="page active" id="page-config">
     <div class="m-hero">
+      <a class="m-hero-burst" href="https://peakgaragesolutions.ca/bin-tracker.html" target="_blank">
+        <img src="burst.png" alt="QR Bin Inventory Tool"/>
+        <div class="burst-text">
+          <span class="bt-main">QR Bin<br>Inventory<br>Tool</span>
+          <span class="bt-sub">Try Free!</span>
+        </div>
+      </a>
       <div class="slabel">Configurator</div>
       <div class="stitle">Build Your Unit</div>
       <div class="gold-rule"></div>
