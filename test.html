@@ -204,7 +204,40 @@ footer a:hover{color:var(--gold-light);}
   transition:transform .25s cubic-bezier(.34,1.56,.64,1);
 }
 .comic-burst-wrap:hover{transform:scale(1.1) rotate(-4deg);}
-.comic-burst-wrap img{
+
+.comic-burst-wrap-left{
+  position:absolute;
+  top:1.1rem;
+  left:1.5rem;
+  z-index:10;
+  text-decoration:none;
+  display:block;
+  width:150px;
+  height:138px;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.comic-burst-wrap-left:hover{transform:scale(1.1) rotate(4deg);}
+.comic-burst-wrap-left img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  position:absolute;
+  top:0;left:0;
+}
+.comic-burst-wrap-left .comic-burst-text{
+  position:absolute;
+  left:7%;
+  right:12%;
+  top:18%;
+  bottom:27%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  pointer-events:none;
+  gap:0;
+}.comic-burst-wrap img{
   width:100%;
   height:100%;
   object-fit:contain;
