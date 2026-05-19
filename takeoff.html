@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Drywall Tally v15.22</title>
+  <title>Drywall Tally v15.34</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
 
 
@@ -564,7 +564,7 @@
     Drywall Tally
   </div>
   <button id="drawer-new-job-btn" class="drawer-new-btn" onclick="newJob()">+ New Job</button>
-  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.22 · May 16, 2026</div>
+  <div style="font-size:10px;color:rgba(255,255,255,0.3);text-align:right;padding:2px 4px 6px;letter-spacing:0.04em">v15.34 · May 16, 2026</div>
   <div id="drawer-jobs-label" class="drawer-label">Jobs</div>
   <div class="drawer-job-list" id="drawer-job-list"></div>
   <div id="drawer-action-btns" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.12);flex-shrink:0">
@@ -3896,11 +3896,8 @@ function showReport() {
       return gPrices[priceKey] > 0 ? gPrices[priceKey] : (bracket ? bracket.rates[gRateIdx] : 0.39);
     })();
     const dwFivetRate = (() => {
-      const hMap = {"8'":'h8',"9'":'h9',"10'":'h10',"11'":'h11',"12'+":"h12"};
-      const hKey = hMap[dwCeilH] || 'h9';
-      const priceKey = (isHR ? 'fivet_hr_' : 'fivet_lr_') + hKey;
-      if (gPrices[priceKey] > 0) return gPrices[priceKey];
-      return dwBoardRate + FIVET_PREMIUM[gRateIdx];
+      const prem = gPrices['fivet_premium'] > 0 ? gPrices['fivet_premium'] : FIVET_PREMIUM[gRateIdx];
+      return dwBoardRate + prem;
     })();
     const DW_FIVET_KEYS = new Set(['fg48','fg54','dl48','tc48','hdl48','dens58','wr58']);
     const DW_DUROCK_KEYS = new Set(['durock48']);
@@ -3980,7 +3977,7 @@ function showReport() {
       'Peak': 'tray_waffle_ceil', 'Niche': 'tray_waffle_ceil',
       "OTA <64'": 'ota_under64', "OTA >64'": 'ota_over64',
       'Door Frame Single': 'entry_door_single', 'Door Frame Double': 'entry_door_double',
-      'Open Round Stairs': 'open_round_stairs',
+      'Open Round Stairs': 'open_round_stairs', 'Pot Lights': 'pot_lights',
     };
 
     // ── Collect all data needed for both sections ──
@@ -3995,7 +3992,11 @@ function showReport() {
         const matRate = gMatPrices[matKeyMap2[t.key]] || 0;
         const mc = sf * matRate;
         const lbl = t.labels ? t.labels[t.lengths.indexOf(l)] : l + "' sheets";
-        dwMatRows.push({ name: `${t.fullName} — ${lbl}`, sheets: qty, sqft: sf, unitPrice: matRate, matCost: mc, key: t.key });
+        const widthPrefix = t.labels ? '' : (t.key.includes('54') ? '54" × ' : '48" × ');
+        const cleanName = t.fullName
+          .replace(/\s*\(48"\s*&\s*54"\)/g, '')
+          .replace(/^\d+"\s*×\s*/,'');
+        dwMatRows.push({ name: `${widthPrefix}${cleanName} — ${lbl}`, sheets: qty, sqft: sf, unitPrice: matRate, matCost: mc, key: t.key });
         if (DUROCK_KEYS.has(t.key)) dwDurockSqft += sf;
         else if (FIVET_KEYS.has(t.key)) dwFivetSqft += sf;
         else dwPlainSqft += sf;
@@ -4108,6 +4109,22 @@ function showReport() {
           </span></div>`;
       });
 
+      // Drywall material subtotal
+      const dwMatTotal = dwMatRows.reduce((s, r) => s + r.matCost, 0);
+      const dwSheetTotal = dwMatRows.reduce((s, r) => s + r.sheets, 0);
+      const dwSqftTotal = dwMatRows.reduce((s, r) => s + r.sqft, 0);
+      if (dwMatRows.length > 0) {
+        html += `<div class="modal-row" style="font-weight:600;border-top:1.5px solid var(--border-md);margin-top:2px">
+          <span>Drywall Subtotal</span>
+          <span style="display:flex;gap:6px">
+            <span style="min-width:44px;text-align:right;font-family:'DM Mono',monospace;font-weight:600">${dwSheetTotal}</span>
+            <span style="min-width:50px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${Math.round(dwSqftTotal)}</span>
+            <span style="min-width:56px;text-align:right"></span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:600;color:${matCol}">${dwMatTotal>0?fmtC(dwMatTotal):''}</span>
+          </span>
+        </div>`;
+      }
+
       // Insulation
       if (insMatRows.length) {
         html += `<div class="modal-type-head" style="color:#db2777;margin-top:8px">Insulation</div>`;
@@ -4215,8 +4232,7 @@ function showReport() {
       const insExtrasEntries = INSULATION_EXTRAS_ITEMS.filter(item => (a.counts['insExtras']?.[item]||0)>0);
       const steelExtrasEntries = STEEL_EXTRAS_ITEMS.filter(item => (a.counts['steelExtras']?.[item]||0)>0);
       const mudExtrasEntries = MUD_EXTRAS_ITEMS.filter(item => (a.counts['mudExtras']?.[item]||0)>0);
-      const jobExtrasEntries = JOB_EXTRAS_ITEMS.filter(item => (a.counts['jobExtras']?.[item]||0)>0);
-      const hasExtras = extrasEntries.length || insExtrasEntries.length || steelExtrasEntries.length || mudExtrasEntries.length || jobExtrasEntries.length;
+      const hasExtras = extrasEntries.length || insExtrasEntries.length || steelExtrasEntries.length || mudExtrasEntries.length;
       if (hasExtras) {
         html += `<div class="modal-type-head" style="color:#0891b2;margin-top:8px">Extras</div>`;
         const extrasColHead = colHead([{label:'Qty',w:36},{label:'Mat Cost',w:70}]);
@@ -4276,21 +4292,6 @@ function showReport() {
               <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
               <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${matCol}">${mc>0?fmtC(mc):''}</span>
             </span></div>`;
-          });
-        }
-        if (jobExtrasEntries.length) {
-          html += `<div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px">Labour Extras</div>`;
-          html += extrasColHead;
-          jobExtrasEntries.forEach(item => {
-            const qty = a.counts['jobExtras'][item];
-            const rk = ADDON_RATE_MAP[item];
-            const rate = rk ? (gPrices[rk]||EXTRAS_RATES[rk]?.[gRateIdx]||0) : 0;
-            const amt = qty * rate;
-            html += `<div class="modal-row"><span>${item} <span style="font-size:11px;color:var(--muted)">(×${qty})</span></span>
-              <span style="display:flex;gap:6px">
-                <span style="min-width:36px;text-align:right;font-family:'DM Mono',monospace;font-weight:500">${qty}</span>
-                <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:#1d4ed8">${amt>0?fmtC(amt):''}</span>
-              </span></div>`;
           });
         }
       }
@@ -4356,40 +4357,73 @@ function showReport() {
         tapingExtras = tapingGross * (gPrices['taping_extra_1'] || 0);
         laborCost += (gPrices['taping_extra_2'] || 0);
         laborCost += tapingGross + cbGross + tapingExtras;
+      }
 
-        // ── LABOR SECTION — shown after taping calc ──
-        const labCol = '#1d4ed8';
-        const sectionHeadLab = `<div style="margin:14px 0 6px;padding:8px 10px;background:${labCol}18;border-left:3px solid ${labCol};border-radius:4px">
-          <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${labCol}">Labor</span>
-        </div>`;
-        const labColHead = `<div style="display:flex;justify-content:flex-end;gap:6px;padding:0 4px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">
-          <span style="min-width:60px;text-align:right">Sq Ft / Qty</span>
-          <span style="min-width:60px;text-align:right">Rate</span>
-          <span style="min-width:70px;text-align:right">Lab Cost</span>
-        </div>`;
-        const labRow = (label, qty, qtyUnit, rate, rateUnit, cost, color) =>
-          `<div class="modal-row"><span>${label}</span>
-            <span style="display:flex;gap:6px">
-              <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty}${qtyUnit}</span>
-              <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate}</span>
-              <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${color||labCol}">${cost>0?fmtC(cost):''}</span>
-            </span></div>`;
+      // ── LABOR SECTION — always shown ──
+      const labCol = '#1d4ed8';
+      const sectionHeadLab = `<div style="margin:14px 0 6px;padding:8px 10px;background:${labCol}18;border-left:3px solid ${labCol};border-radius:4px">
+        <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${labCol}">Labor</span>
+      </div>`;
+      const labColHead = `<div style="display:flex;justify-content:flex-end;gap:6px;padding:0 4px 2px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">
+        <span style="min-width:60px;text-align:right">Sq Ft / Qty</span>
+        <span style="min-width:60px;text-align:right">Rate</span>
+        <span style="min-width:70px;text-align:right">Lab Cost</span>
+      </div>`;
+      const labRow = (label, qty, qtyUnit, rate, rateUnit, cost, color) =>
+        `<div class="modal-row"><span>${label}</span>
+          <span style="display:flex;gap:6px">
+            <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${qty}${qtyUnit}</span>
+            <span style="min-width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)">${rate}</span>
+            <span style="min-width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:500;color:${color||labCol}">${cost>0?fmtC(cost):''}</span>
+          </span></div>`;
 
-        html += sectionHeadLab;
-        html += `<div class="modal-type-head" style="color:#1d4ed8">Base Rates</div>`;
-        html += labColHead;
+      html += sectionHeadLab;
+      html += `<div class="modal-type-head" style="color:#1d4ed8">Base Rates</div>`;
+      html += labColHead;
 
-        // Boarding base — all drywall except durock at base rate
-        const boardingBaseSqft = dwPlainSqft + dwFivetSqft;
-        if (boardingBaseSqft > 0) {
-          html += labRow('Boarding Base', Math.round(boardingBaseSqft), ' ft²', fmtC(dwBoardRate * 1000) + '/MSF', '', boardingBaseSqft * dwBoardRate);
+      // Boarding base — always shown
+      const plainFivetSqft = dwPlainSqft + dwFivetSqft;
+      if (plainFivetSqft > 0) {
+        html += labRow('Boarding Base', Math.round(plainFivetSqft), ' ft²', fmtC(dwBoardRate * 1000) + '/MSF', '', plainFivetSqft * dwBoardRate);
+      }
+
+      // Labour Extras — shown after boarding base
+      {
+        const jobCostsEntries2 = JOB_COSTS_ITEMS.filter(item => (a.counts['jobCosts']?.[item]||0)>0);
+        const labExtra2 = a.counts['labourExtra'] || {};
+        const allJobExtras = JOB_EXTRAS_ITEMS.filter(item => (a.counts['jobExtras']?.[item]||0)>0);
+        const hasLabExtras = allJobExtras.length > 0 || jobCostsEntries2.length > 0 ||
+          Object.values(labExtra2).some(v => v > 0);
+        if (hasLabExtras) {
+          html += `<div class="modal-type-head" style="color:#0891b2;margin-top:6px">Labour Extras</div>`;
+          // All job extras (skylights, OTA, pot lights, door frames, stairs, peak, niche)
+          allJobExtras.forEach(item => {
+            const qty = a.counts['jobExtras'][item];
+            const rk = ADDON_RATE_MAP[item];
+            const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
+            html += labRow(`${item} (×${qty})`, qty, '', fmtC(rate) + ' ea', '', qty * rate);
+          });
+          jobCostsEntries2.forEach(item => {
+            const JOB_COSTS_RATE_MAP2 = {'Scaffolding':'scaffolding','Cleaning':'cleaning','Touchup & Year End Service Calls':'tpy_flat'};
+            const rk = JOB_COSTS_RATE_MAP2[item] || 'scaffolding';
+            const rate = gPrices[rk] || 0;
+            html += labRow(item, '', '', fmtC(rate), '', rate);
+          });
+          const trades = [{key:'drywall',label:'Drywall Labour Extra'},{key:'insulation',label:'Insulation Labour Extra'},{key:'steel',label:'Steel Labour Extra'},{key:'taping',label:'Taping Labour Extra'}];
+          trades.forEach(tr => {
+            const val = labExtra2[tr.key] || 0;
+            if (val > 0) html += labRow(tr.label, val, ' units', '$1.00/unit', '', val);
+          });
         }
-        // Insulation base
-        const insBaseSqft = insMatRows.reduce((s, r) => s + r.sqft, 0);
-        const insBaseCost = insMatRows.reduce((s, r) => s + r.labCost, 0);
-        if (insBaseSqft > 0) {
-          html += labRow('Insulation Base', Math.round(insBaseSqft), ' ft²', fmtC(insLabRate * 1000) + '/MSF', '', insBaseCost);
-        }
+      }
+      // Insulation base — always shown
+      const insBaseSqft = insMatRows.reduce((s, r) => s + r.sqft, 0);
+      const insBaseCost = insMatRows.reduce((s, r) => s + r.labCost, 0);
+      if (insBaseSqft > 0) {
+        html += labRow('Insulation Base', Math.round(insBaseSqft), ' ft²', fmtC(insLabRate * 1000) + '/MSF', '', insBaseCost);
+      }
+
+      if (j.details?.tasks?.taping) {
         // Taping base
         if (tapingSqft > 0) {
           html += labRow('Taping Base', tapingSqft, ' ft²', fmtC(tapingRate2 * 1000) + '/MSF', '', tapingGross);
@@ -4408,7 +4442,7 @@ function showReport() {
 
           // Fireguard premium
           if (dwFivetSqft > 0) {
-            const fgPrem = dwFivetRate - dwBoardRate;
+            const fgPrem = gPrices['fivet_premium'] > 0 ? gPrices['fivet_premium'] : FIVET_PREMIUM[gRateIdx];
             html += labRow('Fireguard Premium', Math.round(dwFivetSqft), ' ft²', fmtC(fgPrem * 1000) + '/MSF', '', dwFivetSqft * fgPrem);
           }
           // Durock (full rate, not a premium on base)
@@ -4463,32 +4497,6 @@ function showReport() {
             const rate = gPrices['ceil_waffle']||[76.50,78.03,79.59][gRateIdx];
             html += labRow('Waffle / Tray Ceiling', '', '', fmtC(rate) + ' each', '', rate);
           }
-        }
-
-        // Labour Extras (formerly Add-Ons + Job Costs)
-        const potLightQty = a.counts['jobExtras']?.['Pot Lights'] || 0;
-        const jobCostsEntries2 = JOB_COSTS_ITEMS.filter(item => (a.counts['jobCosts']?.[item]||0)>0);
-        const labExtra2 = a.counts['labourExtra'] || {};
-        const hasLabExtras = potLightQty > 0 || jobCostsEntries2.length > 0 ||
-          Object.values(labExtra2).some(v => v > 0);
-        if (hasLabExtras) {
-          html += `<div class="modal-type-head" style="color:#0891b2;margin-top:6px">Labour Extras</div>`;
-          if (potLightQty > 0) {
-            const plRate = gPrices['pot_lights'] || EXTRAS_RATES.pot_lights[gRateIdx];
-            html += labRow(`Pot Lights (×${potLightQty})`, potLightQty, '', fmtC(plRate) + ' ea', '', potLightQty * plRate);
-          }
-          jobCostsEntries2.forEach(item => {
-            const JOB_COSTS_RATE_MAP2 = {'Scaffolding':'scaffolding','Cleaning':'cleaning','Touchup & Year End Service Calls':'tpy_flat'};
-            const rk = JOB_COSTS_RATE_MAP2[item] || 'scaffolding';
-            const rate = gPrices[rk] || 0;
-            html += labRow(item, '', '', fmtC(rate), '', rate);
-          });
-          // Per-trade labour extra dollar counters
-          const trades = [{key:'drywall',label:'Drywall Labour Extra'},{key:'insulation',label:'Insulation Labour Extra'},{key:'steel',label:'Steel Labour Extra'},{key:'taping',label:'Taping Labour Extra'}];
-          trades.forEach(tr => {
-            const val = labExtra2[tr.key] || 0;
-            if (val > 0) html += labRow(tr.label, val, ' units', '$1.00/unit', '', val);
-          });
         }
 
         html += `<div style="height:8px"></div>`;
@@ -4589,7 +4597,7 @@ function showReport() {
           const qty = a.counts[st.key]?.[item] || 0;
           if (!qty) return ss;
           const lm = item.match(/(\d+)'/); const len = lm ? parseInt(lm[1]) : 1;
-          return ss + qty * len * (gPrices['steel_labor'] > 0 ? gPrices['steel_labor'] : STEEL_LR_RATES[gRateIdx]);
+          return ss + qty * len * (gPrices['steel_labor'] || 0);
         }, 0);
       }, 0);
       const addOnGross = JOB_EXTRAS_ITEMS.reduce((s, item) => {
@@ -4600,8 +4608,7 @@ function showReport() {
         const rate = rk ? (gPrices[rk] || EXTRAS_RATES[rk]?.[gRateIdx] || 0) : 0;
         return s + qty * rate;
       }, 0);
-      laborCost += boardGross;
-      laborCost += dwDurockSqft * dwDurockRate;
+      laborCost += boardGross + durockGross;
       const steelExtras = steelGross * (gPrices['steel_extra_1'] || 0);
       laborCost += steelExtras;
       laborCost += (gPrices['steel_extra_2'] || 0);
@@ -4624,9 +4631,8 @@ function showReport() {
       laborCost += cbInstallGross;
 
       const durockGross = dwDurockSqft * dwDurockRate;
-      const boardingExtras = 0; // removed — was board_extra_1 which has been eliminated
       const local675Base = Math.max(0,
-        insGross + boardGross + boardingExtras + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross + durockGross
+        insGross + boardGross + steelGross + steelExtras + addOnGross + townPremiumCost + cbInstallGross + durockGross
         - boarderMatDeduct - insulatorMatDeduct
       );
 
@@ -4950,22 +4956,11 @@ const PRICE_FIELDS = [
   { key:'board_hr_h10', label:">9' to ≤10'",  rates:[0.397,0.405,0.413], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
   { key:'board_hr_h11', label:">10' to ≤11'", rates:[0.416,0.424,0.433], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
   { key:'board_hr_h12', label:">11' to ≤12'", rates:[0.434,0.442,0.451], col:'hr', group:'Boarding', sub:'High-Rise ($/ft²)', priceTab:'DW' },
+  { key:'fivet_premium', label:'Fireguard Premium ($/ft²)', rates:[0.105,0.107,0.109], col:'lr', group:'Boarding', priceTab:'DW' },
   // ── Boarding Extras at bottom ──
   // ── Durock ──
-  { key:'durock_rate',     label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Durock', priceTab:'DW' },
-  // ── Fireguard Boarding LR ──
-  { key:'fivet_lr_h8',  label:"≤8'",          rates:[0.457,0.466,0.475], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_lr_h9',  label:">8' to ≤9'",   rates:[0.478,0.488,0.497], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_lr_h10', label:">9' to ≤10'",  rates:[0.527,0.538,0.548], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_lr_h11', label:">10' to ≤11'", rates:[0.556,0.567,0.578], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_lr_h12', label:">11' to ≤12'", rates:[0.571,0.582,0.594], col:'lr', group:'Fireguard Boarding', sub:'Low-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  // ── Fireguard Boarding HR ──
-  { key:'fivet_hr_h8',  label:"≤9'",           rates:[0.482,0.492,0.502], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_hr_h9',  label:">8' to ≤9'",   rates:[0.482,0.492,0.502], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_hr_h10', label:">9' to ≤10'",  rates:[0.502,0.512,0.522], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_hr_h11', label:">10' to ≤11'", rates:[0.521,0.531,0.542], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  { key:'fivet_hr_h12', label:">11' to ≤12'", rates:[0.539,0.549,0.560], col:'hr', group:'Fireguard Boarding', sub:'High-Rise ⅝"/Type C/DL ($/ft²)', priceTab:'DW' },
-  // ── Steel HR ──
+  { key:'durock_labor',    label:'Durock ($/ft²)',              rates:[0.60,0.61,0.63],      col:'lr', group:'Boarding', priceTab:'DW' },
+  // ── Fireguard Boarding LR ──  // ── Fireguard Boarding HR ──  // ── Steel HR ──
   { key:'steel_hr_h8',  label:"≤8'",          rates:[0.343,0.349,0.357], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
   { key:'steel_hr_h9',  label:">8' to ≤9'",   rates:[0.361,0.368,0.376], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
   { key:'steel_hr_h10', label:">9' to ≤10'",  rates:[0.384,0.391,0.399], col:'hr', group:'Steel', sub:'High-Rise Studs ($/lf)', priceTab:'DW' },
@@ -4975,6 +4970,7 @@ const PRICE_FIELDS = [
   { key:'suspended_ceil',     label:'Suspended Ceiling ($/ft²)',     rates:[0.66,0.68,0.69],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'DW' },
   { key:'suspended_ceil_iso', label:'With Isolator Hangers ($/ft²)', rates:[0.71,0.73,0.74],   col:'hr', group:'Steel', sub:'Ceilings', priceTab:'DW' },
   // ── Steel Extras at bottom ──
+  { key:'steel_labor',   label:'Steel Labor ($/lf)',          rates:[0,0,0], col:'lr', group:'Steel', priceTab:'DW' },
   { key:'steel_extra_1', label:'Steel Extra 1 ($/ft²)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', priceTab:'DW' },
   { key:'steel_extra_2', label:'Steel Extra 2 (flat $)', rates:[0,0,0], col:'lr', group:'Steel', sub:'Extras', flat:true, priceTab:'DW' },
   // ── Insulation LR ──
@@ -5036,7 +5032,6 @@ const PRICE_FIELDS = [
   { key:'taper_stairs',    label:'Open Round Stairs — taper ($)',   rates:[162.93, 166.19, 169.52], col:'lr', group:'Extras', priceTab:'EX' },
   { key:'taper_town',      label:'Townhouse premium — taper ($/MSF)', rates:[20.00, 20.40, 20.81],  col:'lr', group:'Extras', priceTab:'EX' },
   { key:'taper_stack',     label:'Stack T/H premium — taper ($/MSF)', rates:[85.15, 86.85, 88.59],  col:'lr', group:'Extras', priceTab:'EX' },
-  { key:'durock_labor',    label:'Durock Premium ($/ft²)',       rates:[0.600, 0.610, 0.630], col:'lr', group:'Extras', priceTab:'DW' },
   { key:'pot_lights',      label:'Pot Lights/each ($)',         rates:[4.28,   4.37,   4.46],   col:'lr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_single',label:'Door Frame Single ($)',      rates:[87.00,  87.00,  87.00],  col:'hr', group:'Extras', priceTab:'EX' },
   { key:'entry_door_double',label:'Door Frame Double ($)',      rates:[174.00, 174.00, 174.00], col:'hr', group:'Extras', priceTab:'EX' },
