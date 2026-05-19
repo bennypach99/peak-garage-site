@@ -2400,7 +2400,7 @@ function switchToAbout(e) {
   if (e) e.preventDefault();
   document.getElementById('page-main').style.display = 'none';
   document.getElementById('page-bintracker').style.display = 'none';
-  document.getElementById('page-about').style.display = '';
+  document.getElementById('page-about').style.display = 'block';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
   document.getElementById('nav-about').classList.add('active');
   window.scrollTo(0,0);
