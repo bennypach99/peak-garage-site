@@ -495,11 +495,11 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
     </a>
   </div>
   <div class="nav-links" id="main-nav-links">
-    <a href="#features" id="nav-features" class="nav-tab-link" onclick="switchToMain(event); document.getElementById('features').scrollIntoView({behavior:'smooth'})">Features</a>
-    <a href="#gallery" id="nav-gallery" class="nav-tab-link" onclick="switchToMain(event); document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">Gallery</a>
-    <a href="#configurator" id="nav-configure" class="nav-tab-link" onclick="switchToMain(event); document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure</a>
-    <a href="#bin-tracker" id="nav-bintracker" class="nav-tab-link" onclick="switchToBinTracker(event)">Bin Tracker</a>
-    <a href="#about-page" id="nav-about" class="nav-tab-link" onclick="switchToAbout(event)">About</a>
+    <a href="#features" id="nav-features" class="nav-tab-link">Features</a>
+    <a href="#gallery" id="nav-gallery" class="nav-tab-link">Gallery</a>
+    <a href="#configurator" id="nav-configure" class="nav-tab-link">Configure</a>
+    <a href="#bin-tracker" id="nav-bintracker" class="nav-tab-link">Bin Tracker</a>
+    <a href="#about-page" id="nav-about" class="nav-tab-link">About</a>
   </div>
 </nav>
 
@@ -508,13 +508,13 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 <div class="hero">
   <div class="hero-glow"></div>
   <!-- ══ COMIC BURST ══ -->
-<a class="comic-burst-wrap-left" href="#bin-tracker" onclick="switchToBinTracker(event)" title="Free QR Code Labels included with your shelves!">
+<a class="comic-burst-wrap-left" href="#bin-tracker" id="burst-left" title="Free QR Code Labels included with your shelves!">
   <img src="burst.png" alt="Free QR Code Labels" />
   <div class="comic-burst-text">
     <span class="cbt-main">Free QR<br>Code Labels<br>included<br>with your<br>shelves!</span>
   </div>
 </a>
-<a class="comic-burst-wrap" href="#bin-tracker" onclick="switchToBinTracker(event)" title="Try our free Bin Inventory Tracker!">
+<a class="comic-burst-wrap" href="#bin-tracker" id="burst-right" title="Try our free Bin Inventory Tracker!">
   <img src="burst.png" alt="QR Bin Inventory Tool" />
   <div class="comic-burst-text">
     <span class="cbt-main">QR Bin<br>Inventory<br>Tool</span>
@@ -528,7 +528,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
   <div class="hero-btns">
     <button class="btn-gold" onclick="document.getElementById('configurator').scrollIntoView({behavior:'smooth'})">Configure for Price & Dimensions</button>
     <button class="btn-outline" onclick="document.getElementById('gallery').scrollIntoView({behavior:'smooth'})">See the Work</button>
-    <a class="btn-outline" href="#bin-tracker" onclick="switchToBinTracker(event)">
+    <a class="btn-outline" href="#bin-tracker" id="btn-outline-bintracker">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;flex-shrink:0;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       QR Bin Inventory Tool
     </a>
@@ -728,7 +728,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
     <div style="width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:.8rem auto 1.2rem;"></div>
     <p style="color:var(--muted);font-size:.9rem;line-height:1.75;margin-bottom:.8rem;">Once your rack is built, keeping track of what's inside every tote is easy with our free <strong style="color:var(--gold-light);">QR Bin Inventory Tool</strong>. Set up your shelf layout, assign items to bins, search across all your shelves, and even print QR code labels so any bin is one scan away.</p>
     <p style="color:var(--muted);font-size:.85rem;line-height:1.7;margin-bottom:2rem;">Works right in your browser — no app, no login, no cost. Your data stays on your device.</p>
-    <a href="#bin-tracker" onclick="switchToBinTracker(event)"
+    <a href="#bin-tracker" id="btn-open-bintracker"
        style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;padding:1rem 2.5rem;border-radius:8px;font-weight:700;font-family:'Rajdhani',sans-serif;font-size:1.1rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:opacity .2s;">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       Open QR Bin Inventory Tool
@@ -2395,42 +2395,50 @@ if (savedCode) {
 
 <script>
 // ── TAB SWITCHING ──
-function switchToMain(e) {
-  if (e) e.preventDefault();
-  document.getElementById('page-main').style.display = 'block';
-  document.getElementById('page-bintracker').style.display = 'none';
-  document.getElementById('page-about').style.display = 'none';
+function showTab(tab) {
+  document.getElementById('page-main').style.display        = (tab === 'main')       ? 'block' : 'none';
+  document.getElementById('page-bintracker').style.display  = (tab === 'bintracker') ? 'block' : 'none';
+  document.getElementById('page-about').style.display       = (tab === 'about')      ? 'block' : 'none';
   var hs = document.getElementById('householdScreen');
-  if (hs) hs.style.display = 'none';
+  if (hs) hs.style.display = (tab === 'bintracker' && !localStorage.getItem('peakHouseholdCode')) ? 'flex' : 'none';
   document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
+  var activeId = tab === 'main' ? null : tab === 'bintracker' ? 'nav-bintracker' : 'nav-about';
+  if (activeId) document.getElementById(activeId).classList.add('active');
+  window.scrollTo(0, 0);
 }
-function switchToAbout(e) {
-  if (e) e.preventDefault();
-  document.getElementById('page-main').style.display = 'none';
-  document.getElementById('page-bintracker').style.display = 'none';
-  document.getElementById('page-about').style.display = 'block';
-  var hs = document.getElementById('householdScreen');
-  if (hs) hs.style.display = 'none';
-  document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
-  document.getElementById('nav-about').classList.add('active');
-  window.scrollTo(0,0);
-}
-function switchToBinTracker(e) {
-  if (e) e.preventDefault();
-  document.getElementById('page-main').style.display = 'none';
-  document.getElementById('page-bintracker').style.display = 'block';
-  document.getElementById('page-about').style.display = 'none';
-  // Restore household screen if no code is saved
-  var hs = document.getElementById('householdScreen');
-  if (hs && !localStorage.getItem('peakHouseholdCode')) hs.style.display = 'flex';
-  document.querySelectorAll('.nav-tab-link').forEach(a => a.classList.remove('active'));
-  document.getElementById('nav-bintracker').classList.add('active');
-  window.scrollTo(0,0);
-}
-// Check URL hash on load
-(function(){
-  if (window.location.hash === '#bin-tracker') switchToBinTracker(null);
-})();
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Nav links
+  document.getElementById('nav-features').addEventListener('click', function(e) {
+    e.preventDefault(); showTab('main');
+    setTimeout(function(){ document.getElementById('features').scrollIntoView({behavior:'smooth'}); }, 50);
+  });
+  document.getElementById('nav-gallery').addEventListener('click', function(e) {
+    e.preventDefault(); showTab('main');
+    setTimeout(function(){ document.getElementById('gallery').scrollIntoView({behavior:'smooth'}); }, 50);
+  });
+  document.getElementById('nav-configure').addEventListener('click', function(e) {
+    e.preventDefault(); showTab('main');
+    setTimeout(function(){ document.getElementById('configurator').scrollIntoView({behavior:'smooth'}); }, 50);
+  });
+  document.getElementById('nav-bintracker').addEventListener('click', function(e) {
+    e.preventDefault(); showTab('bintracker');
+  });
+  document.getElementById('nav-about').addEventListener('click', function(e) {
+    e.preventDefault(); showTab('about');
+  });
+
+  // Other bin tracker links
+  ['burst-left','burst-right','btn-outline-bintracker','btn-open-bintracker'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('click', function(e){ e.preventDefault(); showTab('bintracker'); });
+  });
+});
+
+// Keep global aliases for any remaining inline callers
+function switchToMain(e)       { if(e) e.preventDefault(); showTab('main'); }
+function switchToAbout(e)      { if(e) e.preventDefault(); showTab('about'); }
+function switchToBinTracker(e) { if(e) e.preventDefault(); showTab('bintracker'); }
 </script>
 </body>
 </html>
