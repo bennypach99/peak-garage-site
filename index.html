@@ -451,7 +451,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 
 
 /* ── HOUSEHOLD WELCOME SCREEN ── */
-#householdScreen{position:fixed;inset:0;background:var(--ch);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+#householdScreen{position:fixed;inset:0;background:var(--ch);z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
 .hw-logo{height:56px;width:auto;margin-bottom:20px;opacity:.9;}
 .hw-title{font-family:'Rajdhani',sans-serif;font-size:1.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);text-align:center;margin-bottom:6px;}
 .hw-sub{font-size:.83rem;color:var(--muted);text-align:center;max-width:300px;line-height:1.65;margin-bottom:28px;}
@@ -950,7 +950,7 @@ body{font-family:'Open Sans',sans-serif;background:var(--ch);color:var(--text);m
 </div><!-- end #page-bintracker -->
 
 <!-- ══ ABOUT TAB ══ -->
-<div id="page-about" style="display:none;">
+<div id="page-about" style="display:none;"><div style="background:red;color:white;font-size:40px;padding:40px;z-index:9999;position:relative;">ABOUT PAGE IS SHOWING</div>
   <div class="section-wrap">
     <div class="section-label">About Us</div>
     <div class="section-title">Who We Are</div>
@@ -2385,7 +2385,10 @@ if (savedCode) {
   hideHouseholdScreen(savedCode);
   attachFirestoreListener(savedCode);
 } else {
-  showHouseholdScreen();
+  // Only show household screen if bin tracker tab is active (not on page load where main tab shows)
+  if (document.getElementById('page-bintracker').style.display !== 'none') {
+    showHouseholdScreen();
+  }
 }
 
 </script>
