@@ -1724,6 +1724,9 @@ function generateCode() {
 
 // ── HOUSEHOLD WELCOME SCREEN ──
 function showHouseholdScreen() {
+  // Only show if bin tracker tab is the active/visible tab
+  var bt = document.getElementById('page-bintracker');
+  if (bt && bt.style.display === 'none') return;
   document.getElementById('householdScreen').style.display = 'flex';
   document.getElementById('householdBadge').style.display = 'none';
 }
