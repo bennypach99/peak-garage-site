@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peak Garage Solutions — Mobile</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1c1c1e;
+            --text-color: #f5f5f7;
+            --text-muted: #a1a1a6;
+            --accent-color: #f4d03f;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            padding: 15px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #2c2c2e;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+
+        .tagline {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin: 25px 0 15px;
+            text-transform: uppercase;
+        }
+
+        h1 span {
+            background-color: var(--accent-color);
+            color: #000;
+            padding: 0 5px;
+            display: inline-block;
+        }
+
+        .btn {
+            display: block;
+            background-color: var(--accent-color);
+            color: #000;
+            text-align: center;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            font-weight: 700;
+            text-decoration: none;
+            margin: 20px 0;
+            font-size: 1.1rem;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 2px solid var(--text-color);
+        }
+
+        .section {
+            margin: 35px 0;
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            border-left: 4px solid var(--accent-color);
+            padding-left: 10px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+        }
+
+        .step-num {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-color);
+            opacity: 0.7;
+        }
+
+        .step-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .review-text {
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .review-author {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #2c2c2e;
+        }
+
+        td:last-child {
+            text-align: right;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            background-color: #2c2c2e;
+            border: 1px solid #3a3a3c;
+            color: #fff;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid #2c2c2e;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">PEAK GARAGE SOLUTIONS</div>
+        <div class="tagline">HAND-BUILT IN BURLINGTON • EST. 2024</div>
+    </header>
+
+    <main>
+        <h1>A Shelf Sized <span>For Your Totes</span></h1>
+        <p style="color: var(--text-muted);">Hand-built pine garage storage sized to fit Costco, HDX, and GSC 27 Gal / 102 L totes. From 2-bin starters to full walls.</p>
+        
+        <a href="tel:2897074755" class="btn">☏ TEXT 289-707-4755</a>
+        <a href="#quote" class="btn btn-secondary">GET A INSTANT QUOTE</a>
+
+        <div class="card" style="text-align: center; font-weight: bold;">
+            ⭐️ 4.9 Rating (60+ Reviews)<br>
+            ⏱️ 10–14 Day Custom Builds<br>
+            🚚 Delivery & Setup Included
+        </div>
+
+        <div class="section">
+            <h2>4 Steps. 2 Weeks.</h2>
+            <div class="card">
+                <div class="step-num">01</div>
+                <div class="step-title">Sketch or Shoot</div>
+                <p style="color: var(--text-muted);">Send a photo of your garage wall with rough dimensions, or just tell us how many totes you need to store.</p>
+            </div>
+            <div class="card">
+                <div class="step-num">02</div>
+                <div class="step-title">Instant Price</div>
+                <p style="color: var(--text-muted);">Text us for a fixed price layout within 24 hours.</p>
+            </div>
+            <div class="card">
+                <div class="step-num">03</div>
+                <div class="step-title">Workshop Build</div>
+                <p style="color: var(--text-muted);">Kiln-dried pine, pocket-screw joinery. Built by hand in our Aldershot shop.</p>
+            </div>
+            <div class="card">
+                <div class="step-num">04</div>
+                <div class="step-title">Delivered & Set Up</div>
+                <p style="color: var(--text-muted);">Free in-garage setup across the GTA core. Just wheel it in and you're done.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Delivery & Setup</h2>
+            <div class="card">
+                <p style="margin-bottom: 10px; font-size: 0.9rem;">Heavy-duty delivery is baked straight into the pricing for the following areas:</p>
+                <table>
+                    <tr><td>Burlington, Oakville, Milton</td><td>FREE</td></tr>
+                    <tr><td>Waterdown, Hamilton, Dundas</td><td>FREE</td></tr>
+                    <tr><td>Mississauga</td><td>$40</td></tr>
+                    <tr><td>Toronto, Brampton, Etobicoke</td><td>$50</td></tr>
+                    <tr><td>Guelph, Kitchener-Waterloo</td><td>$50</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Word of Mouth</h2>
+            <div class="card">
+                <p class="review-text">"Benny measured our wall, drew it up the same afternoon, and installed two weeks later. Cleanest the garage has been since we moved in."</p>
+                <p class="review-author">— Sarah & Dev, Aldershot</p>
+            </div>
+            <div class="card">
+                <p class="review-text">"I priced Gladiator and the Costco systems — this was half, looks twice as good, and the bins actually fit without wiggle."</p>
+                <p class="review-author">— Tom R., Tyandaga</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Bonus Web App Included</h2>
+            <div class="card" style="border: 1px dashed var(--accent-color);">
+                <strong style="color: var(--accent-color);">Scan a Bin, See Inside</strong>
+                <p style="font-size: 0.9rem; margin-top: 5px; color: var(--text-muted);">Every shelf ships with waterproof QR labels and a free household-syncing web app to easily index and track your gear. No app store accounts required.</p>
+            </div>
+        </div>
+
+        <div id="quote" class="section">
+            <h2>Let's Build</h2>
+            <form>
+                <label for="name">Name</label>
+                <input type="text" id="name" placeholder="Sarah Cavanaugh" required>
+
+                <label for="contact">Phone or Email</label>
+                <input type="text" id="contact" placeholder="289-707-4755" required>
+
+                <label for="postal">Postal Code</label>
+                <input type="text" id="postal" placeholder="L7T 1A1" required>
+
+                <label for="size">Build Size</label>
+                <select id="size">
+                    <option>Not sure — recommend a size</option>
+                    <option>2×3 (6 bins)</option>
+                    <option>2×4 (8 bins)</option>
+                    <option>3×4 (12 bins)</option>
+                    <option>4×4 (16 bins)</option>
+                    <option>5×4 (20 bins)</option>
+                    <option>6×4 (24 bins)</option>
+                    <option>Workbench + Bins layout</option>
+                    <option>Custom Layout</option>
+                </select>
+
+                <label for="notes">Notes</label>
+                <textarea id="notes" rows="4" placeholder="Feel free to detail custom dimensions or features..."></textarea>
+
+                <button type="submit" class="btn" style="width: 100%; border: none; cursor: pointer;">SEND QUOTE REQUEST →</button>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>Benny Pacheco • Owner & Builder</p>
+        <p style="margin-top: 5px;">© 2026 Peak Garage Solutions</p>
+    </footer>
+
+</body>
+</html>
