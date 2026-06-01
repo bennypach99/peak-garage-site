@@ -124,7 +124,7 @@ function Hero() {
           <div className="pg-hero-stats" style={{ display: 'flex', gap: 32, marginTop: 48, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             <div><span style={{ color: 'var(--yellow)' }}>★ 4.9</span> · 60+ REVIEWS</div>
             <div>240+ DELIVERED</div>
-            <div>10–14 DAY BUILDS</div>
+            <div>READY IN DAYS</div>
             <div>DELIVERY + SETUP INCLUDED</div>
           </div>
         </div>
@@ -180,7 +180,7 @@ function Hero() {
       </div>
 
       {/* Marquee */}
-      <Marquee items={['HEAVY DUTY','★','CUSTOM SIZING','★','LOCAL DELIVERY','★','HAND-BUILT IN ALDERSHOT','★','MODULAR','★','10–14 DAY BUILDS','★','FAST QUOTE','★']} />
+      <Marquee items={['HEAVY DUTY','★','CUSTOM SIZING','★','LOCAL DELIVERY','★','HAND-BUILT IN BURLINGTON','★','MODULAR','★','READY IN DAYS','★','FAST QUOTE','★']} />
     </section>
   );
 }
@@ -219,7 +219,7 @@ function Gallery() {
       <div className="pg-wrap" style={{ padding: '0 48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40 }}>
           <div>
-            <div className="pg-eyebrow" style={{ marginBottom: 12 }}>// 02 — IN THE WILD</div>
+            <div className="pg-eyebrow" style={{ marginBottom: 12 }}>// 01 — IN THE WILD</div>
             <h2 className="pg-display" style={{ fontSize: 88, margin: 0 }}>
               SHIPPED<br/>THIS YEAR.
             </h2>
@@ -258,7 +258,7 @@ function How() {
   const steps = [
     { n: '01', t: 'SKETCH OR SHOOT', d: 'Photo of your garage wall plus rough dimensions. Or just tell me how many totes you need to store.' },
     { n: '02', t: 'INSTANT PRICE', d: 'Use the builder above for an instant fixed price. Or text me — I quote back within 24 hours.' },
-    { n: '03', t: 'WORKSHOP BUILD', d: 'Kiln-dried pine, pocket-screw joinery, stained or natural. Built in my Aldershot shop in 10–14 days.' },
+    { n: '03', t: 'WORKSHOP BUILD', d: 'Kiln-dried pine, pocket-screw joinery, stained or natural. Built by hand in my Burlington shop — most orders done by the end of the week.' },
     { n: '04', t: 'DELIVERED & SET UP', d: 'Next-day or two-day delivery once it’s ready. Free in-garage setup across the GTA core — wheel it in (if you ordered casters) and you’re done.' },
   ];
   return (
@@ -305,10 +305,10 @@ function About() {
           </h2>
           <div className="pg-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginTop: 40 }}>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--bone-d70)', margin: 0 }}>
-              I'm {PG_OWNER}. I started Peak Garage Solutions in {PG_EST} because I couldn't find a shelf sized right for the 27 Gal / 102 L totes that everyone in Burlington has from Costco. So I built one for my own garage. Then a neighbor wanted one.
+              I'm Benny. I started Peak Garage Solutions in {PG_EST} because I couldn't find a shelf sized right for the 27 Gal / 102 L totes that everyone in Burlington has from Costco. So I built one for my own garage. Then a neighbor wanted one.
             </p>
             <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--bone-d70)', margin: 0 }}>
-              Two years and a few hundred builds later, it's still just me in the shop. Every shelf is built by hand, by the same set of hands. I quote it, I build it, I deliver it. That's the whole pitch.
+              Two years and many builds later, it's still just me in the shop. Every shelf is built by hand, by the same set of hands. I quote it, I build it, I deliver it. That's the whole pitch.
             </p>
           </div>
           <div style={{ marginTop: 40, fontFamily: 'var(--display)', fontWeight: 800, fontSize: 22, letterSpacing: '-0.01em', textTransform: 'uppercase' }}>
@@ -478,7 +478,7 @@ function FAQ() {
     ['How heavy can each shelf go?', "Each shelf level handles 2,000 lb total — these aren’t wire racks. If you go with the wheel casters, each individual caster is rated to 250 lb, so even a fully loaded 24-bin wall rolls easy."],
     ['Do you install?', "Yes — delivery and in-garage setup are included in the price for Milton, Burlington, Waterdown/Stoney Creek, Hamilton/Dundas, and Oakville. Mississauga is $40 flat, Toronto/Brampton/Etobicoke/Cambridge/Waterloo/Guelph is $50 flat, and further out (Brantford, Grimsby, Niagara) we’ll work it out. No drilling required unless you want them wall-anchored."],,
     ['Can I add a workbench later?', "Yes — everything is modular. Workbench bays, extra columns, casters, and stain finishes can all be added later."],
-    ['How long does it take?', "Workshop build is 10–14 days typical — then most orders are delivered the next day or within two days of being ready. Holiday season (Oct–Dec) runs about 3 weeks. A 25% deposit holds your slot in the build queue."],,
+    ['How long does it take?', "Usually 2 to 7 days — most orders are done by the end of the week. Holiday season (Oct–Dec) can run a little longer. A 25% deposit holds your spot in the build queue."],,
     ['Payment?', "E-transfer, debit, or cash on delivery. 25% deposit up front, balance on delivery."],
     ['Do the totes come with the shelf?', "Optional. Costco 27 Gal black-and-yellow totes are $15 each as an add-on, or bring your own."],
   ];
@@ -546,6 +546,18 @@ function Contact() {
 
 function QuoteForm() {
   const [sent, setSent] = React.useState(false);
+  const [build, setBuild] = React.useState('');
+
+  // When the user clicks "Lock this build" in the configurator, the spec + price
+  // arrive here so they only have to add their contact info.
+  React.useEffect(() => {
+    function onQuote(e) {
+      setBuild((e.detail && e.detail.summary) || '');
+      setSent(false);
+    }
+    window.addEventListener('pg-load-quote', onQuote);
+    return () => window.removeEventListener('pg-load-quote', onQuote);
+  }, []);
   if (sent) {
     return (
       <div style={{ background: 'var(--ink2)', padding: 32, border: '1px solid var(--ink4)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', minHeight: 480 }}>
@@ -562,6 +574,16 @@ function QuoteForm() {
     <form onSubmit={e => { e.preventDefault(); setSent(true); }}
       style={{ background: 'var(--ink2)', padding: 32, display: 'flex', flexDirection: 'column', gap: 14, border: '1px solid var(--ink4)' }}>
       <div className="pg-eyebrow" style={{ marginBottom: 8 }}>// QUOTE FORM</div>
+
+      {build && (
+        <div style={{ background: 'var(--yellow-pale)', border: '1px solid var(--yellow)', padding: '14px 16px', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', color: 'var(--yellow)' }}>YOUR BUILD</div>
+            <button type="button" onClick={() => setBuild('')} style={{ background: 'none', border: 'none', color: 'var(--bone-d50)', fontFamily: 'var(--mono)', fontSize: 11, cursor: 'pointer' }}>CLEAR ✕</button>
+          </div>
+          <pre style={{ margin: '8px 0 0', fontFamily: 'var(--mono)', fontSize: 12, lineHeight: 1.5, color: 'var(--bone)', whiteSpace: 'pre-wrap' }}>{build}</pre>
+        </div>
+      )}
       {[
         ['NAME','Sarah Cavanaugh','name'],
         ['PHONE OR EMAIL', PG_PHONE,'contact'],
@@ -572,12 +594,6 @@ function QuoteForm() {
           <input name={n} placeholder={p} required style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink4)', padding: '8px 0', color: 'var(--bone)', fontFamily: 'var(--mono)', fontSize: 14, outline: 'none' }} />
         </label>
       ))}
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', color: 'var(--bone-d50)' }}>BUILD SIZE</span>
-        <select style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink4)', padding: '8px 0', color: 'var(--bone)', fontFamily: 'var(--mono)', fontSize: 14, outline: 'none', appearance: 'none' }}>
-          {['Not sure — recommend a size','2×3 (6 bins)','2×4 (8 bins)','3×4 (12 bins)','4×4 (16 bins)','5×4 (20 bins)','6×4 (24 bins)','6×6 (36 bins) full wall','Workbench + bins','Custom — I\'ll describe below'].map(o => <option key={o} style={{ background: 'var(--ink)' }}>{o}</option>)}
-        </select>
-      </label>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', color: 'var(--bone-d50)' }}>NOTES</span>
         <textarea rows={3} placeholder="Garage photo helps a lot — text it to me after." style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink4)', padding: '8px 0', color: 'var(--bone)', fontFamily: 'var(--mono)', fontSize: 14, outline: 'none', resize: 'none' }} />
