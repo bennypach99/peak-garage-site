@@ -316,11 +316,10 @@ function About() {
           </div>
         </div>
         <div style={{ aspectRatio: '3/4', background: 'var(--ink2)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'repeating-linear-gradient(45deg, var(--ink2) 0 12px, var(--ink3) 12px 24px)' }} />
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--bone-d50)', letterSpacing: '0.1em', textAlign: 'center', textTransform: 'uppercase' }}>
-            [ PORTRAIT ·<br/>{PG_OWNER.toUpperCase()}<br/>IN THE WORKSHOP ]
-          </div>
-          <div style={{ position: 'absolute', top: 16, left: 16, background: 'var(--yellow)', color: 'var(--ink)', padding: '6px 10px', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em' }}>// FIG. 4</div>
+          <img src={PG_R('workshop', 'assets/workshop.jpg')} alt={`${PG_OWNER} in the workshop`}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          <div style={{ position: 'absolute', top: 16, left: 16, background: 'var(--yellow)', color: 'var(--ink)', padding: '6px 10px', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.12em', zIndex: 2 }}>// FIG. 4</div>
         </div>
       </div>
     </section>
