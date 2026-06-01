@@ -1,0 +1,203 @@
+/* ── PEAK GARAGE SOLUTIONS — Brand styles ─────────────────── */
+
+:root{
+  --ink:      #0E0E0E;
+  --ink2:     #161616;
+  --ink3:     #1F1F1F;
+  --ink4:     #2A2A2A;
+  --bone:     #F4F1EA;
+  --bone2:    #E8E3D7;
+  --bone-d50: rgba(244,241,234,0.50);
+  --bone-d70: rgba(244,241,234,0.70);
+  --bone-d12: rgba(244,241,234,0.12);
+  --bone-d22: rgba(244,241,234,0.22);
+  --yellow:    #F5D820;
+  --yellow-d:  #C9B617;
+  --yellow-l:  #FFE74A;
+  --yellow-pale:#2A2410;
+  --gold:     #C9A84C; /* used in bin-tracker only */
+  --display:  'Archivo','Inter Tight',system-ui,sans-serif;
+  --sans:     'Inter',system-ui,sans-serif;
+  --mono:     'IBM Plex Mono',ui-monospace,monospace;
+  --rajdhani: 'Rajdhani','Archivo',system-ui,sans-serif; /* for bin-tracker echo */
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss01','cv11';
+  min-width: 1280px; /* desktop design — horizontal scroll on narrower screens */
+}
+a { color: inherit; text-decoration: none; cursor: pointer; }
+button { font-family: inherit; cursor: pointer; }
+img { max-width: 100%; display: block; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary { list-style: none; }
+
+/* layout helper */
+.pg-wrap { max-width: 1440px; margin: 0 auto; padding: 0 48px; }
+
+/* mono label */
+.pg-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+
+/* big display text helper */
+.pg-display {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  line-height: 0.9;
+}
+
+/* skewed yellow highlight */
+.pg-hl {
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 0 14px;
+  display: inline-block;
+  transform: skewX(-6deg);
+}
+
+/* buttons */
+.pg-btn {
+  background: var(--yellow);
+  color: var(--ink);
+  border: none;
+  padding: 18px 26px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transition: filter .15s, transform .15s;
+}
+.pg-btn:hover { filter: brightness(1.07); }
+.pg-btn:active { transform: translateY(1px); }
+.pg-btn-ghost {
+  background: transparent;
+  color: var(--bone);
+  border: 1px solid var(--bone);
+}
+.pg-btn-ghost:hover { background: var(--bone); color: var(--ink); }
+.pg-btn-small {
+  padding: 10px 16px;
+  font-size: 12px;
+}
+
+/* spec card row */
+.pg-spec-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--ink4);
+  padding: 12px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+.pg-spec-row .k { color: var(--bone-d50); }
+
+/* hide scrollbars inside artboards */
+.pg-noscroll::-webkit-scrollbar { display: none; }
+.pg-noscroll { scrollbar-width: none; }
+
+/* anchor offset for sticky nav */
+section[id] { scroll-margin-top: 72px; }
+
+/* Sticky bottom CTA bar — visible on mobile only.  Renders unconditionally; CSS
+   hides it above 768px so desktop is unaffected. */
+.pg-sticky-cta {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: none;
+  gap: 8px;
+  background: var(--ink2);
+  border-top: 2px solid var(--yellow);
+  padding: 10px 14px;
+}
+.pg-sticky-cta .pg-btn { flex: 1; justify-content: center; padding: 14px 18px; font-size: 13px; }
+
+/* ─────────────────────────────────────────── Mobile (≤768px) ───── */
+@media (max-width: 768px) {
+  body { min-width: 0; padding-bottom: 78px; } /* leave room for sticky bar */
+
+  .pg-sticky-cta { display: flex; }
+
+  /* Container padding */
+  .pg-wrap { padding: 0 16px !important; }
+
+  /* Section padding shrunk */
+  section { padding-top: 48px !important; padding-bottom: 48px !important; }
+
+  /* Display headings — scale down */
+  .pg-display { font-size: clamp(36px, 11vw, 64px) !important; }
+
+  /* All multi-column grids collapse to one column */
+  .pg-col-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+
+  /* Some grids stay 2-col on mobile (smaller things — like add-on cards) */
+  .pg-addons-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+
+  /* Build-type picker (3 doubles) wraps to 1 column on phone, single full width above */
+  .pg-buildtype-grid { grid-template-columns: 1fr !important; gap: 6px !important; }
+
+  /* Nav — hide center links + ghost button; show logo + main CTA */
+  .pg-nav-links { display: none !important; }
+  .pg-nav-ghost { display: none !important; }
+  .pg-nav { padding: 0 16px !important; }
+
+  /* Top bar — hide the long copy, keep phone link */
+  .pg-topbar-detail { display: none !important; }
+
+  /* Hero stacks: shrink padding + hide spec overlay on the image */
+  .pg-hero-grid { padding: 32px 16px 24px !important; gap: 28px !important; }
+  .pg-hero-photo svg { display: none; } /* the spec callouts crowd a small image */
+  .pg-hero-stats { flex-wrap: wrap !important; gap: 14px !important; }
+
+  /* Hero CTA row stacks */
+  .pg-hero-cta { flex-direction: column !important; gap: 10px !important; }
+  .pg-hero-cta .pg-btn { width: 100%; justify-content: center; }
+
+  /* Builder: shop drawing first, then price card, then controls */
+  .pg-builder-grid .pg-builder-controls { padding: 20px !important; }
+
+  /* Gallery: 1 column, taller card so the photos breathe */
+  .pg-gallery-grid a { aspect-ratio: 5/3.4 !important; }
+
+  /* How — borders look messy stacked, swap to gapped cards */
+  .pg-how-grid { background: transparent !important; border: none !important; gap: 1px !important; }
+
+  /* Reviews — shrink min-height since stacked */
+  .pg-reviews-grid > div { min-height: 0 !important; }
+
+  /* Delivery — map below zone list, fixed reasonable height */
+  .pg-delivery-grid > div:last-child { aspect-ratio: 5/4 !important; }
+
+  /* Bin tracker — phone frame shrinks but stays usable */
+  .pg-tracker-phone { transform: scale(0.78); transform-origin: top center; margin-bottom: -120px; }
+
+  /* Footer wraps */
+  .pg-footer-top { flex-direction: column !important; align-items: flex-start !important; gap: 24px !important; }
+  .pg-footer-links { flex-wrap: wrap !important; gap: 24px !important; }
+  .pg-footer-bottom { flex-direction: column !important; gap: 8px !important; align-items: flex-start !important; }
+
+  /* Sticky nav stays usable */
+  .pg-nav-cta-row { gap: 6px !important; }
+}
+
+/* Tweaks panel hides into corner — make sure z-index over content */

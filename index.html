@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Peak Garage Solutions — Custom Tote Storage · Burlington</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Hand-built custom garage shelves sized for 27 Gal / 102 L totes — Costco, HDX, GSC. Local delivery across Burlington & surrounding areas. Configure your build and get an instant price." />
+<link rel="icon" href="images/logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="peak-styles.css">
+<style>
+  @keyframes pg-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+</style>
+
+<!-- ──────────────────────────────────────────────────────────────
+     IMAGE MAP — all images load from the images/ folder in this repo.
+     If you rename a photo, update it here. logo + gallery1–9.
+     ────────────────────────────────────────────────────────────── -->
+<script>
+  window.__resources = {
+    logo:     'images/logo.png',
+    gallery1: 'images/gallery1.jpg',
+    gallery2: 'images/gallery2.jpg',
+    gallery3: 'images/gallery3.jpg',
+    gallery4: 'images/gallery4.jpg',
+    gallery5: 'images/gallery5.jpg',
+    gallery6: 'images/gallery6.jpg',
+    gallery7: 'images/gallery7.jpg',
+    gallery8: 'images/gallery8.jpg',
+    gallery9: 'images/gallery9.jpg',
+    binTracker: 'bin-tracker.html',
+  };
+</script>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="peak-components.jsx"></script>
+<script type="text/babel" src="peak-configurator.jsx"></script>
+<script type="text/babel" src="peak-bintracker.jsx"></script>
+<script type="text/babel" src="peak-mobile.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "#F5D820",
+  "showBinTracker": true,
+  "showMarquee": true
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  React.useEffect(() => {
+    document.documentElement.style.setProperty('--yellow', t.accent);
+  }, [t.accent]);
+
+  return (
+    <>
+      <TopBar />
+      <Nav />
+      <Hero />
+      <Configurator />
+      <Gallery />
+      <How />
+      <About />
+      <Reviews />
+      <Delivery />
+      {t.showBinTracker && <BinTracker />}
+      <FAQ />
+      <Contact />
+      <Footer />
+      <StickyBottomBar />
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Brand accent">
+          <TweakColor
+            label="Accent color"
+            value={t.accent}
+            options={['#F5D820','#FFB400','#C9A84C','#FF6B35','#22C55E','#7C3AED']}
+            onChange={v => setTweak('accent', v)}
+          />
+        </TweakSection>
+        <TweakSection title="Sections">
+          <TweakToggle label="Bin tracker section" value={t.showBinTracker} onChange={v => setTweak('showBinTracker', v)} />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+</body>
+</html>
