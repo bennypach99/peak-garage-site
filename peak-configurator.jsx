@@ -135,7 +135,7 @@ function Configurator() {
       <div className="pg-wrap" style={{ padding: '0 48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40 }}>
           <div>
-            <div className="pg-eyebrow" style={{ marginBottom: 12 }}>// 01 — THE BUILDER</div>
+            <div className="pg-eyebrow" style={{ marginBottom: 12 }}>// 02 — THE BUILDER</div>
             <h2 className="pg-display" style={{ fontSize: 96, margin: 0 }}>
               BUILD<br/>
               <span className="pg-hl">YOUR SHELF.</span>
@@ -288,7 +288,30 @@ function Configurator() {
                 ))}
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-                <a href="#quote" className="pg-btn" style={{ flex: 1, justifyContent: 'center' }}>LOCK THIS BUILD →</a>
+                <button type="button" className="pg-btn" style={{ flex: 1, justifyContent: 'center' }}
+                  onClick={() => {
+                    // Build a human-readable spec + price and hand it to the quote form.
+                    const addonNames = [];
+                    if (addons.has('top')) addonNames.push('¾″ sanded maple top');
+                    else if (isDouble || addons.has('basictop')) addonNames.push('½″ basic top');
+                    if (addons.has('stain')) addonNames.push(`${stainName.toLowerCase()} stain`);
+                    if (addons.has('casters')) addonNames.push('wheel casters');
+                    if (addons.has('totes')) addonNames.push(`${slots} totes`);
+                    const name = isDouble
+                      ? `Double ${DU_PROPS[dualKind].label} unit w/ shelves`
+                      : `Custom ${cols}×${rows} (${slots} totes)`;
+                    const summary =
+                      `${name}\n` +
+                      (addonNames.length ? `Add-ons: ${addonNames.join(', ')}\n` : 'No add-ons\n') +
+                      `Dimensions: ${wIn}″ W × ${hTotal}″ H × 28.5″ D\n` +
+                      `Estimated total: $${total.toLocaleString()}`;
+                    window.dispatchEvent(new CustomEvent('pg-load-quote', { detail: { summary } }));
+                    const el = document.getElementById('quote');
+                    if (el) {
+                      const top = el.getBoundingClientRect().top + window.scrollY - 40;
+                      window.scrollTo({ top, behavior: 'smooth' });
+                    }
+                  }}>LOCK THIS BUILD →</button>
                 <a href={PG_PHONE_SMS} className="pg-btn pg-btn-ghost" style={{ justifyContent: 'center' }}>☏ TEXT</a>
               </div>
             </div>
