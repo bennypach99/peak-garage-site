@@ -11,11 +11,11 @@ function BinTracker() {
             <span className="pg-hl">SEE INSIDE.</span>
           </h2>
           <p style={{ fontSize: 17, lineHeight: 1.5, color: 'var(--bone-d70)', marginTop: 24, maxWidth: 520 }}>
-            Every Peak shelf ships with waterproof QR labels and a free web app — <strong style={{ color: 'var(--yellow)' }}>Peak Bin Finder</strong>. Scan a bin with your phone, log what's in it, search across every bin from anywhere. No app store. No account. Shared with your household.
+            Every Peak shelf ships with QR labels and a free web app — <strong style={{ color: 'var(--yellow)' }}>Peak Bin Finder</strong>. Scan a bin with your phone, log what's in it, search across every bin from anywhere. No app store. No account. Shared with your household.
           </p>
           <div className="pg-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 32 }}>
             {[
-              ['QR LABELS', 'Avery 82805 waterproof · 24 per sheet'],
+              ['QR LABELS', 'Avery 82805 · 24 per sheet'],
               ['HOUSEHOLD SYNC', 'Real-time across every device'],
               ['SEARCH ANY ITEM', '"Where are my Christmas lights?"'],
               ['EXPORT BACKUP', 'Excel export · CSV anytime'],
