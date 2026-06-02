@@ -28,8 +28,14 @@ const WB_WIDTHS = [2,3,4,5,6];
 const WB_PEGBOARD_PER_WIDTH = 40;   // pegboard panel + 2x4 frame, per column of width
 const WB_PEG_HEIGHT_IN = 36;        // pegboard adds 36" to overall height
 const WB_LED_COST = 50;             // LED light bar — $50 each
-// LED bars: one per 2 columns of width (workbench), up to 3 on a double unit.
-function ledMax(mode, cols) { return mode === 'double' ? 3 : Math.max(1, Math.floor(cols / 2)); }
+// LED bars require a 2-wide section with pegboard.
+//   Workbench: one per 2 columns of width.
+//   Double 2-high (exception): up to 3 (left peg, middle bay, right peg).
+//   Double 3/4-high: 1 (only the center 2-wide bay has pegboard).
+function ledMax(mode, cols, dualKind) {
+  if (mode === 'double') return dualKind === '2high' ? 3 : 1;
+  return Math.max(1, Math.floor(cols / 2));
+}
 
 // ── Double-unit constants (from live site) ──
 const DU_PROPS = {
@@ -144,7 +150,7 @@ function Configurator() {
   const isCustom    = mode === 'custom';
 
   // LED bars: clamp the count to the max allowed for this build.
-  const maxLed = ledMax(mode, isWorkbench ? wbWidth : 0);
+  const maxLed = ledMax(mode, isWorkbench ? wbWidth : 0, dualKind);
   const effLed = isCustom ? 0 : Math.min(ledCount, maxLed);
 
   // ── Price + dimensions ──
@@ -613,8 +619,17 @@ function renderWorkbench({ cols, wood, woodEdge, topThick, hasCasters, addons, l
           {/* perforated field, inset by the frame thickness */}
           <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
           <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={`url(#${pegId})`}/>
-          {/* LED light bars under the pegboard frame */}
-          <LedBars n={leds} x={ox + ft + 6} y={pegBottom - 5} w={drawW - 2 * ft - 12} />
+          {/* LED light bars — each 2 totes wide, at the TOP of the pegboard, one per pair of columns */}
+          {Array.from({length: leds}).map((_, i) => {
+            const bx = ox + i * 2 * cellW + ft + 4;
+            const bw = 2 * cellW - 2 * ft - 8;
+            return (
+              <g key={`led${i}`}>
+                <rect x={bx} y={pegTop + ft + 6} width={bw} height={3} rx="1.5" fill="#fff6cf"/>
+                <rect x={bx} y={pegTop + ft + 6} width={bw} height={3} rx="1.5" fill="var(--yellow)" opacity="0.5"/>
+              </g>
+            );
+          })}
         </g>
       )}
 
@@ -745,7 +760,8 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
         <g>
           <rect x={cbX + ft/2} y={cbY + ft/2} width={cbW - ft} height={cbH - ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
           <rect x={cbX + ft/2} y={cbY + ft/2} width={cbW - ft} height={cbH - ft} fill={`url(#${pegId})`}/>
-          <LedBars n={leds} x={cbX + ft/2 + 4} y={cbY + cbH - ft - 5} w={cbW - ft - 8} />
+          {/* LED bar — 2 totes wide, at the TOP of the center pegboard */}
+          {leds >= 1 && <LedBars n={1} x={cbX + ft/2 + 6} y={cbY + ft + 6} w={cbW - ft - 12} />}
         </g>
       )}
 
