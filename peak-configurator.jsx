@@ -619,10 +619,12 @@ function renderWorkbench({ cols, wood, woodEdge, topThick, hasCasters, addons, l
           {/* perforated field, inset by the frame thickness */}
           <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
           <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={`url(#${pegId})`}/>
-          {/* LED light bars — each 2 totes wide, at the TOP of the pegboard, one per pair of columns */}
+          {/* LED light bars — each 2 totes wide, fixed size, at the TOP of the pegboard, group centered */}
           {Array.from({length: leds}).map((_, i) => {
-            const bx = ox + i * 2 * cellW + ft + 4;
-            const bw = 2 * cellW - 2 * ft - 8;
+            const segW = 2 * cellW;
+            const startX = ox + (drawW - leds * segW) / 2;
+            const bx = startX + i * segW + ft + 4;
+            const bw = segW - 2 * ft - 8;
             return (
               <g key={`led${i}`}>
                 <rect x={bx} y={pegTop + ft + 6} width={bw} height={3} rx="1.5" fill="#fff6cf"/>
