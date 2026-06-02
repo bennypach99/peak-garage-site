@@ -779,8 +779,13 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
         const shelves = [];
         const studH = Math.max(4, topThick * 0.9);
         const ys = oy + drawH / 2;
-        shelves.push(<rect key="midp" x={ox + binBlockW} y={ys - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
-        shelves.push(<rect key="mids" x={ox + binBlockW} y={ys} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
+        if (dualKind === '2high') {
+          // 2-high: no mid plywood shelf — just a 2x4 cross-rail at mid-height
+          shelves.push(<rect key="midrail" x={ox + binBlockW} y={ys - studH} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
+        } else {
+          shelves.push(<rect key="midp" x={ox + binBlockW} y={ys - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
+          shelves.push(<rect key="mids" x={ox + binBlockW} y={ys} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
+        }
         shelves.push(<rect key="botp" x={ox + binBlockW} y={oy + drawH - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
         shelves.push(<rect key="bots" x={ox + binBlockW} y={oy + drawH - topThick - studH} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
         return shelves;
