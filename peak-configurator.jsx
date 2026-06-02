@@ -724,8 +724,10 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
           <rect x={ox + binBlockW} y={pegTop} width={midW} height={Math.max(4, topThick * 0.9)} fill={wood} stroke={woodEdge} strokeWidth="0.4"/>
           {/* Work-surface shelf at the bottom of the open middle bay */}
           <rect x={ox + binBlockW} y={pegBottom - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>
-          {/* LED bar in the upper middle open bay */}
-          <LedBars n={leds} x={ox + binBlockW + ft + 4} y={pegTop + ft + 6} w={midW - 2 * ft - 8} />
+          {/* LED bars: #1 middle (full-width, fixed), #2 left pegboard, #3 right pegboard */}
+          {leds >= 1 && <LedBars n={1} x={ox + binBlockW + ft + 4} y={pegTop + ft + 6} w={midW - 2 * ft - 8} />}
+          {leds >= 2 && <LedBars n={1} x={ox + ft + 4} y={pegTop + ft + 6} w={binBlockW - 2 * ft - 8} />}
+          {leds >= 3 && <LedBars n={1} x={ox + binBlockW + midW + ft + 4} y={pegTop + ft + 6} w={binBlockW - 2 * ft - 8} />}
         </g>
       )}
 
