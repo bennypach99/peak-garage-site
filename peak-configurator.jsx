@@ -705,13 +705,25 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
           <circle cx="4.5" cy="4.5" r="1.15" fill="rgba(0,0,0,0.30)"/>
         </pattern>
       </defs>
-      {/* Pegboard — full-width above the top board (2-high only) */}
+      {/* 2-high pegboard: panels ONLY above the two side tote blocks; middle bay stays open */}
       {hasPeg && pegMode === 'top' && (
         <g>
-          <rect x={ox} y={pegTop} width={drawW} height={pegTopH} fill={wood} stroke={woodEdge}/>
-          <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegTopH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
-          <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegTopH - 2 * ft} fill={`url(#${pegId})`}/>
-          <LedBars n={leds} x={ox + ft + 6} y={pegBottom - 5} w={drawW - 2 * ft - 12} />
+          {/* Left pegboard panel */}
+          <rect x={ox} y={pegTop} width={binBlockW} height={pegTopH} fill={wood} stroke={woodEdge}/>
+          <rect x={ox + ft} y={pegTop + ft} width={binBlockW - 2 * ft} height={pegTopH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
+          <rect x={ox + ft} y={pegTop + ft} width={binBlockW - 2 * ft} height={pegTopH - 2 * ft} fill={`url(#${pegId})`}/>
+          {/* Right pegboard panel */}
+          <rect x={ox + binBlockW + midW} y={pegTop} width={binBlockW} height={pegTopH} fill={wood} stroke={woodEdge}/>
+          <rect x={ox + binBlockW + midW + ft} y={pegTop + ft} width={binBlockW - 2 * ft} height={pegTopH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
+          <rect x={ox + binBlockW + midW + ft} y={pegTop + ft} width={binBlockW - 2 * ft} height={pegTopH - 2 * ft} fill={`url(#${pegId})`}/>
+          {/* Middle bay OPEN — black void with framing posts */}
+          <rect x={ox + binBlockW} y={pegTop} width={midW} height={pegTopH} fill="#000"/>
+          <rect x={ox + binBlockW - ft/2} y={pegTop} width={ft} height={pegTopH} fill={wood} stroke={woodEdge}/>
+          <rect x={ox + binBlockW + midW - ft/2} y={pegTop} width={ft} height={pegTopH} fill={wood} stroke={woodEdge}/>
+          {/* Work-surface shelf at the bottom of the open middle bay */}
+          <rect x={ox + binBlockW} y={pegBottom - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>
+          {/* LED bar in the upper middle open bay */}
+          <LedBars n={leds} x={ox + binBlockW + ft + 4} y={pegTop + ft + 6} w={midW - 2 * ft - 8} />
         </g>
       )}
 
