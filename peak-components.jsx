@@ -23,7 +23,7 @@ function PG_R(id, fallback) {
 // Clicking loads cols/rows or dualKind only — NO add-ons applied.
 const PG_GALLERY = [
   { id: 'gallery1', src: 'assets/gallery1.jpg', label: 'Workbench · 3-wide · pegboard + work top', tag: 'Workbench 3W · from $177',
-    cfg: { wbWidth: 3 } },
+    cfg: { wbWidth: 3, addons: ['pegboard'] } },
   { id: 'gallery5', src: 'assets/gallery5.jpg', label: 'Workbench · 4-wide · maple work top', tag: 'Workbench 4W · from $236',
     cfg: { wbWidth: 4 } },
   { id: 'gallery4', src: 'assets/gallery4.jpg', label: 'Workbench · 3-wide · maple work top', tag: 'Workbench 3W · from $177',
@@ -129,7 +129,13 @@ function Hero() {
           </div>
         </div>
 
-        <div className="pg-hero-photo" style={{ position: 'relative' }}>
+        <div className="pg-hero-photo" style={{ position: 'relative', cursor: 'pointer' }}
+          onClick={(e) => {
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('pg-load-config', { detail: { dualKind: '2high', addons: ['pegboard'], ledCount: 1, stain: 'natural' } }));
+            const el = document.getElementById('build');
+            if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: 'smooth' });
+          }}>
           <div style={{
             aspectRatio: '4/3',
             backgroundImage: `url(${PG_R('gallery10', 'assets/gallery10.jpg')})`,
@@ -175,7 +181,7 @@ function Hero() {
             background: 'var(--yellow)', color: 'var(--ink)',
             padding: '12px 16px', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
             textTransform: 'uppercase', transform: 'skewX(-6deg)',
-          }}>CUSTOM WORKBENCH · BUILT TO FIT</div>
+          }}>TAP TO BUILD THIS →</div>
         </div>
       </div>
 
@@ -205,8 +211,8 @@ function Marquee({ items }) {
 function Gallery() {
   function loadInBuilder(cfg, e) {
     e.preventDefault();
-    // Always clear add-ons when loading from gallery — show the bare build at its base price.
-    const payload = { ...cfg, addons: [], stain: 'walnut' };
+    // Add-ons from the gallery card (e.g. pegboard); otherwise show the bare build.
+    const payload = { ...cfg, addons: cfg.addons || [], ledCount: cfg.ledCount || 0, stain: cfg.stain || 'walnut' };
     window.dispatchEvent(new CustomEvent('pg-load-config', { detail: payload }));
     const el = document.getElementById('build');
     if (el) {
