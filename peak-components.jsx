@@ -22,24 +22,24 @@ function PG_R(id, fallback) {
 // Tag price is the lowest base price for that build (no add-ons).
 // Clicking loads cols/rows or dualKind only — NO add-ons applied.
 const PG_GALLERY = [
-  { id: 'gallery3', src: 'assets/gallery3.jpg', label: 'Natural pine · 4-HIGH double w/ shelves · Aldershot', tag: 'Double 4H · from $530', span: 2,
-    cfg: { dualKind: '4high' } },
-  { id: 'gallery1', src: 'assets/gallery1.jpg', label: '2-wide · 3-high · walnut stain + casters', tag: '6 totes · from $132',
-    cfg: { cols: 2, rows: 3 } },
-  { id: 'gallery2', src: 'assets/gallery2.jpg', label: '2-wide · 4-high · walnut stain + casters', tag: '8 totes · from $176',
-    cfg: { cols: 2, rows: 4 } },
-  { id: 'gallery4', src: 'assets/gallery4.jpg', label: '3-wide · 2-high · maple top + casters', tag: '6 totes · from $132',
-    cfg: { cols: 3, rows: 2 } },
-  { id: 'gallery5', src: 'assets/gallery5.jpg', label: '4-wide · 2-high · maple top + casters', tag: '8 totes · from $176',
-    cfg: { cols: 4, rows: 2 } },
-  { id: 'gallery6', src: 'assets/gallery6.jpg', label: 'Natural pine · 2-HIGH double w/ shelves', tag: 'Double 2H · from $340', span: 2,
+  { id: 'gallery1', src: 'assets/gallery1.jpg', label: 'Workbench · 3-wide · pegboard + work top', tag: 'Workbench 3W · from $177',
+    cfg: { wbWidth: 3 } },
+  { id: 'gallery5', src: 'assets/gallery5.jpg', label: 'Workbench · 4-wide · maple work top', tag: 'Workbench 4W · from $236',
+    cfg: { wbWidth: 4 } },
+  { id: 'gallery4', src: 'assets/gallery4.jpg', label: 'Workbench · 3-wide · maple work top', tag: 'Workbench 3W · from $177',
+    cfg: { wbWidth: 3 } },
+  { id: 'gallery6', src: 'assets/gallery6.jpg', label: 'Natural pine · 2-HIGH double w/ shelves', tag: 'Double 2H · from $340',
     cfg: { dualKind: '2high' } },
-  { id: 'gallery7', src: 'assets/gallery7.jpg', label: '4-wide · 4-high · walnut stain + casters', tag: '16 totes · from $352',
+  { id: 'gallery3', src: 'assets/gallery3.jpg', label: 'Natural pine · 4-HIGH double w/ shelves', tag: 'Double 4H · from $530',
+    cfg: { dualKind: '4high' } },
+  { id: 'gallery7', src: 'assets/gallery7.jpg', label: 'Custom · 4-wide · 4-high · walnut stain', tag: '16 totes · from $352',
     cfg: { cols: 4, rows: 4 } },
-  { id: 'gallery8', src: 'assets/gallery8.jpg', label: '4-wide · 5-high · walnut stain + casters', tag: '20 totes · from $440',
+  { id: 'gallery8', src: 'assets/gallery8.jpg', label: 'Custom · 4-wide · 5-high · walnut stain', tag: '20 totes · from $440',
     cfg: { cols: 4, rows: 5 } },
-  { id: 'gallery9', src: 'assets/gallery9.jpg', label: '5-wide · 5-high · walnut stain + casters', tag: '25 totes · from $550',
+  { id: 'gallery9', src: 'assets/gallery9.jpg', label: 'Custom · 5-wide · 5-high · walnut stain', tag: '25 totes · from $550',
     cfg: { cols: 5, rows: 5 } },
+  { id: 'gallery2', src: 'assets/gallery2.jpg', label: 'Custom · 2-wide · 4-high · walnut stain', tag: '8 totes · from $176',
+    cfg: { cols: 2, rows: 4 } },
 ];
 
 /* ─────────────────────────────────────────── TopBar + Nav */
@@ -132,7 +132,7 @@ function Hero() {
         <div className="pg-hero-photo" style={{ position: 'relative' }}>
           <div style={{
             aspectRatio: '4/3',
-            backgroundImage: `url(${PG_R('gallery3', 'assets/gallery3.jpg')})`,
+            backgroundImage: `url(${PG_R('gallery10', 'assets/gallery10.jpg')})`,
             backgroundSize: 'cover', backgroundPosition: 'center',
             position: 'relative',
           }}>
@@ -147,27 +147,27 @@ function Hero() {
               </g>
               {/* call-outs */}
               <g stroke="var(--yellow)" strokeWidth="0.8" fill="none" opacity="0.85">
-                <circle cx="200" cy="320" r="7"/>
-                <line x1="207" y1="320" x2="280" y2="265"/>
-                <circle cx="580" cy="320" r="7"/>
-                <line x1="573" y1="320" x2="500" y2="265"/>
-                <circle cx="395" cy="380" r="7"/>
-                <line x1="402" y1="380" x2="470" y2="430"/>
+                <circle cx="205" cy="230" r="7"/>
+                <line x1="212" y1="230" x2="285" y2="185"/>
+                <circle cx="205" cy="410" r="7"/>
+                <line x1="212" y1="410" x2="285" y2="455"/>
+                <circle cx="400" cy="400" r="7"/>
+                <line x1="400" y1="407" x2="400" y2="452"/>
               </g>
               <g fontFamily="var(--mono)" fontSize="11" fill="var(--bone)">
-                <text x="285" y="258">DOUBLE 4-HIGH</text>
-                <text x="285" y="272" fill="var(--bone-d70)">8 totes per side · natural pine</text>
-                <text x="500" y="258">FULL-WIDTH TOP</text>
-                <text x="500" y="272" fill="var(--bone-d70)">¾″ maple included</text>
-                <text x="475" y="446">OPEN WORKBENCH SHELVES</text>
-                <text x="475" y="460" fill="var(--bone-d70)">in the middle section</text>
+                <text x="290" y="178">PEGBOARD BACK</text>
+                <text x="290" y="192" fill="var(--bone-d70)">tools + LED light bar</text>
+                <text x="290" y="462">8 TOTES · 2×2 PER SIDE</text>
+                <text x="290" y="476" fill="var(--bone-d70)">yellow-lid 27 gal / 102 L</text>
+                <text x="330" y="470">OPEN WORKBENCH BAY</text>
+                <text x="330" y="484" fill="var(--bone-d70)">work surface + shelf</text>
               </g>
               {/* tick marks */}
               <g stroke="var(--yellow)" strokeWidth="1" fill="none">
                 <line x1="540" y1="40" x2="560" y2="40"/>
                 <line x1="550" y1="30" x2="550" y2="50"/>
               </g>
-              <text x="40" y="30" fill="var(--yellow)" fontFamily="var(--mono)" fontSize="11" letterSpacing="2">FIG. 1 / FULL GARAGE BUILD · DOUBLE 4-HIGH W/ SHELVES · ALDERSHOT</text>
+              <text x="40" y="30" fill="var(--yellow)" fontFamily="var(--mono)" fontSize="11" letterSpacing="2">FIG. 1 / CUSTOM WORKBENCH · PEGBOARD + 8 TOTES · BURLINGTON</text>
             </svg>
           </div>
           <div style={{
@@ -175,7 +175,7 @@ function Hero() {
             background: 'var(--yellow)', color: 'var(--ink)',
             padding: '12px 16px', fontFamily: 'var(--display)', fontWeight: 800, fontSize: 14, letterSpacing: '0.04em',
             textTransform: 'uppercase', transform: 'skewX(-6deg)',
-          }}>DOUBLE 4H · FROM $600</div>
+          }}>CUSTOM WORKBENCH · BUILT TO FIT</div>
         </div>
       </div>
 
