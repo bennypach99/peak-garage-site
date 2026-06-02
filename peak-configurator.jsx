@@ -33,13 +33,14 @@ function ledMax(mode, cols) { return mode === 'double' ? 3 : Math.max(1, Math.fl
 
 // ── Double-unit constants (from live site) ──
 const DU_PROPS = {
-  '2high': { rows: 2, slots: 8,  baseM: 400, baseB: 340, hIn: 36.75, stain: 75,  label: '2 HIGH' },
-  '3high': { rows: 3, slots: 12, baseM: 500, baseB: 435, hIn: 52.75, stain: 85,  label: '3 HIGH' },
-  '4high': { rows: 4, slots: 16, baseM: 600, baseB: 530, hIn: 68.75, stain: 100, label: '4 HIGH' },
+  '2high': { rows: 2, slots: 8,  baseM: 400, baseB: 340, hIn: 36.75, stain: 75,  label: '2 HIGH', peg: 100, pegMode: 'top' },
+  '3high': { rows: 3, slots: 12, baseM: 500, baseB: 435, hIn: 52.75, stain: 85,  label: '3 HIGH', peg: 80,  pegMode: 'center' },
+  '4high': { rows: 4, slots: 16, baseM: 600, baseB: 530, hIn: 68.75, stain: 100, label: '4 HIGH', peg: 80,  pegMode: 'center' },
 };
 const DU_WIDTH_IN = 133.5;
 const DU_CASTER_COST = 100;
 const DU_CASTER_COUNT = 8;
+const DU_PEG_COST = 100;   // pegboard back + frame on a double unit (flat)
 
 function calcWorkbench(cols, addons, stainName, ledCount) {
   const rows = 2;
@@ -80,6 +81,7 @@ function calcDouble(kind, addons, stainName, ledCount) {
   let total = base;
   if (addons.has('stain'))   { total += props.stain;     lines.push({ label: `Stain (${stainName})`, val: props.stain }); }
   if (addons.has('casters')) { total += DU_CASTER_COST;  lines.push({ label: `Casters (${DU_CASTER_COUNT} wheels · 2 sets)`, val: DU_CASTER_COST }); }
+  if (addons.has('pegboard')){ total += props.peg;      lines.push({ label: `Pegboard back + frame`, val: props.peg }); }
   if (ledCount > 0)          { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
   if (addons.has('totes'))   { const p = props.slots * 15; total += p; lines.push({ label: `${props.slots} totes × $15`, val: p }); }
   return { total, lines, slots: props.slots, props };
@@ -159,7 +161,8 @@ function Configurator() {
     const r = calcDouble(dualKind, addons, stainName, effLed);
     total = r.total; lines = r.lines; slots = r.slots;
     wIn = DU_WIDTH_IN;
-    hTotal = r.props.hIn + (addons.has('casters') ? CASTER_ADD_IN : 0);
+    const pegH = (addons.has('pegboard') && DU_PROPS[dualKind].pegMode === 'top') ? WB_PEG_HEIGHT_IN : 0;
+    hTotal = r.props.hIn + pegH + (addons.has('casters') ? CASTER_ADD_IN : 0);
     dimLabel = `${r.props.label} DOUBLE · ${slots} TOTES`;
   } else {
     const r = calcSingle(cols, rows, addons, stainName);
@@ -299,6 +302,8 @@ function Configurator() {
                       name='½″ BASIC PLYWOOD TOP' price='INCLUDED' note='default — sturdy + clean' />
                     <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
                       name='¾″ SANDED MAPLE TOP' price={`+$${DU_PROPS[dualKind].baseM - DU_PROPS[dualKind].baseB}`} note='upgrade — best looking' />
+                    <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
+                      name='PEGBOARD BACK' price={`$${DU_PROPS[dualKind].peg}`} note={DU_PROPS[dualKind].pegMode === 'top' ? 'full-width · +36″ H' : 'center section'} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${DU_PROPS[dualKind].stain}`} note={stainName} />
@@ -354,7 +359,7 @@ function Configurator() {
 
           {/* RIGHT — preview + price */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <ShelfPreview mode={mode} cols={cols} rows={rows} wbWidth={wbWidth} dualKind={dualKind} addons={addons} stain={stain} />
+            <ShelfPreview mode={mode} cols={cols} rows={rows} wbWidth={wbWidth} dualKind={dualKind} addons={addons} ledCount={effLed} stain={stain} />
 
             <div style={{ background: 'var(--yellow-pale)', border: '1px solid var(--yellow)', padding: 24, position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -539,7 +544,7 @@ function LedStepper({ count, max, onChange }) {
 
 /* ─────────────────────────────────────── Shelf preview */
 
-function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, addons, stain }) {
+function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, addons, ledCount, stain }) {
   const stainColors = { walnut: '#3a2a1c', ebony: '#0e0e0e', cherry: '#5a2820', natural: '#d9b986' };
   const wood = addons.has('stain') ? stainColors[stain] : '#D9B986';
   const woodEdge = addons.has('stain') ? '#000' : '#A88656';
@@ -549,19 +554,20 @@ function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, addons, stain }) {
     ? (hasMaple ? 7 : 4)
     : (addons.has('top') ? 7 : addons.has('basictop') ? 4 : 0);
   const hasCasters = addons.has('casters');
+  const leds = ledCount || 0;
 
   const SVG_W = 540, SVG_H = 400;
 
   if (mode === 'workbench') {
-    return renderWorkbench({ cols: wbWidth, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H });
+    return renderWorkbench({ cols: wbWidth, wood, woodEdge, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H });
   }
   if (mode === 'double') {
-    return renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters, addons, stain, SVG_W, SVG_H });
+    return renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H });
   }
   return renderSingle({ cols, rows, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H });
 }
 
-function renderWorkbench({ cols, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H }) {
+function renderWorkbench({ cols, wood, woodEdge, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H }) {
   const wIn = WIDTH_IN[cols];
   const toteRows = 2;
   const toteHIn = HEIGHT_IN[2];                 // 36
@@ -607,13 +613,8 @@ function renderWorkbench({ cols, wood, woodEdge, topThick, hasCasters, addons, s
           {/* perforated field, inset by the frame thickness */}
           <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
           <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={`url(#${pegId})`}/>
-          {/* LED light bar under the pegboard frame */}
-          {addons.has('led') && (
-            <g>
-              <rect x={ox + ft + 6} y={pegBottom - 5} width={drawW - 2 * ft - 12} height={3} rx="1.5" fill="#fff6cf"/>
-              <rect x={ox + ft + 6} y={pegBottom - 5} width={drawW - 2 * ft - 12} height={3} rx="1.5" fill="var(--yellow)" opacity="0.5"/>
-            </g>
-          )}
+          {/* LED light bars under the pegboard frame */}
+          <LedBars n={leds} x={ox + ft + 6} y={pegBottom - 5} w={drawW - 2 * ft - 12} />
         </g>
       )}
 
@@ -657,7 +658,7 @@ function renderSingle({ cols, rows, wood, woodEdge, topThick, hasCasters, addons
   );
 }
 
-function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters, addons, stain, SVG_W, SVG_H }) {
+function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H }) {
   const props = DU_PROPS[dualKind];
   const wIn = DU_WIDTH_IN;
   const hIn = props.hIn;
@@ -682,8 +683,38 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
   const topFill = hasMaple ? '#D4B17A' : '#CDA571';
   const topShadow = '#7a5a32';
 
+  // Optional pegboard. 2-high: full-width panel above the top board.
+  // 3/4-high: panel fills the upper half of the open center bay (2-wide).
+  const hasPeg = addons.has('pegboard');
+  const pegMode = props.pegMode;
+  const pegTopH = (hasPeg && pegMode === 'top' ? WB_PEG_HEIGHT_IN : 0) * sy;
+  const gap = (hasPeg && pegMode === 'top') ? 8 : 0;
+  const pegBottom = oy - topThick - gap;
+  const pegTop = pegBottom - pegTopH;
+  const pegFieldColor = '#C9A06A';
+  const pegId = `pg-peg-d-${dualKind}`;
+  const assemblyTop = (hasPeg && pegMode === 'top') ? pegTop : (oy - topThick);
+  const assemblyH = (oy + drawH) - assemblyTop;
+  // center-bay pegboard geometry (3/4-high)
+  const cbX = ox + binBlockW, cbW = midW, cbY = oy, cbH = drawH / 2;
+
   return (
-    <PreviewFrame title={`PG-${dualKind.toUpperCase().replace('HIGH','H')}-D${addons.has('stain')?'-'+stain[0].toUpperCase():''}`} slots={props.slots} subBadge="DOUBLE" SVG_W={SVG_W} SVG_H={SVG_H}>
+    <PreviewFrame title={`PG-${dualKind.toUpperCase().replace('HIGH','H')}-D${hasPeg?'-PEG':''}${addons.has('stain')?'-'+stain[0].toUpperCase():''}`} slots={props.slots} subBadge="DOUBLE" SVG_W={SVG_W} SVG_H={SVG_H}>
+      <defs>
+        <pattern id={pegId} width="9" height="9" patternUnits="userSpaceOnUse">
+          <circle cx="4.5" cy="4.5" r="1.15" fill="rgba(0,0,0,0.30)"/>
+        </pattern>
+      </defs>
+      {/* Pegboard — full-width above the top board (2-high only) */}
+      {hasPeg && pegMode === 'top' && (
+        <g>
+          <rect x={ox} y={pegTop} width={drawW} height={pegTopH} fill={wood} stroke={woodEdge}/>
+          <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegTopH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
+          <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegTopH - 2 * ft} fill={`url(#${pegId})`}/>
+          <LedBars n={leds} x={ox + ft + 6} y={pegBottom - 5} w={drawW - 2 * ft - 12} />
+        </g>
+      )}
+
       <g>
         <rect x={ox - 3} y={oy - topThick} width={drawW + 6} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.6"/>
         <line x1={ox - 3} y1={oy - topThick + 1} x2={ox + drawW + 3} y2={oy - topThick + 1} stroke="rgba(255,255,255,0.18)" strokeWidth="0.6"/>
@@ -692,6 +723,15 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
 
       {/* The middle section is OPEN at the back — paint a black void behind the shelves */}
       <rect x={ox + binBlockW} y={oy} width={midW} height={drawH} fill="#000"/>
+
+      {/* Pegboard — fills the upper half of the open center bay (3/4-high) */}
+      {hasPeg && pegMode === 'center' && (
+        <g>
+          <rect x={cbX + ft/2} y={cbY + ft/2} width={cbW - ft} height={cbH - ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
+          <rect x={cbX + ft/2} y={cbY + ft/2} width={cbW - ft} height={cbH - ft} fill={`url(#${pegId})`}/>
+          <LedBars n={leds} x={cbX + ft/2 + 4} y={cbY + cbH - ft - 5} w={cbW - ft - 8} />
+        </g>
+      )}
 
       <Frame x={ox} y={oy} w={binBlockW} h={drawH} cols={sideCols} rows={sideRows} cellW={cellW} cellH={cellH} ft={ft} wood={wood} woodEdge={woodEdge}/>
       <Totes x={ox} y={oy} cols={sideCols} rows={sideRows} cellW={cellW} cellH={cellH} ft={ft}/>
@@ -713,9 +753,26 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
       })()}
 
       {hasCasters && <Casters x={ox} y={oy + drawH} w={drawW} count={DU_CASTER_COUNT}/>}
-      <Dimensions ox={ox} oy={oy} drawW={drawW} drawH={drawH} wIn={wIn} hIn={hIn} topThick={topThick} hasCasters={hasCasters}/>
+      <Dimensions ox={ox} oy={assemblyTop} drawW={drawW} drawH={assemblyH} wIn={wIn} hIn={hIn + (hasPeg ? WB_PEG_HEIGHT_IN : 0)} topThick={topThick} hasCasters={hasCasters}/>
     </PreviewFrame>
   );
+}
+
+// Renders n LED light bars spread across width w (front elevation).
+function LedBars({ n, x, y, w }) {
+  if (!n || n <= 0) return null;
+  const barW = (w - (n - 1) * 8) / n;
+  const bars = [];
+  for (let i = 0; i < n; i++) {
+    const bx = x + i * (barW + 8);
+    bars.push(
+      <g key={i}>
+        <rect x={bx} y={y} width={barW} height={3} rx="1.5" fill="#fff6cf"/>
+        <rect x={bx} y={y} width={barW} height={3} rx="1.5" fill="var(--yellow)" opacity="0.5"/>
+      </g>
+    );
+  }
+  return <g>{bars}</g>;
 }
 
 /* ─────────────────── shared SVG fragments ─────────────────── */
