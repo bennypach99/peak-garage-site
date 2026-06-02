@@ -1,18 +1,16 @@
 // Peak Garage Solutions — Configurator
-// Mirrors the live pricing model from peakgaragesolutions.ca:
-//   SINGLE UNIT
-//     base   = cols*rows * $22
-//     basic top (½″ ply) = $10 * cols
-//     maple top (¾″)     = $25 * cols
-//     stain  = $50 / $75 / $100 / $150 based on slot count
-//     casters= $50 / $75 / $100 based on slot count (4/6/8 wheels)
-//     totes  = $15 * slots
-//   DOUBLE UNIT WITH SHELVES (always 2-wide × 2 sides × ROWS, with maple-shelf middle)
-//     base   = 2h $400 / 3h $500 / 4h $600 (maple top included)
-//              switch to basic top: 2h $340 / 3h $435 / 4h $530
-//     stain  = 2h $75 / 3h $85 / 4h $100
-//     casters= $100 flat (8 wheels = 2 sets)
-//     totes  = $15 * (8/12/16)
+// Pricing model (mirrors peakgaragesolutions.ca):
+//   WORKBENCH  (2-high unit + mandatory work top + optional pegboard)
+//     frame  = cols*2 * $22
+//     top    = ½" $10*cols  /  ¾" $25*cols   (mandatory — pick one, default ½")
+//     pegbd  = $50 * cols   (optional · adds 36" height)
+//     led    = $45 flat      (optional)
+//     stain/casters/totes = same helpers as below
+//   DOUBLE UNIT WITH SHELVES (2-wide × 2 sides × ROWS, open middle shelf)
+//     base   = 2h $400 / 3h $500 / 4h $600 (maple top incl.) · basic top saves
+//     stain  = 2h $75 / 3h $85 / 4h $100 · casters $100 flat · totes $15 ea
+//   CUSTOM SINGLE (any width × height)
+//     base   = cols*rows * $22 + optional top/stain/casters/totes
 
 const WIDTH_IN  = {1:23.5, 2:45.5, 3:67.5, 4:89.5, 5:111.5, 6:133.5};
 const HEIGHT_IN = {2:36,   3:52,   4:68,   5:84,   6:100};
@@ -20,12 +18,20 @@ const CASTER_ADD_IN = 4;
 const TOP_THICK_BASIC = 0.5, TOP_THICK_MAPLE = 0.75;
 
 function stainCost(c,r)    { const s=c*r; return s<=8?50:s<=16?75:s<=24?100:150; }
-function topCost(c)        { return c*25; }
-function basicTopCost(c)   { return c*10; }
+function topCost(c)        { return c*30; }   // ¾" sanded maple — $30 / width
+function basicTopCost(c)   { return c*15; }   // ½" basic — $15 / width
 function casterCost(c,r)   { const s=c*r; return s<12?50:s<16?75:s<=25?100:125; }
 function casterCount(c,r)  { const s=c*r; return s<12?4:s<16?6:s<=25?8:10; }
 
-// Double-unit constants (from live site)
+// ── Workbench constants (easy to tune) ──
+const WB_WIDTHS = [2,3,4,5,6];
+const WB_PEGBOARD_PER_WIDTH = 40;   // pegboard panel + 2x4 frame, per column of width
+const WB_PEG_HEIGHT_IN = 36;        // pegboard adds 36" to overall height
+const WB_LED_COST = 50;             // LED light bar — $50 each
+// LED bars: one per 2 columns of width (workbench), up to 3 on a double unit.
+function ledMax(mode, cols) { return mode === 'double' ? 3 : Math.max(1, Math.floor(cols / 2)); }
+
+// ── Double-unit constants (from live site) ──
 const DU_PROPS = {
   '2high': { rows: 2, slots: 8,  baseM: 400, baseB: 340, hIn: 36.75, stain: 75,  label: '2 HIGH' },
   '3high': { rows: 3, slots: 12, baseM: 500, baseB: 435, hIn: 52.75, stain: 85,  label: '3 HIGH' },
@@ -34,6 +40,23 @@ const DU_PROPS = {
 const DU_WIDTH_IN = 133.5;
 const DU_CASTER_COST = 100;
 const DU_CASTER_COUNT = 8;
+
+function calcWorkbench(cols, addons, stainName, ledCount) {
+  const rows = 2;
+  const slots = cols * rows;
+  const base = slots * 22;
+  const lines = [{ label: `${slots} totes × $22 (2-high)`, val: base }];
+  let total = base;
+  // Work-surface top is mandatory — basic is the default, maple is the upgrade
+  if (addons.has('top')) { const p = topCost(cols);      total += p; lines.push({ label: `¾″ Sanded maple work top ($30 × ${cols})`, val: p }); }
+  else                   { const p = basicTopCost(cols); total += p; lines.push({ label: `½″ Basic work top ($15 × ${cols})`, val: p }); }
+  if (addons.has('pegboard')) { const p = WB_PEGBOARD_PER_WIDTH * cols; total += p; lines.push({ label: `Pegboard back + frame ($40 × ${cols})`, val: p }); }
+  if (ledCount > 0)           { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
+  if (addons.has('stain'))    { const p = stainCost(cols,rows); total += p; lines.push({ label: `Stain (${stainName})`, val: p }); }
+  if (addons.has('casters'))  { const p = casterCost(cols,rows); total += p; lines.push({ label: `Casters (${casterCount(cols,rows)} wheels)`, val: p }); }
+  if (addons.has('totes'))    { const p = slots * 15; total += p; lines.push({ label: `${slots} totes × $15`, val: p }); }
+  return { total, lines, slots };
+}
 
 function calcSingle(cols, rows, addons, stainName) {
   const slots = cols * rows;
@@ -48,9 +71,8 @@ function calcSingle(cols, rows, addons, stainName) {
   return { total, lines, slots };
 }
 
-function calcDouble(kind, addons, stainName) {
+function calcDouble(kind, addons, stainName, ledCount) {
   const props = DU_PROPS[kind];
-  // Default top is now ½″ BASIC plywood (included). Switch to maple = upgrade.
   const hasMaple = addons.has('top');
   const base = hasMaple ? props.baseM : props.baseB;
   const topLabel = hasMaple ? '¾″ Sanded Maple plywood top (included)' : '½″ Basic plywood top (included)';
@@ -58,16 +80,20 @@ function calcDouble(kind, addons, stainName) {
   let total = base;
   if (addons.has('stain'))   { total += props.stain;     lines.push({ label: `Stain (${stainName})`, val: props.stain }); }
   if (addons.has('casters')) { total += DU_CASTER_COST;  lines.push({ label: `Casters (${DU_CASTER_COUNT} wheels · 2 sets)`, val: DU_CASTER_COST }); }
+  if (ledCount > 0)          { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
   if (addons.has('totes'))   { const p = props.slots * 15; total += p; lines.push({ label: `${props.slots} totes × $15`, val: p }); }
   return { total, lines, slots: props.slots, props };
 }
 
 function Configurator() {
-  // Default state matches the hero photo: natural pine 4-HIGH double w/ shelves, no add-ons.
+  // Default to a 4-wide workbench with pegboard (matches the hero).
+  const [mode, setMode] = React.useState('workbench'); // 'workbench' | 'double' | 'custom'
+  const [wbWidth, setWbWidth] = React.useState(4);
   const [cols, setCols] = React.useState(4);
   const [rows, setRows] = React.useState(4);
   const [dualKind, setDualKind] = React.useState('4high');
-  const [addons, setAddons] = React.useState(new Set());
+  const [addons, setAddons] = React.useState(new Set(['pegboard']));
+  const [ledCount, setLedCount] = React.useState(0);
   const [stain, setStain] = React.useState('walnut');
   const [pulse, setPulse] = React.useState(false);
 
@@ -75,14 +101,11 @@ function Configurator() {
   React.useEffect(() => {
     function onLoad(e) {
       const cfg = e.detail || {};
-      if (cfg.dualKind) {
-        setDualKind(cfg.dualKind);
-      } else {
-        setDualKind(null);
-        if (cfg.cols) setCols(cfg.cols);
-        if (cfg.rows) setRows(cfg.rows);
-      }
+      if (cfg.wbWidth) { setMode('workbench'); setWbWidth(cfg.wbWidth); }
+      else if (cfg.dualKind) { setMode('double'); setDualKind(cfg.dualKind); }
+      else { setMode('custom'); if (cfg.cols) setCols(cfg.cols); if (cfg.rows) setRows(cfg.rows); }
       if (Array.isArray(cfg.addons)) setAddons(new Set(cfg.addons));
+      setLedCount(cfg.ledCount || 0);
       if (cfg.stain) setStain(cfg.stain);
       setPulse(true);
       setTimeout(() => setPulse(false), 1400);
@@ -91,23 +114,49 @@ function Configurator() {
     return () => window.removeEventListener('pg-load-config', onLoad);
   }, []);
 
+  // Custom mode: basic/maple optional + mutually exclusive (can have neither).
   const toggle = (k) => {
     const n = new Set(addons);
     if (n.has(k)) n.delete(k); else n.add(k);
-    // basic + maple are mutually exclusive
     if (k === 'basictop' && n.has('basictop')) n.delete('top');
     if (k === 'top' && n.has('top'))           n.delete('basictop');
     setAddons(n);
   };
+  // Workbench/Double: a top is always present — pick basic (default) or maple.
+  const chooseTop = (maple) => {
+    const n = new Set(addons);
+    if (maple) n.add('top'); else n.delete('top');
+    n.delete('basictop');
+    setAddons(n);
+  };
+  // Generic optional add-on toggle (pegboard, led, stain, casters, totes)
+  const toggleAddon = (k) => {
+    const n = new Set(addons);
+    if (n.has(k)) n.delete(k); else n.add(k);
+    setAddons(n);
+  };
 
   const stainName = stain.charAt(0).toUpperCase() + stain.slice(1);
-  const isDouble = !!dualKind;
+  const isWorkbench = mode === 'workbench';
+  const isDouble    = mode === 'double';
+  const isCustom    = mode === 'custom';
 
-  // ── Price + dimensions
+  // LED bars: clamp the count to the max allowed for this build.
+  const maxLed = ledMax(mode, isWorkbench ? wbWidth : 0);
+  const effLed = isCustom ? 0 : Math.min(ledCount, maxLed);
+
+  // ── Price + dimensions ──
   let total, lines, slots, wIn, hTotal, dimLabel;
-  const topThickIn = addons.has('top') ? TOP_THICK_MAPLE : addons.has('basictop') ? TOP_THICK_BASIC : 0;
-  if (isDouble) {
-    const r = calcDouble(dualKind, addons, stainName);
+  if (isWorkbench) {
+    const r = calcWorkbench(wbWidth, addons, stainName, effLed);
+    total = r.total; lines = r.lines; slots = r.slots;
+    wIn = WIDTH_IN[wbWidth];
+    const topThickIn = addons.has('top') ? TOP_THICK_MAPLE : TOP_THICK_BASIC;
+    const pegH = addons.has('pegboard') ? WB_PEG_HEIGHT_IN : 0;
+    hTotal = HEIGHT_IN[2] + topThickIn + pegH + (addons.has('casters') ? CASTER_ADD_IN : 0);
+    dimLabel = `WORKBENCH · ${wbWidth}-WIDE · ${slots} TOTES`;
+  } else if (isDouble) {
+    const r = calcDouble(dualKind, addons, stainName, effLed);
     total = r.total; lines = r.lines; slots = r.slots;
     wIn = DU_WIDTH_IN;
     hTotal = r.props.hIn + (addons.has('casters') ? CASTER_ADD_IN : 0);
@@ -116,9 +165,14 @@ function Configurator() {
     const r = calcSingle(cols, rows, addons, stainName);
     total = r.total; lines = r.lines; slots = r.slots;
     wIn = WIDTH_IN[cols];
+    const topThickIn = addons.has('top') ? TOP_THICK_MAPLE : addons.has('basictop') ? TOP_THICK_BASIC : 0;
     hTotal = HEIGHT_IN[rows] + topThickIn + (addons.has('casters') ? CASTER_ADD_IN : 0);
     dimLabel = `${cols}W × ${rows}H · ${slots} TOTES`;
   }
+
+  const fromLabel = isWorkbench ? 'WORKBENCH FROM' : isDouble ? 'DOUBLE UNIT FROM' : 'CUSTOM FROM';
+  const fromPrice = isWorkbench ? '$118' : isDouble ? '$340' : '$22';
+  const fromUnit  = isCustom ? '/SLOT' : '';
 
   return (
     <section id="build" style={{ background: 'var(--ink)', padding: '88px 0', borderBottom: '1px solid var(--ink4)', position: 'relative' }}>
@@ -138,17 +192,17 @@ function Configurator() {
             <div className="pg-eyebrow" style={{ marginBottom: 12 }}>// 02 — THE BUILDER</div>
             <h2 className="pg-display" style={{ fontSize: 96, margin: 0 }}>
               BUILD<br/>
-              <span className="pg-hl">YOUR SHELF.</span>
+              <span className="pg-hl">YOUR UNIT.</span>
             </h2>
             <p style={{ fontSize: 17, lineHeight: 1.5, color: 'var(--bone-d70)', marginTop: 20, maxWidth: 540 }}>
-              Pick a single unit, or a double unit with shelves in the middle. Instant price, real dimensions, real shop drawing — no quote needed.
+              Pick a workbench, a double unit with shelves, or a fully custom size. Instant price, real dimensions, real shop drawing — no quote needed.
             </p>
           </div>
           <div style={{ maxWidth: 260, textAlign: 'right' }}>
-            <div className="pg-eyebrow" style={{ marginBottom: 8 }}>{isDouble ? 'DOUBLE UNIT FROM' : 'SINGLE UNIT FROM'}</div>
+            <div className="pg-eyebrow" style={{ marginBottom: 8 }}>{fromLabel}</div>
             <div className="pg-display" style={{ fontSize: 48, color: 'var(--yellow)' }}>
-              {isDouble ? '$340' : '$22'}
-              <span style={{ fontSize: 22, color: 'var(--bone-d50)' }}>{isDouble ? '' : '/SLOT'}</span>
+              {fromPrice}
+              <span style={{ fontSize: 22, color: 'var(--bone-d50)' }}>{fromUnit}</span>
             </div>
             <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.06em', marginTop: 4 }}>+ ADD-ONS</div>
           </div>
@@ -158,31 +212,41 @@ function Configurator() {
           {/* LEFT — controls */}
           <div className="pg-builder-controls" style={{ background: 'var(--ink2)', border: '1px solid var(--ink4)', padding: 32 }}>
 
-            {/* 00 — Build type */}
-            <PickerBlock label="01 — BUILD TYPE" sub="Custom-sized single shelf, or fixed-spec double unit w/ open middle shelves">
-              {/* Custom single shelf — its own row, full width */}
-              <div style={{ marginBottom: 14 }}>
-                <TypeBtn active={!isDouble} onClick={() => setDualKind(null)} primary="CUSTOM SIZE" sub="single shelf · pick width × height below" />
+            {/* 01 — Build type */}
+            <PickerBlock label="01 — BUILD TYPE" sub="Workbench, double unit, or fully custom">
+              {/* Workbench */}
+              <Divider>WORKBENCH · WORK TOP + OPTIONAL PEGBOARD</Divider>
+              <div className="pg-buildtype-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+                {WB_WIDTHS.map(w => (
+                  <TypeBtn key={w} active={isWorkbench && wbWidth === w}
+                    onClick={() => { setMode('workbench'); setWbWidth(w); }}
+                    primary={`${w}-WIDE`} sub={`${w*2} totes`} center />
+                ))}
               </div>
-              {/* Divider label */}
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8,
-                fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)',
-                letterSpacing: '0.14em', textTransform: 'uppercase',
-              }}>
-                <span style={{ flex: 1, height: 1, background: 'var(--ink4)' }} />
-                <span>OR — DOUBLE UNIT W/ OPEN SHELVES</span>
-                <span style={{ flex: 1, height: 1, background: 'var(--ink4)' }} />
-              </div>
+              {/* Double */}
+              <Divider>DOUBLE UNIT W/ OPEN SHELVES</Divider>
               <div className="pg-buildtype-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                 {Object.entries(DU_PROPS).map(([k, p]) => (
-                  <TypeBtn key={k} active={dualKind === k} onClick={() => setDualKind(k)}
+                  <TypeBtn key={k} active={isDouble && dualKind === k}
+                    onClick={() => { setMode('double'); setDualKind(k); }}
                     primary={`DOUBLE · ${p.label}`} sub={`${p.slots} totes · ${p.hIn}″`} />
                 ))}
               </div>
+              {/* Custom */}
+              <Divider>FULLY CUSTOM</Divider>
+              <TypeBtn active={isCustom} onClick={() => setMode('custom')}
+                primary="CUSTOM SIZE" sub="single shelf · pick width × height below" />
             </PickerBlock>
 
-            {!isDouble && (
+            {/* 02 — size selectors */}
+            {isWorkbench && (
+              <div style={{ marginBottom: 24, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>
+                2-high · {wIn}″ W × {HEIGHT_IN[2] + (addons.has('pegboard') ? WB_PEG_HEIGHT_IN : 0)}″ H × 28.5″ D
+                {addons.has('pegboard') ? ' · incl. pegboard' : ''}. Work top included.
+              </div>
+            )}
+
+            {isCustom && (
               <>
                 <PickerBlock label="02 — WIDTH (COLUMNS)" sub="Number of tote columns side-by-side">
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
@@ -191,7 +255,6 @@ function Configurator() {
                     ))}
                   </div>
                 </PickerBlock>
-
                 <PickerBlock label="03 — HEIGHT (ROWS)" sub="Number of stacked levels">
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
                     {[2,3,4,5,6].map(n => (
@@ -208,34 +271,60 @@ function Configurator() {
               </div>
             )}
 
-            <PickerBlock label={isDouble ? '04 — ADD-ONS' : '04 — ADD-ONS'} sub="Mix and match — costs update live">
+            {/* 03/04 — add-ons */}
+            <PickerBlock label="04 — ADD-ONS" sub="Mix and match — costs update live">
               <div className="pg-addons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                <AddOnCard
-                  active={isDouble ? !addons.has('top') : addons.has('basictop')}
-                  onClick={() => toggle('basictop')}
-                  name={isDouble ? '½″ BASIC PLYWOOD TOP' : '½″ BASIC PLYWOOD TOP'}
-                  price={isDouble ? 'INCLUDED' : `$${basicTopCost(cols)}`}
-                  note={isDouble ? 'default — sturdy + clean' : `$10 × ${cols} wide`}
-                  disabled={!isDouble && addons.has('top')} />
-                <AddOnCard
-                  active={addons.has('top')}
-                  onClick={() => toggle('top')}
-                  name={isDouble ? '¾″ SANDED MAPLE TOP' : '¾″ SANDED MAPLE TOP'}
-                  price={isDouble ? `+$${DU_PROPS[dualKind].baseM - DU_PROPS[dualKind].baseB}` : `$${topCost(cols)}`}
-                  note={isDouble ? 'upgrade — best looking' : `$25 × ${cols} wide`}
-                  disabled={!isDouble && addons.has('basictop')} />
-                <AddOnCard active={addons.has('stain')} onClick={() => toggle('stain')}
-                  name='STAIN FINISH'
-                  price={isDouble ? `$${DU_PROPS[dualKind].stain}` : `$${stainCost(cols,rows)}`}
-                  note={stainName} />
-                <AddOnCard active={addons.has('casters')} onClick={() => toggle('casters')}
-                  name='WHEEL CASTERS'
-                  price={isDouble ? `$${DU_CASTER_COST}` : `$${casterCost(cols,rows)}`}
-                  note={isDouble ? `${DU_CASTER_COUNT} wheels · 2 sets` : `${casterCount(cols,rows)} wheels`} />
-                <AddOnCard active={addons.has('totes')} onClick={() => toggle('totes')}
-                  name='27 GAL TOTES'
-                  price={`$${slots * 15}`} note={`$15 × ${slots} bins`} />
+
+                {isWorkbench && (
+                  <>
+                    <AddOnCard active={!addons.has('top')} onClick={() => chooseTop(false)}
+                      name='½″ BASIC WORK TOP' price={`$${basicTopCost(wbWidth)}`} note={`included · $15 × ${wbWidth}`} />
+                    <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
+                      name='¾″ SANDED MAPLE TOP' price={`$${topCost(wbWidth)}`} note={`upgrade · $30 × ${wbWidth}`} />
+                    <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
+                      name='PEGBOARD BACK' price={`$${WB_PEGBOARD_PER_WIDTH * wbWidth}`} note={`$40 × ${wbWidth} · +36″ H`} />
+                    <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
+                    <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
+                      name='STAIN FINISH' price={`$${stainCost(wbWidth,2)}`} note={stainName} />
+                    <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
+                      name='WHEEL CASTERS' price={`$${casterCost(wbWidth,2)}`} note={`${casterCount(wbWidth,2)} wheels`} />
+                    <AddOnCard active={addons.has('totes')} onClick={() => toggleAddon('totes')}
+                      name='27 GAL TOTES' price={`$${slots * 15}`} note={`$15 × ${slots} bins`} />
+                  </>
+                )}
+
+                {isDouble && (
+                  <>
+                    <AddOnCard active={!addons.has('top')} onClick={() => chooseTop(false)}
+                      name='½″ BASIC PLYWOOD TOP' price='INCLUDED' note='default — sturdy + clean' />
+                    <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
+                      name='¾″ SANDED MAPLE TOP' price={`+$${DU_PROPS[dualKind].baseM - DU_PROPS[dualKind].baseB}`} note='upgrade — best looking' />
+                    <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
+                    <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
+                      name='STAIN FINISH' price={`$${DU_PROPS[dualKind].stain}`} note={stainName} />
+                    <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
+                      name='WHEEL CASTERS' price={`$${DU_CASTER_COST}`} note={`${DU_CASTER_COUNT} wheels · 2 sets`} />
+                    <AddOnCard active={addons.has('totes')} onClick={() => toggleAddon('totes')}
+                      name='27 GAL TOTES' price={`$${slots * 15}`} note={`$15 × ${slots} bins`} />
+                  </>
+                )}
+
+                {isCustom && (
+                  <>
+                    <AddOnCard active={addons.has('basictop')} onClick={() => toggle('basictop')}
+                      name='½″ BASIC PLYWOOD TOP' price={`$${basicTopCost(cols)}`} note={`$10 × ${cols} wide`} disabled={addons.has('top')} />
+                    <AddOnCard active={addons.has('top')} onClick={() => toggle('top')}
+                      name='¾″ SANDED MAPLE TOP' price={`$${topCost(cols)}`} note={`$25 × ${cols} wide`} disabled={addons.has('basictop')} />
+                    <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
+                      name='STAIN FINISH' price={`$${stainCost(cols,rows)}`} note={stainName} />
+                    <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
+                      name='WHEEL CASTERS' price={`$${casterCost(cols,rows)}`} note={`${casterCount(cols,rows)} wheels`} />
+                    <AddOnCard active={addons.has('totes')} onClick={() => toggleAddon('totes')}
+                      name='27 GAL TOTES' price={`$${slots * 15}`} note={`$15 × ${slots} bins`} />
+                  </>
+                )}
               </div>
+
               {addons.has('stain') && (
                 <div style={{ marginTop: 16, padding: 14, background: 'var(--ink)', border: '1px solid var(--ink4)' }}>
                   <div className="pg-eyebrow" style={{ marginBottom: 10 }}>STAIN COLOR</div>
@@ -265,7 +354,7 @@ function Configurator() {
 
           {/* RIGHT — preview + price */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <ShelfPreview cols={cols} rows={rows} dualKind={dualKind} addons={addons} stain={stain} />
+            <ShelfPreview mode={mode} cols={cols} rows={rows} wbWidth={wbWidth} dualKind={dualKind} addons={addons} stain={stain} />
 
             <div style={{ background: 'var(--yellow-pale)', border: '1px solid var(--yellow)', padding: 24, position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -290,16 +379,20 @@ function Configurator() {
               <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
                 <button type="button" className="pg-btn" style={{ flex: 1, justifyContent: 'center' }}
                   onClick={() => {
-                    // Build a human-readable spec + price and hand it to the quote form.
                     const addonNames = [];
-                    if (addons.has('top')) addonNames.push('¾″ sanded maple top');
-                    else if (isDouble || addons.has('basictop')) addonNames.push('½″ basic top');
+                    if (isWorkbench || isDouble) addonNames.push(addons.has('top') ? '¾″ sanded maple top' : '½″ basic top');
+                    else if (addons.has('top')) addonNames.push('¾″ sanded maple top');
+                    else if (addons.has('basictop')) addonNames.push('½″ basic top');
+                    if (addons.has('pegboard')) addonNames.push('pegboard back');
+                    if (effLed > 0) addonNames.push(`${effLed} LED light bar${effLed > 1 ? 's' : ''}`);
                     if (addons.has('stain')) addonNames.push(`${stainName.toLowerCase()} stain`);
                     if (addons.has('casters')) addonNames.push('wheel casters');
                     if (addons.has('totes')) addonNames.push(`${slots} totes`);
-                    const name = isDouble
-                      ? `Double ${DU_PROPS[dualKind].label} unit w/ shelves`
-                      : `Custom ${cols}×${rows} (${slots} totes)`;
+                    const name = isWorkbench
+                      ? `Workbench · ${wbWidth}-wide (${slots} totes)`
+                      : isDouble
+                        ? `Double ${DU_PROPS[dualKind].label} unit w/ shelves`
+                        : `Custom ${cols}×${rows} (${slots} totes)`;
                     const summary =
                       `${name}\n` +
                       (addonNames.length ? `Add-ons: ${addonNames.join(', ')}\n` : 'No add-ons\n') +
@@ -323,6 +416,20 @@ function Configurator() {
 }
 
 /* ─────────────────────────────────────── controls */
+
+function Divider({ children }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10, margin: '4px 0 10px',
+      fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)',
+      letterSpacing: '0.14em', textTransform: 'uppercase',
+    }}>
+      <span style={{ flex: 1, height: 1, background: 'var(--ink4)' }} />
+      <span style={{ flexShrink: 0 }}>{children}</span>
+      <span style={{ flex: 1, height: 1, background: 'var(--ink4)' }} />
+    </div>
+  );
+}
 
 function PickerBlock({ label, sub, children }) {
   return (
@@ -353,7 +460,7 @@ function SizeBtn({ active, onClick, primary, secondary }) {
   );
 }
 
-function TypeBtn({ active, onClick, primary, sub }) {
+function TypeBtn({ active, onClick, primary, sub, center }) {
   return (
     <button type="button" onClick={onClick} style={{
       padding: '14px 10px',
@@ -361,10 +468,11 @@ function TypeBtn({ active, onClick, primary, sub }) {
       color: active ? 'var(--ink)' : 'var(--bone)',
       border: `1px solid ${active ? 'var(--yellow)' : 'var(--ink4)'}`,
       fontFamily: 'var(--display)', fontWeight: 800, cursor: 'pointer',
-      display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start',
-      transition: 'all .12s', textAlign: 'left',
+      display: 'flex', flexDirection: 'column', gap: 4,
+      alignItems: center ? 'center' : 'flex-start',
+      transition: 'all .12s', textAlign: center ? 'center' : 'left',
     }}>
-      <span style={{ fontSize: 13, lineHeight: 1, letterSpacing: '0.02em' }}>{primary}</span>
+      <span style={{ fontSize: center ? 16 : 13, lineHeight: 1, letterSpacing: '0.02em' }}>{primary}</span>
       <span style={{ fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 400, letterSpacing: '0.06em', opacity: 0.7 }}>{sub}</span>
     </button>
   );
@@ -396,25 +504,132 @@ function AddOnCard({ active, onClick, name, price, note, disabled, textOnly }) {
   );
 }
 
-/* ─────────────────────────────────────── Shelf preview (renders single OR double) */
+// LED light bar — quantity stepper (0 … max). $50 each.
+function LedStepper({ count, max, onChange }) {
+  const active = count > 0;
+  const dec = (e) => { e.stopPropagation(); onChange(Math.max(0, count - 1)); };
+  const inc = (e) => { e.stopPropagation(); onChange(Math.min(max, count + 1)); };
+  return (
+    <div style={{
+      padding: '14px 14px',
+      background: active ? 'var(--yellow-pale)' : 'var(--ink)',
+      border: `1px solid ${active ? 'var(--yellow)' : 'var(--ink4)'}`,
+      display: 'flex', flexDirection: 'column', gap: 6, position: 'relative',
+    }}>
+      <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 13, letterSpacing: '0.02em', color: 'var(--bone)' }}>LED LIGHT BARS</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>$50 each · up to {max}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button type="button" onClick={dec} disabled={count <= 0} style={{
+            width: 24, height: 24, lineHeight: 1, border: `1px solid ${count <= 0 ? 'var(--ink4)' : 'var(--yellow)'}`,
+            background: 'transparent', color: count <= 0 ? 'var(--bone-d50)' : 'var(--yellow)',
+            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: count <= 0 ? 'not-allowed' : 'pointer',
+          }}>−</button>
+          <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: active ? 'var(--yellow)' : 'var(--bone)', minWidth: 16, textAlign: 'center' }}>{count}</span>
+          <button type="button" onClick={inc} disabled={count >= max} style={{
+            width: 24, height: 24, lineHeight: 1, border: `1px solid ${count >= max ? 'var(--ink4)' : 'var(--yellow)'}`,
+            background: 'transparent', color: count >= max ? 'var(--bone-d50)' : 'var(--yellow)',
+            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: count >= max ? 'not-allowed' : 'pointer',
+          }}>+</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-function ShelfPreview({ cols, rows, dualKind, addons, stain }) {
+/* ─────────────────────────────────────── Shelf preview */
+
+function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, addons, stain }) {
   const stainColors = { walnut: '#3a2a1c', ebony: '#0e0e0e', cherry: '#5a2820', natural: '#d9b986' };
   const wood = addons.has('stain') ? stainColors[stain] : '#D9B986';
   const woodEdge = addons.has('stain') ? '#000' : '#A88656';
-  const hasMaple = addons.has('top') || (!dualKind && addons.has('top'));
-  // top thickness in SVG units; basic = thinner, maple = thicker; doubles ALWAYS show a top.
-  const topThick = dualKind
-    ? (addons.has('top') ? 7 : 4)
+  const hasMaple = addons.has('top');
+  // top thickness in SVG units; basic = thinner, maple = thicker.
+  const topThick = (mode === 'double' || mode === 'workbench')
+    ? (hasMaple ? 7 : 4)
     : (addons.has('top') ? 7 : addons.has('basictop') ? 4 : 0);
   const hasCasters = addons.has('casters');
 
   const SVG_W = 540, SVG_H = 400;
 
-  if (dualKind) {
+  if (mode === 'workbench') {
+    return renderWorkbench({ cols: wbWidth, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H });
+  }
+  if (mode === 'double') {
     return renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters, addons, stain, SVG_W, SVG_H });
   }
   return renderSingle({ cols, rows, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H });
+}
+
+function renderWorkbench({ cols, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H }) {
+  const wIn = WIDTH_IN[cols];
+  const toteRows = 2;
+  const toteHIn = HEIGHT_IN[2];                 // 36
+  const hasPeg = addons.has('pegboard');
+  const pegHIn = hasPeg ? WB_PEG_HEIGHT_IN : 0; // 36
+  const totalHIn = toteHIn + pegHIn;
+
+  const MAX_W = 133.5, MAX_H = 100;
+  const PAD = 36;
+  const sx = (SVG_W - 2 * PAD) / MAX_W;
+  const sy = (SVG_H - 2 * PAD) / MAX_H;
+  const drawW = wIn * sx;
+  const toteH = toteHIn * sy;
+  const pegH = pegHIn * sy;
+  const gap = hasPeg ? 8 : 0; // gap between pegboard frame and work surface
+
+  const ox = (SVG_W - drawW) / 2;
+  const oyTotes = SVG_H - PAD - toteH;            // tote block sits on the floor
+  const workTopY = oyTotes - topThick;           // work surface on top of totes
+  const pegBottom = workTopY - gap;
+  const pegTop = pegBottom - pegH;
+  const assemblyTop = hasPeg ? pegTop : workTopY;
+  const assemblyH = (oyTotes + toteH) - assemblyTop;
+
+  const cellW = drawW / cols, cellH = toteH / toteRows;
+  const ft = Math.max(4, Math.min(cellW, cellH) * 0.18);
+  const topFill = addons.has('top') ? '#E0C28E' : '#C9A77A';
+  const pegFieldColor = '#C9A06A';
+  const pegId = `pg-peg-${cols}`;
+
+  return (
+    <PreviewFrame title={`PG-WB-${cols}W${hasPeg ? '-PEG' : ''}${addons.has('top') ? '-M' : ''}${addons.has('stain') ? '-' + stain[0].toUpperCase() : ''}`} slots={cols * toteRows} subBadge="WORKBENCH" SVG_W={SVG_W} SVG_H={SVG_H}>
+      {/* Pegboard panel above the work surface */}
+      {hasPeg && (
+        <g>
+          <defs>
+            <pattern id={pegId} width="9" height="9" patternUnits="userSpaceOnUse">
+              <circle cx="4.5" cy="4.5" r="1.15" fill="rgba(0,0,0,0.30)"/>
+            </pattern>
+          </defs>
+          {/* 2x4 frame around the pegboard */}
+          <rect x={ox} y={pegTop} width={drawW} height={pegH} fill={wood} stroke={woodEdge}/>
+          {/* perforated field, inset by the frame thickness */}
+          <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={pegFieldColor} stroke="rgba(0,0,0,0.35)" strokeWidth="0.5"/>
+          <rect x={ox + ft} y={pegTop + ft} width={drawW - 2 * ft} height={pegH - 2 * ft} fill={`url(#${pegId})`}/>
+          {/* LED light bar under the pegboard frame */}
+          {addons.has('led') && (
+            <g>
+              <rect x={ox + ft + 6} y={pegBottom - 5} width={drawW - 2 * ft - 12} height={3} rx="1.5" fill="#fff6cf"/>
+              <rect x={ox + ft + 6} y={pegBottom - 5} width={drawW - 2 * ft - 12} height={3} rx="1.5" fill="var(--yellow)" opacity="0.5"/>
+            </g>
+          )}
+        </g>
+      )}
+
+      {/* Work surface top (mandatory) */}
+      <rect x={ox - 3} y={workTopY} width={drawW + 6} height={topThick} fill={topFill} stroke="rgba(0,0,0,0.4)"/>
+      <line x1={ox - 3} y1={workTopY + 0.8} x2={ox + drawW + 3} y2={workTopY + 0.8} stroke="rgba(255,255,255,0.18)" strokeWidth="0.6"/>
+
+      {/* Tote block — totes all the way across, 2 high */}
+      <Frame x={ox} y={oyTotes} w={drawW} h={toteH} cols={cols} rows={toteRows} cellW={cellW} cellH={cellH} ft={ft} wood={wood} woodEdge={woodEdge}/>
+      <Totes x={ox} y={oyTotes} cols={cols} rows={toteRows} cellW={cellW} cellH={cellH} ft={ft}/>
+
+      {hasCasters && <Casters x={ox} y={oyTotes + toteH} w={drawW} count={casterCount(cols, toteRows)}/>}
+
+      <Dimensions ox={ox} oy={assemblyTop} drawW={drawW} drawH={assemblyH} wIn={wIn} hIn={totalHIn} topThick={topThick} hasCasters={hasCasters}/>
+    </PreviewFrame>
+  );
 }
 
 function renderSingle({ cols, rows, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H }) {
@@ -464,42 +679,34 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
   const cellH = drawH / sideRows;
   const ft = Math.max(4, Math.min(cellW, cellH) * 0.18);
 
-  // Top-board styling: same tan tone as the frame so the unit reads as one piece,
-  // with a subtle highlight line on top + a darker shadow line below for thickness.
   const topFill = hasMaple ? '#D4B17A' : '#CDA571';
   const topShadow = '#7a5a32';
 
   return (
     <PreviewFrame title={`PG-${dualKind.toUpperCase().replace('HIGH','H')}-D${addons.has('stain')?'-'+stain[0].toUpperCase():''}`} slots={props.slots} subBadge="DOUBLE" SVG_W={SVG_W} SVG_H={SVG_H}>
-      {/* Top board — single clean rect, the only varying dim is thickness */}
       <g>
         <rect x={ox - 3} y={oy - topThick} width={drawW + 6} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.6"/>
         <line x1={ox - 3} y1={oy - topThick + 1} x2={ox + drawW + 3} y2={oy - topThick + 1} stroke="rgba(255,255,255,0.18)" strokeWidth="0.6"/>
         <line x1={ox - 3} y1={oy - 0.5} x2={ox + drawW + 3} y2={oy - 0.5} stroke="rgba(0,0,0,0.45)" strokeWidth="0.6"/>
       </g>
 
-      {/* The middle section is OPEN at the back — so paint a black void behind the shelves */}
+      {/* The middle section is OPEN at the back — paint a black void behind the shelves */}
       <rect x={ox + binBlockW} y={oy} width={midW} height={drawH} fill="#000"/>
 
-      {/* Left bin block (frame + bins) */}
       <Frame x={ox} y={oy} w={binBlockW} h={drawH} cols={sideCols} rows={sideRows} cellW={cellW} cellH={cellH} ft={ft} wood={wood} woodEdge={woodEdge}/>
       <Totes x={ox} y={oy} cols={sideCols} rows={sideRows} cellW={cellW} cellH={cellH} ft={ft}/>
 
-      {/* Right bin block (frame + bins) */}
       <Frame x={ox + binBlockW + midW} y={oy} w={binBlockW} h={drawH} cols={sideCols} rows={sideRows} cellW={cellW} cellH={cellH} ft={ft} wood={wood} woodEdge={woodEdge}/>
       <Totes x={ox + binBlockW + midW} y={oy} cols={sideCols} rows={sideRows} cellW={cellW} cellH={cellH} ft={ft}/>
 
-      {/* Middle posts + ONE center shelf (regardless of side bin-row count) */}
       <rect x={ox + binBlockW - ft/2} y={oy} width={ft} height={drawH} fill={wood} stroke={woodEdge}/>
       <rect x={ox + binBlockW + midW - ft/2} y={oy} width={ft} height={drawH} fill={wood} stroke={woodEdge}/>
       {(() => {
         const shelves = [];
-        const studH = Math.max(4, topThick * 0.9); // 2x4 stud band visible under the plywood
-        // Single shelf at the vertical center of the open section
+        const studH = Math.max(4, topThick * 0.9);
         const ys = oy + drawH / 2;
         shelves.push(<rect key="midp" x={ox + binBlockW} y={ys - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
         shelves.push(<rect key="mids" x={ox + binBlockW} y={ys} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
-        // Bottom of unit: plywood floor + stud frame above it
         shelves.push(<rect key="botp" x={ox + binBlockW} y={oy + drawH - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
         shelves.push(<rect key="bots" x={ox + binBlockW} y={oy + drawH - topThick - studH} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
         return shelves;
@@ -600,11 +807,8 @@ function Casters({ x, y, w, count = 4 }) {
     <g>
       {xs.map((cx, i) => (
         <g key={i}>
-          {/* caster plate */}
           <rect x={cx - 9} y={y} width={18} height={4} fill="#444" stroke="#666" strokeWidth="0.4"/>
-          {/* fork */}
           <path d={`M ${cx - 6} ${y + 4} L ${cx - 7} ${wheelY - 1} M ${cx + 6} ${y + 4} L ${cx + 7} ${wheelY - 1}`} stroke="#666" strokeWidth="1.2" fill="none"/>
-          {/* wheel */}
           <circle cx={cx} cy={wheelY} r="6.5" fill="#0a0a0a" stroke="#aaa" strokeWidth="0.6"/>
           <circle cx={cx} cy={wheelY} r="2" fill="#888"/>
         </g>
@@ -614,7 +818,6 @@ function Casters({ x, y, w, count = 4 }) {
 }
 
 function Dimensions({ ox, oy, drawW, drawH, wIn, hIn, topThick, hasCasters }) {
-  // topThick is in SVG units, but we present total height in inches based on the unit
   const totalIn = Math.round((hIn + (hasCasters ? CASTER_ADD_IN : 0)) * 10) / 10;
   return (
     <>
