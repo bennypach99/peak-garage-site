@@ -720,6 +720,8 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
           <rect x={ox + binBlockW} y={pegTop} width={midW} height={pegTopH} fill="#000"/>
           <rect x={ox + binBlockW - ft/2} y={pegTop} width={ft} height={pegTopH} fill={wood} stroke={woodEdge}/>
           <rect x={ox + binBlockW + midW - ft/2} y={pegTop} width={ft} height={pegTopH} fill={wood} stroke={woodEdge}/>
+          {/* 2x4 header rail across the top of the middle open bay */}
+          <rect x={ox + binBlockW} y={pegTop} width={midW} height={Math.max(4, topThick * 0.9)} fill={wood} stroke={woodEdge} strokeWidth="0.4"/>
           {/* Work-surface shelf at the bottom of the open middle bay */}
           <rect x={ox + binBlockW} y={pegBottom - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>
           {/* LED bar in the upper middle open bay */}
