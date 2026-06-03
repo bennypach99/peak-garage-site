@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "ca.benny.employeetally",
+      "sha256_cert_fingerprints": [
+        "E3:00:8D:33:06:EA:20:5F:AB:5F:90:A4:60:A3:CE:7A:DC:0E:87:BE:1F:7E:3F:16:60:E4:27:6F:6D:7B:3A:ED"
+      ]
+    }
+  }
+]
