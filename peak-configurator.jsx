@@ -614,15 +614,15 @@ function CenterWidthSlider({ value, onChange, overallW }) {
       </div>
       <div style={{ background: 'var(--ink)', border: '1px solid var(--ink4)', padding: '18px 18px 16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
-          <div className="pg-display" style={{ fontSize: 44, color: 'var(--yellow)', lineHeight: 1 }}>
-            {value}<span style={{ fontSize: 22 }}>″</span>
+          <div className="pg-display" style={{ fontSize: 44, color: 'var(--yellow)', lineHeight: 1, display: 'flex', alignItems: 'flex-end' }}>
+            <span>{value}</span><span style={{ fontSize: 22, lineHeight: 1, marginBottom: 3 }}>″</span>
           </div>
           <div style={{ textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.08em' }}>
             OVERALL WIDTH
             <div className="pg-display" style={{ fontSize: 22, color: 'var(--bone)', letterSpacing: 0 }}>{overallW}″</div>
           </div>
         </div>
-        <input type="range" className="pg-range" min={24} max={48} step={1} value={value}
+        <input type="range" className="pg-range" min={24} max={48} step={0.5} value={value}
           onChange={(e) => onChange(Number(e.target.value))} />
         <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.08em', marginTop: 8 }}>
           <span>24″ NARROW</span>
@@ -648,6 +648,24 @@ function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, centerWidth, center
   const leds = ledCount || 0;
 
   const SVG_W = 540, SVG_H = 400;
+
+  // --- 3D preview: parametric Three.js model for EVERY config (replaces SVG drawing). ---
+  const Shelf3D = window.Shelf3D;
+  if (Shelf3D) {
+    const addonArr = Array.from(addons);
+    let slots, subBadge, cfg;
+    if (mode === 'workbench') {
+      slots = wbWidth * 2; subBadge = 'WORKBENCH';
+      cfg = { mode, wbWidth, addons: addonArr, stain, leds };
+    } else if (mode === 'double') {
+      slots = DU_PROPS[dualKind].slots; subBadge = 'DOUBLE';
+      cfg = { mode, dualKind, centerWidth, centerShelves, addons: addonArr, stain, leds };
+    } else {
+      slots = cols * rows; subBadge = null;
+      cfg = { mode, cols, rows, addons: addonArr, stain, leds };
+    }
+    return <Shelf3D cfg={cfg} slots={slots} subBadge={subBadge} />;
+  }
 
   if (mode === 'workbench') {
     return renderWorkbench({ cols: wbWidth, wood, woodEdge, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H });
