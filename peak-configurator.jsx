@@ -47,6 +47,9 @@ const DU_WIDTH_IN = 133.5;
 const DU_CASTER_COST = 100;
 const DU_CASTER_COUNT = 8;
 const DU_PEG_COST = 100;   // pegboard back + frame on a double unit (flat)
+const DU_CENTER_SHELF_COST = 60;  // each ADDED shelf dividing the open center bay
+const CENTER_SHELF_BASE = { '2high': 0, '3high': 1, '4high': 1 };    // shelves included in the base price
+const CENTER_SHELF_ADD_MAX = { '2high': 1, '3high': 1, '4high': 2 };  // max extra shelves the customer can add
 
 function calcWorkbench(cols, addons, stainName, ledCount) {
   const rows = 2;
@@ -78,7 +81,7 @@ function calcSingle(cols, rows, addons, stainName) {
   return { total, lines, slots };
 }
 
-function calcDouble(kind, addons, stainName, ledCount) {
+function calcDouble(kind, addons, stainName, ledCount, centerShelves) {
   const props = DU_PROPS[kind];
   const hasMaple = addons.has('top');
   const base = hasMaple ? props.baseM : props.baseB;
@@ -88,6 +91,7 @@ function calcDouble(kind, addons, stainName, ledCount) {
   if (addons.has('stain'))   { total += props.stain;     lines.push({ label: `Stain (${stainName})`, val: props.stain }); }
   if (addons.has('casters')) { total += DU_CASTER_COST;  lines.push({ label: `Casters (${DU_CASTER_COUNT} wheels · 2 sets)`, val: DU_CASTER_COST }); }
   if (addons.has('pegboard')){ total += props.peg;      lines.push({ label: `Pegboard back + frame`, val: props.peg }); }
+  if (centerShelves > 0)     { const p = DU_CENTER_SHELF_COST * centerShelves; total += p; lines.push({ label: `Additional center shelf${centerShelves > 1 ? 's' : ''} × ${centerShelves}`, val: p }); }
   if (ledCount > 0)          { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
   if (addons.has('totes'))   { const p = props.slots * 15; total += p; lines.push({ label: `${props.slots} totes × $15`, val: p }); }
   return { total, lines, slots: props.slots, props };
@@ -100,6 +104,8 @@ function Configurator() {
   const [cols, setCols] = React.useState(4);
   const [rows, setRows] = React.useState(4);
   const [dualKind, setDualKind] = React.useState('4high');
+  const [centerWidth, setCenterWidth] = React.useState(42); // double units: open center bay width, 24–48"
+  const [centerShelves, setCenterShelves] = React.useState(0); // double units: EXTRA shelves added beyond the included base
   const [addons, setAddons] = React.useState(new Set(['pegboard']));
   const [ledCount, setLedCount] = React.useState(0);
   const [stain, setStain] = React.useState('walnut');
@@ -110,7 +116,7 @@ function Configurator() {
     function onLoad(e) {
       const cfg = e.detail || {};
       if (cfg.wbWidth) { setMode('workbench'); setWbWidth(cfg.wbWidth); }
-      else if (cfg.dualKind) { setMode('double'); setDualKind(cfg.dualKind); }
+      else if (cfg.dualKind) { setMode('double'); setDualKind(cfg.dualKind); if (cfg.centerWidth) setCenterWidth(cfg.centerWidth); if (typeof cfg.centerShelves === 'number') setCenterShelves(cfg.centerShelves); }
       else { setMode('custom'); if (cfg.cols) setCols(cfg.cols); if (cfg.rows) setRows(cfg.rows); }
       if (Array.isArray(cfg.addons)) setAddons(new Set(cfg.addons));
       setLedCount(cfg.ledCount || 0);
@@ -152,6 +158,11 @@ function Configurator() {
   // LED bars: clamp the count to the max allowed for this build.
   const maxLed = ledMax(mode, isWorkbench ? wbWidth : 0, dualKind);
   const effLed = isCustom ? 0 : Math.min(ledCount, maxLed);
+  // Center shelves: doubles include a base count; the customer can add extras (charged).
+  const baseShelves = isDouble ? CENTER_SHELF_BASE[dualKind] : 0;
+  const maxExtraShelves = isDouble ? CENTER_SHELF_ADD_MAX[dualKind] : 0;
+  const effExtraShelves = isDouble ? Math.min(centerShelves, maxExtraShelves) : 0;
+  const totalShelves = baseShelves + effExtraShelves;
 
   // ── Price + dimensions ──
   let total, lines, slots, wIn, hTotal, dimLabel;
@@ -164,9 +175,9 @@ function Configurator() {
     hTotal = HEIGHT_IN[2] + topThickIn + pegH + (addons.has('casters') ? CASTER_ADD_IN : 0);
     dimLabel = `WORKBENCH · ${wbWidth}-WIDE · ${slots} TOTES`;
   } else if (isDouble) {
-    const r = calcDouble(dualKind, addons, stainName, effLed);
+    const r = calcDouble(dualKind, addons, stainName, effLed, effExtraShelves);
     total = r.total; lines = r.lines; slots = r.slots;
-    wIn = DU_WIDTH_IN;
+    wIn = 2 * WIDTH_IN[2] + centerWidth;
     const pegH = (addons.has('pegboard') && DU_PROPS[dualKind].pegMode === 'top') ? WB_PEG_HEIGHT_IN : 0;
     hTotal = r.props.hIn + pegH + (addons.has('casters') ? CASTER_ADD_IN : 0);
     dimLabel = `${r.props.label} DOUBLE · ${slots} TOTES`;
@@ -194,7 +205,12 @@ function Configurator() {
           animation: 'pg-pulse 1.4s ease-out forwards', zIndex: 5,
         }}>✓ LOADED FROM GALLERY</div>
       )}
-      <style>{`@keyframes pg-pulse { 0%{opacity:0;transform:translate(-50%,-8px)} 15%{opacity:1;transform:translate(-50%,0)} 85%{opacity:1;transform:translate(-50%,0)} 100%{opacity:0;transform:translate(-50%,-8px)} }`}</style>
+      <style>{`@keyframes pg-pulse { 0%{opacity:0;transform:translate(-50%,-8px)} 15%{opacity:1;transform:translate(-50%,0)} 85%{opacity:1;transform:translate(-50%,0)} 100%{opacity:0;transform:translate(-50%,-8px)} }
+.pg-range{-webkit-appearance:none;appearance:none;width:100%;height:6px;background:var(--ink4);outline:none;cursor:pointer;border:none;}
+.pg-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;background:var(--yellow);border:3px solid var(--ink);box-shadow:0 0 0 1px var(--yellow);cursor:pointer;}
+.pg-range::-moz-range-thumb{width:20px;height:20px;background:var(--yellow);border:3px solid var(--ink);box-shadow:0 0 0 1px var(--yellow);border-radius:0;cursor:pointer;}
+.pg-range::-moz-range-track{height:6px;background:var(--ink4);}
+.pg-range:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 2px var(--yellow);}`}</style>
       <div className="pg-wrap" style={{ padding: '0 48px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40 }}>
           <div>
@@ -275,9 +291,12 @@ function Configurator() {
             )}
 
             {isDouble && (
-              <div style={{ marginBottom: 24, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>
-                {DU_WIDTH_IN}″ W × {DU_PROPS[dualKind].hIn}″ H × 28.5″ D · top board included.
-              </div>
+              <>
+                <div style={{ marginBottom: 20, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>
+                  {2 * WIDTH_IN[2] + centerWidth}″ W × {DU_PROPS[dualKind].hIn}″ H × 28.5″ D · top board included.
+                </div>
+                <CenterWidthSlider value={centerWidth} onChange={setCenterWidth} overallW={2 * WIDTH_IN[2] + centerWidth} />
+              </>
             )}
 
             {/* 03/04 — add-ons */}
@@ -310,6 +329,7 @@ function Configurator() {
                       name='¾″ SANDED MAPLE TOP' price={`+$${DU_PROPS[dualKind].baseM - DU_PROPS[dualKind].baseB}`} note='upgrade — best looking' />
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
                       name='PEGBOARD BACK' price={`$${DU_PROPS[dualKind].peg}`} note={DU_PROPS[dualKind].pegMode === 'top' ? 'full-width · +36″ H' : 'center section'} />
+                    <ShelfStepper extra={effExtraShelves} maxExtra={maxExtraShelves} base={baseShelves} onChange={setCenterShelves} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${DU_PROPS[dualKind].stain}`} note={stainName} />
@@ -365,7 +385,7 @@ function Configurator() {
 
           {/* RIGHT — preview + price */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            <ShelfPreview mode={mode} cols={cols} rows={rows} wbWidth={wbWidth} dualKind={dualKind} addons={addons} ledCount={effLed} stain={stain} />
+            <ShelfPreview mode={mode} cols={cols} rows={rows} wbWidth={wbWidth} dualKind={dualKind} centerWidth={centerWidth} centerShelves={totalShelves} addons={addons} ledCount={effLed} stain={stain} />
 
             <div style={{ background: 'var(--yellow-pale)', border: '1px solid var(--yellow)', padding: 24, position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -395,6 +415,7 @@ function Configurator() {
                     else if (addons.has('top')) addonNames.push('¾″ sanded maple top');
                     else if (addons.has('basictop')) addonNames.push('½″ basic top');
                     if (addons.has('pegboard')) addonNames.push('pegboard back');
+                    if (effExtraShelves > 0) addonNames.push(`${effExtraShelves} extra center shelf${effExtraShelves > 1 ? 'ves' : ''}`);
                     if (effLed > 0) addonNames.push(`${effLed} LED light bar${effLed > 1 ? 's' : ''}`);
                     if (addons.has('stain')) addonNames.push(`${stainName.toLowerCase()} stain`);
                     if (addons.has('casters')) addonNames.push('wheel casters');
@@ -548,9 +569,73 @@ function LedStepper({ count, max, onChange }) {
   );
 }
 
+// Center shelves — included base + addable extras ($60 each). Shows total; can't go below base.
+function ShelfStepper({ extra, maxExtra, base, onChange }) {
+  const total = base + extra;
+  const active = extra > 0;
+  const dec = (e) => { e.stopPropagation(); onChange(Math.max(0, extra - 1)); };
+  const inc = (e) => { e.stopPropagation(); onChange(Math.min(maxExtra, extra + 1)); };
+  const note = base > 0 ? `${base} included · $60 each more` : `$60 each · up to ${maxExtra}`;
+  return (
+    <div style={{
+      padding: '14px 14px',
+      background: active ? 'var(--yellow-pale)' : 'var(--ink)',
+      border: `1px solid ${active ? 'var(--yellow)' : 'var(--ink4)'}`,
+      display: 'flex', flexDirection: 'column', gap: 6, position: 'relative',
+    }}>
+      <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 13, letterSpacing: '0.02em', color: 'var(--bone)' }}>CENTER SHELVES</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>{note}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button type="button" onClick={dec} disabled={extra <= 0} style={{
+            width: 24, height: 24, lineHeight: 1, border: `1px solid ${extra <= 0 ? 'var(--ink4)' : 'var(--yellow)'}`,
+            background: 'transparent', color: extra <= 0 ? 'var(--bone-d50)' : 'var(--yellow)',
+            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: extra <= 0 ? 'not-allowed' : 'pointer',
+          }}>−</button>
+          <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: active ? 'var(--yellow)' : 'var(--bone)', minWidth: 16, textAlign: 'center' }}>{total}</span>
+          <button type="button" onClick={inc} disabled={extra >= maxExtra} style={{
+            width: 24, height: 24, lineHeight: 1, border: `1px solid ${extra >= maxExtra ? 'var(--ink4)' : 'var(--yellow)'}`,
+            background: 'transparent', color: extra >= maxExtra ? 'var(--bone-d50)' : 'var(--yellow)',
+            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: extra >= maxExtra ? 'not-allowed' : 'pointer',
+          }}>+</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Center-shelf width slider — double units only. 24″–48″. Does not affect price.
+function CenterWidthSlider({ value, onChange, overallW }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12, gap: 12 }}>
+        <span className="pg-eyebrow">02 — CENTER SHELF WIDTH</span>
+        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.04em', textAlign: 'right' }}>Open middle bay · 24″–48″</span>
+      </div>
+      <div style={{ background: 'var(--ink)', border: '1px solid var(--ink4)', padding: '18px 18px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
+          <div className="pg-display" style={{ fontSize: 44, color: 'var(--yellow)', lineHeight: 1 }}>
+            {value}<span style={{ fontSize: 22 }}>″</span>
+          </div>
+          <div style={{ textAlign: 'right', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.08em' }}>
+            OVERALL WIDTH
+            <div className="pg-display" style={{ fontSize: 22, color: 'var(--bone)', letterSpacing: 0 }}>{overallW}″</div>
+          </div>
+        </div>
+        <input type="range" className="pg-range" min={24} max={48} step={1} value={value}
+          onChange={(e) => onChange(Number(e.target.value))} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.08em', marginTop: 8 }}>
+          <span>24″ NARROW</span>
+          <span>48″ WIDE</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────── Shelf preview */
 
-function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, addons, ledCount, stain }) {
+function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, centerWidth, centerShelves, addons, ledCount, stain }) {
   const stainColors = { walnut: '#3a2a1c', ebony: '#0e0e0e', cherry: '#5a2820', natural: '#d9b986' };
   const wood = addons.has('stain') ? stainColors[stain] : '#D9B986';
   const woodEdge = addons.has('stain') ? '#000' : '#A88656';
@@ -568,7 +653,7 @@ function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, addons, ledCount, s
     return renderWorkbench({ cols: wbWidth, wood, woodEdge, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H });
   }
   if (mode === 'double') {
-    return renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H });
+    return renderDouble({ dualKind, centerWidth, centerShelves, wood, woodEdge, hasMaple, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H });
   }
   return renderSingle({ cols, rows, wood, woodEdge, topThick, hasCasters, addons, stain, SVG_W, SVG_H });
 }
@@ -675,11 +760,12 @@ function renderSingle({ cols, rows, wood, woodEdge, topThick, hasCasters, addons
   );
 }
 
-function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H }) {
+function renderDouble({ dualKind, centerWidth, centerShelves, wood, woodEdge, hasMaple, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H }) {
   const props = DU_PROPS[dualKind];
-  const wIn = DU_WIDTH_IN;
+  const cw = centerWidth || 42;
+  const wIn = 2 * WIDTH_IN[2] + cw;
   const hIn = props.hIn;
-  const MAX_W = 133.5, MAX_H = 100;
+  const MAX_W = 2 * WIDTH_IN[2] + 48, MAX_H = 100;
   const PAD = 36;
   const sx = (SVG_W - 2 * PAD) / MAX_W;
   const sy = (SVG_H - 2 * PAD) / MAX_H;
@@ -712,8 +798,10 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
   const pegId = `pg-peg-d-${dualKind}`;
   const assemblyTop = (hasPeg && pegMode === 'top') ? pegTop : (oy - topThick);
   const assemblyH = (oy + drawH) - assemblyTop;
-  // center-bay pegboard geometry (3/4-high)
-  const cbX = ox + binBlockW, cbW = midW, cbY = oy, cbH = drawH / 2;
+  // center-bay pegboard geometry (3/4-high) — fills the top cavity (first compartment).
+  // Exception: a fully-shelved 4-high (3 shelves) is tall enough to back the top TWO cavities.
+  const pegCavities = (dualKind === '4high' && centerShelves >= 3) ? 2 : 1;
+  const cbX = ox + binBlockW, cbW = midW, cbY = oy, cbH = pegCavities * drawH / ((centerShelves || 1) + 1);
 
   return (
     <PreviewFrame title={`PG-${dualKind.toUpperCase().replace('HIGH','H')}-D${hasPeg?'-PEG':''}${addons.has('stain')?'-'+stain[0].toUpperCase():''}`} slots={props.slots} subBadge="DOUBLE" SVG_W={SVG_W} SVG_H={SVG_H}>
@@ -778,14 +866,14 @@ function renderDouble({ dualKind, wood, woodEdge, hasMaple, topThick, hasCasters
       {(() => {
         const shelves = [];
         const studH = Math.max(4, topThick * 0.9);
-        const ys = oy + drawH / 2;
-        if (dualKind === '2high') {
-          // 2-high: no mid plywood shelf — just a 2x4 cross-rail at mid-height
-          shelves.push(<rect key="midrail" x={ox + binBlockW} y={ys - studH} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
-        } else {
-          shelves.push(<rect key="midp" x={ox + binBlockW} y={ys - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
-          shelves.push(<rect key="mids" x={ox + binBlockW} y={ys} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
+        const n = centerShelves || 0;
+        // n evenly-spaced shelves divide the open center bay into n+1 equal compartments
+        for (let i = 1; i <= n; i++) {
+          const sy = oy + (drawH * i) / (n + 1);
+          shelves.push(<rect key={`csp${i}`} x={ox + binBlockW} y={sy - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
+          shelves.push(<rect key={`css${i}`} x={ox + binBlockW} y={sy} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
         }
+        // structural floor shelf — always present
         shelves.push(<rect key="botp" x={ox + binBlockW} y={oy + drawH - topThick} width={midW} height={topThick} fill={topFill} stroke={topShadow} strokeWidth="0.4"/>);
         shelves.push(<rect key="bots" x={ox + binBlockW} y={oy + drawH - topThick - studH} width={midW} height={studH} fill={wood} stroke={woodEdge} strokeWidth="0.3"/>);
         return shelves;
