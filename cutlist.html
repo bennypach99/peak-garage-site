@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Cut List Generator · Peak Garage Solutions</title>
+  <link rel="icon" href="data:," />
+  <style>
+    html, body { margin: 0; padding: 0; background: #141312; }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin></script>
+</head>
+<body>
+  <div id="root"><div style="color:#7b7568;font-family:sans-serif;padding:48px;text-align:center;">Loading cut list generator…</div></div>
+  <script type="text/babel" data-presets="react">
+const { useState, useMemo, useEffect } = React;
+
+const DEFAULT_PRICES = { "8'": 5.5, "10'": 7.5, "12'": 9.5, "16'": 13, ply05: 48, ply075: 65, peg: 28 };
+function loadLS(key, fallback) {
+  try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; }
+  catch (e) { return fallback; }
+}
+
+
+/* ---------- Fixed spec tables (Peak Garage configurator) ---------- */
+const WIDTH_TABLE = { 1: 23.5, 2: 45.5, 3: 67.5, 4: 89.5, 5: 111.5, 6: 133.5 };
+const HEIGHT_TABLE = { 2: 36, 3: 52, 4: 68, 5: 84, 6: 100 };
+const DEPTH = 28.5;
+const SHELF_CROSS = 25.5;
+const SUPPORT = DEPTH - 7;   // 21.5"
+const PEGBOARD_H = 32;       // 96/32 = 3 panels per sheet
+const BACK_STUD = 65;        // 33" tote zone + 32" pegboard zone
+const PEG_OVERALL = 66.5;
+const SHEET_W = 96, SHEET_H = 48, SEC = 45.5; // 4x8 sheet, 2-wide section width
+
+const STOCK_LENGTHS = [
+  { in: 96, label: "8'" }, { in: 120, label: "10'" },
+  { in: 144, label: "12'" }, { in: 192, label: "16'" },
+];
+
+const COLS = [1, 2, 3, 4, 5, 6];
+const ROWS = [2, 3, 4, 5, 6];
+const PEGBOARDS = [
+  { label: "2-Wide", cols: 2, totes: 4 }, { label: "3-Wide", cols: 3, totes: 6 },
+  { label: "4-Wide", cols: 4, totes: 8 }, { label: "5-Wide", cols: 5, totes: 10 },
+  { label: "6-Wide", cols: 6, totes: 12 },
+];
+const DOUBLES = [
+  { label: "Double · 2 High", rows: 2, totes: 8 },
+  { label: "Double · 3 High", rows: 3, totes: 12 },
+  { label: "Double · 4 High", rows: 4, totes: 16 },
+];
+
+const f2 = (n) => +n.toFixed(2);
+
+/* Section a sheet-good across the width: full piece if it fits in 8', else 2-wide sections */
+function sections(width, columns) {
+  if (width <= SHEET_W) return [width];
+  const out = []; let c = columns;
+  while (c >= 2) { out.push(SEC); c -= 2; }
+  if (c === 1) out.push(WIDTH_TABLE[1]); // 23.5" leftover single column
+  return out;
+}
+
+/* Standard-shelf tops: always cut in 2-wide (45.5") pieces, plus a 23.5" leftover for an odd column */
+function sectionsCols(columns) {
+  const out = []; let c = columns;
+  while (c >= 2) { out.push(SEC); c -= 2; }
+  if (c === 1) out.push(WIDTH_TABLE[1]);
+  return out;
+}
+
+/* ---------- Cut list math ---------- */
+function buildCutList(productType, columns, rows, shelfWidth, ply) {
+  const hasPly = ply > 0;
+
+  /* ----- DOUBLE PEGBOARD ----- */
+  if (productType === "doublepeg") {
+    const front = f2(HEIGHT_TABLE[2] - 3);
+    const framing = [
+      { name: "Full-Width Plates", desc: "3 per tower × 2 towers", qty: 6, length: SEC },
+      { name: "Top Back / Pegboard Rails", desc: 'width − 3" · 2 per tower × 2', qty: 4, length: f2(SEC - 3) },
+      { name: "Back Corner Studs", desc: '65" · 2 per tower × 2', qty: 4, length: BACK_STUD },
+      { name: "Vertical Studs", desc: '33" · 4 per tower × 2', qty: 8, length: front },
+      { name: "Tote Runners", desc: "2 per bin · 8 bins across towers", qty: 16, length: DEPTH },
+      { name: "Shelf Rails", desc: "2 per shelf × 2 center shelves", qty: 4, length: shelfWidth },
+      { name: "Shelf Cross Members", desc: '2 per shelf × 2 · fixed 25.5"', qty: 4, length: SHELF_CROSS },
+      { name: "Center Supports", desc: '21.5" · 4 top + 2 bottom shelf', qty: 6, length: SUPPORT },
+    ];
+    const pegPieces = [{ name: "Pegboard Panel", w: SEC }, { name: "Pegboard Panel", w: SEC }];
+    const plyPieces = hasPly ? [
+      { name: "Tower Top", w: SEC }, { name: "Tower Top", w: SEC },
+      { name: "Center Work Top", w: shelfWidth }, { name: "Center Bottom Shelf", w: shelfWidth },
+    ] : [];
+    return { width: 91 + shelfWidth, height: PEG_OVERALL, framing, pegPieces, plyPieces, bins: 8 };
+  }
+
+  /* ----- PEGBOARD (single) ----- */
+  if (productType === "pegboard") {
+    const width = WIDTH_TABLE[columns];
+    const front = f2(HEIGHT_TABLE[2] - 3);
+    const nCenter = 2 * (columns - 1);
+    const framing = [
+      { name: "Full-Width Plates", desc: "3 of 4 plates run full width", qty: 3, length: width },
+      { name: "Top Back / Pegboard Rails", desc: 'top back plate + pegboard rail · width − 3"', qty: 2, length: f2(width - 3) },
+      { name: "Back Corner Studs", desc: '65" · extend to pegboard top', qty: 2, length: BACK_STUD },
+      { name: "Vertical Studs", desc: `33" · 2 front corners${nCenter ? ` + ${nCenter} center dividers` : ""}`, qty: 2 + nCenter, length: front },
+      { name: "Tote Runners", desc: `2 per bin · ${columns}×2 = ${columns * 2} bins`, qty: 4 * columns, length: DEPTH },
+      { name: "Corner Connectors", desc: "front-to-back ties at corners", qty: 4, length: SUPPORT },
+    ];
+    const centerTop = Math.max(0, columns - 3);
+    if (centerTop > 0) framing.push({ name: "Center Supports", desc: "work-top support across span", qty: centerTop, length: SUPPORT });
+    const secs = sections(width, columns);
+    const pegPieces = secs.map((w) => ({ name: "Pegboard Panel", w }));
+    const plyPieces = hasPly ? secs.map((w) => ({ name: "Work Top", w })) : [];
+    return { width, height: PEG_OVERALL, framing, pegPieces, plyPieces, bins: columns * 2 };
+  }
+
+  /* ----- DOUBLE (open shelves) ----- */
+  if (productType === "double") {
+    const frameH = HEIGHT_TABLE[rows];
+    const shelfCount = rows === 4 ? 3 : 2;
+    const framing = [
+      { name: "Full-Width Plates", desc: "4 per tower × 2 towers", qty: 8, length: SEC },
+      { name: "Vertical Studs", desc: "6 per tower × 2 towers", qty: 12, length: f2(frameH - 3) },
+      { name: "Tote Runners", desc: `2 per bin · ${4 * rows} bins across both towers`, qty: 8 * rows, length: DEPTH },
+      { name: "Corner Connectors", desc: "4 per tower × 2 towers", qty: 8, length: SUPPORT },
+      { name: "Shelf Rails", desc: `2 per shelf × ${shelfCount} · tracks shelf width`, qty: 2 * shelfCount, length: shelfWidth },
+      { name: "Shelf Cross Members", desc: `2 per shelf × ${shelfCount} · fixed 25.5"`, qty: 2 * shelfCount, length: SHELF_CROSS },
+    ];
+    const plyPieces = [];
+    if (hasPly) {
+      plyPieces.push({ name: "Tower Top", w: SEC }, { name: "Tower Top", w: SEC });
+      for (let i = 0; i < shelfCount; i++) plyPieces.push({ name: "Center Shelf", w: shelfWidth });
+    }
+    return { width: 91 + shelfWidth, height: f2(frameH + ply), framing, pegPieces: [], plyPieces, bins: 4 * rows };
+  }
+
+  /* ----- STANDARD SHELF ----- */
+  const width = WIDTH_TABLE[columns];
+  const frameH = HEIGHT_TABLE[rows];
+  const framing = [
+    { name: "Full-Width Plates", desc: "Top & bottom, front & back frames", qty: 4, length: width },
+    { name: "Vertical Studs", desc: columns > 1 ? "4 corners + 2 per added column" : "4 corner posts", qty: 4 + 2 * (columns - 1), length: f2(frameH - 3) },
+    { name: "Tote Runners", desc: `2 per bin · ${columns}×${rows} = ${columns * rows} bins`, qty: 2 * columns * rows, length: DEPTH },
+    { name: "Corner Connectors", desc: "Front-to-back ties at corners", qty: 4, length: SUPPORT },
+  ];
+  const centerTop = Math.max(0, columns - 3);
+  if (centerTop > 0) framing.push({ name: "Center Supports", desc: "Plywood support across span", qty: centerTop, length: SUPPORT });
+  const plyPieces = hasPly ? sectionsCols(columns).map((w) => ({ name: "Top Plywood", w })) : [];
+  return { width, height: f2(frameH + ply), framing, pegPieces: [], plyPieces, bins: columns * rows };
+}
+
+/* ---------- 2x4 cutting-stock optimizer ---------- */
+function optimizeStock(framing) {
+  const cuts = [];
+  framing.forEach((p) => { for (let i = 0; i < p.qty; i++) cuts.push({ length: p.length, name: p.name }); });
+  cuts.sort((a, b) => b.length - a.length);
+  const boards = [];
+  cuts.forEach((cut) => {
+    let best = -1, bestRem = Infinity;
+    boards.forEach((b, i) => { if (b.remaining + 1e-9 >= cut.length && b.remaining < bestRem) { best = i; bestRem = b.remaining; } });
+    if (best >= 0) { boards[best].remaining -= cut.length; boards[best].cuts.push(cut); return; }
+    const stock = STOCK_LENGTHS.find((s) => s.in + 1e-9 >= cut.length) || STOCK_LENGTHS[STOCK_LENGTHS.length - 1];
+    boards.push({ stock: stock.in, label: stock.label, remaining: stock.in - cut.length, cuts: [cut] });
+  });
+  const byLength = {}; let purchased = 0;
+  boards.forEach((b) => { byLength[b.label] = (byLength[b.label] || 0) + 1; purchased += b.stock; });
+  const used = cuts.reduce((s, c) => s + c.length, 0);
+  return { boards, byLength, wastePct: purchased ? (1 - used / purchased) * 100 : 0 };
+}
+
+/* ---------- Sheet nesting (48x96): panels are width × depth ---------- */
+function packSheets(pieces, depth) {
+  if (!pieces.length) return null;
+  const bands = Math.floor(SHEET_W / depth) || 1; // 32->3, 28.5->3
+  let narrow = 0, wide = 0, usedArea = 0;
+  pieces.forEach((p) => { usedArea += p.w * depth; if (p.w <= SHEET_H) narrow++; else wide++; });
+  const narrowSheets = Math.ceil(narrow / bands);
+  const sheets = narrowSheets + wide;
+  const freeSlots = narrowSheets * bands - narrow; // reusable same-size slots
+  const totalArea = sheets * SHEET_W * SHEET_H;
+  return { sheets, bands, wastePct: (1 - usedArea / totalArea) * 100, freeSlots };
+}
+
+/* Place pieces on 48x96 sheets and return rectangle coords (inches) for drawing */
+function layoutSheets(pieces, depth) {
+  const bands = Math.floor(SHEET_W / depth) || 1;
+  const sheets = [];
+  const narrow = pieces.filter((p) => p.w <= SHEET_H);
+  const wide = pieces.filter((p) => p.w > SHEET_H);
+  let cur = null, band = 0;
+  narrow.forEach((p) => {
+    if (!cur || band >= bands) { cur = { rects: [] }; sheets.push(cur); band = 0; }
+    cur.rects.push({ x: band * depth, y: 0, w: depth, h: p.w, label: `${p.w}×${depth}`, name: p.name });
+    band++;
+  });
+  wide.forEach((p) => { sheets.push({ rects: [{ x: 0, y: 0, w: p.w, h: depth, label: `${p.w}×${depth}`, name: p.name }] }); });
+  return sheets;
+}
+
+function groupPieces(pieces, depth) {
+  const m = {};
+  pieces.forEach((p) => { const k = p.name + "|" + p.w; if (!m[k]) m[k] = { name: p.name, w: p.w, d: depth, qty: 0 }; m[k].qty++; });
+  return Object.values(m);
+}
+
+const PART_COLORS = {
+  "Full-Width Plates": "#F2D43C", "Top Back / Pegboard Rails": "#C9A84C", "Back Corner Studs": "#6B8E4E",
+  "Vertical Studs": "#8FB35A", "Tote Runners": "#5C9BD1", "Corner Connectors": "#C77DAD",
+  "Center Supports": "#9B6BB0", "Shelf Rails": "#E08A5C", "Shelf Cross Members": "#6FB8A0",
+};
+
+function CutListGenerator() {
+  const [columns, setColumns] = useState(2);
+  const [rows, setRows] = useState(3);
+  const [ply, setPly] = useState(0.75);
+  const [productType, setProductType] = useState("shelf");
+  const [shelfWidth, setShelfWidth] = useState(42.5);
+  const [activeQuick, setActiveQuick] = useState(null);
+  const [showPlan, setShowPlan] = useState(false);
+  const [showSheets, setShowSheets] = useState(false);
+  const [cart, setCart] = useState(() => loadLS("pgs_cart", []));
+  const [prices, setPrices] = useState(() => ({ ...DEFAULT_PRICES, ...loadLS("pgs_prices", {}) }));
+  useEffect(() => { try { localStorage.setItem("pgs_cart", JSON.stringify(cart)); } catch (e) {} }, [cart]);
+  useEffect(() => { try { localStorage.setItem("pgs_prices", JSON.stringify(prices)); } catch (e) {} }, [prices]);
+
+  const cl = useMemo(() => buildCutList(productType, columns, rows, shelfWidth, ply), [productType, columns, rows, shelfWidth, ply]);
+  const opt = useMemo(() => optimizeStock(cl.framing), [cl.framing]);
+  const pegPack = useMemo(() => packSheets(cl.pegPieces, PEGBOARD_H), [cl.pegPieces]);
+  const plyPack = useMemo(() => packSheets(cl.plyPieces, DEPTH), [cl.plyPieces]);
+  const pegRows = useMemo(() => groupPieces(cl.pegPieces, PEGBOARD_H), [cl.pegPieces]);
+  const plyRows = useMemo(() => groupPieces(cl.plyPieces, DEPTH), [cl.plyPieces]);
+  const pegLayout = useMemo(() => layoutSheets(cl.pegPieces, PEGBOARD_H), [cl.pegPieces]);
+  const plyLayout = useMemo(() => layoutSheets(cl.plyPieces, DEPTH), [cl.plyPieces]);
+
+  const productLabel = () => {
+    if (isDpeg) return `Double Pegboard · ${shelfWidth}" bay`;
+    if (isDouble) return `Double Open · ${rows}-High · ${shelfWidth}" shelf`;
+    if (isPeg) return `Pegboard · ${columns}-Wide`;
+    return `Shelf · ${columns}W × ${rows}H${ply ? ` · ${plyLabel} top` : " · no top"}`;
+  };
+  const addToCart = () => setCart((prev) => [...prev, { id: Date.now() + Math.random(), label: productLabel(), framing: cl.framing, pegPieces: cl.pegPieces, plyPieces: cl.plyPieces, ply }]);
+  const removeFromCart = (id) => setCart((prev) => prev.filter((c) => c.id !== id));
+
+  const cartStats = useMemo(() => {
+    if (!cart.length) return null;
+    const pooledFraming = cart.flatMap((c) => c.framing);
+    const pooledPeg = cart.flatMap((c) => c.pegPieces);
+    const pool05 = cart.filter((c) => c.ply === 0.5).flatMap((c) => c.plyPieces);
+    const pool075 = cart.filter((c) => c.ply === 0.75).flatMap((c) => c.plyPieces);
+    const studs = optimizeStock(pooledFraming).byLength;
+    const pegP = packSheets(pooledPeg, PEGBOARD_H);
+    const p05 = packSheets(pool05, DEPTH);
+    const p075 = packSheets(pool075, DEPTH);
+    // naive (build each unit separately, no offcut sharing)
+    let nStud = 0, nSheet = 0;
+    cart.forEach((c) => {
+      nStud += Object.values(optimizeStock(c.framing).byLength).reduce((a, b) => a + b, 0);
+      const pp = packSheets(c.pegPieces, PEGBOARD_H); if (pp) nSheet += pp.sheets;
+      const x = packSheets(c.plyPieces, DEPTH); if (x) nSheet += x.sheets;
+    });
+    const cStud = Object.values(studs).reduce((a, b) => a + b, 0);
+    const cSheet = (pegP ? pegP.sheets : 0) + (p05 ? p05.sheets : 0) + (p075 ? p075.sheets : 0);
+    let cost = 0;
+    for (const k in studs) cost += studs[k] * (prices[k] || 0);
+    cost += (pegP ? pegP.sheets : 0) * prices.peg + (p05 ? p05.sheets : 0) * prices.ply05 + (p075 ? p075.sheets : 0) * prices.ply075;
+    return { studs, pegP, p05, p075, cost, studsSaved: nStud - cStud, sheetsSaved: nSheet - cSheet };
+  }, [cart, prices]);
+
+  const totalPieces = cl.framing.reduce((s, p) => s + p.qty, 0);
+  const totalInches = cl.framing.reduce((s, p) => s + p.qty * p.length, 0);
+  const isShelf = productType === "shelf";
+  const isDouble = productType === "double";
+  const isPeg = productType === "pegboard";
+  const isDpeg = productType === "doublepeg";
+  const usesShelfWidth = isDouble || isDpeg;
+  const plyLabel = ply === 0.75 ? '¾"' : ply === 0.5 ? '½"' : "none";
+
+  const pickPeg = (wb, i) => { setProductType("pegboard"); setColumns(wb.cols); setRows(2); setActiveQuick("pg" + i); };
+  const pickDouble = (d, i) => { setProductType("double"); setRows(d.rows); setActiveQuick("db" + i); };
+  const pickDpeg = () => { setProductType("doublepeg"); setActiveQuick("dpeg"); };
+  const pickCol = (c) => { setColumns(c); setProductType("shelf"); setActiveQuick(null); };
+  const pickRow = (r) => { setRows(r); setProductType("shelf"); setActiveQuick(null); };
+
+  const C = { bg: "#141312", panel: "#1c1b19", card: "#222120", border: "#2e2c29", line: "#262422", gold: "#C9A84C", bright: "#F2D43C", text: "#ece5d4", muted: "#7b7568", dim: "#56514a" };
+  const sectionLabel = { color: C.gold, fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", fontWeight: 700, margin: "0 0 12px" };
+  const tile = (a) => ({ background: a ? C.bright : C.card, border: `1px solid ${a ? C.bright : C.border}`, borderRadius: "6px", padding: "12px 8px", cursor: "pointer", textAlign: "center", transition: "all .12s", minWidth: 0 });
+  const tileNum = (a) => ({ fontSize: "22px", fontWeight: 700, color: a ? "#141312" : C.text, lineHeight: 1 });
+  const tileSub = (a) => ({ fontSize: "11px", color: a ? "#5a4d10" : C.muted, marginTop: "4px", fontWeight: 600 });
+
+  const sheetRow = (pw) => (
+    <tr key={pw.name + pw.w + pw.d} style={{ borderBottom: `1px solid ${C.line}` }}>
+      <td style={{ padding: "11px 12px 11px 0" }}>
+        <span style={{ display: "inline-block", width: "9px", height: "9px", borderRadius: "2px", background: pw.d === PEGBOARD_H ? "#b08d57" : "#9a8f7a", marginRight: "9px", verticalAlign: "middle" }} />
+        <span style={{ fontWeight: 600 }}>{pw.name}</span>
+        <div style={{ color: C.dim, fontSize: "12px", marginTop: "2px", marginLeft: "18px" }}>{pw.d === PEGBOARD_H ? "pegboard" : plyLabel + " plywood"}</div>
+      </td>
+      <td style={{ textAlign: "right", padding: "11px 12px", fontWeight: 700, color: C.bright, fontSize: "16px" }}>{pw.qty}</td>
+      <td style={{ textAlign: "right", padding: "11px 12px", color: "#cfc8b6", fontFamily: "monospace" }}>{pw.w}×{pw.d}"</td>
+      <td style={{ textAlign: "right", padding: "11px 0 11px 12px", color: C.muted, fontFamily: "monospace" }}>{((pw.qty * pw.w * pw.d) / 144).toFixed(1)} ft²</td>
+    </tr>
+  );
+
+  return (
+    <div style={{ background: C.bg, color: C.text, minHeight: "100vh", fontFamily: "'Helvetica Neue', system-ui, sans-serif", padding: "0 0 40px" }}>
+      <div style={{ borderBottom: `2px solid ${C.bright}`, padding: "22px 26px 18px", display: "flex", alignItems: "baseline", gap: "14px", flexWrap: "wrap" }}>
+        <h1 style={{ margin: 0, fontSize: "20px", fontWeight: 800, color: C.bright, letterSpacing: "1px" }}>CUT LIST GENERATOR</h1>
+        <span style={{ color: C.dim, fontSize: "12px", letterSpacing: "2px" }}>PEAK GARAGE SOLUTIONS</span>
+      </div>
+
+      <div style={{ padding: "22px 26px 0" }}>
+        <p style={sectionLabel}>Workbench + Plywood + Pegboard</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(105px, 1fr))", gap: "8px", marginBottom: "20px" }}>
+          {PEGBOARDS.map((wb, i) => { const a = activeQuick === "pg" + i; return (
+            <button key={i} onClick={() => pickPeg(wb, i)} style={tile(a)}><div style={tileNum(a)}>{wb.label}</div><div style={tileSub(a)}>{wb.totes} totes</div></button>); })}
+        </div>
+
+        <p style={sectionLabel}>Double Unit · Open Shelves</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "8px", marginBottom: "20px" }}>
+          {DOUBLES.map((d, i) => { const a = activeQuick === "db" + i; return (
+            <button key={i} onClick={() => pickDouble(d, i)} style={{ ...tile(a), textAlign: "left", padding: "12px 14px" }}>
+              <div style={{ ...tileNum(a), fontSize: "15px" }}>{d.label}</div><div style={tileSub(a)}>{d.totes} totes · {d.rows === 4 ? 3 : 2} shelves</div>
+            </button>); })}
+        </div>
+
+        <p style={sectionLabel}>Double 2-High + Peg Board</p>
+        <div style={{ marginBottom: "24px" }}>
+          <button onClick={pickDpeg} style={{ ...tile(isDpeg), textAlign: "left", padding: "12px 14px", width: "auto", minWidth: "220px" }}>
+            <div style={{ ...tileNum(isDpeg), fontSize: "15px" }}>Double Pegboard</div><div style={tileSub(isDpeg)}>8 totes · 2 towers + work bay</div>
+          </button>
+        </div>
+
+        {usesShelfWidth && (
+          <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "16px 18px", marginBottom: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "12px" }}>
+              <span style={{ ...sectionLabel, margin: 0 }}>{isDpeg ? "Center Bay Width" : "Center Shelf Width"}</span>
+              <span style={{ fontSize: "24px", fontWeight: 800, color: C.bright }}>{shelfWidth}"</span>
+            </div>
+            <input type="range" min={24} max={48} step={0.5} value={shelfWidth} onChange={(e) => setShelfWidth(Number(e.target.value))} style={{ width: "100%", accentColor: C.bright }} />
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", color: C.dim, marginTop: "4px" }}><span>24"</span><span>48"</span></div>
+          </div>
+        )}
+
+        <p style={sectionLabel}>Custom Size · plywood top only</p>
+        <div style={{ fontSize: "11px", color: C.dim, marginTop: "-6px", marginBottom: "12px" }}>Any column × row · top ply set to None / ½" / ¾" above · tops cut in 45.5" pieces to minimize waste</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <p style={{ ...sectionLabel, color: C.muted }}>02 — Width (columns)</p><span style={{ color: C.dim, fontSize: "11px" }}>tote columns side-by-side</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "8px", marginBottom: "20px" }}>
+          {COLS.map((c) => { const a = isShelf && columns === c; return (<button key={c} onClick={() => pickCol(c)} style={tile(a)}><div style={tileNum(a)}>{c}</div><div style={tileSub(a)}>{WIDTH_TABLE[c]}"</div></button>); })}
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <p style={{ ...sectionLabel, color: C.muted }}>03 — Height (rows)</p><span style={{ color: C.dim, fontSize: "11px" }}>stacked levels</span>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
+          {ROWS.map((r) => { const a = isShelf && rows === r; return (<button key={r} onClick={() => pickRow(r)} style={tile(a)}><div style={tileNum(a)}>{r}</div><div style={tileSub(a)}>{HEIGHT_TABLE[r]}"</div></button>); })}
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 26px 0" }}>
+        <div style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "16px 18px", display: "flex", gap: "28px", flexWrap: "wrap", alignItems: "center" }}>
+          {[["Width", cl.width + '"'], ["Height", cl.height + '"'], ["Depth", DEPTH + '"']].map(([k, v]) => (
+            <div key={k}><div style={{ fontSize: "10px", color: C.muted, letterSpacing: "1.5px", textTransform: "uppercase" }}>{k}</div><div style={{ fontSize: "22px", fontWeight: 700, color: C.bright }}>{v}</div></div>))}
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "10px", color: C.muted, letterSpacing: "1.5px", textTransform: "uppercase" }}>Plywood</span>
+            {[{ v: 0, l: "None" }, { v: 0.5, l: '½"' }, { v: 0.75, l: '¾"' }].map((o) => (
+              <button key={o.v} onClick={() => setPly(o.v)} style={{ background: ply === o.v ? C.bright : C.card, color: ply === o.v ? "#141312" : C.muted, border: `1px solid ${ply === o.v ? C.bright : C.border}`, borderRadius: "4px", padding: "6px 12px", fontSize: "13px", fontWeight: 700, cursor: "pointer" }}>{o.l}</button>))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "22px 26px 0" }}>
+        <p style={{ ...sectionLabel, color: C.bright }}>2×4 Framing — Cut List <span style={{ color: C.muted, fontWeight: 400 }}>(all 1.5"×3.5")</span></p>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+            <thead>
+              <tr style={{ borderBottom: `1px solid ${C.border}`, color: C.muted, fontSize: "10px", letterSpacing: "1.5px", textTransform: "uppercase" }}>
+                <th style={{ textAlign: "left", padding: "8px 12px 8px 0" }}>Part</th><th style={{ textAlign: "right", padding: "8px 12px" }}>Qty</th>
+                <th style={{ textAlign: "right", padding: "8px 12px" }}>Length</th><th style={{ textAlign: "right", padding: "8px 0 8px 12px" }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cl.framing.map((p, i) => (
+                <tr key={i} style={{ borderBottom: `1px solid ${C.line}` }}>
+                  <td style={{ padding: "11px 12px 11px 0" }}>
+                    <span style={{ display: "inline-block", width: "9px", height: "9px", borderRadius: "2px", background: PART_COLORS[p.name] || "#666", marginRight: "9px", verticalAlign: "middle" }} />
+                    <span style={{ fontWeight: 600 }}>{p.name}</span><div style={{ color: C.dim, fontSize: "12px", marginTop: "2px", marginLeft: "18px" }}>{p.desc}</div>
+                  </td>
+                  <td style={{ textAlign: "right", padding: "11px 12px", fontWeight: 700, color: C.bright, fontSize: "16px" }}>{p.qty}</td>
+                  <td style={{ textAlign: "right", padding: "11px 12px", color: "#cfc8b6", fontFamily: "monospace" }}>{p.length}"</td>
+                  <td style={{ textAlign: "right", padding: "11px 0 11px 12px", color: C.muted, fontFamily: "monospace" }}>{(p.qty * p.length).toFixed(1)}"</td>
+                </tr>))}
+              {pegRows.map(sheetRow)}
+              {plyRows.map(sheetRow)}
+              {pegRows.length === 0 && plyRows.length === 0 && (
+                <tr><td colSpan={4} style={{ padding: "11px 0", color: C.dim, fontStyle: "italic", fontSize: "13px" }}>No sheet goods</td></tr>)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={{ padding: "20px 26px 0" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "10px" }}>
+          {[
+            { label: "2×4 Pieces", value: totalPieces, sub: "framing" },
+            { label: "Lumber Order", value: Object.entries(opt.byLength).map(([l, n]) => `${n}×${l}`).join("  "), sub: `${opt.wastePct.toFixed(0)}% offcut`, wide: true },
+            plyPack && { label: "Plywood Sheets", value: `${plyPack.sheets} × 4'×8'`, sub: `${plyPack.wastePct.toFixed(0)}% waste${plyPack.freeSlots ? ` · ${plyPack.freeSlots} slot left` : ""}` },
+            pegPack && { label: "Pegboard Sheets", value: `${pegPack.sheets} × 4'×8'`, sub: `${pegPack.wastePct.toFixed(0)}% waste${pegPack.freeSlots ? ` · ${pegPack.freeSlots} panel left` : ""}` },
+            { label: "Tote Bins", value: cl.bins, sub: isDouble ? "+ open shelves" : isDpeg ? "+ work bay" : `${columns}W` },
+          ].filter(Boolean).map((c, i) => (
+            <div key={i} style={{ background: C.panel, border: `1px solid ${C.border}`, borderRadius: "8px", padding: "15px 16px", gridColumn: c.wide ? "span 2" : "auto" }}>
+              <div style={{ fontSize: "10px", color: C.muted, letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "7px" }}>{c.label}</div>
+              <div style={{ fontSize: c.wide ? "18px" : "22px", fontWeight: 700, color: C.bright, lineHeight: 1.05, fontFamily: c.wide ? "monospace" : "inherit" }}>{c.value}</div>
+              <div style={{ fontSize: "12px", color: C.dim, marginTop: "5px" }}>{c.sub}</div>
+            </div>))}
+        </div>
+      </div>
+
+      <div style={{ padding: "16px 26px 0" }}>
+        <button onClick={addToCart} style={{ background: C.bright, color: "#141312", border: "none", borderRadius: "6px", padding: "12px 22px", fontSize: "14px", fontWeight: 800, letterSpacing: "1px", cursor: "pointer", textTransform: "uppercase" }}>+ Add to Cart</button>
+      </div>
+
+      <div style={{ padding: "18px 26px 0" }}>
+        <button onClick={() => setShowPlan(!showPlan)} style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, padding: "8px 16px", borderRadius: "4px", fontSize: "11px", cursor: "pointer", letterSpacing: "1.5px", textTransform: "uppercase", fontWeight: 600 }}>
+          {showPlan ? "Hide" : "Show"} 2×4 Cut Plan ({opt.boards.length} boards)
+        </button>
+        {showPlan && (
+          <div style={{ marginTop: "16px" }}>
+            {opt.boards.map((b, i) => (
+              <div key={i} style={{ marginBottom: "7px", display: "flex", alignItems: "center", gap: "12px" }}>
+                <span style={{ color: C.muted, fontSize: "11px", minWidth: "70px", fontWeight: 700 }}>2×4×{b.label}</span>
+                <div style={{ flex: 1, background: C.card, borderRadius: "3px", height: "30px", display: "flex", overflow: "hidden", border: `1px solid ${C.border}` }}>
+                  {b.cuts.map((cut, j) => { const pct = (cut.length / b.stock) * 100; return (
+                    <div key={j} title={`${cut.name}: ${cut.length}"`} style={{ width: pct + "%", background: PART_COLORS[cut.name] || "#666", borderRight: "1px solid #141312", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: "#141312", fontWeight: 700, overflow: "hidden", whiteSpace: "nowrap", minWidth: 0 }}>{pct > 9 ? `${cut.length}"` : ""}</div>); })}
+                  {b.remaining > 0.05 && (<div style={{ width: (b.remaining / b.stock) * 100 + "%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", color: C.dim, fontFamily: "monospace" }}>{b.remaining.toFixed(1)}"</div>)}
+                </div>
+              </div>))}
+            <div style={{ marginTop: "12px", display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "11px" }}>
+              {Object.entries(PART_COLORS).filter(([n]) => cl.framing.some((p) => p.name === n)).map(([name, color]) => (
+                <div key={name} style={{ display: "flex", alignItems: "center", gap: "6px" }}><div style={{ width: "10px", height: "10px", borderRadius: "2px", background: color }} /><span style={{ color: C.muted }}>{name}</span></div>))}
+            </div>
+          </div>)}
+      </div>
+
+      {(pegLayout.length > 0 || plyLayout.length > 0) && (
+        <div style={{ padding: "18px 26px 0" }}>
+          <button onClick={() => setShowSheets(!showSheets)} style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, padding: "8px 16px", borderRadius: "4px", fontSize: "11px", cursor: "pointer", letterSpacing: "1.5px", textTransform: "uppercase", fontWeight: 600 }}>
+            {showSheets ? "Hide" : "Show"} Sheet Cut Layouts ({plyLayout.length + pegLayout.length} sheets · 4'×8')
+          </button>
+          {showSheets && (
+            <div style={{ marginTop: "16px" }}>
+              {plyLayout.length > 0 && (
+                <div style={{ marginBottom: "18px" }}>
+                  <div style={{ ...sectionLabel, marginBottom: "10px" }}>{plyLabel} Plywood — {plyLayout.length} sheet{plyLayout.length > 1 ? "s" : ""}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
+                    {plyLayout.map((sh, i) => <SheetView key={i} sheet={sh} mat="ply" C={C} idx={i} />)}
+                  </div>
+                </div>)}
+              {pegLayout.length > 0 && (
+                <div style={{ marginBottom: "6px" }}>
+                  <div style={{ ...sectionLabel, marginBottom: "10px" }}>Pegboard — {pegLayout.length} sheet{pegLayout.length > 1 ? "s" : ""}</div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "14px" }}>
+                    {pegLayout.map((sh, i) => <SheetView key={i} sheet={sh} mat="peg" C={C} idx={i} />)}
+                  </div>
+                </div>)}
+              <div style={{ fontSize: "11px", color: C.dim, marginTop: "4px" }}>Each sheet shown 8' (96") wide × 4' (48") tall. Grey area is reusable offcut.</div>
+            </div>)}
+        </div>
+      )}
+
+      <div style={{ padding: "26px 26px 0" }}>
+        <div style={{ background: C.panel, border: `1px solid ${C.bright}`, borderRadius: "10px", padding: "18px 20px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "14px" }}>
+            <p style={{ ...sectionLabel, margin: 0, color: C.bright, fontSize: "13px" }}>Shopping Cart</p>
+            <span style={{ color: C.muted, fontSize: "12px" }}>{cart.length} unit{cart.length !== 1 ? "s" : ""}{cart.length ? ` · offcuts shared` : ""}</span>
+          </div>
+
+          {!cartStats ? (
+            <div style={{ color: C.dim, fontSize: "13px" }}>Empty — configure a unit above and tap Add to Cart. Add more and the material order re-optimizes, reusing offcuts across units.</div>
+          ) : (
+            <>
+              {cart.map((item) => (
+                <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: `1px solid ${C.line}` }}>
+                  <span style={{ fontSize: "13px", color: C.text }}>{item.label}</span>
+                  <button onClick={() => removeFromCart(item.id)} style={{ background: "none", border: "none", color: C.muted, cursor: "pointer", fontSize: "18px", lineHeight: 1, padding: "0 4px" }}>×</button>
+                </div>))}
+
+              <div style={{ ...sectionLabel, margin: "16px 0 10px", color: C.gold }}>Combined Material Order</div>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+                <tbody>
+                  {(() => {
+                    const lines = [];
+                    ["8'", "10'", "12'", "16'"].forEach((k) => { if (cartStats.studs[k]) lines.push({ sku: `2×4×${k}`, qty: cartStats.studs[k], pk: k }); });
+                    if (cartStats.p075 && cartStats.p075.sheets) lines.push({ sku: '¾" Plywood 4×8', qty: cartStats.p075.sheets, pk: "ply075" });
+                    if (cartStats.p05 && cartStats.p05.sheets) lines.push({ sku: '½" Plywood 4×8', qty: cartStats.p05.sheets, pk: "ply05" });
+                    if (cartStats.pegP && cartStats.pegP.sheets) lines.push({ sku: "Pegboard 4×8", qty: cartStats.pegP.sheets, pk: "peg" });
+                    return lines.map((ln) => (
+                      <tr key={ln.sku} style={{ borderBottom: `1px solid ${C.line}` }}>
+                        <td style={{ padding: "8px 0", color: C.text }}><span style={{ color: C.bright, fontWeight: 700, marginRight: "8px" }}>{ln.qty}×</span>{ln.sku}</td>
+                        <td style={{ textAlign: "right", padding: "8px 0", color: C.muted }}>
+                          $<input type="number" step={0.5} value={prices[ln.pk]} onChange={(e) => setPrices((p) => ({ ...p, [ln.pk]: Number(e.target.value) }))} style={{ width: "58px", background: C.card, border: `1px solid ${C.border}`, color: C.text, borderRadius: "3px", padding: "3px 5px", fontSize: "12px", textAlign: "right", fontFamily: "monospace" }} /> ea
+                        </td>
+                        <td style={{ textAlign: "right", padding: "8px 0 8px 12px", color: C.text, fontFamily: "monospace", minWidth: "70px" }}>${(ln.qty * (prices[ln.pk] || 0)).toFixed(2)}</td>
+                      </tr>));
+                  })()}
+                </tbody>
+              </table>
+
+              {(cartStats.studsSaved > 0 || cartStats.sheetsSaved > 0) && (
+                <div style={{ marginTop: "12px", fontSize: "12px", color: "#8FB35A", background: "rgba(143,179,90,.1)", border: "1px solid rgba(143,179,90,.3)", borderRadius: "6px", padding: "9px 12px" }}>
+                  Sharing offcuts across the cart saved {cartStats.studsSaved > 0 ? `${cartStats.studsSaved} stud${cartStats.studsSaved > 1 ? "s" : ""}` : ""}{cartStats.studsSaved > 0 && cartStats.sheetsSaved > 0 ? " and " : ""}{cartStats.sheetsSaved > 0 ? `${cartStats.sheetsSaved} sheet${cartStats.sheetsSaved > 1 ? "s" : ""}` : ""} vs building each unit separately.
+                </div>)}
+
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "16px", paddingTop: "14px", borderTop: `2px solid ${C.border}` }}>
+                <button onClick={() => setCart([])} style={{ background: "none", border: `1px solid ${C.border}`, color: C.muted, padding: "7px 14px", borderRadius: "4px", fontSize: "11px", cursor: "pointer", letterSpacing: "1px", textTransform: "uppercase" }}>Clear</button>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "10px", color: C.muted, letterSpacing: "1.5px", textTransform: "uppercase" }}>Estimated Total</div>
+                  <div style={{ fontSize: "30px", fontWeight: 800, color: C.bright, lineHeight: 1 }}>${cartStats.cost.toFixed(2)}</div>
+                  <div style={{ fontSize: "10px", color: C.dim, marginTop: "3px" }}>prices editable · before tax</div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SheetView({ sheet, mat, C, idx }) {
+  const fill = mat === "peg" ? "#b08d57" : "#9a8f7a";
+  return (
+    <div style={{ width: "300px", maxWidth: "100%" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "2 / 1", background: "#1a1916", border: `1px solid ${C.border}`, borderRadius: "4px", overflow: "hidden" }}>
+        {sheet.rects.map((r, i) => (
+          <div key={i} title={r.name} style={{ position: "absolute", left: `${(r.x / 96) * 100}%`, top: `${(r.y / 48) * 100}%`, width: `${(r.w / 96) * 100}%`, height: `${(r.h / 48) * 100}%`, background: fill, border: "1.5px solid #141312", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#141312", fontWeight: 700, textAlign: "center", lineHeight: 1.1, overflow: "hidden", padding: "1px" }}>
+            {r.label}
+          </div>))}
+      </div>
+      <div style={{ fontSize: "10px", color: C.muted, marginTop: "4px", letterSpacing: "1px" }}>SHEET {idx + 1}</div>
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById("root")).render(<CutListGenerator />);
+  </script>
+</body>
+</html>
