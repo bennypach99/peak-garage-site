@@ -26,7 +26,9 @@ function casterCount(c,r)  { const s=c*r; return s<12?4:s<16?6:s<=25?8:10; }
 // ── Workbench constants (easy to tune) ──
 const WB_WIDTHS = [2,3,4,5,6];
 const WB_PEGBOARD_PER_WIDTH = 40;   // pegboard panel + 2x4 frame, per column of width
-const WB_PEG_HEIGHT_IN = 36;        // pegboard adds 36" to overall height
+const WB_PEG_HEIGHT_IN = 32;        // pegboard panel is 32″ tall
+const WB_TOTE_ZONE_IN = 33;         // tote zone under the pegboard (studs 65″ = 33 + 32)
+const WB_OVERALL_IN = 66.5;         // workbench / 2-high work-center overall height
 const WB_LED_COST = 50;             // LED light bar — $50 each
 // LED bars require a 2-wide section with pegboard.
 //   Workbench: one per 2 columns of width.
@@ -171,15 +173,13 @@ function Configurator() {
     total = r.total; lines = r.lines; slots = r.slots;
     wIn = WIDTH_IN[wbWidth];
     const topThickIn = addons.has('top') ? TOP_THICK_MAPLE : TOP_THICK_BASIC;
-    const pegH = addons.has('pegboard') ? WB_PEG_HEIGHT_IN : 0;
-    hTotal = HEIGHT_IN[2] + topThickIn + pegH + (addons.has('casters') ? CASTER_ADD_IN : 0);
+    hTotal = (addons.has('pegboard') ? WB_OVERALL_IN : HEIGHT_IN[2] + topThickIn) + (addons.has('casters') ? CASTER_ADD_IN : 0);
     dimLabel = `WORKBENCH · ${wbWidth}-WIDE · ${slots} TOTES`;
   } else if (isDouble) {
     const r = calcDouble(dualKind, addons, stainName, effLed, effExtraShelves);
     total = r.total; lines = r.lines; slots = r.slots;
     wIn = 2 * WIDTH_IN[2] + centerWidth;
-    const pegH = (addons.has('pegboard') && DU_PROPS[dualKind].pegMode === 'top') ? WB_PEG_HEIGHT_IN : 0;
-    hTotal = r.props.hIn + pegH + (addons.has('casters') ? CASTER_ADD_IN : 0);
+    hTotal = ((dualKind === '2high' && addons.has('pegboard')) ? WB_OVERALL_IN : r.props.hIn) + (addons.has('casters') ? CASTER_ADD_IN : 0);
     dimLabel = `${r.props.label} DOUBLE · ${slots} TOTES`;
   } else {
     const r = calcSingle(cols, rows, addons, stainName);
@@ -266,7 +266,7 @@ function Configurator() {
             {/* 02 — size selectors */}
             {isWorkbench && (
               <div style={{ marginBottom: 24, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>
-                2-high · {wIn}″ W × {HEIGHT_IN[2] + (addons.has('pegboard') ? WB_PEG_HEIGHT_IN : 0)}″ H × 28.5″ D
+                2-high · {wIn}″ W × {addons.has('pegboard') ? WB_OVERALL_IN : HEIGHT_IN[2]}″ H × 28.5″ D
                 {addons.has('pegboard') ? ' · incl. pegboard' : ''}. Work top included.
               </div>
             )}
@@ -293,7 +293,7 @@ function Configurator() {
             {isDouble && (
               <>
                 <div style={{ marginBottom: 20, fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>
-                  {2 * WIDTH_IN[2] + centerWidth}″ W × {DU_PROPS[dualKind].hIn}″ H × 28.5″ D · top board included.
+                  {2 * WIDTH_IN[2] + centerWidth}″ W × {(dualKind === '2high' && addons.has('pegboard')) ? WB_OVERALL_IN : DU_PROPS[dualKind].hIn}″ H × 28.5″ D · top board included.
                 </div>
                 <CenterWidthSlider value={centerWidth} onChange={setCenterWidth} overallW={2 * WIDTH_IN[2] + centerWidth} />
               </>
@@ -661,10 +661,10 @@ function ShelfPreview({ mode, cols, rows, wbWidth, dualKind, centerWidth, center
 function renderWorkbench({ cols, wood, woodEdge, topThick, hasCasters, addons, leds, stain, SVG_W, SVG_H }) {
   const wIn = WIDTH_IN[cols];
   const toteRows = 2;
-  const toteHIn = HEIGHT_IN[2];                 // 36
   const hasPeg = addons.has('pegboard');
-  const pegHIn = hasPeg ? WB_PEG_HEIGHT_IN : 0; // 36
-  const totalHIn = toteHIn + pegHIn;
+  const toteHIn = hasPeg ? WB_TOTE_ZONE_IN : HEIGHT_IN[2];  // 33″ with peg, else 36″
+  const pegHIn = hasPeg ? WB_PEG_HEIGHT_IN : 0;             // 32″
+  const totalHIn = hasPeg ? WB_OVERALL_IN : HEIGHT_IN[2];
 
   const MAX_W = 133.5, MAX_H = 100;
   const PAD = 36;
@@ -764,7 +764,7 @@ function renderDouble({ dualKind, centerWidth, centerShelves, wood, woodEdge, ha
   const props = DU_PROPS[dualKind];
   const cw = centerWidth || 42;
   const wIn = 2 * WIDTH_IN[2] + cw;
-  const hIn = props.hIn;
+  const hIn = (dualKind === '2high' && addons.has('pegboard')) ? WB_TOTE_ZONE_IN : props.hIn;
   const MAX_W = 2 * WIDTH_IN[2] + 48, MAX_H = 100;
   const PAD = 36;
   const sx = (SVG_W - 2 * PAD) / MAX_W;
@@ -880,7 +880,7 @@ function renderDouble({ dualKind, centerWidth, centerShelves, wood, woodEdge, ha
       })()}
 
       {hasCasters && <Casters x={ox} y={oy + drawH} w={drawW} count={DU_CASTER_COUNT}/>}
-      <Dimensions ox={ox} oy={assemblyTop} drawW={drawW} drawH={assemblyH} wIn={wIn} hIn={hIn + (hasPeg ? WB_PEG_HEIGHT_IN : 0)} topThick={topThick} hasCasters={hasCasters}/>
+      <Dimensions ox={ox} oy={assemblyTop} drawW={drawW} drawH={assemblyH} wIn={wIn} hIn={(dualKind === '2high' && hasPeg) ? WB_OVERALL_IN : props.hIn} topThick={topThick} hasCasters={hasCasters}/>
     </PreviewFrame>
   );
 }
