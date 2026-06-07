@@ -17,11 +17,19 @@ const HEIGHT_IN = {2:36,   3:52,   4:68,   5:84,   6:100};
 const CASTER_ADD_IN = 4;
 const TOP_THICK_BASIC = 0.5, TOP_THICK_MAPLE = 0.75;
 
+// Stain on a workbench / custom unit: $10 per tote bin, plus $10 per top-width bin only
+// when the ¾″ maple top is chosen (½″ plywood is never stained, so it adds nothing).
+function flatStainCost(slots, cols, hasMaple) {
+  return 10 * slots + (hasMaple ? 10 * cols : 0);
+}
+
 function stainCost(c,r)    { const s=c*r; return s<=8?50:s<=16?75:s<=24?100:150; }
 function topCost(c)        { return c*30; }   // ¾" sanded maple — $30 / width
 function basicTopCost(c)   { return c*15; }   // ½" basic — $15 / width
 function casterCost(c,r)   { const s=c*r; return s<12?50:s<16?75:s<=25?100:125; }
 function casterCount(c,r)  { const s=c*r; return s<12?4:s<16?6:s<=25?8:10; }
+// Workbench wheel count by width: 2–3 → 4, 4–5 → 6, 6 → 8.
+function wbCasterCount(cols)  { return cols >= 6 ? 8 : cols >= 4 ? 6 : 4; }
 
 // ── Workbench constants (easy to tune) ──
 const WB_WIDTHS = [2,3,4,5,6];
@@ -53,6 +61,18 @@ const DU_SHELF_COST_BASIC = 50;   // extra center shelf with ½″ plywood
 const DU_SHELF_COST_MAPLE = 80;   // extra center shelf with ¾″ plywood ($50 + $30 upgrade for 2 bin-spaces)
 const DU_PLY_RATE_BASIC = 15;     // ½″ plywood — $ per bin-space wide
 const DU_PLY_RATE_MAPLE = 30;     // ¾″ plywood — $ per bin-space wide
+const STD_CENTER_SHELVES = { '2high': 2, '3high': 3, '4high': 3 };  // structural center-bay shelves
+
+// Stain on a double: $10 per tote bin, $10 per middle shelf (full width), and — when ¾″ is
+// selected — $10 per bin-width of plywood (4 side bins + the center shelves). A 24″ center
+// halves each shelf's width, so the shelf-stain drops to $5 and the plywood-stain drops $10/shelf.
+function doubleStainCost(kind, hasMaple, centerWidth, totalShelves) {
+  const props = DU_PROPS[kind];
+  const binsPerShelf = (centerWidth || 45.5) <= 24 ? 1 : 2;
+  let s = 10 * props.slots + 5 * binsPerShelf * totalShelves;
+  if (hasMaple) s += 10 * (4 + binsPerShelf * totalShelves);
+  return s;
+}
 const CENTER_SHELF_BASE = { '2high': 0, '3high': 1, '4high': 1 };    // shelves included in the base price
 const CENTER_SHELF_ADD_MAX = { '2high': 1, '3high': 1, '4high': 2 };  // max extra shelves the customer can add
 
@@ -66,8 +86,8 @@ function calcWorkbench(cols, addons, stainName, ledCount) {
   if (addons.has('top')) { const up = topCost(cols) - basicTopCost(cols); total += up; lines.push({ label: `¾″ Sanded maple upgrade (+$15 × ${cols})`, val: up }); }
   if (addons.has('pegboard')) { const p = WB_PEGBOARD_PER_WIDTH * cols; total += p; lines.push({ label: `Pegboard back + frame ($40 × ${cols})`, val: p }); }
   if (ledCount > 0)           { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
-  if (addons.has('stain'))    { const p = stainCost(cols,rows); total += p; lines.push({ label: `Stain (${stainName})`, val: p }); }
-  if (addons.has('casters'))  { const p = casterCost(cols,rows); total += p; lines.push({ label: `Casters (${casterCount(cols,rows)} wheels)`, val: p }); }
+  if (addons.has('stain'))    { const p = flatStainCost(slots, cols, addons.has('top')); total += p; lines.push({ label: `Stain finish (${stainName})`, val: p }); }
+  if (addons.has('casters'))  { const p = casterCost(cols,rows); total += p; lines.push({ label: `Casters (${wbCasterCount(cols)} wheels)`, val: p }); }
   if (addons.has('totes'))    { const p = slots * 15; total += p; lines.push({ label: `${slots} totes × $15`, val: p }); }
   return { total, lines, slots };
 }
@@ -79,8 +99,8 @@ function calcSingle(cols, rows, addons, stainName) {
   let total = base;
   if (addons.has('basictop')) { const p = basicTopCost(cols); total += p; lines.push({ label: `½″ Basic plywood top ($15 × ${cols})`, val: p }); }
   if (addons.has('top'))      { const p = topCost(cols);      total += p; lines.push({ label: `¾″ Maple plywood top ($30 × ${cols})`, val: p }); }
-  if (addons.has('stain'))    { const p = stainCost(cols,rows); total += p; lines.push({ label: `Stain (${stainName})`, val: p }); }
-  if (addons.has('casters'))  { const p = casterCost(cols,rows); total += p; lines.push({ label: `Casters (${casterCount(cols,rows)} wheels)`, val: p }); }
+  if (addons.has('stain'))    { const p = flatStainCost(slots, cols, addons.has('top')); total += p; lines.push({ label: `Stain finish (${stainName})`, val: p }); }
+  if (addons.has('casters'))  { const p = casterCost(cols,rows); total += p; lines.push({ label: `Casters (${wbCasterCount(cols)} wheels)`, val: p }); }
   if (addons.has('totes'))    { const p = slots * 15;          total += p; lines.push({ label: `${slots} totes × $15`, val: p }); }
   return { total, lines, slots };
 }
@@ -101,7 +121,7 @@ function calcDouble(kind, addons, stainName, ledCount, centerShelves, centerWidt
     const disc = hasMaple ? DU_PLY_RATE_MAPLE : DU_PLY_RATE_BASIC;
     total -= disc; lines.push({ label: `Narrow 24″ center bay`, val: -disc });
   }
-  if (addons.has('stain'))   { total += props.stain;     lines.push({ label: `Stain (${stainName})`, val: props.stain }); }
+  if (addons.has('stain'))   { const p = doubleStainCost(kind, hasMaple, centerWidth, STD_CENTER_SHELVES[kind] + centerShelves); total += p; lines.push({ label: `Stain finish (${stainName})`, val: p }); }
   if (addons.has('casters')) { total += DU_CASTER_COST;  lines.push({ label: `Casters (${DU_CASTER_COUNT} wheels · 2 sets)`, val: DU_CASTER_COST }); }
   if (addons.has('pegboard')){ total += props.peg;      lines.push({ label: `Pegboard back + frame`, val: props.peg }); }
   if (centerShelves > 0)     { const ea = hasMaple ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC; const p = ea * centerShelves; total += p; lines.push({ label: `Extra center shelf${centerShelves > 1 ? 's' : ''} × ${centerShelves} ($${ea} ea)`, val: p }); }
@@ -121,7 +141,7 @@ function Configurator() {
   const [centerShelves, setCenterShelves] = React.useState(0); // double units: EXTRA shelves added beyond the included base
   const [addons, setAddons] = React.useState(new Set(['pegboard']));
   const [ledCount, setLedCount] = React.useState(0);
-  const [stain, setStain] = React.useState('walnut');
+  const [stain, setStain] = React.useState('ebony');
   const [pulse, setPulse] = React.useState(false);
 
   // Listen for gallery "load this build" events.
@@ -324,9 +344,9 @@ function Configurator() {
                       name='PEGBOARD BACK' price={`$${WB_PEGBOARD_PER_WIDTH * wbWidth}`} note={`$40 × ${wbWidth} · +36″ H`} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
-                      name='STAIN FINISH' price={`$${stainCost(wbWidth,2)}`} note={stainName} />
+                      name='STAIN FINISH' price={`$${flatStainCost(wbWidth * 2, wbWidth, addons.has('top'))}`} note={stainName} />
                     <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
-                      name='WHEEL CASTERS' price={`$${casterCost(wbWidth,2)}`} note={`${casterCount(wbWidth,2)} wheels`} />
+                      name='WHEEL CASTERS' price={`$${casterCost(wbWidth,2)}`} note={`${wbCasterCount(wbWidth)} wheels`} />
                     <AddOnCard active={addons.has('totes')} onClick={() => toggleAddon('totes')}
                       name='27 GAL TOTES' price={`$${slots * 15}`} note={`$15 × ${slots} bins`} />
                   </>
@@ -343,7 +363,7 @@ function Configurator() {
                     <ShelfStepper extra={effExtraShelves} maxExtra={maxExtraShelves} base={baseShelves} cost={addons.has('top') ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC} onChange={setCenterShelves} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
-                      name='STAIN FINISH' price={`$${DU_PROPS[dualKind].stain}`} note={stainName} />
+                      name='STAIN FINISH' price={`$${doubleStainCost(dualKind, addons.has('top'), centerWidth, STD_CENTER_SHELVES[dualKind] + effExtraShelves)}`} note={stainName} />
                     <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
                       name='WHEEL CASTERS' price={`$${DU_CASTER_COST}`} note={`${DU_CASTER_COUNT} wheels · 2 sets`} />
                     <AddOnCard active={addons.has('totes')} onClick={() => toggleAddon('totes')}
@@ -358,9 +378,9 @@ function Configurator() {
                     <AddOnCard active={addons.has('top')} onClick={() => toggle('top')}
                       name='¾″ SANDED MAPLE TOP' price={`$${topCost(cols)}`} note={`$30 × ${cols} wide`} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
-                      name='STAIN FINISH' price={`$${stainCost(cols,rows)}`} note={stainName} />
+                      name='STAIN FINISH' price={`$${flatStainCost(cols * rows, cols, addons.has('top'))}`} note={stainName} />
                     <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
-                      name='WHEEL CASTERS' price={`$${casterCost(cols,rows)}`} note={`${casterCount(cols,rows)} wheels`} />
+                      name='WHEEL CASTERS' price={`$${casterCost(cols,rows)}`} note={`${wbCasterCount(cols)} wheels`} />
                     <AddOnCard active={addons.has('totes')} onClick={() => toggleAddon('totes')}
                       name='27 GAL TOTES' price={`$${slots * 15}`} note={`$15 × ${slots} bins`} />
                   </>
