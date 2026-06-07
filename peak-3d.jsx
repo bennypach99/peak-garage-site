@@ -195,7 +195,7 @@
       const n = cfg.leds;
       for (let i = 0; i < n; i++) { const seg = W / n; addBox(THREE, u, seg * 0.7, 0.9, 1.2, -W / 2 + (i + 0.5) * seg, topY - 0.8, D / 2 - 1.6, mats.led); }
     }
-    if (yb) addCasters(THREE, u, W, D, casterCount(cfg.wbWidth * 2), mats.caster);
+    if (yb) addCasters(THREE, u, W, D, wbCasterCount(cfg.wbWidth), mats.caster);
     return u;
   }
 
@@ -248,11 +248,12 @@
       const tt = a.includes('top') ? 0.75 : 0.5;
       addBox(THREE, u, W + 1.5, tt, D, 0, yb + hIn + tt / 2, 0, mats.top);
     }
-    if (yb) addCasters(THREE, u, W, D, casterCount(cols * rows), mats.caster);
+    if (yb) addCasters(THREE, u, W, D, wbCasterCount(cols), mats.caster);
     return u;
   }
 
   function casterCount(s) { return s < 12 ? 4 : s < 16 ? 6 : s <= 25 ? 8 : 10; }
+  function wbCasterCount(cols) { return cols >= 6 ? 8 : cols >= 4 ? 6 : 4; }
 
   function buildModel(THREE, cfg) {
     const mats = makeMats(THREE, cfg);
