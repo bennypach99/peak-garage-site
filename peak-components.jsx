@@ -9,6 +9,13 @@ const PG_DOMAIN = 'peakgaragesolutions.ca';
 const PG_REGION = 'Burlington & surrounding areas';
 const PG_EST = '2024';
 
+// EmailJS — quote form delivery (same account/templates as the legacy site).
+const EMAILJS_PUBLIC_KEY  = 'oNs9CbcPHf_Nhc4kH';
+const EMAILJS_SERVICE_ID  = 'service_4qiybvi';
+const EMAILJS_TEMPLATE_OWNER    = 'template_w5deyiz'; // notification to Benny
+const EMAILJS_TEMPLATE_CUSTOMER = 'template_ayvgsvb'; // confirmation to the customer
+const PG_OWNER_EMAIL = 'benny@peakgaragesolutions.ca';
+
 // Asset-URL resolver: prefers a blob URL injected by the standalone bundler,
 // falls back to the project-relative path in dev mode.
 function PG_R(id, fallback) {
@@ -553,6 +560,8 @@ function Contact() {
 function QuoteForm() {
   const [sent, setSent] = React.useState(false);
   const [build, setBuild] = React.useState('');
+  const [sending, setSending] = React.useState(false);
+  const [error, setError] = React.useState('');
 
   // When the user clicks "Lock this build" in the configurator, the spec + price
   // arrive here so they only have to add their contact info.
@@ -564,6 +573,47 @@ function QuoteForm() {
     window.addEventListener('pg-load-quote', onQuote);
     return () => window.removeEventListener('pg-load-quote', onQuote);
   }, []);
+  function handleSubmit(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const name = (fd.get('name') || '').trim();
+    const contact = (fd.get('contact') || '').trim();
+    const postal = (fd.get('postal') || '').trim();
+    const notes = (fd.get('notes') || '').trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+    if (!window.emailjs) {
+      setError(`Email service didn't load — please text us at ${PG_PHONE}.`);
+      return;
+    }
+    setSending(true);
+    setError('');
+    window.emailjs.init(EMAILJS_PUBLIC_KEY);
+    window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_OWNER, {
+      to_email: PG_OWNER_EMAIL,
+      from_name: name,
+      from_email: isEmail ? contact : '(not provided)',
+      phone: isEmail ? '(not provided)' : contact,
+      config_summary: build || '(no configuration attached)',
+      config_cols: '—', config_rows: '—', config_slots: '—',
+      config_width: '—', config_height: '—', config_depth: '28.5"',
+      config_addons: '—', config_total: '—',
+      notes: (notes || 'None') + (postal ? ` · Postal: ${postal}` : ''),
+    }).then(() => {
+      if (isEmail) {
+        return window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CUSTOMER, {
+          to_email: contact, from_name: name, config_summary: build || '',
+        });
+      }
+    }).then(() => {
+      setSending(false);
+      setSent(true);
+    }).catch((err) => {
+      console.error('EmailJS error:', err);
+      setSending(false);
+      setError(`Something went wrong sending your request — please text us at ${PG_PHONE}.`);
+    });
+  }
+
   if (sent) {
     return (
       <div style={{ background: 'var(--ink2)', padding: 32, border: '1px solid var(--ink4)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', minHeight: 480 }}>
@@ -577,7 +627,7 @@ function QuoteForm() {
     );
   }
   return (
-    <form onSubmit={e => { e.preventDefault(); setSent(true); }}
+    <form onSubmit={handleSubmit}
       style={{ background: 'var(--ink2)', padding: 32, display: 'flex', flexDirection: 'column', gap: 14, border: '1px solid var(--ink4)' }}>
       <div className="pg-eyebrow" style={{ marginBottom: 8 }}>// QUOTE FORM</div>
 
@@ -602,11 +652,14 @@ function QuoteForm() {
       ))}
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', color: 'var(--bone-d50)' }}>NOTES</span>
-        <textarea rows={3} placeholder="Garage photo helps a lot — text it to me after." style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink4)', padding: '8px 0', color: 'var(--bone)', fontFamily: 'var(--mono)', fontSize: 14, outline: 'none', resize: 'none' }} />
+        <textarea name="notes" rows={3} placeholder="Garage photo helps a lot — text it to me after." style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink4)', padding: '8px 0', color: 'var(--bone)', fontFamily: 'var(--mono)', fontSize: 14, outline: 'none', resize: 'none' }} />
       </label>
-      <button type="submit" className="pg-btn" style={{ marginTop: 12, justifyContent: 'center' }}>
-        SEND QUOTE REQUEST →
+      <button type="submit" className="pg-btn" disabled={sending} style={{ marginTop: 12, justifyContent: 'center', opacity: sending ? 0.6 : 1, cursor: sending ? 'wait' : 'pointer' }}>
+        {sending ? 'SENDING…' : 'SEND QUOTE REQUEST →'}
       </button>
+      {error && (
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: '#ff6b5e', letterSpacing: '0.04em', textAlign: 'center' }}>{error}</div>
+      )}
       <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.06em', textAlign: 'center', textTransform: 'uppercase' }}>
         No spam · No mailing list · Just your quote
       </div>
