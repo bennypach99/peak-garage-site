@@ -139,7 +139,7 @@ function Hero() {
         <div className="pg-hero-photo" style={{ position: 'relative', cursor: 'pointer' }}
           onClick={(e) => {
             e.preventDefault();
-            window.dispatchEvent(new CustomEvent('pg-load-config', { detail: { dualKind: '2high', addons: ['pegboard'], ledCount: 1, stain: 'natural' } }));
+            window.dispatchEvent(new CustomEvent('pg-load-config', { detail: { dualKind: '2high', addons: ['pegboard'], ledCount: 1, stain: 'ebony' } }));
             const el = document.getElementById('build');
             if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 60, behavior: 'smooth' });
           }}>
@@ -493,7 +493,7 @@ function FAQ() {
     ['Can I add a workbench later?', "Yes — everything is modular. Workbench bays, extra columns, casters, and stain finishes can all be added later."],
     ['How long does it take?', "Usually 2 to 7 days — most orders are done by the end of the week. Holiday season (Oct–Dec) can run a little longer. A 25% deposit holds your spot in the build queue."],,
     ['Payment?', "E-transfer, debit, or cash on delivery. 25% deposit up front, balance on delivery."],
-    ['Do the totes come with the shelf?', "Optional. Costco 27 Gal black-and-yellow totes are $15 each as an add-on, or bring your own."],
+    ['Do the totes come with the shelf?', "Optional. Costco 27 Gal black-and-yellow totes are $20 each as an add-on, or bring your own."],
   ];
   return (
     <section id="faq" style={{ background: 'var(--ink2)', padding: '88px 0', borderBottom: '1px solid var(--ink4)' }}>
