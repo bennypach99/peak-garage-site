@@ -59,12 +59,11 @@ const CENTER_SHELF_ADD_MAX = { '2high': 1, '3high': 1, '4high': 2 };  // max ext
 function calcWorkbench(cols, addons, stainName, ledCount) {
   const rows = 2;
   const slots = cols * rows;
-  const base = slots * 22;
-  const lines = [{ label: `${slots} totes × $22 (2-high)`, val: base }];
+  const base = slots * 22 + basicTopCost(cols);   // includes the ½″ basic work top
+  const lines = [{ label: `${slots} totes × $22 + ½″ basic top`, val: base }];
   let total = base;
-  // Work-surface top is mandatory — basic is the default, maple is the upgrade
-  if (addons.has('top')) { const p = topCost(cols);      total += p; lines.push({ label: `¾″ Sanded maple work top ($30 × ${cols})`, val: p }); }
-  else                   { const p = basicTopCost(cols); total += p; lines.push({ label: `½″ Basic work top ($15 × ${cols})`, val: p }); }
+  // Maple is the upgrade over the included ½″ basic top
+  if (addons.has('top')) { const up = topCost(cols) - basicTopCost(cols); total += up; lines.push({ label: `¾″ Sanded maple upgrade (+$15 × ${cols})`, val: up }); }
   if (addons.has('pegboard')) { const p = WB_PEGBOARD_PER_WIDTH * cols; total += p; lines.push({ label: `Pegboard back + frame ($40 × ${cols})`, val: p }); }
   if (ledCount > 0)           { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
   if (addons.has('stain'))    { const p = stainCost(cols,rows); total += p; lines.push({ label: `Stain (${stainName})`, val: p }); }
@@ -318,9 +317,9 @@ function Configurator() {
                 {isWorkbench && (
                   <>
                     <AddOnCard active={!addons.has('top')} onClick={() => chooseTop(false)}
-                      name='½″ BASIC WORK TOP' price={`$${basicTopCost(wbWidth)}`} note={`included · $15 × ${wbWidth}`} />
+                      name='½″ BASIC WORK TOP' price='$0' note='included' />
                     <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
-                      name='¾″ SANDED MAPLE TOP' price={`$${topCost(wbWidth)}`} note={`upgrade · $30 × ${wbWidth}`} />
+                      name='¾″ SANDED MAPLE TOP' price={`+$${topCost(wbWidth) - basicTopCost(wbWidth)}`} note={`upgrade · +$15 × ${wbWidth}`} />
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
                       name='PEGBOARD BACK' price={`$${WB_PEGBOARD_PER_WIDTH * wbWidth}`} note={`$40 × ${wbWidth} · +36″ H`} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
