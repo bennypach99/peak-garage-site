@@ -343,7 +343,7 @@ function Configurator() {
                     <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
                       name='¾″ SANDED MAPLE TOP' price={`+$${topCost(wbWidth) - basicTopCost(wbWidth)}`} note={`upgrade · +$15 × ${wbWidth}`} />
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
-                      name='PEGBOARD BACK' price={`$${WB_PEGBOARD_PER_WIDTH * wbWidth}`} note={`$40 × ${wbWidth} · +36″ H`} />
+                      name='PEGBOARD BACK' price={`$${WB_PEGBOARD_PER_WIDTH * wbWidth}`} note={`$40 × ${wbWidth} · +32″ H`} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${flatStainCost(wbWidth * 2, wbWidth, addons.has('top'))}`} note={stainName} />
@@ -361,7 +361,7 @@ function Configurator() {
                     <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
                       name='¾″ SANDED MAPLE TOP' price={`+$${DU_PROPS[dualKind].plyBins * 15}`} note={`upgrade · +$15 × ${DU_PROPS[dualKind].plyBins}`} />
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
-                      name='PEGBOARD BACK' price={`$${DU_PROPS[dualKind].peg}`} note={DU_PROPS[dualKind].pegMode === 'top' ? 'full-width · +36″ H' : 'center section'} />
+                      name='PEGBOARD BACK' price={`$${DU_PROPS[dualKind].peg}`} note={DU_PROPS[dualKind].pegMode === 'top' ? 'full-width · +32″ H' : 'center section'} />
                     <ShelfStepper extra={effExtraShelves} maxExtra={maxExtraShelves} base={baseShelves} cost={addons.has('top') ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC} onChange={setCenterShelves} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
@@ -394,8 +394,8 @@ function Configurator() {
                   <div className="pg-eyebrow" style={{ marginBottom: 10 }}>STAIN COLOR</div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     {[
-                      ['walnut',  '#3a2a1c'],
                       ['ebony',   '#0e0e0e'],
+                      ['walnut',  '#3a2a1c'],
                       ['cherry',  '#5a2820'],
                       ['natural', '#d9b986'],
                     ].map(([k,c]) => (
