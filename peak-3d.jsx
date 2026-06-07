@@ -155,10 +155,14 @@
   function makeMats(THREE, cfg) {
     const a = cfg.addons;
     const col = (hex) => new THREE.Color(hex).convertSRGBToLinear();
-    const woodColor = a.includes('stain') ? (STAINS[cfg.stain] || WOOD_DEFAULT) : WOOD_DEFAULT;
+    const stained = a.includes('stain');
+    const woodColor = stained ? (STAINS[cfg.stain] || WOOD_DEFAULT) : WOOD_DEFAULT;
+    const isMapleTop = a.includes('top');
+    // 3/4" sanded maple top takes the stain; 1/2" basic plywood top never does.
+    const topColor = (stained && isMapleTop) ? (STAINS[cfg.stain] || WOOD_DEFAULT) : (isMapleTop ? '#E0C28E' : '#C7A371');
     return {
       wood: new THREE.MeshStandardMaterial({ color: col(woodColor), roughness: 0.84, metalness: 0 }),
-      top: new THREE.MeshStandardMaterial({ color: col(a.includes('top') ? '#E0C28E' : '#C7A371'), roughness: 0.68, metalness: 0 }),
+      top: new THREE.MeshStandardMaterial({ color: col(topColor), roughness: 0.68, metalness: 0 }),
       tote: new THREE.MeshStandardMaterial({ color: col('#3a3d42'), roughness: 0.5, metalness: 0.05 }),
       toteLid: new THREE.MeshStandardMaterial({ color: col('#E8B91C'), roughness: 0.45, metalness: 0.05 }),
       caster: new THREE.MeshStandardMaterial({ color: col('#15161a'), roughness: 0.55, metalness: 0.25 }),
