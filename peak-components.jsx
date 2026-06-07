@@ -557,6 +557,26 @@ function Contact() {
   );
 }
 
+// Parse the configurator's build summary into the individual fields the
+// EmailJS owner template renders (type/rows/slots/dims/addons/total).
+function parseBuild(b) {
+  const out = { type: '—', rows: '—', slots: '—', addons: 'None', width: '—', height: '—', depth: '28.5"', total: '—' };
+  if (!b) return out;
+  const lines = b.split('\n').map((s) => s.trim()).filter(Boolean);
+  if (lines[0]) out.type = lines[0];
+  const dim = b.match(/([\d.]+)\s*["″]?\s*W\s*[×x]\s*([\d.]+)\s*["″]?\s*H\s*[×x]\s*([\d.]+)\s*["″]?\s*D/i);
+  if (dim) { out.width = dim[1] + '"'; out.height = dim[2] + '"'; out.depth = dim[3] + '"'; }
+  const add = b.match(/Add-?ons?:\s*(.+)/i);
+  if (add) out.addons = add[1].trim();
+  const tot = b.match(/total:\s*(\$[\d,]+)/i);
+  if (tot) out.total = tot[1];
+  const slot = b.match(/(\d+)\s*tote/i);
+  if (slot) out.slots = slot[1] + ' totes';
+  const hi = b.match(/(\d+)\s*HIGH/i);
+  if (hi) out.rows = hi[1] + ' high';
+  return out;
+}
+
 function QuoteForm() {
   const [sent, setSent] = React.useState(false);
   const [build, setBuild] = React.useState('');
@@ -577,31 +597,40 @@ function QuoteForm() {
     e.preventDefault();
     const fd = new FormData(e.target);
     const name = (fd.get('name') || '').trim();
-    const contact = (fd.get('contact') || '').trim();
+    const phone = (fd.get('phone') || '').trim();
+    const email = (fd.get('email') || '').trim();
     const postal = (fd.get('postal') || '').trim();
     const notes = (fd.get('notes') || '').trim();
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+    if (!name) { setError('Please enter your name.'); return; }
+    if (!phone && !email) { setError('Add a phone number or email so we can reach you.'); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('That email address looks off — mind double-checking it?'); return; }
     if (!window.emailjs) {
       setError(`Email service didn't load — please text us at ${PG_PHONE}.`);
       return;
     }
+    const p = parseBuild(build);
     setSending(true);
     setError('');
     window.emailjs.init(EMAILJS_PUBLIC_KEY);
     window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_OWNER, {
       to_email: PG_OWNER_EMAIL,
       from_name: name,
-      from_email: isEmail ? contact : '(not provided)',
-      phone: isEmail ? '(not provided)' : contact,
+      from_email: email || '(not provided)',
+      phone: phone || '(not provided)',
+      config_cols: p.type,
+      config_rows: p.rows,
+      config_slots: p.slots,
+      config_width: p.width,
+      config_height: p.height,
+      config_depth: p.depth,
+      config_addons: p.addons,
+      config_total: p.total,
       config_summary: build || '(no configuration attached)',
-      config_cols: '—', config_rows: '—', config_slots: '—',
-      config_width: '—', config_height: '—', config_depth: '28.5"',
-      config_addons: '—', config_total: '—',
       notes: (notes || 'None') + (postal ? ` · Postal: ${postal}` : ''),
     }).then(() => {
-      if (isEmail) {
+      if (email) {
         return window.emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CUSTOMER, {
-          to_email: contact, from_name: name, config_summary: build || '',
+          to_email: email, from_name: name, config_summary: build || '',
         });
       }
     }).then(() => {
@@ -641,13 +670,14 @@ function QuoteForm() {
         </div>
       )}
       {[
-        ['NAME','Sarah Cavanaugh','name'],
-        ['PHONE OR EMAIL', PG_PHONE,'contact'],
-        ['POSTAL CODE','L7T 1A1','postal'],
-      ].map(([k,p,n]) => (
+        ['NAME', 'Sarah Cavanaugh', 'name', true],
+        ['PHONE', '(289) 555-0123', 'phone', false],
+        ['EMAIL', 'sarah@email.com', 'email', false],
+        ['POSTAL CODE', 'L7T 1A1', 'postal', false],
+      ].map(([k, p, n, req]) => (
         <label key={n} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', color: 'var(--bone-d50)' }}>{k}</span>
-          <input name={n} placeholder={p} required style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink4)', padding: '8px 0', color: 'var(--bone)', fontFamily: 'var(--mono)', fontSize: 14, outline: 'none' }} />
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '0.14em', color: 'var(--bone-d50)' }}>{k}{req ? '' : ' (optional)'}</span>
+          <input name={n} placeholder={p} required={req} style={{ background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink4)', padding: '8px 0', color: 'var(--bone)', fontFamily: 'var(--mono)', fontSize: 14, outline: 'none' }} />
         </label>
       ))}
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
