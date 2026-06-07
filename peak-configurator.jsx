@@ -41,15 +41,18 @@ function ledMax(mode, cols, dualKind) {
 
 // ── Double-unit constants (from live site) ──
 const DU_PROPS = {
-  '2high': { rows: 2, slots: 8,  baseM: 400, baseB: 340, hIn: 36.75, stain: 75,  label: '2 HIGH', peg: 100, pegMode: 'top' },
-  '3high': { rows: 3, slots: 12, baseM: 500, baseB: 435, hIn: 52.75, stain: 85,  label: '3 HIGH', peg: 80,  pegMode: 'center' },
-  '4high': { rows: 4, slots: 16, baseM: 600, baseB: 530, hIn: 68.75, stain: 100, label: '4 HIGH', peg: 80,  pegMode: 'center' },
+  '2high': { rows: 2, slots: 8,  base12: 386, plyBins: 8,  hIn: 36.75, stain: 75,  label: '2 HIGH', peg: 100, pegMode: 'top' },
+  '3high': { rows: 3, slots: 12, base12: 444, plyBins: 10, hIn: 52.75, stain: 85,  label: '3 HIGH', peg: 80,  pegMode: 'center' },
+  '4high': { rows: 4, slots: 16, base12: 532, plyBins: 10, hIn: 68.75, stain: 100, label: '4 HIGH', peg: 80,  pegMode: 'center' },
 };
 const DU_WIDTH_IN = 133.5;
 const DU_CASTER_COST = 100;
 const DU_CASTER_COUNT = 8;
 const DU_PEG_COST = 100;   // pegboard back + frame on a double unit (flat)
-const DU_CENTER_SHELF_COST = 60;  // each ADDED shelf dividing the open center bay
+const DU_SHELF_COST_BASIC = 50;   // extra center shelf with ½″ plywood
+const DU_SHELF_COST_MAPLE = 80;   // extra center shelf with ¾″ plywood ($50 + $30 upgrade for 2 bin-spaces)
+const DU_PLY_RATE_BASIC = 15;     // ½″ plywood — $ per bin-space wide
+const DU_PLY_RATE_MAPLE = 30;     // ¾″ plywood — $ per bin-space wide
 const CENTER_SHELF_BASE = { '2high': 0, '3high': 1, '4high': 1 };    // shelves included in the base price
 const CENTER_SHELF_ADD_MAX = { '2high': 1, '3high': 1, '4high': 2 };  // max extra shelves the customer can add
 
@@ -75,25 +78,34 @@ function calcSingle(cols, rows, addons, stainName) {
   const base = slots * 22;
   const lines = [{ label: `${slots} slots × $22`, val: base }];
   let total = base;
-  if (addons.has('basictop')) { const p = basicTopCost(cols); total += p; lines.push({ label: `½″ Basic plywood top ($10 × ${cols})`, val: p }); }
-  if (addons.has('top'))      { const p = topCost(cols);      total += p; lines.push({ label: `¾″ Maple plywood top ($25 × ${cols})`, val: p }); }
+  if (addons.has('basictop')) { const p = basicTopCost(cols); total += p; lines.push({ label: `½″ Basic plywood top ($15 × ${cols})`, val: p }); }
+  if (addons.has('top'))      { const p = topCost(cols);      total += p; lines.push({ label: `¾″ Maple plywood top ($30 × ${cols})`, val: p }); }
   if (addons.has('stain'))    { const p = stainCost(cols,rows); total += p; lines.push({ label: `Stain (${stainName})`, val: p }); }
   if (addons.has('casters'))  { const p = casterCost(cols,rows); total += p; lines.push({ label: `Casters (${casterCount(cols,rows)} wheels)`, val: p }); }
   if (addons.has('totes'))    { const p = slots * 15;          total += p; lines.push({ label: `${slots} totes × $15`, val: p }); }
   return { total, lines, slots };
 }
 
-function calcDouble(kind, addons, stainName, ledCount, centerShelves) {
+function calcDouble(kind, addons, stainName, ledCount, centerShelves, centerWidth) {
   const props = DU_PROPS[kind];
   const hasMaple = addons.has('top');
-  const base = hasMaple ? props.baseM : props.baseB;
-  const topLabel = hasMaple ? '¾″ Sanded Maple plywood top (included)' : '½″ Basic plywood top (included)';
-  const lines = [{ label: `${props.label} double w/ shelves — ${topLabel}`, val: base }];
-  let total = base;
+  const lines = [{ label: `${props.label} double w/ ½″ plywood — frame + shelves`, val: props.base12 }];
+  let total = props.base12;
+  if (hasMaple) {
+    const up = props.plyBins * (DU_PLY_RATE_MAPLE - DU_PLY_RATE_BASIC);   // +$15 / bin-space
+    total += up;
+    lines.push({ label: `¾″ Sanded maple upgrade (+$15 × ${props.plyBins})`, val: up });
+  }
+  // Narrow center: only the 24″ (single-bin) option is discounted; 24.5″–48″ is full price.
+  const cw = centerWidth || 45.5;
+  if (cw <= 24) {
+    const disc = hasMaple ? DU_PLY_RATE_MAPLE : DU_PLY_RATE_BASIC;
+    total -= disc; lines.push({ label: `Narrow 24″ center bay`, val: -disc });
+  }
   if (addons.has('stain'))   { total += props.stain;     lines.push({ label: `Stain (${stainName})`, val: props.stain }); }
   if (addons.has('casters')) { total += DU_CASTER_COST;  lines.push({ label: `Casters (${DU_CASTER_COUNT} wheels · 2 sets)`, val: DU_CASTER_COST }); }
   if (addons.has('pegboard')){ total += props.peg;      lines.push({ label: `Pegboard back + frame`, val: props.peg }); }
-  if (centerShelves > 0)     { const p = DU_CENTER_SHELF_COST * centerShelves; total += p; lines.push({ label: `Additional center shelf${centerShelves > 1 ? 's' : ''} × ${centerShelves}`, val: p }); }
+  if (centerShelves > 0)     { const ea = hasMaple ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC; const p = ea * centerShelves; total += p; lines.push({ label: `Extra center shelf${centerShelves > 1 ? 's' : ''} × ${centerShelves} ($${ea} ea)`, val: p }); }
   if (ledCount > 0)          { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
   if (addons.has('totes'))   { const p = props.slots * 15; total += p; lines.push({ label: `${props.slots} totes × $15`, val: p }); }
   return { total, lines, slots: props.slots, props };
@@ -106,7 +118,7 @@ function Configurator() {
   const [cols, setCols] = React.useState(4);
   const [rows, setRows] = React.useState(4);
   const [dualKind, setDualKind] = React.useState('4high');
-  const [centerWidth, setCenterWidth] = React.useState(42); // double units: open center bay width, 24–48"
+  const [centerWidth, setCenterWidth] = React.useState(45.5); // double units: open center bay width, 24–48" (45.5" = two bins)
   const [centerShelves, setCenterShelves] = React.useState(0); // double units: EXTRA shelves added beyond the included base
   const [addons, setAddons] = React.useState(new Set(['pegboard']));
   const [ledCount, setLedCount] = React.useState(0);
@@ -176,7 +188,7 @@ function Configurator() {
     hTotal = (addons.has('pegboard') ? WB_OVERALL_IN : HEIGHT_IN[2] + topThickIn) + (addons.has('casters') ? CASTER_ADD_IN : 0);
     dimLabel = `WORKBENCH · ${wbWidth}-WIDE · ${slots} TOTES`;
   } else if (isDouble) {
-    const r = calcDouble(dualKind, addons, stainName, effLed, effExtraShelves);
+    const r = calcDouble(dualKind, addons, stainName, effLed, effExtraShelves, centerWidth);
     total = r.total; lines = r.lines; slots = r.slots;
     wIn = 2 * WIDTH_IN[2] + centerWidth;
     hTotal = ((dualKind === '2high' && addons.has('pegboard')) ? WB_OVERALL_IN : r.props.hIn) + (addons.has('casters') ? CASTER_ADD_IN : 0);
@@ -324,12 +336,12 @@ function Configurator() {
                 {isDouble && (
                   <>
                     <AddOnCard active={!addons.has('top')} onClick={() => chooseTop(false)}
-                      name='½″ BASIC PLYWOOD TOP' price='INCLUDED' note='default — sturdy + clean' />
+                      name='½″ BASIC PLYWOOD TOP' price='$0' note='included' />
                     <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
-                      name='¾″ SANDED MAPLE TOP' price={`+$${DU_PROPS[dualKind].baseM - DU_PROPS[dualKind].baseB}`} note='upgrade — best looking' />
+                      name='¾″ SANDED MAPLE TOP' price={`+$${DU_PROPS[dualKind].plyBins * 15}`} note={`upgrade · +$15 × ${DU_PROPS[dualKind].plyBins}`} />
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
                       name='PEGBOARD BACK' price={`$${DU_PROPS[dualKind].peg}`} note={DU_PROPS[dualKind].pegMode === 'top' ? 'full-width · +36″ H' : 'center section'} />
-                    <ShelfStepper extra={effExtraShelves} maxExtra={maxExtraShelves} base={baseShelves} onChange={setCenterShelves} />
+                    <ShelfStepper extra={effExtraShelves} maxExtra={maxExtraShelves} base={baseShelves} cost={addons.has('top') ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC} onChange={setCenterShelves} />
                     <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${DU_PROPS[dualKind].stain}`} note={stainName} />
@@ -343,9 +355,9 @@ function Configurator() {
                 {isCustom && (
                   <>
                     <AddOnCard active={addons.has('basictop')} onClick={() => toggle('basictop')}
-                      name='½″ BASIC PLYWOOD TOP' price={`$${basicTopCost(cols)}`} note={`$10 × ${cols} wide`} disabled={addons.has('top')} />
+                      name='½″ BASIC PLYWOOD TOP' price={`$${basicTopCost(cols)}`} note={`$15 × ${cols} wide`} />
                     <AddOnCard active={addons.has('top')} onClick={() => toggle('top')}
-                      name='¾″ SANDED MAPLE TOP' price={`$${topCost(cols)}`} note={`$25 × ${cols} wide`} disabled={addons.has('basictop')} />
+                      name='¾″ SANDED MAPLE TOP' price={`$${topCost(cols)}`} note={`$30 × ${cols} wide`} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${stainCost(cols,rows)}`} note={stainName} />
                     <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
@@ -570,12 +582,12 @@ function LedStepper({ count, max, onChange }) {
 }
 
 // Center shelves — included base + addable extras ($60 each). Shows total; can't go below base.
-function ShelfStepper({ extra, maxExtra, base, onChange }) {
+function ShelfStepper({ extra, maxExtra, base, cost, onChange }) {
   const total = base + extra;
   const active = extra > 0;
   const dec = (e) => { e.stopPropagation(); onChange(Math.max(0, extra - 1)); };
   const inc = (e) => { e.stopPropagation(); onChange(Math.min(maxExtra, extra + 1)); };
-  const note = base > 0 ? `${base} included · $60 each more` : `$60 each · up to ${maxExtra}`;
+  const note = base > 0 ? `${base} included · $${cost} each more` : `$${cost} each · up to ${maxExtra}`;
   return (
     <div style={{
       padding: '14px 14px',
