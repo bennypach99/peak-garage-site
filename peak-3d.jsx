@@ -28,16 +28,16 @@
   }
 
   // ── 2x4 tote rack built like the real thing:
-  //   • wide 2x4 studs (3.5" face forward), front + back, at every column boundary
-  //   • top + bottom plates span the width (the only horizontal cross members)
+  //   • 2x4 studs with the NARROW 1.5" face forward, 3.5" deep — front + back at each boundary
+  //   • top + bottom plates lay flat (1.5" tall × 3.5" deep) — the only horizontal members
   //   • RUNNERS: 1.5×3.5×28.5 cleats screwed to the SIDES of the studs, two per tote bay,
   //     running full depth front→back. The tote lid rests ON the runners; the bin hangs below.
   //   • first runner sits 2.5" below the underside of the top plate.
   function toteRack(THREE, group, o) {
     const { x0, x1, D, nCols, yb, totalH, rows, wood, totes } = o;
     const colW = (x1 - x0) / nCols;
-    const STUD_W = 3.5, STUD_D = 1.5;          // stud: wide face forward
-    const PLATE = 3.5;                          // top/bottom plate height
+    const STUD_W = 1.5, STUD_D = 3.5;          // stud: narrow 1.5" face forward, 3.5" deep
+    const PLATE = 1.5;                          // plate lays flat: 1.5" tall, 3.5" deep
     const RUN_PROJ = 1.5, RUN_H = 3.5;          // runner: projects 1.5", 3.5" tall, full depth
     const zF = D / 2 - STUD_D / 2;
     const zB = -D / 2 + STUD_D / 2;
@@ -47,16 +47,17 @@
       addBox(THREE, group, STUD_W, totalH, STUD_D, x, yb + totalH / 2, zF, wood);
       addBox(THREE, group, STUD_W, totalH, STUD_D, x, yb + totalH / 2, zB, wood);
     }
-    // top + bottom plates span the width (front + back) — only horizontal members
+    // top + bottom plates span the width (front + back), laying flat — only horizontal members
     [yb + PLATE / 2, yb + totalH - PLATE / 2].forEach((y) => {
       addBox(THREE, group, (x1 - x0) + STUD_W, PLATE, STUD_D, (x0 + x1) / 2, y, zF, wood);
       addBox(THREE, group, (x1 - x0) + STUD_W, PLATE, STUD_D, (x0 + x1) / 2, y, zB, wood);
     });
-    // runner levels: first 2.5" below underside of top plate, then one tote-pitch apart
-    const topPlateBottom = yb + totalH - PLATE;
-    const pitch = totalH / rows;
+    // runner levels: first runner top sits 2.5" below the underside of the top plate
+    // (= 4" from the top of the frame), then 16" top-to-top down the rack.
+    const RUN_PITCH = 16;
+    const ry0 = yb + totalH - 4;
     const runY = [];
-    for (let k = 0; k < rows; k++) runY.push(topPlateBottom - 2.5 - k * pitch);
+    for (let k = 0; k < rows; k++) runY.push(ry0 - k * RUN_PITCH);
     // runners: two per bay (left + right), screwed to the inner sides of the studs, full depth
     runY.forEach((ry) => {
       for (let c = 0; c < nCols; c++) {
@@ -68,29 +69,54 @@
     // totes: lid rests on top of the two runners; bin hangs below between them
     if (totes) {
       runY.forEach((ry) => {
-        const bodyH = pitch * 0.78;
+        const bodyH = RUN_PITCH * 0.82;
         for (let c = 0; c < nCols; c++) {
           const cx = x0 + (c + 0.5) * colW;
           const lidW = colW - STUD_W + 0.4, lidD = D - 2;
           const bodyW = colW - STUD_W - 2 * RUN_PROJ - 0.6, bodyD = lidD - 3;
-          addBox(THREE, group, lidW, 2.0, lidD, cx, ry - 1.0, 0, totes.toteLid);
-          addBox(THREE, group, bodyW, bodyH, bodyD, cx, ry - 2.0 - bodyH / 2, 0, totes.tote);
-          addBox(THREE, group, bodyW * 0.9, 0.6, bodyD * 0.9, cx, ry - 2.0 - bodyH, 0, totes.tote);
+          // lid sits ON TOP of the runners (bottom flush with runner top); bin hangs below
+          addBox(THREE, group, lidW, 2.0, lidD, cx, ry + 1.0, 0, totes.toteLid);
+          addBox(THREE, group, bodyW, bodyH, bodyD, cx, ry - bodyH / 2, 0, totes.tote);
+          addBox(THREE, group, bodyW * 0.9, 0.6, bodyD * 0.9, cx, ry - bodyH, 0, totes.tote);
         }
       });
     }
   }
 
-  // ── plywood box: solid sides + horizontal shelves (open shelving / center bay).
+  // ── plywood box: open shelving / center bay — horizontal shelves only (no side panels;
+  // the shelves are carried by the adjacent tote-rack frames).
   function plywoodBox(THREE, group, o) {
     const { x0, x1, D, yb, H, nShelves, wood, back } = o;
-    addBox(THREE, group, PLY, H, D, x0 + PLY / 2, yb + H / 2, 0, wood);
-    addBox(THREE, group, PLY, H, D, x1 - PLY / 2, yb + H / 2, 0, wood);
     if (back) addBox(THREE, group, (x1 - x0), H, PLY, (x0 + x1) / 2, yb + H / 2, -D / 2 + PLY / 2, wood);
     const gaps = nShelves + 1;
     for (let i = 0; i <= gaps; i++) {
       const y = yb + (H * i) / gaps;
-      addBox(THREE, group, (x1 - x0) - PLY, PLY, D, (x0 + x1) / 2, y, 0, wood);
+      addBox(THREE, group, (x1 - x0), PLY, D, (x0 + x1) / 2, y, 0, wood);
+    }
+  }
+
+  // ── pegboard wall: 2x4 stud frame (1.5×3.5 end studs + top rail), a single pegboard
+  // panel inset behind the studs, and 36"-long LED light bars at the TOP, shining down.
+  function pegWall(THREE, group, o) {
+    const { x0, x1, yBase, ph, D, wood, peg, led, leds } = o;
+    const SW = 1.5, SD = 3.5;                 // frame stud: 1.5" face front, 3.5" deep
+    const studZ = -D / 2 + SD / 2;            // studs at the back
+    const W = x1 - x0;
+    // end vertical studs only — no interior verticals
+    addBox(THREE, group, SW, ph, SD, x0, yBase + ph / 2, studZ, wood);
+    addBox(THREE, group, SW, ph, SD, x1, yBase + ph / 2, studZ, wood);
+    // top rail across the width — 2x4 laying FLAT (1.5" tall × 3.5" deep)
+    addBox(THREE, group, W + SW, 1.5, SD, (x0 + x1) / 2, yBase + ph - 0.75, studZ, wood);
+    // single continuous pegboard panel inset behind the studs
+    const pegZ = -D / 2 + 0.3;
+    addBox(THREE, group, W - 0.5, ph - 4, 0.4, (x0 + x1) / 2, yBase + (ph - 4) / 2, pegZ, peg(W, ph - 4));
+    // 36"-long LED light bars along the TOP of the pegboard, shining down
+    const n = Math.max(0, leds | 0);
+    for (let i = 0; i < n; i++) {
+      const seg = W / n;
+      const bx = x0 + (i + 0.5) * seg;
+      const barLen = Math.min(36, seg * 0.95);
+      addBox(THREE, group, barLen, 1.1, 1.8, bx, yBase + ph - 4, -D / 2 + SD + 0.4, led);
     }
   }
 
@@ -113,8 +139,8 @@
     const c = document.createElement('canvas');
     c.width = c.height = 128;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#D8C7A2'; ctx.fillRect(0, 0, 128, 128);
-    ctx.fillStyle = 'rgba(40,30,15,0.4)';
+    ctx.fillStyle = '#9ba1a7'; ctx.fillRect(0, 0, 128, 128);
+    ctx.fillStyle = 'rgba(40,45,52,0.5)';
     for (let y = 12; y < 128; y += 16) for (let x = 12; x < 128; x += 16) { ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill(); }
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
@@ -122,7 +148,7 @@
     return (w, h) => {
       const tt = t.clone(); tt.needsUpdate = true;
       tt.repeat.set(Math.max(1, Math.round(w / 8)), Math.max(1, Math.round(h / 8)));
-      return new THREE.MeshStandardMaterial({ map: tt, roughness: 0.85, metalness: 0 });
+      return new THREE.MeshStandardMaterial({ map: tt, roughness: 0.9, metalness: 0 });
     };
   }
 
@@ -151,17 +177,19 @@
     const topThick = a.includes('top') ? 0.75 : 0.5;
     const yb = a.includes('casters') ? CASTER_H : 0;
     toteRack(THREE, u, { x0: -W / 2, x1: W / 2, D, nCols: cfg.wbWidth, yb, totalH: toteZone, rows: 2, wood: mats.wood, totes: a.includes('totes') ? mats : null });
-    addBox(THREE, u, W + 2, topThick, D + 1.5, 0, yb + toteZone + topThick / 2, 0, mats.top);
+    // flat 2x4 end rails (front→back) connecting the front & back legs at each end, top & bottom
+    const apronLen = D - 3.5;
+    [-W / 2 + 1.0, W / 2 - 1.0].forEach((ex) => {
+      addBox(THREE, u, 3.5, 1.5, apronLen, ex, yb + toteZone - 0.75, 0, mats.wood);
+      addBox(THREE, u, 3.5, 1.5, apronLen, ex, yb + 0.75, 0, mats.wood);
+    });
+    addBox(THREE, u, W + 1.5, topThick, D, 0, yb + toteZone + topThick / 2, 0, mats.top);
     const topY = yb + toteZone + topThick;
     if (hasPeg) {
-      const ph = 32;
-      addBox(THREE, u, BOARD, ph, POST, -W / 2 + BOARD / 2, topY + ph / 2, -D / 2 + POST / 2, mats.wood);
-      addBox(THREE, u, BOARD, ph, POST, W / 2 - BOARD / 2, topY + ph / 2, -D / 2 + POST / 2, mats.wood);
-      addBox(THREE, u, W, BOARD, POST, 0, topY + ph - BOARD / 2, -D / 2 + POST / 2, mats.wood);
-      addBox(THREE, u, W - 4, ph - 2, 0.4, 0, topY + ph / 2, -D / 2 + POST + 0.2, mats.peg(W - 4, ph - 2));
-      if (cfg.leds > 0) addBox(THREE, u, W - 6, 0.9, 1.2, 0, topY + 0.8, -D / 2 + 2.6, mats.led);
+      pegWall(THREE, u, { x0: -W / 2, x1: W / 2, yBase: topY, ph: 32, D, nCols: cfg.wbWidth, wood: mats.wood, peg: mats.peg, led: mats.led, leds: cfg.leds });
     } else if (cfg.leds > 0) {
-      addBox(THREE, u, W - 6, 0.9, 1.2, 0, topY - 0.8, D / 2 - 1.6, mats.led);
+      const n = cfg.leds;
+      for (let i = 0; i < n; i++) { const seg = W / n; addBox(THREE, u, seg * 0.7, 0.9, 1.2, -W / 2 + (i + 0.5) * seg, topY - 0.8, D / 2 - 1.6, mats.led); }
     }
     if (yb) addCasters(THREE, u, W, D, casterCount(cfg.wbWidth * 2), mats.caster);
     return u;
@@ -184,22 +212,20 @@
     toteRack(THREE, u, { x0: xL0, x1: xL1, D, nCols: 2, yb, totalH: hIn, rows, wood: mats.wood, totes: totesMat });
     toteRack(THREE, u, { x0: xR0, x1: xR1, D, nCols: 2, yb, totalH: hIn, rows, wood: mats.wood, totes: totesMat });
     plywoodBox(THREE, u, { x0: xC0, x1: xC1, D, yb, H: hIn, nShelves: cfg.centerShelves, wood: mats.wood, back: false });
-    addBox(THREE, u, W + 1, topThick, D + 1.5, 0, yb + hIn + topThick / 2, 0, mats.top);
+    addBox(THREE, u, W + 1.5, topThick, D, 0, yb + hIn + topThick / 2, 0, mats.top);
     const gaps = cfg.centerShelves + 1;
     if (hasPeg) {
       if (props.pegMode === 'top') {
-        const ph = 32, py0 = yb + hIn + topThick;
-        addBox(THREE, u, BOARD, ph, POST, xL0 + BOARD / 2, py0 + ph / 2, -D / 2 + POST / 2, mats.wood);
-        addBox(THREE, u, BOARD, ph, POST, xR1 - BOARD / 2, py0 + ph / 2, -D / 2 + POST / 2, mats.wood);
-        addBox(THREE, u, W, BOARD, POST, 0, py0 + ph - BOARD / 2, -D / 2 + POST / 2, mats.wood);
-        addBox(THREE, u, W - 4, ph - 2, 0.4, 0, py0 + ph / 2, -D / 2 + POST + 0.2, mats.peg(W - 4, ph - 2));
-        if (cfg.leds > 0) addBox(THREE, u, W - 6, 0.9, 1.2, 0, py0 + 0.8, -D / 2 + 2.6, mats.led);
+        const py0 = yb + hIn + topThick;
+        const pegCols = Math.max(3, Math.round(W / 24));
+        pegWall(THREE, u, { x0: -W / 2, x1: W / 2, yBase: py0, ph: 32, D, nCols: pegCols, wood: mats.wood, peg: mats.peg, led: mats.led, leds: cfg.leds });
       } else {
         const comp = hIn / gaps;
         const cav = (cfg.dualKind === '4high' && cfg.centerShelves >= 3) ? 2 : 1;
         const ph = cav * comp, py0 = yb + hIn - ph;
-        addBox(THREE, u, cw - 3, ph - 2, 0.4, (xC0 + xC1) / 2, py0 + ph / 2, -D / 2 + PLY + 0.2, mats.peg(cw - 3, ph - 2));
-        if (cfg.leds > 0) addBox(THREE, u, cw - 6, 0.9, 1.2, (xC0 + xC1) / 2, yb + hIn - 1.4, -D / 2 + 2, mats.led);
+        addBox(THREE, u, cw - 3, ph - 2, 0.4, (xC0 + xC1) / 2, py0 + ph / 2, -D / 2 + 0.3, mats.peg(cw - 3, ph - 2));
+        const n = Math.max(0, cfg.leds | 0);
+        for (let i = 0; i < n; i++) { const seg = (cw - 4) / n; addBox(THREE, u, seg * 0.72, 1.1, 1.8, xC0 + 2 + (i + 0.5) * seg, py0 + ph - 3, -D / 2 + 2.2, mats.led); }
       }
     }
     if (yb) addCasters(THREE, u, W, D, 8, mats.caster);
@@ -216,7 +242,7 @@
     toteRack(THREE, u, { x0: -W / 2, x1: W / 2, D, nCols: cols, yb, totalH: hIn, rows, wood: mats.wood, totes: a.includes('totes') ? mats : null });
     if (a.includes('top') || a.includes('basictop')) {
       const tt = a.includes('top') ? 0.75 : 0.5;
-      addBox(THREE, u, W + 2, tt, D + 1.5, 0, yb + hIn + tt / 2, 0, mats.top);
+      addBox(THREE, u, W + 1.5, tt, D, 0, yb + hIn + tt / 2, 0, mats.top);
     }
     if (yb) addCasters(THREE, u, W, D, casterCount(cols * rows), mats.caster);
     return u;
