@@ -48,6 +48,15 @@ function ledMax(mode, cols, dualKind) {
   if (mode === 'double') return dualKind === '2high' ? 3 : 1;
   return Math.max(1, Math.floor(cols / 2));
 }
+// Allowed LED counts per build. Wide pegboards skip counts that would strand a
+// light off-center: 5-wide (two large panels + narrow center) → 0 or 2;
+// 6-wide (three equal panels) → 0, 1, or 3 (a lone pair would be lopsided).
+function ledOptions(mode, cols, dualKind) {
+  if (mode === 'workbench' && cols === 5) return [0, 2];
+  if (mode === 'workbench' && cols === 6) return [0, 1, 3];
+  const max = ledMax(mode, cols, dualKind);
+  return Array.from({ length: max + 1 }, (_, i) => i);
+}
 
 // ── Double-unit constants (from live site) ──
 const DU_PROPS = {
@@ -190,9 +199,10 @@ function Configurator() {
   const isDouble    = mode === 'double';
   const isCustom    = mode === 'custom';
 
-  // LED bars: clamp the count to the max allowed for this build.
+  // LED bars: clamp the count to the nearest valid option for this build.
   const maxLed = ledMax(mode, isWorkbench ? wbWidth : 0, dualKind);
-  const effLed = isCustom ? 0 : Math.min(ledCount, maxLed);
+  const ledOpts = ledOptions(mode, isWorkbench ? wbWidth : 0, dualKind);
+  const effLed = isCustom ? 0 : ledOpts.filter((v) => v <= ledCount).pop() ?? 0;
   // Center shelves: doubles include a base count; the customer can add extras (charged).
   const baseShelves = isDouble ? CENTER_SHELF_BASE[dualKind] : 0;
   const maxExtraShelves = isDouble ? CENTER_SHELF_ADD_MAX[dualKind] : 0;
@@ -344,7 +354,7 @@ function Configurator() {
                       name='¾″ SANDED MAPLE TOP' price={`+$${topCost(wbWidth) - basicTopCost(wbWidth)}`} note={`upgrade · +$15 × ${wbWidth}`} />
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
                       name='PEGBOARD BACK' price={`$${WB_PEGBOARD_PER_WIDTH * wbWidth}`} note={`$40 × ${wbWidth} · +32″ H`} />
-                    <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
+                    <LedStepper count={effLed} options={ledOpts} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${flatStainCost(wbWidth * 2, wbWidth, addons.has('top'))}`} note={stainName} />
                     <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
@@ -363,7 +373,7 @@ function Configurator() {
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
                       name='PEGBOARD BACK' price={`$${DU_PROPS[dualKind].peg}`} note={DU_PROPS[dualKind].pegMode === 'top' ? 'full-width · +32″ H' : 'center section'} />
                     <ShelfStepper extra={effExtraShelves} maxExtra={maxExtraShelves} base={baseShelves} cost={addons.has('top') ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC} onChange={setCenterShelves} />
-                    <LedStepper count={effLed} max={maxLed} onChange={setLedCount} />
+                    <LedStepper count={effLed} options={ledOptions(mode, 0, dualKind)} onChange={setLedCount} />
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${doubleStainCost(dualKind, addons.has('top'), centerWidth, STD_CENTER_SHELVES[dualKind] + effExtraShelves)}`} note={stainName} />
                     <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
@@ -569,11 +579,16 @@ function AddOnCard({ active, onClick, name, price, note, disabled, textOnly }) {
   );
 }
 
-// LED light bar — quantity stepper (0 … max). $50 each.
-function LedStepper({ count, max, onChange }) {
+// LED light bar — quantity stepper over an explicit options list. $50 each.
+function LedStepper({ count, options, onChange }) {
+  const opts = options && options.length ? options : [0];
+  const max = opts[opts.length - 1];
+  const idx = Math.max(0, opts.indexOf(count));
   const active = count > 0;
-  const dec = (e) => { e.stopPropagation(); onChange(Math.max(0, count - 1)); };
-  const inc = (e) => { e.stopPropagation(); onChange(Math.min(max, count + 1)); };
+  const atMin = idx <= 0;
+  const atMax = idx >= opts.length - 1;
+  const dec = (e) => { e.stopPropagation(); if (!atMin) onChange(opts[idx - 1]); };
+  const inc = (e) => { e.stopPropagation(); if (!atMax) onChange(opts[idx + 1]); };
   return (
     <div style={{
       padding: '14px 14px',
@@ -585,16 +600,16 @@ function LedStepper({ count, max, onChange }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
         <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--bone-d50)', letterSpacing: '0.04em' }}>$50 each · up to {max}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button type="button" onClick={dec} disabled={count <= 0} style={{
-            width: 24, height: 24, lineHeight: 1, border: `1px solid ${count <= 0 ? 'var(--ink4)' : 'var(--yellow)'}`,
-            background: 'transparent', color: count <= 0 ? 'var(--bone-d50)' : 'var(--yellow)',
-            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: count <= 0 ? 'not-allowed' : 'pointer',
+          <button type="button" onClick={dec} disabled={atMin} style={{
+            width: 24, height: 24, lineHeight: 1, border: `1px solid ${atMin ? 'var(--ink4)' : 'var(--yellow)'}`,
+            background: 'transparent', color: atMin ? 'var(--bone-d50)' : 'var(--yellow)',
+            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: atMin ? 'not-allowed' : 'pointer',
           }}>−</button>
           <span style={{ fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, color: active ? 'var(--yellow)' : 'var(--bone)', minWidth: 16, textAlign: 'center' }}>{count}</span>
-          <button type="button" onClick={inc} disabled={count >= max} style={{
-            width: 24, height: 24, lineHeight: 1, border: `1px solid ${count >= max ? 'var(--ink4)' : 'var(--yellow)'}`,
-            background: 'transparent', color: count >= max ? 'var(--bone-d50)' : 'var(--yellow)',
-            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: count >= max ? 'not-allowed' : 'pointer',
+          <button type="button" onClick={inc} disabled={atMax} style={{
+            width: 24, height: 24, lineHeight: 1, border: `1px solid ${atMax ? 'var(--ink4)' : 'var(--yellow)'}`,
+            background: 'transparent', color: atMax ? 'var(--bone-d50)' : 'var(--yellow)',
+            fontFamily: 'var(--display)', fontWeight: 800, fontSize: 16, cursor: atMax ? 'not-allowed' : 'pointer',
           }}>+</button>
         </div>
       </div>
