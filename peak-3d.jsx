@@ -95,21 +95,45 @@
     }
   }
 
-  // ── pegboard wall: 2x4 stud frame (1.5×3.5 end studs + top rail), a single pegboard
-  // panel inset behind the studs, and 36"-long LED light bars at the TOP, shining down.
+  // Pegboard panel sectioning — ported verbatim from the cut-list tool.
+  // ≤4-wide: one full panel. 5-wide: 45.5 + center leftover + 45.5. 6-wide: 45.5 ×3.
+  // Interior back studs land on every seam (5- and 6-wide only).
+  function pegSections(width, columns) {
+    const SEC = 45.5;
+    if (width <= 96) return [width];
+    if (columns >= 6) return [SEC, SEC, SEC];
+    if (columns === 5) return [SEC, +(width - 2 * SEC).toFixed(2), SEC];
+    const out = []; let c = columns;
+    while (c >= 2) { out.push(SEC); c -= 2; }
+    if (c === 1) out.push(23.5);
+    return out;
+  }
+
+  // ── pegboard wall: 2x4 stud frame (1.5×3.5 end studs + interior back studs at panel
+  // seams, same orientation as the back corners), pegboard panels split on those seams,
+  // a flat top rail, and 36"-long LED light bars at the TOP shining down.
   function pegWall(THREE, group, o) {
-    const { x0, x1, yBase, ph, D, wood, peg, led, leds } = o;
+    const { x0, x1, yBase, ph, D, nCols, wood, peg, led, leds } = o;
     const SW = 1.5, SD = 3.5;                 // frame stud: 1.5" face front, 3.5" deep
     const studZ = -D / 2 + SD / 2;            // studs at the back
     const W = x1 - x0;
-    // end vertical studs only — no interior verticals
+    // end vertical studs
     addBox(THREE, group, SW, ph, SD, x0, yBase + ph / 2, studZ, wood);
     addBox(THREE, group, SW, ph, SD, x1, yBase + ph / 2, studZ, wood);
     // top rail across the width — 2x4 laying FLAT (1.5" tall × 3.5" deep)
     addBox(THREE, group, W + SW, 1.5, SD, (x0 + x1) / 2, yBase + ph - 0.75, studZ, wood);
-    // single continuous pegboard panel inset behind the studs
+    // panel seams from the cut-list: interior back studs + split pegboard panels
+    const secs = pegSections(W, nCols || Math.max(2, Math.round(W / 22.4)));
     const pegZ = -D / 2 + 0.3;
-    addBox(THREE, group, W - 0.5, ph - 4, 0.4, (x0 + x1) / 2, yBase + (ph - 4) / 2, pegZ, peg(W, ph - 4));
+    const panelH = ph - 4;
+    let cx = x0;
+    secs.forEach((segW, i) => {
+      // pegboard panel for this section, inset a hair on each side so the seam reads
+      addBox(THREE, group, segW - 0.6, panelH, 0.4, cx + segW / 2, yBase + panelH / 2, pegZ, peg(segW, panelH));
+      // interior back stud on every seam after the first section
+      if (i < secs.length - 1) addBox(THREE, group, SW, ph, SD, cx + segW, yBase + ph / 2, studZ, wood);
+      cx += segW;
+    });
     // 36"-long LED light bars along the TOP of the pegboard, shining down
     const n = Math.max(0, leds | 0);
     for (let i = 0; i < n; i++) {
