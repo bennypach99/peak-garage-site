@@ -48,12 +48,11 @@ function ledMax(mode, cols, dualKind) {
   if (mode === 'double') return dualKind === '2high' ? 3 : 1;
   return Math.max(1, Math.floor(cols / 2));
 }
-// Allowed LED counts per build. Wide pegboards skip counts that would strand a
-// light off-center: 5-wide (two large panels + narrow center) → 0 or 2;
-// 6-wide (three equal panels) → 0, 1, or 3 (a lone pair would be lopsided).
+// Allowed LED counts per build. The 5-wide (two large panels + a narrow center)
+// can't center a lone light, so it allows only 0 or 2. All other widths allow the
+// full range; a 2-light layout sits in the outer panels, left + right.
 function ledOptions(mode, cols, dualKind) {
   if (mode === 'workbench' && cols === 5) return [0, 2];
-  if (mode === 'workbench' && cols === 6) return [0, 1, 3];
   const max = ledMax(mode, cols, dualKind);
   return Array.from({ length: max + 1 }, (_, i) => i);
 }
