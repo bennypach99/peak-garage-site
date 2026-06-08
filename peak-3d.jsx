@@ -134,13 +134,24 @@
       if (i < secs.length - 1) addBox(THREE, group, SW, ph, SD, cx + segW, yBase + ph / 2, studZ, wood);
       cx += segW;
     });
-    // 36"-long LED light bars along the TOP of the pegboard, shining down
+    // LED light bars (36" long) centered in the LARGE pegboard sections, shining down.
+    // Single panel (≤4-wide): spread evenly. Sectioned (5/6-wide): one per large panel,
+    // chosen symmetrically so a lone light lands center and a pair takes the outer panels.
     const n = Math.max(0, leds | 0);
-    for (let i = 0; i < n; i++) {
-      const seg = W / n;
-      const bx = x0 + (i + 0.5) * seg;
-      const barLen = Math.min(36, seg * 0.95);
-      addBox(THREE, group, barLen, 1.1, 1.8, bx, yBase + ph - 4, -D / 2 + SD + 0.4, led);
+    if (n > 0) {
+      let xs;
+      if (secs.length === 1) {
+        xs = Array.from({ length: n }, (_, i) => x0 + (i + 0.5) * (W / n));
+      } else {
+        const large = []; let lx = x0;
+        secs.forEach((segW) => { if (segW >= 40) large.push(lx + segW / 2); lx += segW; });
+        const L = large.length;
+        if (n >= L) xs = large;
+        else if (n === 1) xs = [large[Math.floor((L - 1) / 2)]];
+        else xs = Array.from({ length: n }, (_, i) => large[Math.round(i * (L - 1) / (n - 1))]);
+      }
+      const barLen = secs.length === 1 ? Math.min(36, (W / n) * 0.95) : 36;
+      xs.forEach((bx) => addBox(THREE, group, barLen, 1.1, 1.8, bx, yBase + ph - 4, -D / 2 + SD + 0.4, led));
     }
   }
 
