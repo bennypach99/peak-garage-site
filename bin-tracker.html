@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAgUklEQVR4nL2baZBlxXXnf5l5t3ffq1d7V1VXV1fvGzRLI2ig2UGIXSCQrcUeGckxY3+aiImxwzPjmM2hiXDEjD/4w0w47Al5LCEkQjIWEsLsIFqC3kRDL9Bb9Va9VVJVt79Vb7paZ8+G+id2X7+e++t99tnvgPHnOoMrqAS+pp1+Gj5OL3Pf3i5fr5fGmtRRySvP/Lpx9z0qf+e3F7Hsd+/0OF7+lF5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UA==" />
+<link rel="icon" type="image/png" href="pbf-icon-192.png" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#0E0E0E">
@@ -469,20 +469,13 @@ body{font-family:var(--sans);background:var(--ch);color:var(--text);min-height:1
   <span id="syncLabel">Connecting…</span>
 </div>
 
-<!-- Shared logo mark. NOTE: clean placeholder app-mark — restore the original
-     Peak Garage Solutions PNG by replacing PGS_LOGO with your data URL. -->
+<!-- Shared logo mark — Peak Garage Solutions gold mountain peaks (matches brand). -->
 <script>
 window.PGS_LOGO = "data:image/svg+xml," + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">' +
   '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
   '<stop offset="0" stop-color="#FFE74A"/><stop offset="1" stop-color="#C9B617"/></linearGradient></defs>' +
-  '<rect x="3" y="3" width="50" height="50" rx="11" fill="url(#g)"/>' +
-  '<rect x="13" y="15" width="30" height="9" rx="2.5" fill="#0E0E0E"/>' +
-  '<rect x="13" y="29" width="30" height="9" rx="2.5" fill="#0E0E0E"/>' +
-  '<rect x="20" y="11" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
-  '<rect x="30" y="11" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
-  '<rect x="20" y="25" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
-  '<rect x="30" y="25" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
+  '<polygon points="3,47 18,18 28,34 38,11 53,47" fill="url(#g)"/>' +
   '</svg>');
 document.getElementById('hwLogoImg').src = window.PGS_LOGO;
 document.getElementById('headerLogoImg').src = window.PGS_LOGO;
