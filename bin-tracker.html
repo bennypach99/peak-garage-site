@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAgUklEQVR4nL2baZBlxXXnf5l5t3ffq1d7V1VXV1fvGzRLI2ig2UGIXSCQrcUeGckxY3+aiImxwzPjmM2hiXDEjD/4w0w47Al5LCEkQjIWEsLsIFqC3kRDL9Bb9Va9VVJVt79Vb7paZ8+G+id2X7+e++t99tnvgPHnOoMrqAS+pp1+Gj5OL3Pf3i5fr5fGmtRRySvP/Lpx9z0qf+e3F7Hsd+/0OF7+lF5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UA==" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Peak Bin Finder">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="pbf-apple-touch-180.png">
+<style>
+  /* Android status bar safe area */
+  :root { --status-bar-height: env(safe-area-inset-top, 24px); }
+  body { padding-top: var(--status-bar-height); }
+  .site-header { padding-top: max(12px, env(safe-area-inset-top, 12px)); }
+</style>
+<title>Peak Bin Finder · Bin inventory for Peak Garage Solutions</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --gold:#F5D820;--gold-light:#FFE74A;--gold-dark:#C9B617;--gold-pale:#2A2410;
+  --ch:#0E0E0E;--ch2:#161616;--ch3:#1F1F1F;--ch4:#2A2A2A;
+  --text:#F4F1EA;--muted:rgba(244,241,234,0.5);
+  --border:rgba(245,216,32,0.18);--bstrong:rgba(245,216,32,0.42);
+  --radius:6px;--radius-sm:4px;--danger:#c0392b;
+  --display:'Archivo','Inter Tight',system-ui,sans-serif;
+  --sans:'Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+body{font-family:var(--sans);background:var(--ch);color:var(--text);min-height:100vh;padding-bottom:60px;}
+
+/* ── HEADER ── */
+.site-header{background:var(--ch2);border-bottom:1px solid var(--bstrong);padding:.7rem 1.1rem .5rem;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;align-items:center;gap:12px;margin-bottom:.45rem;}
+.logo-wrap{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.logo-wrap img{height:48px;width:auto;}
+.logo-text{font-family:var(--display);font-weight:700;font-size:1.25rem;letter-spacing:.08em;color:var(--gold);text-transform:uppercase;line-height:1.2;white-space:nowrap;}
+.logo-wrap,.logo-wrap:link,.logo-wrap:visited{color:var(--gold);text-decoration:none;}
+.logo-sep{font-weight:400;color:var(--muted);}
+.logo-sub{display:block;font-size:.82rem;font-weight:500;color:var(--gold);letter-spacing:.14em;}.logo-sub a,.logo-sub a:link,.logo-sub a:visited,.logo-sub a:hover,.logo-sub a:active{color:var(--gold)!important;text-decoration:none!important;}
+.nav-bar{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);}
+.nav-data-btns{display:flex;gap:4px;padding:4px 6px;flex-shrink:0;}
+.nav-data-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--bstrong);border-radius:6px;color:var(--gold);font-family:var(--display);font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.nav-data-btn:hover{background:rgba(245,216,32,.1);color:var(--gold-light);}
+
+/* ── PAGE ── */
+.page{padding:16px;}
+
+/* ── EMPTY STATE ── */
+.shelf-hero{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;gap:16px;}
+.shelf-hero-title{font-family:var(--display);font-size:1.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);text-align:center;}
+.shelf-hero-sub{font-size:.85rem;color:var(--muted);text-align:center;max-width:260px;line-height:1.6;}
+
+/* ── SHELF CONTROLS ── */
+.shelf-controls{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.shelf-controls-row{display:flex;align-items:center;gap:8px;width:100%;}
+.shelf-chips-row{display:flex;align-items:flex-start;gap:8px;}
+.shelf-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0;}
+.shelf-chip{background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:6px 12px;font-family:var(--display);font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.shelf-chip:hover{border-color:var(--gold);color:var(--gold);}
+.shelf-chip.active{background:rgba(245,216,32,.18);border-color:var(--gold);color:var(--gold-light);}
+.edit-shelf-btn{background:transparent;border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:6px 11px;font-family:var(--display);font-size:.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap;}
+.edit-shelf-btn:hover{background:rgba(245,216,32,.1);border-color:var(--gold);}
+.shelf-select{display:none;}
+
+/* ── NARROW WIDTH (embedded demo iframe + small phones) ── */
+@media (max-width: 480px){
+  .site-header{padding:.55rem .7rem .45rem;}
+  .header-top{gap:8px;}
+  .logo-wrap img{height:34px;}
+  .logo-text{font-size:.98rem;letter-spacing:.04em;white-space:normal;line-height:1.05;}
+  .nav-bar{flex-wrap:wrap;gap:4px;}
+  .nav-data-btns{flex-wrap:wrap;padding:4px 0;}
+  .nav-data-btns[style*="margin-left:auto"]{margin-left:0 !important;}
+  .nav-data-btn{font-size:.66rem;padding:5px 8px;gap:4px;}
+  /* chips wrap onto their own rows; edit button drops below instead of overlapping */
+  .shelf-chips-row{flex-wrap:wrap;}
+  .shelf-chips{flex:1 1 100%;}
+  .edit-shelf-btn{flex:0 0 auto;}
+  .shelf-chip{font-size:.72rem;padding:5px 10px;white-space:normal;}
+  .page{padding:12px;}
+}
+
+/* ── SHELF INFO CARD ── */
+.shelf-info-card{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;}
+.shelf-info-area{font-family:var(--display);font-size:1.15rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.06em;}
+.shelf-info-desc{font-size:.82rem;color:var(--muted);margin-top:2px;}
+.shelf-info-meta{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;}
+.shelf-meta-chip{font-family:var(--display);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);background:var(--gold-pale);border:1px solid var(--bstrong);padding:3px 10px;border-radius:20px;}
+
+/* ── SHELF DIAGRAM ── */
+.shelf-diagram-wrap{width:100%;overflow-x:auto;padding:4px 0 12px;display:flex;justify-content:center;}
+.shelf-diagram-inner{display:inline-block;}
+.shelf-col-header-row{display:flex;}
+.shelf-body-row{display:flex;align-items:flex-start;}
+.shelf-row-labels{flex-shrink:0;}
+
+/* ── BIN GRID (Direction 3 · Data Grid — crisp SVG/DOM, replaces canvas) ── */
+.bin-grid{display:grid;gap:7px;}
+.bin-cell{display:flex;flex-direction:column;text-align:left;cursor:pointer;font:inherit;min-height:84px;
+  background:var(--ch2);border:1px solid rgba(245,216,32,.16);border-radius:var(--radius);padding:9px 9px 8px;transition:border-color .15s,background .15s;}
+.bin-cell:hover{border-color:var(--gold);background:rgba(245,216,32,.06);}
+.bin-cell.sel{background:rgba(245,216,32,.14);border-color:var(--gold-light);}
+.bin-cell.filled{border-color:var(--bstrong);}
+.bin-cell-top{display:flex;align-items:center;justify-content:space-between;gap:4px;}
+.bin-cell-code{font-family:var(--mono);font-size:.86rem;font-weight:600;color:rgba(245,216,32,.4);}
+.bin-cell.filled .bin-cell-code,.bin-cell.sel .bin-cell-code{color:var(--gold);}
+.bin-cell.sel .bin-cell-code{color:var(--gold-light);}
+.bin-cell-count{font-family:var(--display);font-size:.6rem;font-weight:700;color:var(--ch);background:var(--gold);border-radius:10px;padding:1px 6px;line-height:1.5;}
+.bin-cell-full{font-family:var(--display);font-size:.55rem;font-weight:800;letter-spacing:.06em;color:var(--ch);background:var(--gold-light);border-radius:10px;padding:1px 6px;}
+.bin-cell-items{flex:1;margin-top:5px;display:flex;flex-direction:column;gap:1px;min-height:0;}
+.bin-cell-item{font-size:.62rem;color:var(--muted);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bin-cell-empty{font-family:var(--mono);font-size:.55rem;letter-spacing:1px;color:rgba(244,241,234,.28);}
+.bin-cell-bar{height:4px;border-radius:3px;margin-top:6px;background:rgba(255,255,255,.06);overflow:hidden;}
+.bin-cell-bar > i{display:block;height:100%;border-radius:3px;transition:width .25s cubic-bezier(.2,.7,.3,1);}
+.bin-grid-colhdr{display:grid;gap:7px;margin:0 0 6px 22px;}
+.bin-grid-colhdr > span{text-align:center;font-family:var(--mono);font-size:.8rem;font-weight:600;color:var(--gold);letter-spacing:1px;}
+.bin-grid-row{display:flex;align-items:stretch;gap:7px;}
+.bin-grid-rownum{width:15px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;font-weight:600;color:var(--gold);}
+.bin-grid-cells{flex:1;display:grid;gap:7px;}
+
+/* ── FULLNESS CONTROL (segmented) ── */
+.fill-control{padding:12px 13px 14px;border-top:1px solid var(--bstrong);background:rgba(245,216,32,.03);}
+.fill-control-label{font-family:var(--display);font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.fill-seg{display:flex;gap:4px;}
+.fill-seg-btn{flex:1;cursor:pointer;font-family:var(--display);font-size:.78rem;font-weight:700;padding:9px 2px;border-radius:6px;border:1px solid var(--bstrong);background:var(--ch3);color:var(--muted);transition:all .12s;text-align:center;}
+.fill-seg-btn:hover{border-color:rgba(245,216,32,.6);color:var(--text);}
+.fill-seg-btn.on{border-color:var(--gold-light);background:rgba(245,216,32,.2);color:var(--gold-light);}
+.sbin-fill-tag{font-family:var(--display);font-size:.8rem;font-weight:600;border:1px solid var(--bstrong);background:var(--gold-pale);padding:2px 10px;border-radius:20px;letter-spacing:.04em;}
+
+/* ── SEARCH ── */
+.search-wrap{position:relative;margin-bottom:10px;}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted);}
+.search-input{width:100%;background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 12px 11px 38px;font-family:var(--sans);font-size:.92rem;color:var(--text);outline:none;transition:border-color .15s;}
+.search-input:focus{border-color:var(--gold);}
+.search-input::placeholder{color:var(--muted);}
+.result-card{background:var(--ch2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.result-item-name{font-family:var(--display);font-size:1rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text);margin-bottom:6px;}
+.result-location{display:inline-flex;align-items:center;gap:5px;background:rgba(245,216,32,.1);border:1px solid var(--bstrong);color:var(--gold);font-family:var(--display);font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:20px;}
+.result-bin-chip{cursor:pointer;transition:background .15s,color .15s;}
+.result-bin-chip:hover{background:rgba(245,216,32,.25);color:var(--gold-light);}
+.result-bin-label{font-size:.78rem;color:var(--muted);margin-top:5px;}
+.no-results{text-align:center;padding:24px 16px;color:var(--muted);font-size:.85rem;}
+
+/* ── BIN DETAIL PANEL ── */
+.sbin-panel{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);overflow:hidden;margin-top:12px;}
+.sbin-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.sbin-title{font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--gold-light);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;}
+.sbin-count{font-family:var(--display);font-size:.8rem;font-weight:600;color:var(--gold);background:var(--gold-pale);border:1px solid var(--bstrong);padding:3px 10px;border-radius:20px;letter-spacing:.06em;white-space:nowrap;}
+.sbin-items{padding:4px 0;}
+.sbin-item-row{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:1px solid var(--border);}
+.sbin-item-row:last-child{border-bottom:none;}
+.sbin-item-name{flex:1;font-size:.9rem;color:var(--text);}
+.sbin-item-qty{font-family:var(--display);font-size:.8rem;font-weight:600;color:var(--gold);background:var(--gold-pale);border:1px solid var(--bstrong);padding:2px 8px;border-radius:20px;}
+.sbin-empty{padding:20px 16px;font-size:.85rem;color:var(--muted);font-style:italic;}
+.sbin-add-row{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--border);background:var(--ch3);}
+
+/* ── FORMS ── */
+.form-row{margin-bottom:12px;}
+.form-row-inline{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.form-label{display:block;font-family:var(--display);font-size:.66rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:.35rem;}
+.form-input{width:100%;background:var(--ch);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;font-family:var(--sans);font-size:.9rem;color:var(--text);outline:none;transition:border-color .15s;}
+.form-input:focus{border-color:var(--gold);}
+.form-input::placeholder{color:var(--muted);}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:12px;border:none;border-radius:var(--radius-sm);font-family:var(--display);font-size:.95rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .15s;}
+.btn-primary{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);}
+.btn-primary:hover{opacity:.88;}
+.btn-secondary{background:var(--ch3);border:1px solid var(--bstrong);color:var(--gold);}
+.btn-secondary:hover{background:rgba(245,216,32,.08);}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{border-color:var(--gold);color:var(--text);}
+.btn-sm{padding:7px 14px;font-size:.82rem;width:auto;display:inline-block;}
+.btn-lg{padding:18px;font-size:1.1rem;}
+.icon-btn{background:none;border:none;cursor:pointer;padding:5px;border-radius:5px;color:var(--muted);transition:all .15s;}
+.icon-btn:hover{background:rgba(245,216,32,.1);color:var(--gold);}
+.icon-btn svg{width:15px;height:15px;}
+.icon-btn.danger{color:var(--danger);}
+.icon-btn.danger:hover{background:rgba(192,57,43,.15);color:#e05040;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-sheet{background:var(--ch2);border:1px solid var(--bstrong);width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:20px 16px 32px;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-handle{width:36px;height:3px;background:var(--bstrong);border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-family:var(--display);font-size:1.35rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text);margin-bottom:4px;}
+.modal-sub{font-size:.8rem;color:var(--muted);margin-bottom:16px;}
+.mt8{margin-top:8px;}.mt16{margin-top:16px;}
+
+/* ── SIZE PICKER ── */
+.size-btn-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;}
+.size-btn{background:var(--ch3);border:1px solid var(--border);border-radius:5px;padding:8px 4px;font-family:var(--display);font-size:.88rem;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s;}
+.size-btn.sel{background:var(--gold-pale);border-color:var(--gold);color:var(--gold-light);}
+.size-btn:hover:not(.sel){border-color:rgba(245,216,32,.4);color:var(--text);}
+
+/* ── QR SCANNER MODAL ── */
+.qr-modal-inner{padding:20px 16px 28px;}
+.qr-modal-inner h2{font-family:var(--display);font-size:1.3rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gold-light);margin-bottom:4px;}
+.qr-modal-inner p{font-size:.82rem;color:var(--muted);margin-bottom:14px;}
+#qrReaderBox{border-radius:8px;overflow:hidden;margin-bottom:10px;}
+.qr-status{font-size:.82rem;color:var(--muted);text-align:center;padding:6px 0;}
+.qr-result{background:rgba(58,125,68,.2);border:1px solid rgba(58,125,68,.5);border-radius:8px;padding:10px 14px;color:#5fda8a;font-family:var(--display);font-size:.9rem;font-weight:600;letter-spacing:.04em;text-align:center;margin:8px 0;display:none;}
+.qr-result.show{display:block;}
+
+/* ── LABEL MODAL ── */
+.label-shelf-list{max-height:220px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:6px;}
+.label-shelf-item{display:flex;align-items:center;gap:10px;background:var(--ch3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;transition:all .15s;}
+.label-shelf-item.sel{background:var(--gold-pale);border-color:var(--gold);}
+.label-shelf-item input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;}
+.label-shelf-name{font-family:var(--display);font-size:.88rem;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.04em;}
+.label-shelf-sub{font-size:.72rem;color:var(--muted);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--ch2);border:1px solid var(--bstrong);color:var(--gold);font-family:var(--display);font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:24px;opacity:0;transition:all .25s;z-index:300;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── TAG ── */
+.tag{display:inline-block;background:var(--gold-pale);border:1px solid var(--bstrong);color:var(--gold);font-family:var(--display);font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:20px;}
+
+/* ── DISCLAIMER ── */
+.bottom-disclaimer{display:flex;align-items:flex-start;gap:8px;padding:12px 16px;color:var(--muted);font-size:.73rem;line-height:1.6;border-top:1px solid var(--border);margin-top:24px;}
+.bottom-disclaimer strong{color:var(--gold);font-weight:600;}
+
+
+/* ── HOUSEHOLD WELCOME SCREEN ── */
+#householdScreen{position:fixed;inset:0;background:var(--ch);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+.hw-logo{height:56px;width:auto;margin-bottom:20px;opacity:.9;}
+.hw-title{font-family:var(--display);font-size:1.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);text-align:center;margin-bottom:6px;}
+.hw-sub{font-size:.83rem;color:var(--muted);text-align:center;max-width:300px;line-height:1.65;margin-bottom:28px;}
+.hw-card{background:var(--ch2);border:1px solid var(--bstrong);border-radius:var(--radius);padding:20px 18px;width:100%;max-width:380px;}
+.hw-section{margin-bottom:18px;}
+.hw-section:last-child{margin-bottom:0;}
+.hw-section-label{font-family:var(--display);font-size:.65rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.hw-input-row{display:flex;gap:8px;}
+.hw-input{flex:1;background:var(--ch);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;font-family:var(--sans);font-size:.92rem;color:var(--text);outline:none;transition:border-color .15s;text-transform:uppercase;letter-spacing:.04em;}
+.hw-input:focus{border-color:var(--gold);}
+.hw-input::placeholder{color:var(--muted);text-transform:none;letter-spacing:0;}
+.hw-divider{display:flex;align-items:center;gap:10px;margin:16px 0;}
+.hw-divider-line{flex:1;height:1px;background:var(--border);}
+.hw-divider-text{font-family:var(--display);font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.hw-hint{font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.5;}
+#householdBadge{display:flex;align-items:center;gap:6px;background:var(--gold-pale);border:1px solid var(--bstrong);border-radius:20px;padding:4px 10px 4px 8px;cursor:pointer;transition:background .15s;flex-shrink:0;max-width:180px;}
+#householdBadge:hover{background:rgba(245,216,32,.15);}
+.hw-badge-dot{width:7px;height:7px;border-radius:50%;background:#4caf7d;flex-shrink:0;}
+.hw-badge-code{font-family:var(--display);font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ── MOVE BIN ── */
+.move-bin-btn{background:linear-gradient(135deg,var(--gold-dark),var(--gold),var(--gold-light));color:var(--ch);border:none;border-radius:var(--radius-sm);font-family:var(--display);font-size:.95rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+.move-bin-btn:hover{opacity:.88;}
+.bin-move-target{animation:movePulse 1.4s ease-in-out infinite;}
+@keyframes movePulse{0%,100%{border-color:rgba(245,216,32,.4);}50%{border-color:#FFE74A;background:rgba(245,216,32,.1);}}
+/* ── PRINT ── */
+@media print{body>*{display:none!important;}}
+</style>
+</head>
+<body>
+
+<!-- HOUSEHOLD WELCOME SCREEN -->
+<div id="householdScreen">
+  <img class="hw-logo" id="hwLogoImg" alt="Peak Garage Solutions">
+  <div class="hw-title">Peak Bin Finder</div>
+  <div class="hw-sub">Enter your household code to access your shared inventory — or create a new one.</div>
+  <div class="hw-card">
+    <div class="hw-section">
+      <div class="hw-section-label">Household Code</div>
+      <input class="hw-input" id="hwCodeInput" type="text" placeholder="e.g. SMITH-HOME" maxlength="32" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="hw-section">
+      <div class="hw-section-label">PIN</div>
+      <input class="hw-input" id="hwPinInput" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="4–8 digit PIN" maxlength="8" autocomplete="off">
+    </div>
+    <button class="btn btn-primary" id="hwJoinBtn">Enter Household</button>
+    <div class="hw-hint">Share the code <strong style="color:var(--gold);">and</strong> PIN with everyone in your household — both are needed to open your shared inventory. The first time a code is used, its PIN is set. Keep them private from other households.</div>
+  </div>
+  <button class="btn btn-secondary mt16" id="installAppBtnHome" style="display:none;max-width:380px;width:100%;">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"><rect x="4" y="1.5" width="8" height="13" rx="1.5"/><line x1="6.6" y1="12.4" x2="9.4" y2="12.4"/></svg>Install App on This Device
+  </button>
+</div>
+
+<header class="site-header">
+  <div class="header-top">
+    <a class="logo-wrap" href="https://peakgaragesolutions.ca">
+      <img id="headerLogoImg" alt="Peak Garage Solutions" style="height:48px;width:auto;"/>
+      <div class="logo-text">Peak Bin Finder</div>
+    </a>
+    <div id="householdBadge" title="Click to switch household" style="margin-left:auto;display:none;"><div class="hw-badge-dot"></div><span class="hw-badge-code" id="householdBadgeCode"></span></div>
+  </div>
+  <div class="nav-bar">
+    <div class="nav-data-btns" id="installBtnWrap" style="display:none;">
+      <button class="nav-data-btn" id="installAppBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="4" y="1.5" width="8" height="13" rx="1.5"/><line x1="6.6" y1="12.4" x2="9.4" y2="12.4"/></svg>Install App
+      </button>
+    </div>
+    <div class="nav-data-btns" id="sideBtns" style="display:none;">
+      <button class="nav-data-btn" id="qrScanBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>QR Scan
+      </button>
+      <button class="nav-data-btn" id="printLabelsBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>Print Labels
+      </button>
+    </div>
+    <div class="nav-data-btns" style="margin-left:auto;">
+      <button class="nav-data-btn" id="exportBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><path d="M8 2v8M5 7l3 3 3-3"/><rect x="2" y="11" width="12" height="3" rx="1"/></svg>Export
+      </button>
+      <label class="nav-data-btn" style="cursor:pointer;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><path d="M8 10V2M5 5l3-3 3 3"/><rect x="2" y="11" width="12" height="3" rx="1"/></svg>Import
+        <input type="file" id="importInput" accept=".xlsx,.xls" style="display:none;">
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- Empty state -->
+  <div id="shelfEmpty" class="shelf-hero">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="var(--gold)" stroke-width="1.5" opacity=".5">
+      <rect x="6" y="14" width="52" height="8" rx="2"/><rect x="6" y="34" width="52" height="8" rx="2"/>
+      <line x1="12" y1="22" x2="12" y2="34"/><line x1="52" y1="22" x2="52" y2="34"/>
+      <rect x="12" y="42" width="12" height="10" rx="1.5"/><rect x="28" y="42" width="12" height="10" rx="1.5"/>
+    </svg>
+    <div class="shelf-hero-title">No Shelves Yet</div>
+    <div class="shelf-hero-sub">Add your first shelf to start tracking tote bins by location.</div>
+    <button class="btn btn-primary btn-lg" style="width:220px;" id="addShelfBtnEmpty">+ Add New Shelf</button>
+  </div>
+
+  <!-- Active state -->
+  <div id="shelfActive" style="display:none;">
+    <div class="shelf-controls">
+      <div class="shelf-controls-row">
+        <button class="btn btn-secondary btn-sm" id="searchToggleBtn" style="flex:1;">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;vertical-align:middle;margin-right:4px;"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>Search
+        </button>
+        <button class="btn btn-primary btn-sm" id="addShelfBtnActive" style="flex:1;">+ Add New Shelf</button>
+      </div>
+      <div class="shelf-chips-row">
+        <div class="shelf-chips" id="shelfChips"></div>
+        <button class="edit-shelf-btn" id="editShelfBtn">Edit Shelf</button>
+      </div>
+    </div>
+    <div id="searchPanel" style="display:none;margin-bottom:14px;">
+      <div class="search-wrap">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+        <input class="search-input" id="searchInput" type="search" placeholder="Search all bins across all shelves…" autocomplete="off">
+      </div>
+      <div id="searchResults"></div>
+    </div>
+    <div id="shelfDisplay"></div>
+  </div>
+
+</div>
+
+<!-- Add Shelf Modal -->
+<div class="modal-overlay" id="addShelfModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add New Shelf</div>
+    <div class="modal-sub">Where is this shelf and what does it hold?</div>
+    <div class="form-row">
+      <label class="form-label">Area</label>
+      <input class="form-input" id="newShelfArea" type="text" placeholder="e.g. Garage, Basement">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="newShelfDesc" type="text" placeholder="e.g. Tools and Outdoor Stuff">
+    </div>
+    <div class="form-row-inline" style="margin-top:4px;">
+      <div>
+        <label class="form-label">Width (A–F)</label>
+        <div class="size-btn-grid" id="colBtns">
+          <button class="size-btn" data-val="1">1</button><button class="size-btn" data-val="2">2</button>
+          <button class="size-btn sel" data-val="3">3</button><button class="size-btn" data-val="4">4</button>
+          <button class="size-btn" data-val="5">5</button><button class="size-btn" data-val="6">6</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Height (2–6)</label>
+        <div class="size-btn-grid" id="rowBtns">
+          <button class="size-btn" data-val="2">2</button>
+          <button class="size-btn" data-val="3">3</button><button class="size-btn sel" data-val="4">4</button>
+          <button class="size-btn" data-val="5">5</button><button class="size-btn" data-val="6">6</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary mt16" id="confirmAddShelf">Create Shelf</button>
+    <button class="btn btn-ghost mt8" id="cancelAddShelf">Cancel</button>
+    <button class="btn mt8" id="deleteShelfBtn" style="display:none;background:transparent;border:1px solid var(--danger);color:var(--danger);">Delete Shelf</button>
+  </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="qr-modal-inner">
+      <h2>Scan Bin Label</h2>
+      <p>Point your camera at a bin QR code to jump straight to it.</p>
+      <div id="qrReaderBox"></div>
+      <div class="qr-status" id="qrStatusText">Camera not started</div>
+      <div class="qr-result" id="qrResultMsg"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" id="startQrBtn">Start Camera</button>
+        <button class="btn btn-ghost btn-sm" id="stopQrBtn" style="display:none;">Stop</button>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="closeQrBtn" style="margin:0 16px 16px;">Close</button>
+  </div>
+</div>
+
+<!-- Print Labels Modal -->
+<div class="modal-overlay" id="labelModal">
+  <div class="modal-sheet" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Print Bin Labels</div>
+    <div class="modal-sub">Select shelves to generate Avery 82805 labels (1.5" square, 24 per sheet). <strong style="color:var(--gold);">Mobile:</strong> PDF will download — open in Adobe Acrobat or Files app, then print at 100% scale.</div>
+    <div class="label-shelf-list" id="labelShelfList"></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-ghost btn-sm" id="selectAllLabels">Select All</button>
+      <button class="btn btn-ghost btn-sm" id="deselectAllLabels">Deselect All</button>
+    </div>
+    <button class="btn btn-primary" id="previewLabelsBtn">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:5px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>
+      Preview &amp; Print
+    </button>
+    <button class="btn btn-ghost mt8" id="closeLabelBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- Print Preview Overlay -->
+<div id="printPreviewOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:500;flex-direction:column;align-items:center;justify-content:flex-start;padding:20px 16px 0;">
+  <div style="width:100%;max-width:900px;flex:1;display:flex;flex-direction:column;min-height:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;">
+      <div style="font-family:var(--display);font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-light);">Label Preview — Avery 82805</div>
+      <div style="font-family:var(--display);font-size:.72rem;color:var(--muted);">1.5" square · 24 per sheet</div>
+    </div>
+    <iframe id="printFrame" style="flex:1;width:100%;border:none;border-radius:8px;background:white;min-height:0;"></iframe>
+    <div style="display:flex;gap:10px;padding:14px 0 20px;flex-shrink:0;">
+      <button class="btn btn-primary" id="doPrintBtn" style="flex:1;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"><rect x="3" y="1" width="10" height="8" rx="1"/><rect x="1" y="6" width="14" height="7" rx="1"/><rect x="4" y="10" width="8" height="5" rx="1"/></svg>Print
+      </button>
+      <button class="btn btn-ghost" id="closePrintPreviewBtn" style="flex:1;">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bottom-disclaimer">
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="flex-shrink:0;opacity:.5;"><circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7" x2="8" y2="11"/><circle cx="8" cy="5" r="0.5" fill="currentColor" stroke="none"/></svg>
+  <span>Data syncs in real-time across all devices via Firebase. Use <strong>Export</strong> to save a local backup at any time.</span>
+</div>
+
+<!-- Sync status indicator -->
+<div style="position:fixed;bottom:16px;left:16px;font-family:var(--display);font-size:.65rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;opacity:.5;">v1.8.0</div>
+<div id="syncStatus" style="position:fixed;bottom:16px;right:16px;display:flex;align-items:center;gap:6px;background:var(--ch2);border:1px solid var(--bstrong);border-radius:20px;padding:5px 12px;font-family:var(--display);font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);z-index:50;transition:all .3s;">
+  <span id="syncDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s;"></span>
+  <span id="syncLabel">Connecting…</span>
+</div>
+
+<!-- Shared logo mark. NOTE: clean placeholder app-mark — restore the original
+     Peak Garage Solutions PNG by replacing PGS_LOGO with your data URL. -->
+<script>
+window.PGS_LOGO = "data:image/svg+xml," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56">' +
+  '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
+  '<stop offset="0" stop-color="#FFE74A"/><stop offset="1" stop-color="#C9B617"/></linearGradient></defs>' +
+  '<rect x="3" y="3" width="50" height="50" rx="11" fill="url(#g)"/>' +
+  '<rect x="13" y="15" width="30" height="9" rx="2.5" fill="#0E0E0E"/>' +
+  '<rect x="13" y="29" width="30" height="9" rx="2.5" fill="#0E0E0E"/>' +
+  '<rect x="20" y="11" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
+  '<rect x="30" y="11" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
+  '<rect x="20" y="25" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
+  '<rect x="30" y="25" width="6" height="4" rx="1.5" fill="#0E0E0E"/>' +
+  '</svg>');
+document.getElementById('hwLogoImg').src = window.PGS_LOGO;
+document.getElementById('headerLogoImg').src = window.PGS_LOGO;
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FIREBASE CONFIG — paste your firebaseConfig values below
+     ═══════════════════════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, getDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBaIo9tzZ6Sdp5eGKObF7JHdFmCYYiyjIo",
+  authDomain: "bin-tracker-c79dd.firebaseapp.com",
+  projectId: "bin-tracker-c79dd",
+  storageBucket: "bin-tracker-c79dd.firebasestorage.app",
+  messagingSenderId: "1089976624821",
+  appId: "1:1089976624821:web:5a37906d581815e04340fc"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── CONSTANTS ──
+const COL_LETTERS = ['A','B','C','D','E','F'];
+
+// ── STATE ──
+let state = { shelves:[], shelfBins:{}, binFill:{}, addShelfCols:3, addShelfRows:4 };
+let _ignoreNextSnapshot = false;
+let _openShelfIdx = null, _openBinCol = null, _openBinRow = null;
+let _unsubscribe = null;
+let currentHouseholdCode = null;
+let currentHouseholdPin = null;
+let _demoMode = false;
+
+// ── HOUSEHOLD WELCOME SCREEN ──
+function showHouseholdScreen() {
+  document.getElementById('householdScreen').style.display = 'flex';
+  document.getElementById('householdBadge').style.display = 'none';
+}
+function hideHouseholdScreen(code) {
+  document.getElementById('householdScreen').style.display = 'none';
+  document.getElementById('householdBadge').style.display = 'flex';
+  document.getElementById('householdBadgeCode').textContent = code;
+}
+
+async function joinHousehold(rawCode, rawPin) {
+  const code = rawCode.trim().toUpperCase().replace(/\s+/g,'-');
+  const pin = (rawPin || '').trim();
+  if (!code) { showToast('Enter a household code'); return; }
+  if (!/^\d{4,8}$/.test(pin)) { showToast('Enter a 4–8 digit PIN'); return; }
+  const btn = document.getElementById('hwJoinBtn');
+  const oldTxt = btn.textContent; btn.disabled = true; btn.textContent = 'Checking…';
+  try {
+    const ref = getDocRef(code);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.pin && String(data.pin) !== pin) { showToast('Incorrect PIN for this household'); return; }
+      if (!data.pin) { await setDoc(ref, { ...data, pin }); }   // claim a pre-PIN household
+    } else {
+      await setDoc(ref, { shelves:[], shelfBins:{}, binFill:{}, pin }); // create & claim new household
+    }
+    localStorage.setItem('peakHouseholdCode', code);
+    localStorage.setItem('peakHouseholdPin', pin);
+    currentHouseholdCode = code; currentHouseholdPin = pin;
+    hideHouseholdScreen(code);
+    attachFirestoreListener(code);
+  } catch (e) {
+    showToast('Could not connect — check your network'); console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = oldTxt;
+  }
+}
+
+function attemptJoin() {
+  joinHousehold(document.getElementById('hwCodeInput').value, document.getElementById('hwPinInput').value);
+}
+document.getElementById('hwJoinBtn').onclick = attemptJoin;
+document.getElementById('hwCodeInput').onkeydown = e => { if (e.key === 'Enter') document.getElementById('hwPinInput').focus(); };
+document.getElementById('hwPinInput').onkeydown = e => { if (e.key === 'Enter') attemptJoin(); };
+
+// Badge click — switch household
+document.getElementById('householdBadge').onclick = () => {
+  if (!confirm('Switch household? You will need to re-enter your code and PIN.')) return;
+  localStorage.removeItem('peakHouseholdCode');
+  localStorage.removeItem('peakHouseholdPin');
+  if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
+  state = { shelves:[], shelfBins:{}, binFill:{}, addShelfCols:3, addShelfRows:4 };
+  _openShelfIdx = null; _openBinCol = null; _openBinRow = null;
+  currentHouseholdCode = null; currentHouseholdPin = null;
+  document.getElementById('hwCodeInput').value = '';
+  document.getElementById('hwPinInput').value = '';
+  showHouseholdScreen();
+  renderShelvesPage();
+};
+
+// ── FIRESTORE ──
+function getDocRef(code) {
+  return doc(db, 'households', code, 'inventory', 'shared');
+}
+
+function attachFirestoreListener(code) {
+  if (_demoMode) return;  // demo — skip Firebase entirely
+  if (_unsubscribe) _unsubscribe();
+  const ref = getDocRef(code);
+  setSyncStatus('connecting');
+
+  // Initial load
+  getDoc(ref).then(snap => {
+    if (snap.exists()) {
+      const data = snap.data();
+      state.shelves   = data.shelves   || [];
+      state.shelfBins = data.shelfBins || {};
+      state.binFill   = data.binFill   || {};
+      if (currentHouseholdPin == null && data.pin != null) currentHouseholdPin = String(data.pin);
+    }
+    renderShelvesPage();
+    setSyncStatus('live');
+
+    // Deep-link handling after load
+    const p = new URLSearchParams(window.location.search);
+    const bin = p.get('bin'), si = p.get('si'), area = p.get('area');
+    if (bin) {
+      let targetSi = null;
+      if (si !== null && state.shelves[parseInt(si)]) targetSi = parseInt(si);
+      else if (area) state.shelves.forEach((s,i) => { if (s.area.toLowerCase()===area.toLowerCase()) targetSi=i; });
+      if (targetSi === null) state.shelves.forEach((s,i) => { for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++) if(binLabel(c,r)===bin.toUpperCase()) targetSi=i; });
+      if (targetSi !== null) {
+        renderShelvesPage(targetSi);
+        setTimeout(() => {
+          const ov = document.getElementById('binOverlay'); if(!ov) return;
+          ov.querySelectorAll('button').forEach(btn => {
+            if (binLabel(parseInt(btn.dataset.col),parseInt(btn.dataset.row))===bin.toUpperCase()) { btn.click(); btn.scrollIntoView({behavior:'smooth',block:'center'}); }
+          });
+        }, 150);
+        window.history.replaceState({},'',window.location.pathname);
+      } else { showToast('Bin "'+bin+'" not found'); }
+    }
+  }).catch(err => { setSyncStatus('error'); console.error(err); renderShelvesPage(); });
+
+  // Live listener
+  _unsubscribe = onSnapshot(ref, snap => {
+    if (_ignoreNextSnapshot) { _ignoreNextSnapshot = false; setSyncStatus('live'); return; }
+    if (!snap.exists()) { setSyncStatus('live'); return; }
+    const data = snap.data();
+    state.shelves   = data.shelves   || [];
+    state.shelfBins = data.shelfBins || {};
+    state.binFill   = data.binFill   || {};
+    if (currentHouseholdPin == null && data.pin != null) currentHouseholdPin = String(data.pin);
+    setSyncStatus('live');
+    renderShelvesPage(_openShelfIdx !== null ? _openShelfIdx : undefined);
+    if (_openBinCol !== null && _openBinRow !== null && _openShelfIdx !== null) {
+      setTimeout(() => {
+        const ov = document.getElementById('binOverlay'); if(!ov) return;
+        ov.querySelectorAll('button').forEach(btn => {
+          if (parseInt(btn.dataset.col)===_openBinCol && parseInt(btn.dataset.row)===_openBinRow) btn.click();
+        });
+      }, 80);
+    }
+  }, err => { setSyncStatus('error'); console.error(err); });
+}
+
+async function saveState() {
+  if (_demoMode) return;  // demo — do not persist
+  if (!currentHouseholdCode) return;
+  setSyncStatus('saving');
+  _ignoreNextSnapshot = true;
+  try {
+    await setDoc(getDocRef(currentHouseholdCode), { shelves: state.shelves, shelfBins: state.shelfBins, binFill: state.binFill });
+    setSyncStatus('live');
+  } catch(e) { setSyncStatus('error'); showToast('Save failed — check connection'); console.error(e); }
+}
+
+// ── SYNC STATUS ──
+function setSyncStatus(mode) {
+  const dot = document.getElementById('syncDot'), label = document.getElementById('syncLabel');
+  if (mode==='live')        { dot.style.background='#4caf7d'; label.textContent='Live';        label.style.color='#4caf7d'; }
+  else if (mode==='saving') { dot.style.background='#F5D820'; label.textContent='Saving…';     label.style.color='#F5D820'; }
+  else if (mode==='error')  { dot.style.background='#c0392b'; label.textContent='Offline';     label.style.color='#c0392b'; }
+  else                      { dot.style.background='#9a8a6a'; label.textContent='Connecting…'; label.style.color='#9a8a6a'; }
+}
+
+// ── UTILS ──
+function binKey(si,c,r)   { return 'shelf'+si+'_'+COL_LETTERS[c]+(r+1); }
+function binLabel(c,r)    { return COL_LETTERS[c]+(r+1); }
+function showToast(msg)   { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function openModal(id)    { document.getElementById(id).classList.add('open'); }
+function closeModal(id)   { document.getElementById(id).classList.remove('open'); }
+
+// fullness helpers
+function fillOf(key)      { const v = state.binFill[key]; return typeof v==='number' ? v : 0; }
+function fillColor(v)     { return v>=1 ? 'var(--gold-light)' : v>=0.5 ? 'var(--gold)' : 'var(--gold-dark)'; }
+function fillWord(v)      { return v>=1?'Full': v>=0.75?'¾ full': v>=0.5?'Half full': v>0?'¼ full':'Empty'; }
+
+// ── SHELVES PAGE ──
+function updateSideBtns() { document.getElementById('sideBtns').style.display = state.shelves.length ? 'flex' : 'none'; }
+
+function renderShelvesPage(selectIdx) {
+  const empty = document.getElementById('shelfEmpty'), active = document.getElementById('shelfActive');
+  if (!state.shelves.length) { empty.style.display='flex'; active.style.display='none'; updateSideBtns(); return; }
+  empty.style.display='none'; active.style.display='block'; updateSideBtns();
+
+  // Determine which shelf to select
+  let idx;
+  if (selectIdx !== undefined) idx = selectIdx;
+  else if (_openShelfIdx !== null && _openShelfIdx < state.shelves.length) idx = _openShelfIdx;
+  else idx = state.shelves.length - 1;
+  _openShelfIdx = idx;
+
+  renderShelfChips(idx);
+  renderShelfDiagram(idx);
+}
+
+function renderShelfChips(activeIdx) {
+  const container = document.getElementById('shelfChips');
+  container.innerHTML = '';
+  state.shelves.forEach((s, i) => {
+    const chip = document.createElement('button');
+    chip.className = 'shelf-chip' + (i === activeIdx ? ' active' : '');
+    chip.textContent = s.area + ' – ' + s.desc;
+    chip.addEventListener('click', function() {
+      _openShelfIdx = i; _openBinCol = null; _openBinRow = null;
+      renderShelfChips(i);
+      renderShelfDiagram(i);
+    });
+    container.appendChild(chip);
+  });
+}
+
+// ── SHELF DIAGRAM (Direction 3 · Data Grid) ──
+// Crisp DOM grid — razor-sharp at any DPI. Each cell is a <button> inside
+// #binOverlay carrying data-col/data-row, so the QR / search / move / deep-link
+// code (which finds buttons by dataset and .click()s them) keeps working
+// unchanged. Selecting a cell opens the bin detail panel below.
+function renderShelfDiagram(idx) {
+  const s = state.shelves[idx]; if (!s) return;
+  const { cols, rows } = s;
+
+  const colHdr = '<div class="bin-grid-colhdr" style="grid-template-columns:repeat('+cols+',1fr);">' +
+    Array.from({length:cols}).map((_,c)=>'<span>'+COL_LETTERS[c]+'</span>').join('') + '</div>';
+
+  let body = '';
+  for (let r=0; r<rows; r++) {
+    let cells = '';
+    for (let c=0; c<cols; c++) {
+      const key = binKey(idx,c,r), items = state.shelfBins[key]||[], filled = items.length>0;
+      const fill = fillOf(key), full = fill>=1;
+      const sel = (_openBinCol===c && _openBinRow===r);
+      const itemsHtml = filled
+        ? items.slice(0,2).map(it=>'<span class="bin-cell-item">'+escapeHtml(it.name)+'</span>').join('')
+        : '<span class="bin-cell-empty">EMPTY</span>';
+      const badge = full
+        ? '<span class="bin-cell-full">FULL</span>'
+        : (filled ? '<span class="bin-cell-count">'+items.length+'</span>' : '');
+      cells +=
+        '<button class="bin-cell'+(filled?' filled':'')+(sel?' sel':'')+'" data-col="'+c+'" data-row="'+r+'">' +
+          '<span class="bin-cell-top"><span class="bin-cell-code">'+binLabel(c,r)+'</span>'+badge+'</span>' +
+          '<span class="bin-cell-items">'+itemsHtml+'</span>' +
+          '<span class="bin-cell-bar"><i style="width:'+(fill*100)+'%;background:'+(filled||fill>0?fillColor(fill):'transparent')+';"></i></span>' +
+        '</button>';
+    }
+    body +=
+      '<div class="bin-grid-row">' +
+        '<div class="bin-grid-rownum">'+(r+1)+'</div>' +
+        '<div class="bin-grid-cells" style="grid-template-columns:repeat('+cols+',1fr);">'+cells+'</div>' +
+      '</div>';
+  }
+
+  document.getElementById('shelfDisplay').innerHTML =
+    colHdr +
+    '<div id="binOverlay">'+body+'</div>' +
+    '<div id="binDetailPanel"></div>';
+
+  const ov = document.getElementById('binOverlay');
+  ov.querySelectorAll('button.bin-cell').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const col=parseInt(this.dataset.col), row=parseInt(this.dataset.row);
+      ov.querySelectorAll('button.bin-cell').forEach(b=>b.classList.remove('sel'));
+      this.classList.add('sel');
+      _openBinCol=col; _openBinRow=row;
+      renderBinDetail(idx,col,row);
+    });
+  });
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// ── BIN DETAIL ──
+function renderBinDetail(si, col, row) {
+  const key=binKey(si,col,row), label=binLabel(col,row);
+  if (!state.shelfBins[key]) state.shelfBins[key]=[];
+  const items=state.shelfBins[key];
+  const fill=fillOf(key);
+  const STEPS=[['Empty',0],['¼',0.25],['½',0.5],['¾',0.75],['Full',1]];
+  const segHtml = STEPS.map(([lbl,v])=>{
+    const on = Math.abs(fill-v)<0.01;
+    return '<button class="fill-seg-btn'+(on?' on':'')+'" data-fill="'+v+'">'+lbl+'</button>';
+  }).join('');
+  const panel=document.getElementById('binDetailPanel');
+  panel.innerHTML =
+    '<div class="sbin-panel">' +
+      '<div class="sbin-header"><div class="sbin-title">'+state.shelves[si].area+' '+label+'</div>' +
+        '<div class="sbin-fill-tag" style="color:'+fillColor(fill)+';">'+fillWord(fill)+'</div></div>' +
+      '<div class="sbin-add-row" style="border-top:none;border-bottom:1px solid var(--border);padding:8px 12px;"><input class="form-input" id="newItemName" placeholder="Add item…" type="text" style="flex:1;font-size:.88rem;padding:9px 12px;"><input class="form-input" id="newItemQty" type="number" min="1" value="1" style="width:64px;font-size:.88rem;padding:9px 8px;"><button class="btn btn-primary btn-sm" id="addItemBtn">Add</button></div>' +
+      '<div class="sbin-items">' +
+        (items.length ? items.map((item,i)=>'<div class="sbin-item-row"><div class="sbin-item-name">'+item.name+'</div>'+(item.qty>1?'<div class="sbin-item-qty">×'+item.qty+'</div>':'')+'<button class="icon-btn danger" data-key="'+key+'" data-idx="'+i+'" data-si="'+si+'" data-col="'+col+'" data-row="'+row+'" onclick="window._removeItem(this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg></button></div>').join('') : '<div class="sbin-empty">Empty</div>') +
+      '</div>' +
+      '<div class="fill-control"><div class="fill-control-label">How full is this bin?</div><div class="fill-seg" id="fillSeg">'+segHtml+'</div></div>' +
+      '<div class="sbin-add-row"><button class="move-bin-btn" id="moveBinBtn">Move Bin to New Slot</button></div>' +
+    '</div>';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  document.getElementById('fillSeg').querySelectorAll('.fill-seg-btn').forEach(b=>{
+    b.addEventListener('click', function(){
+      const v=parseFloat(this.dataset.fill);
+      state.binFill[key]=v; saveState();
+      // update the grid cell in place + refresh detail (keeps selection/scroll)
+      updateCellFill(col,row,v,(state.shelfBins[key]||[]).length);
+      renderBinDetail(si,col,row);
+    });
+  });
+  document.getElementById('moveBinBtn').onclick = function() {
+    enterMoveMode(si, col, row);
+  };
+  document.getElementById('addItemBtn').onclick = function() {
+    const name=document.getElementById('newItemName').value.trim();
+    if (!name) { showToast('Enter an item name'); return; }
+    const qty=parseInt(document.getElementById('newItemQty').value)||1;
+    state.shelfBins[key].push({name,qty}); saveState(); showToast('"'+name+'" added to '+label);
+    updateCellFill(col,row,fillOf(key),state.shelfBins[key].length);
+    renderBinDetail(si,col,row);
+  };
+  document.getElementById('newItemName').onkeydown = e=>{ if(e.key==='Enter') document.getElementById('addItemBtn').click(); };
+}
+
+// patch a single grid cell's bar + badge + filled-state without a full re-render
+function updateCellFill(col,row,fill,count){
+  const ov=document.getElementById('binOverlay'); if(!ov) return;
+  const btn=ov.querySelector('button.bin-cell[data-col="'+col+'"][data-row="'+row+'"]'); if(!btn) return;
+  const filled=count>0, full=fill>=1;
+  btn.classList.toggle('filled',filled);
+  const bar=btn.querySelector('.bin-cell-bar > i');
+  if(bar){ bar.style.width=(fill*100)+'%'; bar.style.background=(filled||fill>0)?fillColor(fill):'transparent'; }
+  const top=btn.querySelector('.bin-cell-top');
+  if(top){
+    const code=top.querySelector('.bin-cell-code').outerHTML;
+    const badge=full?'<span class="bin-cell-full">FULL</span>':(filled?'<span class="bin-cell-count">'+count+'</span>':'');
+    top.innerHTML=code+badge;
+  }
+}
+
+window._removeItem = function(btn) {
+  const k=btn.dataset.key,i=parseInt(btn.dataset.idx),si=parseInt(btn.dataset.si),col=parseInt(btn.dataset.col),row=parseInt(btn.dataset.row);
+  state.shelfBins[k].splice(i,1); saveState();
+  updateCellFill(col,row,fillOf(k),state.shelfBins[k].length);
+  renderBinDetail(si,col,row);
+};
+
+// ── MOVE BIN STATE ──
+let _moveMode = false;
+let _moveSrcSi = null, _moveSrcCol = null, _moveSrcRow = null;
+
+function enterMoveMode(si, col, row) {
+  _moveMode = true; _moveSrcSi = si; _moveSrcCol = col; _moveSrcRow = row;
+  showMovePicker(si, col, row);
+}
+
+function cancelMoveMode() {
+  _moveMode = false; _moveSrcSi = null; _moveSrcCol = null; _moveSrcRow = null;
+}
+
+// ── MOVE PICKER MODAL ──
+// Step 1: pick a shelf. Step 2: pick a bin on that shelf. Step 3: pick action.
+function showMovePicker(srcSi, srcCol, srcRow) {
+  const srcLabel = binLabel(srcCol, srcRow);
+  const srcShelf = state.shelves[srcSi];
+
+  // Remove any existing move overlay
+  const old = document.getElementById('movePickerOverlay');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'movePickerOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:400;display:flex;align-items:flex-end;justify-content:center;';
+  document.body.appendChild(overlay);
+
+  function closeOverlay() { overlay.remove(); cancelMoveMode(); }
+
+  function renderShelfStep() {
+    overlay.innerHTML = `
+      <div style="background:var(--ch2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--bstrong);border-bottom:none;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+        <div style="font-family:var(--display);font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-light);margin-bottom:4px;">Move Bin ${srcLabel}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;line-height:1.5;">Step 1 of 2 — Select destination shelf</div>
+        ${state.shelves.map((s, i) => `
+          <button class="move-opt-btn" data-shelf-idx="${i}" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;${i===srcSi?'border-color:var(--gold);background:rgba(245,216,32,.08);':''}">
+            <span style="font-family:var(--display);font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">${s.area}</span>
+            <span style="font-size:.77rem;color:var(--muted);">${s.desc} &nbsp;·&nbsp; ${s.cols}×${s.rows} bins${i===srcSi?' &nbsp;<span style="color:var(--gold);">(current)</span>':''}</span>
+          </button>`).join('')}
+        <button style="width:100%;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:var(--display);font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;margin-top:2px;" id="movePickerCancelBtn">Cancel</button>
+      </div>`;
+    overlay.querySelectorAll('.move-opt-btn[data-shelf-idx]').forEach(btn => {
+      btn.addEventListener('mouseenter', () => { if(btn.style.borderColor !== 'var(--gold)') { btn.style.background='rgba(245,216,32,.1)'; btn.style.borderColor='var(--gold)'; }});
+      btn.addEventListener('mouseleave', () => { const i=parseInt(btn.dataset.shelfIdx); if(i!==srcSi){btn.style.background='var(--ch3)';btn.style.borderColor='var(--bstrong)';} });
+      btn.onclick = () => renderBinStep(parseInt(btn.dataset.shelfIdx));
+    });
+    document.getElementById('movePickerCancelBtn').onclick = closeOverlay;
+  }
+
+  function renderBinStep(destSi) {
+    const destShelf = state.shelves[destSi];
+    const {cols, rows} = destShelf;
+    const COL_LETTERS = ['A','B','C','D','E','F'];
+    const binLabelLocal = (c, r) => COL_LETTERS[c] + (r+1);
+    const binKeyLocal = (si, c, r) => 'shelf'+si+'_'+COL_LETTERS[c]+(r+1);
+
+    // Build grid
+    let gridHTML = `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:8px;margin-bottom:16px;">`;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const isSrc = (destSi === srcSi && c === srcCol && r === srcRow);
+        const lbl = binLabelLocal(c, r);
+        const k = binKeyLocal(destSi, c, r);
+        const cnt = (state.shelfBins[k] || []).length;
+        gridHTML += `<button data-dc="${c}" data-dr="${r}" ${isSrc?'disabled':''} style="background:${isSrc?'rgba(245,216,32,.08)':'var(--ch3)'};border:${isSrc?'2px solid var(--gold)':'1px solid var(--bstrong)'};border-radius:var(--radius-sm);padding:10px 6px;cursor:${isSrc?'default':'pointer'};transition:all .15s;text-align:center;opacity:${isSrc?.45:1};">
+          <div style="font-family:var(--display);font-size:.95rem;font-weight:700;color:${isSrc?'var(--muted)':'var(--gold)'};letter-spacing:.06em;">${lbl}</div>
+          <div style="font-size:.68rem;color:var(--muted);margin-top:2px;">${isSrc?'source':cnt?cnt+' item'+(cnt!==1?'s':''):'empty'}</div>
+        </button>`;
+      }
+    }
+    gridHTML += '</div>';
+
+    overlay.innerHTML = `
+      <div style="background:var(--ch2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--bstrong);border-bottom:none;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+        <div style="font-family:var(--display);font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-light);margin-bottom:4px;">Move Bin ${srcLabel}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:16px;line-height:1.5;">Step 2 of 2 — Pick a bin on <strong style="color:var(--gold);">${destShelf.area} – ${destShelf.desc}</strong></div>
+        ${gridHTML}
+        <div style="display:flex;gap:8px;">
+          <button style="flex:1;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:11px;font-family:var(--display);font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);cursor:pointer;" id="movePickerBackBtn">← Back</button>
+          <button style="flex:1;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:var(--display);font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;" id="movePickerCancelBtn2">Cancel</button>
+        </div>
+      </div>`;
+
+    overlay.querySelectorAll('button[data-dc]').forEach(btn => {
+      btn.addEventListener('mouseenter', () => { btn.style.background='rgba(245,216,32,.15)'; btn.style.borderColor='var(--gold)'; });
+      btn.addEventListener('mouseleave', () => { btn.style.background='var(--ch3)'; btn.style.borderColor='var(--bstrong)'; });
+      btn.onclick = () => renderActionStep(destSi, parseInt(btn.dataset.dc), parseInt(btn.dataset.dr));
+    });
+    document.getElementById('movePickerBackBtn').onclick = renderShelfStep;
+    document.getElementById('movePickerCancelBtn2').onclick = closeOverlay;
+  }
+
+  function renderActionStep(destSi, destCol, destRow) {
+    const COL_LETTERS = ['A','B','C','D','E','F'];
+    const destLabel = COL_LETTERS[destCol] + (destRow+1);
+    const destShelf = state.shelves[destSi];
+    const sk = binKey(srcSi, srcCol, srcRow);
+    const dk = 'shelf'+destSi+'_'+COL_LETTERS[destCol]+(destRow+1);
+    const destItems = state.shelfBins[dk] || [];
+    const destEmpty = destItems.length === 0;
+
+    let btns = '';
+    if (!destEmpty) {
+      btns = `
+        <button class="move-opt-btn" id="moveOptReplace" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:var(--display);font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Replace</span>
+          <span style="font-size:.77rem;color:var(--muted);">Clear ${destLabel} and move all items from ${srcLabel} there. ${srcLabel} becomes empty.</span>
+        </button>
+        <button class="move-opt-btn" id="moveOptMerge" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:var(--display);font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Merge</span>
+          <span style="font-size:.77rem;color:var(--muted);">Add all items from ${srcLabel} into ${destLabel}. ${srcLabel} becomes empty.</span>
+        </button>
+        <button class="move-opt-btn" id="moveOptSwap" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:var(--display);font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Swap</span>
+          <span style="font-size:.77rem;color:var(--muted);">Exchange contents — ${destLabel} gets ${srcLabel}'s items and vice versa.</span>
+        </button>`;
+    } else {
+      btns = `
+        <button class="move-opt-btn" id="moveOptReplace" style="width:100%;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:13px 15px;margin-bottom:10px;text-align:left;cursor:pointer;transition:all .15s;">
+          <span style="font-family:var(--display);font-size:.95rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:2px;">Move Here</span>
+          <span style="font-size:.77rem;color:var(--muted);">Move all items from ${srcLabel} to ${destLabel}. ${srcLabel} becomes empty.</span>
+        </button>`;
+    }
+
+    overlay.innerHTML = `
+      <div style="background:var(--ch2);border-radius:var(--radius) var(--radius) 0 0;border:1px solid var(--bstrong);border-bottom:none;padding:20px 18px 32px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;">
+        <div style="font-family:var(--display);font-size:1.1rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gold-light);margin-bottom:4px;">Move ${srcLabel} → ${destLabel}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">On <strong style="color:var(--gold);">${destShelf.area} – ${destShelf.desc}</strong> — what happens to ${destLabel}'s contents?</div>
+        ${btns}
+        <div style="display:flex;gap:8px;margin-top:2px;">
+          <button style="flex:1;background:var(--ch3);border:1px solid var(--bstrong);border-radius:var(--radius-sm);padding:11px;font-family:var(--display);font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);cursor:pointer;" id="moveActionBackBtn">← Back</button>
+          <button style="flex:1;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;font-family:var(--display);font-size:.88rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;" id="moveActionCancelBtn">Cancel</button>
+        </div>
+      </div>`;
+
+    // Hover effects
+    overlay.querySelectorAll('.move-opt-btn').forEach(b => {
+      b.addEventListener('mouseenter', () => { b.style.background='rgba(245,216,32,.1)'; b.style.borderColor='var(--gold)'; });
+      b.addEventListener('mouseleave', () => { b.style.background='var(--ch3)'; b.style.borderColor='var(--bstrong)'; });
+    });
+
+    function doMove(mode) {
+      overlay.remove();
+      const srcArr = JSON.parse(JSON.stringify(state.shelfBins[sk] || []));
+      const dstArr = JSON.parse(JSON.stringify(state.shelfBins[dk] || []));
+      const srcFill = fillOf(sk), dstFill = fillOf(dk);
+      if (mode === 'replace') {
+        state.shelfBins[dk] = srcArr;
+        state.shelfBins[sk] = [];
+        state.binFill[dk] = srcFill; state.binFill[sk] = 0;
+      } else if (mode === 'merge') {
+        state.shelfBins[dk] = [...dstArr, ...srcArr];
+        state.shelfBins[sk] = [];
+        state.binFill[dk] = Math.max(dstFill, srcFill); state.binFill[sk] = 0;
+      } else if (mode === 'swap') {
+        state.shelfBins[dk] = srcArr;
+        state.shelfBins[sk] = dstArr;
+        state.binFill[dk] = srcFill; state.binFill[sk] = dstFill;
+      }
+      cancelMoveMode();
+      saveState();
+      showToast(mode.charAt(0).toUpperCase() + mode.slice(1) + ' complete — ' + srcLabel + ' → ' + destLabel);
+      // Switch to destination shelf and select destination bin
+      _openShelfIdx = destSi; _openBinCol = destCol; _openBinRow = destRow;
+      renderShelfDiagram(destSi);
+      setTimeout(() => {
+        const ov2 = document.getElementById('binOverlay');
+        if (ov2) ov2.querySelectorAll('button').forEach(b => {
+          if (parseInt(b.dataset.col) === destCol && parseInt(b.dataset.row) === destRow) b.click();
+        });
+      }, 50);
+    }
+
+    const replaceBtn = document.getElementById('moveOptReplace');
+    if (replaceBtn) replaceBtn.onclick = () => doMove('replace');
+    const mergeBtn = document.getElementById('moveOptMerge');
+    if (mergeBtn) mergeBtn.onclick = () => doMove('merge');
+    const swapBtn = document.getElementById('moveOptSwap');
+    if (swapBtn) swapBtn.onclick = () => doMove('swap');
+    document.getElementById('moveActionBackBtn').onclick = () => renderBinStep(destSi);
+    document.getElementById('moveActionCancelBtn').onclick = closeOverlay;
+  }
+
+  renderShelfStep();
+}
+
+// ── SEARCH ──
+function closeSearch() {
+  document.getElementById('searchPanel').style.display='none'; document.getElementById('searchInput').value=''; document.getElementById('searchResults').innerHTML='';
+  const sb=document.getElementById('searchToggleBtn'); sb.style.background=sb.style.borderColor=sb.style.color='';
+}
+document.getElementById('searchToggleBtn').addEventListener('click', function() {
+  const open=document.getElementById('searchPanel').style.display!=='none';
+  if(open){closeSearch();return;}
+  document.getElementById('searchPanel').style.display='block'; this.style.background='rgba(245,216,32,.15)'; this.style.borderColor='var(--gold)'; this.style.color='var(--gold-light)'; document.getElementById('searchInput').focus();
+});
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q=this.value.trim().toLowerCase(), out=document.getElementById('searchResults');
+  if(!q){out.innerHTML='';return;}
+  let html='',found=0;
+  Object.keys(state.shelfBins).forEach(key=>{
+    const items=state.shelfBins[key]; if(!items||!items.length)return;
+    const m=key.match(/^shelf(\d+)_(.+)$/); if(!m)return;
+    const si=parseInt(m[1]),lbl=m[2],shelf=state.shelves[si];
+    const sName=shelf?shelf.area+' – '+shelf.desc:'Shelf '+si;
+    items.forEach(item=>{
+      if(!item.name.toLowerCase().includes(q))return; found++;
+      html+='<div class="result-card"><div class="result-item-name">'+item.name+'</div><div style="display:flex;align-items:center;gap:8px;margin-top:4px;">'+(item.qty>1?'<div class="tag">×'+item.qty+'</div>':'')+'<button class="result-location result-bin-chip" data-si="'+si+'" data-lbl="'+lbl+'"><svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="12" height="11" rx="1.5"/><line x1="5" y1="7" x2="11" y2="7"/><line x1="5" y1="10" x2="9" y2="10"/></svg>Bin '+lbl+'</button></div><div class="result-bin-label">'+sName+'</div></div>';
+    });
+  });
+  out.innerHTML=found?html:'<div class="no-results">No items found for "<strong>'+this.value+'</strong>"</div>';
+});
+document.getElementById('searchResults').addEventListener('click', function(e) {
+  const chip=e.target.closest('.result-bin-chip'); if(!chip)return;
+  const si=parseInt(chip.dataset.si),lbl=chip.dataset.lbl; closeSearch(); renderShelvesPage(si);
+  setTimeout(()=>{ const ov=document.getElementById('binOverlay'); if(!ov)return; ov.querySelectorAll('button').forEach(btn=>{ if(binLabel(parseInt(btn.dataset.col),parseInt(btn.dataset.row))===lbl) btn.click(); }); },80);
+});
+
+// ── ADD/EDIT SHELF ──
+let editingShelfIdx=null;
+function openAddShelfModal(){editingShelfIdx=null;document.getElementById('newShelfArea').value='';document.getElementById('newShelfDesc').value='';state.addShelfCols=3;state.addShelfRows=4;document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===3));document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===4));document.querySelector('#addShelfModal .modal-title').textContent='Add New Shelf';document.querySelector('#addShelfModal .modal-sub').textContent='Where is this shelf and what does it hold?';document.getElementById('confirmAddShelf').textContent='Create Shelf';document.getElementById('deleteShelfBtn').style.display='none';openModal('addShelfModal');}
+function openEditShelfModal(){const idx=_openShelfIdx;const s=state.shelves[idx];if(!s)return;editingShelfIdx=idx;document.getElementById('newShelfArea').value=s.area;document.getElementById('newShelfDesc').value=s.desc;state.addShelfCols=s.cols;state.addShelfRows=s.rows;document.querySelectorAll('#colBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.cols));document.querySelectorAll('#rowBtns .size-btn').forEach(b=>b.classList.toggle('sel',parseInt(b.dataset.val)===s.rows));document.querySelector('#addShelfModal .modal-title').textContent='Edit Shelf';document.querySelector('#addShelfModal .modal-sub').textContent='Update the name, description, or size.';document.getElementById('confirmAddShelf').textContent='Save Changes';document.getElementById('deleteShelfBtn').style.display='block';openModal('addShelfModal');}
+document.getElementById('addShelfBtnEmpty').onclick=openAddShelfModal;
+document.getElementById('addShelfBtnActive').onclick=openAddShelfModal;
+document.getElementById('editShelfBtn').onclick=openEditShelfModal;
+document.getElementById('colBtns').addEventListener('click',e=>{const b=e.target.closest('.size-btn');if(!b)return;state.addShelfCols=parseInt(b.dataset.val);document.querySelectorAll('#colBtns .size-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+document.getElementById('rowBtns').addEventListener('click',e=>{const b=e.target.closest('.size-btn');if(!b)return;state.addShelfRows=parseInt(b.dataset.val);document.querySelectorAll('#rowBtns .size-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');});
+document.getElementById('confirmAddShelf').onclick=()=>{
+  const area=document.getElementById('newShelfArea').value.trim(),desc=document.getElementById('newShelfDesc').value.trim();
+  if(!area){showToast('Enter an area name');return;} if(!desc){showToast('Enter a description');return;}
+  if(editingShelfIdx!==null){state.shelves[editingShelfIdx]={area,desc,cols:state.addShelfCols,rows:state.addShelfRows};saveState();closeModal('addShelfModal');showToast('Shelf updated');renderShelvesPage(editingShelfIdx);}
+  else{state.shelves.push({area,desc,cols:state.addShelfCols,rows:state.addShelfRows});saveState();closeModal('addShelfModal');showToast('"'+area+' – '+desc+'" added!');renderShelvesPage(state.shelves.length-1);}
+};
+document.getElementById('cancelAddShelf').onclick=()=>closeModal('addShelfModal');
+document.getElementById('addShelfModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('addShelfModal');});
+
+// ── DELETE SHELF ──
+let deleteConfirmPending=false,deleteConfirmTimer=null;
+document.getElementById('deleteShelfBtn').addEventListener('click',function(){
+  const idx=editingShelfIdx!==null?editingShelfIdx:_openShelfIdx;
+  const s=state.shelves[idx]; if(!s)return;
+  if(!deleteConfirmPending){deleteConfirmPending=true;showToast('Tap again to confirm delete');deleteConfirmTimer=setTimeout(()=>{deleteConfirmPending=false;},3000);}
+  else{
+    clearTimeout(deleteConfirmTimer);deleteConfirmPending=false;
+    const remap=(obj)=>{const out={};Object.keys(obj).forEach(k=>{if(!k.startsWith('shelf'+idx+'_')){const match=k.match(/^shelf(\d+)_(.+)$/);if(match&&parseInt(match[1])>idx){out['shelf'+(parseInt(match[1])-1)+'_'+match[2]]=obj[k];}else{out[k]=obj[k];}}});return out;};
+    state.shelfBins=remap(state.shelfBins); state.binFill=remap(state.binFill); state.shelves.splice(idx,1); _openShelfIdx=null;_openBinCol=null;_openBinRow=null;
+    saveState(); closeModal('addShelfModal'); renderShelvesPage(Math.min(idx,state.shelves.length-1)); showToast('Shelf deleted');
+  }
+});
+
+// ── EXPORT ──
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  if(!state.shelves.length){showToast('No shelves to export');return;}
+  const wb=XLSX.utils.book_new();
+  const ov=[['Shelf #','Area','Description','Columns','Rows','Total Slots']];
+  state.shelves.forEach((s,i)=>ov.push([i+1,s.area,s.desc,s.cols,s.rows,s.cols*s.rows]));
+  const ws0=XLSX.utils.aoa_to_sheet(ov); ws0['!cols']=[{wch:8},{wch:20},{wch:30},{wch:10},{wch:8},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws0,'Shelves');
+  state.shelves.forEach((s,si)=>{
+    const rows=[['Bin','Item','Quantity','Fullness']];
+    for(let r=0;r<s.rows;r++) for(let c=0;c<s.cols;c++){const k=binKey(si,c,r),items=state.shelfBins[k]||[];const fpct=Math.round(fillOf(k)*100)+'%';if(items.length)items.forEach((it,ii)=>rows.push([binLabel(c,r),it.name,it.qty,ii===0?fpct:'']));else rows.push([binLabel(c,r),'Empty','',fpct]);}
+    const name=(s.area+' '+s.desc).replace(/[\\/*?:\[\]]/g,'').substring(0,31)||'Shelf '+(si+1);
+    const ws=XLSX.utils.aoa_to_sheet(rows); ws['!cols']=[{wch:8},{wch:30},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  XLSX.writeFile(wb,'peak-bin-tracker-'+currentHouseholdCode+'.xlsx'); showToast('Exported successfully');
+});
+
+// ── IMPORT ──
+document.getElementById('importInput').addEventListener('change',function(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'}); const ws0=wb.Sheets['Shelves']; if(!ws0){showToast('Invalid file');return;}
+      const rows=XLSX.utils.sheet_to_json(ws0,{header:1}); const newShelves=[],newBins={},newFill={};
+      for(let i=1;i<rows.length;i++){const r=rows[i];if(!r||!r[1])continue;newShelves.push({area:String(r[1]||''),desc:String(r[2]||''),cols:parseInt(r[3])||2,rows:parseInt(r[4])||2});}
+      newShelves.forEach((s,si)=>{
+        const name=(s.area+' '+s.desc).replace(/[\\/*?:\[\]]/g,'').substring(0,31)||'Shelf '+(si+1);
+        const ws=wb.Sheets[name]||wb.Sheets['Shelf '+(si+1)]; if(!ws)return;
+        const srows=XLSX.utils.sheet_to_json(ws,{header:1});
+        for(let j=1;j<srows.length;j++){const r=srows[j];if(!r||!r[0])continue;const lbl=String(r[0]),nm=String(r[1]||''),qty=parseInt(r[2])||1;const k='shelf'+si+'_'+lbl;if(r[3]){const pct=parseFloat(String(r[3]).replace('%',''));if(!isNaN(pct))newFill[k]=Math.max(0,Math.min(1,pct/100));}if(!nm||nm==='Empty')continue;if(!newBins[k])newBins[k]=[];newBins[k].push({name:nm,qty});}
+      });
+      if(!newShelves.length){showToast('No shelves found');return;}
+      if(state.shelves.length&&!confirm('Replace all current data with imported data?')){e.target.value='';return;}
+      state.shelves=newShelves; state.shelfBins=newBins; state.binFill=newFill; saveState(); renderShelvesPage(0); showToast('Imported '+newShelves.length+' shelf'+(newShelves.length!==1?'ves':''));
+    }catch(err){showToast('Import failed');console.error(err);}
+    e.target.value='';
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// ── QR SCANNER ──
+let qrScanner=null,qrActive=false;
+function openQrModal(){openModal('qrModal');document.getElementById('qrResultMsg').classList.remove('show');document.getElementById('qrStatusText').textContent='Camera not started';document.getElementById('startQrBtn').style.display='';document.getElementById('stopQrBtn').style.display='none';}
+function closeQrModal(){stopQr();closeModal('qrModal');}
+function startQr(){if(qrActive)return;document.getElementById('qrReaderBox').innerHTML='';document.getElementById('qrStatusText').textContent='Starting camera…';qrScanner=new Html5Qrcode('qrReaderBox');qrScanner.start({facingMode:'environment'},{fps:10,qrbox:{width:220,height:220}},(text)=>{stopQr();handleQrScan(text);},()=>{}).then(()=>{qrActive=true;document.getElementById('qrStatusText').textContent='Scanning — point at a bin label';document.getElementById('startQrBtn').style.display='none';document.getElementById('stopQrBtn').style.display='';}).catch(()=>{document.getElementById('qrStatusText').textContent='Camera access denied.';});}
+function stopQr(){if(qrScanner&&qrActive){qrScanner.stop().catch(()=>{});qrActive=false;}document.getElementById('startQrBtn').style.display='';document.getElementById('stopQrBtn').style.display='none';document.getElementById('qrStatusText').textContent='Camera stopped';}
+function handleQrScan(text){const raw=text.trim();let targetSi=null,targetLabel=null;try{const url=new URL(raw);targetLabel=(url.searchParams.get('bin')||'').toUpperCase();const si=url.searchParams.get('si');if(si!==null&&state.shelves[parseInt(si)])targetSi=parseInt(si);if(!targetSi){const area=url.searchParams.get('area')||'';state.shelves.forEach((s,i)=>{if(s.area.toLowerCase()===area.toLowerCase())targetSi=i;});}}catch(e){targetLabel=raw.toUpperCase().replace(/^SHELF\d+_/,'');}if(!targetLabel){showToast('Could not read QR code');return;}const order=targetSi!==null?[targetSi]:state.shelves.map((_,i)=>i);for(const si of order){const s=state.shelves[si];for(let r=0;r<s.rows;r++)for(let c=0;c<s.cols;c++){if(binLabel(c,r)===targetLabel){const msg=document.getElementById('qrResultMsg');msg.textContent='✓ Bin '+targetLabel+' — '+s.area+' · '+s.desc;msg.classList.add('show');closeQrModal();renderShelvesPage(si);setTimeout(()=>{const ov=document.getElementById('binOverlay');if(!ov)return;ov.querySelectorAll('button').forEach(btn=>{if(binLabel(parseInt(btn.dataset.col),parseInt(btn.dataset.row))===targetLabel)btn.click();});},100);return;}}}document.getElementById('qrResultMsg').textContent='No bin found for "'+targetLabel+'"';document.getElementById('qrResultMsg').classList.add('show');}
+document.getElementById('qrScanBtn').onclick=openQrModal;document.getElementById('closeQrBtn').onclick=closeQrModal;document.getElementById('qrModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeQrModal();});document.getElementById('startQrBtn').onclick=startQr;document.getElementById('stopQrBtn').onclick=stopQr;
+
+// ── LABEL PRINT ──
+function openLabelModal(){const list=document.getElementById('labelShelfList');list.innerHTML='';state.shelves.forEach((s,i)=>{const lbl=document.createElement('label');lbl.className='label-shelf-item';lbl.id='lsi_'+i;const cb=document.createElement('input');cb.type='checkbox';cb.value=i;cb.addEventListener('change',function(){lbl.classList.toggle('sel',this.checked);});const info=document.createElement('div');info.innerHTML='<div class="label-shelf-name">'+s.area+' – '+s.desc+'</div><div class="label-shelf-sub">'+s.cols+' wide × '+s.rows+' high · '+(s.cols*s.rows)+' labels</div>';lbl.appendChild(cb);lbl.appendChild(info);list.appendChild(lbl);});const idx=_openShelfIdx;const el=document.getElementById('lsi_'+idx);if(el){el.classList.add('sel');el.querySelector('input').checked=true;}openModal('labelModal');}
+document.getElementById('printLabelsBtn').onclick=openLabelModal;document.getElementById('closeLabelBtn').onclick=()=>closeModal('labelModal');document.getElementById('labelModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('labelModal');});
+document.getElementById('selectAllLabels').onclick=()=>{document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.add('sel');el.querySelector('input').checked=true;});};
+document.getElementById('deselectAllLabels').onclick=()=>{document.querySelectorAll('#labelShelfList .label-shelf-item').forEach(el=>{el.classList.remove('sel');el.querySelector('input').checked=false;});};
+document.getElementById('previewLabelsBtn').onclick=function(){const selected=[...document.querySelectorAll('#labelShelfList input:checked')].map(i=>parseInt(i.value));if(!selected.length){showToast('Select at least one shelf');return;}const labels=[],qrUrls=[];selected.forEach(si=>{const s=state.shelves[si];for(let r=0;r<s.rows;r++)for(let c=0;c<s.cols;c++){labels.push({bin:binLabel(c,r),si,shelfName:s.area});qrUrls.push('https://peakgaragesolutions.ca/bin-tracker.html?si='+si+'&bin='+encodeURIComponent(binLabel(c,r))+'&area='+encodeURIComponent(s.area)+'&desc='+encodeURIComponent(s.desc));}});closeModal('labelModal');buildPrintPDF(labels,qrUrls);};
+
+function buildPrintPDF(labels,qrUrls){
+  const PT=72,pageW=8.5*PT,pageH=11*PT;
+  const marginTop=0.41*PT,marginLeft=0.735*PT;
+  const D=1.5*PT,colGap=0.337*PT,rowGap=0.24*PT;
+  const cols=4,rows=6,perPage=24,QR_PX=108;
+  const PGS_URL='https://peakgaragesolutions.ca';
+  const allLabels=[...labels],allUrls=[...qrUrls];
+  const rem=allLabels.length%perPage;
+  const blanks=rem?perPage-rem:0;
+  for(let i=0;i<blanks;i++){allLabels.push({bin:'',si:null,shelfName:'Peak Garage Solutions',filler:true});allUrls.push(PGS_URL);}
+  showToast('Building PDF…');
+
+  // Generate all QR codes synchronously using qrcode-generator library
+  function makeQRDataUrl(text){
+    try{
+      var qr=qrcode(0,'M');
+      qr.addData(text);
+      qr.make();
+      // Draw to canvas
+      var cvs=document.createElement('canvas');
+      var size=QR_PX;
+      cvs.width=size;cvs.height=size;
+      var ctx=cvs.getContext('2d');
+      var modules=qr.getModuleCount();
+      var cell=size/modules;
+      ctx.fillStyle='#ffffff';ctx.fillRect(0,0,size,size);
+      ctx.fillStyle='#1a1a1a';
+      for(var r=0;r<modules;r++){
+        for(var c=0;c<modules;c++){
+          if(qr.isDark(r,c)){
+            ctx.fillRect(Math.floor(c*cell),Math.floor(r*cell),Math.ceil(cell),Math.ceil(cell));
+          }
+        }
+      }
+      return cvs.toDataURL('image/png');
+    }catch(e){console.error('QR error',e);return null;}
+  }
+
+  // Generate all QR data URLs synchronously
+  var qrImgs=allUrls.map(function(url){return makeQRDataUrl(url);});
+
+  // Build PDF
+  var {jsPDF}=window.jspdf;
+  var doc=new jsPDF({unit:'pt',format:[pageW,pageH],orientation:'portrait'});
+  var totalPages=Math.ceil(allLabels.length/perPage);
+  for(var pg=0;pg<totalPages;pg++){
+    if(pg>0)doc.addPage([pageW,pageH],'portrait');
+    allLabels.slice(pg*perPage,(pg+1)*perPage).forEach(function(lbl,idx){
+      var col=idx%cols,row=Math.floor(idx/cols);
+      var x=marginLeft+col*(D+colGap),y=marginTop+row*(D+rowGap);
+      doc.setDrawColor(200,200,200);doc.setLineWidth(0.5);
+      doc.roundedRect(x,y,D,D,3,3,'S');
+      // Reserve space for text at bottom, center QR in remaining space
+      var txtH=10; // points reserved for label text
+      var imgSize=D*0.72;
+      var imgX=x+(D-imgSize)/2;
+      var imgY=y+(D-txtH-imgSize)/2; // vertically centered in label minus text area
+      var qi=pg*perPage+idx;
+      if(qrImgs[qi])doc.addImage(qrImgs[qi],'PNG',imgX,imgY,imgSize,imgSize);
+      var txtY=y+D-txtH+4; // text sits at bottom of label
+      if(lbl.filler){
+        doc.setFontSize(5.5);doc.setTextColor(160,160,160);
+        doc.text('Peak Garage Solutions',x+D/2,txtY,{align:'center'});
+      }else{
+        doc.setFontSize(7);doc.setTextColor(26,26,26);doc.setFont('helvetica','bold');
+        doc.text(lbl.shelfName+' '+lbl.bin,x+D/2,txtY,{align:'center'});
+      }
+      doc.setFont('helvetica','normal');
+    });
+  }
+
+  var pdfBlob=doc.output('blob');
+  var pdfUrl=URL.createObjectURL(pdfBlob);
+  window.open(pdfUrl,'_blank');
+  showToast('PDF opened — tap menu → Print');
+  setTimeout(function(){URL.revokeObjectURL(pdfUrl);},60000);
+}
+
+document.getElementById('doPrintBtn').onclick=function(){const f=document.getElementById('printFrame');if(f.contentWindow)f.contentWindow.print();};
+document.getElementById('closePrintPreviewBtn').onclick=function(){document.getElementById('printPreviewOverlay').style.display='none';const f=document.getElementById('printFrame');const d=f.contentDocument||f.contentWindow.document;d.open();d.write('');d.close();};
+
+// ── INIT ──
+renderShelvesPage();
+const _urlParams = new URLSearchParams(location.search);
+const _isDemo = _urlParams.get('demo') === '1' || /(^|[#&])demo=1\b/.test(location.hash);
+if (_isDemo) {
+  _demoMode = true;
+  currentHouseholdCode = 'PEAK-DEMO';
+  // Seed sample data so visitors can try the app immediately
+  state.shelves = [
+    { area: 'Garage',   desc: 'Tools & Outdoor',   cols: 3, rows: 4 },
+    { area: 'Basement', desc: 'Holiday & Seasonal',cols: 2, rows: 3 },
+  ];
+  state.shelfBins = {
+    'shelf0_A1': [{name:'Drill + bits',qty:1},{name:'Cordless saw',qty:1}],
+    'shelf0_A2': [{name:'Garden gloves',qty:3},{name:'Pruning shears',qty:1}],
+    'shelf0_A3': [{name:'Extension cords',qty:4}],
+    'shelf0_A4': [{name:'Tarps',qty:2},{name:'Bungee cords',qty:8}],
+    'shelf0_B1': [{name:'Hammer set',qty:1},{name:'Screwdrivers',qty:1}],
+    'shelf0_B2': [{name:'Painter tape',qty:6},{name:'Drop cloth',qty:2}],
+    'shelf0_B3': [{name:'Spare 2x4s',qty:5}],
+    'shelf0_C1': [{name:'Pool noodles',qty:6}],
+    'shelf0_C2': [{name:'Beach towels',qty:4},{name:'Sunscreen',qty:3}],
+    'shelf0_C4': [{name:'Salt bags',qty:2},{name:'Snow shovel',qty:1}],
+    'shelf1_A1': [{name:'Christmas lights — white',qty:4},{name:'Lights — multi',qty:2},{name:'Wreath',qty:2}],
+    'shelf1_A2': [{name:'Tree skirt',qty:1},{name:'Stockings',qty:4}],
+    'shelf1_A3': [{name:'Ornament box A',qty:1},{name:'Ornament box B',qty:1}],
+    'shelf1_B1': [{name:'Halloween decor',qty:1}],
+    'shelf1_B2': [{name:'Costumes',qty:5}],
+    'shelf1_B3': [{name:'Thanksgiving tablecloths',qty:2}],
+  };
+  state.binFill = {
+    'shelf0_A1':0.75,'shelf0_A2':0.5,'shelf0_A3':0.25,'shelf0_A4':1,
+    'shelf0_B1':0.5,'shelf0_B2':0.5,'shelf0_B3':0.25,
+    'shelf0_C1':0.25,'shelf0_C2':0.5,'shelf0_C4':1,
+    'shelf1_A1':1,'shelf1_A2':0.5,'shelf1_A3':0.75,
+    'shelf1_B1':0.25,'shelf1_B2':0.5,'shelf1_B3':0.5,
+  };
+  document.getElementById('householdScreen').style.display = 'none';
+  document.getElementById('householdBadge').style.display = 'flex';
+  document.getElementById('householdBadgeCode').textContent = 'DEMO MODE';
+  document.getElementById('householdBadge').title = 'Demo mode — changes are not saved.';
+  // Recolor the dot to make it obvious this is demo, not live
+  const dot = document.querySelector('#householdBadge .hw-badge-dot');
+  if (dot) dot.style.background = '#F5D820';
+  setSyncStatus('live');
+  document.getElementById('syncLabel').textContent = 'DEMO';
+  document.getElementById('syncDot').style.background = '#F5D820';
+  renderShelvesPage(0);
+} else {
+  const savedCode = localStorage.getItem('peakHouseholdCode');
+  const savedPin = localStorage.getItem('peakHouseholdPin');
+  if (savedCode && savedPin) {
+    currentHouseholdCode = savedCode;
+    currentHouseholdPin = savedPin;
+    hideHouseholdScreen(savedCode);
+    attachFirestoreListener(savedCode);
+  } else {
+    showHouseholdScreen();
+  }
+}
+
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     INSTALL TO PHONE (PWA) — runtime manifest + icons, single-file.
+     Adds an "Install App" button (native prompt on Android/Chrome/Edge,
+     Add-to-Home-Screen instructions on iOS). Does not touch app logic.
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  // Manifest + icons are now real same-origin files (manifest.webmanifest,
+  // pbf-icon-*.png) linked from <head> — required for reliable Android/Chrome
+  // installability. (data: URL manifests are not reliably installable.)
+
+  // — optional service worker (improves Android install reliability; harmless if sw.js absent) —
+  if ('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+
+  // — install button wiring —
+  const headerWrap=document.getElementById('installBtnWrap');
+  const homeBtn=document.getElementById('installAppBtnHome');
+  const headerBtn=document.getElementById('installAppBtn');
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  let deferredPrompt=null;
+
+  function showInstall(show){
+    if (headerWrap) headerWrap.style.display = show ? 'flex' : 'none';
+    if (homeBtn)    homeBtn.style.display    = show ? '' : 'none';
+  }
+  showInstall(false);
+
+  function miniToast(msg){ const t=document.getElementById('toast'); if(!t)return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
+
+  function iosSheet(){
+    let m=document.getElementById('iosInstallSheet');
+    if(!m){
+      m=document.createElement('div'); m.id='iosInstallSheet'; m.className='modal-overlay';
+      m.innerHTML='<div class="modal-sheet"><div class="modal-handle"></div>'+
+        '<div class="modal-title">Install on iPhone</div>'+
+        '<div class="modal-sub">Add Peak Bin Finder to your home screen so it opens like an app.</div>'+
+        '<ol style="margin:4px 0 18px 20px;color:var(--text);font-size:.92rem;line-height:1.95;">'+
+          '<li>Tap the <strong style="color:var(--gold);">Share</strong> icon in Safari\u2019s toolbar.</li>'+
+          '<li>Choose <strong style="color:var(--gold);">Add to Home Screen</strong>.</li>'+
+          '<li>Tap <strong style="color:var(--gold);">Add</strong> \u2014 done.</li>'+
+        '</ol>'+
+        '<button class="btn btn-ghost" id="iosInstallClose">Got it</button></div>';
+      document.body.appendChild(m);
+      m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+      m.querySelector('#iosInstallClose').onclick=()=>m.classList.remove('open');
+    }
+    m.classList.add('open');
+  }
+
+  function doInstall(){
+    if (deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(()=>{ deferredPrompt=null; showInstall(false); });
+    } else if (isIOS){
+      iosSheet();
+    } else {
+      miniToast('Open your browser menu, then \u201cInstall app\u201d');
+    }
+  }
+  if (headerBtn) headerBtn.onclick=doInstall;
+  if (homeBtn)   homeBtn.onclick=doInstall;
+
+  // Android / desktop Chrome / Edge
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!isStandalone) showInstall(true); });
+  window.addEventListener('appinstalled',()=>{ deferredPrompt=null; showInstall(false); miniToast('App installed'); });
+
+  // iOS Safari never fires beforeinstallprompt — offer the button with instructions
+  if (isIOS && !isStandalone) showInstall(true);
+})();
+</script>
+</body>
+</html>
