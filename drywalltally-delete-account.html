@@ -5,57 +5,86 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Delete Your Account — Drywall Tally: Takeoff &amp; Quote</title>
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-         max-width: 760px; margin: 0 auto; padding: 32px 20px; color: #1a1a1a; line-height: 1.6; }
-  h1 { font-size: 1.6em; margin-bottom: 4px; }
-  h2 { font-size: 1.15em; margin-top: 30px; }
-  .meta { color: #666; font-size: 0.9em; margin-bottom: 24px; }
-  ol { padding-left: 22px; }
-  li { margin-bottom: 8px; }
-  .box { background: #f5f7fa; border-radius: 8px; padding: 14px 18px; margin: 14px 0; }
-  .note { color: #555; font-size: 0.92em; }
+  :root{
+    --brand:#D57800; --ink:#1C1917; --muted:#6B6560; --line:#E7E2DC;
+    --bg:#FBF9F6; --card:#FFFFFF; --accent:#3B82F6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font:16px/1.65 Georgia,'Times New Roman',serif;-webkit-font-smoothing:antialiased}
+  .bar{height:6px;background:var(--brand)}
+  .wrap{max-width:760px;margin:0 auto;padding:40px 22px 80px}
+  .eyebrow{font-family:'Consolas','SF Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:10px}
+  h1{font-family:'Segoe UI',Roboto,system-ui,sans-serif;font-size:30px;font-weight:700;line-height:1.25;margin-bottom:6px}
+  .meta{font-family:'Consolas','SF Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:34px}
+  h2{font-family:'Segoe UI',Roboto,system-ui,sans-serif;font-size:19px;font-weight:700;margin:36px 0 10px;padding-top:22px;border-top:1px solid var(--line)}
+  p{margin-bottom:12px}
+  ul{margin:0 0 12px 22px}
+  li{margin-bottom:6px}
+  a{color:var(--accent)}
+  .step{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand);padding:16px 18px;margin:14px 0;font-family:'Segoe UI',Roboto,system-ui,sans-serif;font-size:15px}
+  .step b{display:block;font-size:13px;font-family:'Consolas','SF Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);margin-bottom:6px}
+  .warn{background:#FFF6EC;border:1px solid #F0DCC2;padding:14px 18px;margin:18px 0;font-family:'Segoe UI',Roboto,system-ui,sans-serif;font-size:15px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-family:'Segoe UI',Roboto,system-ui,sans-serif;font-size:14.5px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:'Consolas','SF Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--line);font-family:'Consolas','SF Mono',monospace;font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
+<div class="bar"></div>
+<div class="wrap">
 
-<h1>Delete Your Account &amp; Data</h1>
-<p class="meta"><strong>Drywall Tally: Takeoff &amp; Quote</strong> (com.drywalltally)<br>
-Developer: Benny Pacheco</p>
+  <div class="eyebrow">Drywall Tally: Takeoff &amp; Quote</div>
+  <h1>Delete Your Account &amp; Data</h1>
+  <p class="meta">Developer: Benny Pacheco &nbsp;·&nbsp; App package: com.drywalltally</p>
 
-<p>You can permanently delete your Drywall Tally account and the cloud data
-associated with it at any time, using either method below.</p>
+  <p>You can delete your Drywall Tally account and all cloud data at any time, using
+  either method below. No reason required, no hoops.</p>
 
-<h2>Option 1 — In the App (immediate)</h2>
-<ol>
-  <li>Open <strong>Drywall Tally: Takeoff &amp; Quote</strong> and make sure
-      you are signed in.</li>
-  <li>Tap the <strong>gear icon</strong> (top right) to open the
-      <strong>More</strong> menu.</li>
-  <li>Tap <strong>Delete Account &amp; Cloud Data</strong> and confirm.</li>
-</ol>
-<div class="box">
-  <strong>What gets deleted:</strong> your sign-in account (email or Google)
-  and your entire cloud backup — jobs, areas, counts, price lists, custom
-  items, and business information stored on our servers.<br><br>
-  <strong>What is not deleted:</strong> data stored locally on your own device
-  remains there until you clear it in the app or uninstall the app. PDF
-  reports you previously shared or saved elsewhere are under your control.
+  <h2>Option 1 — Delete inside the app (instant)</h2>
+  <div class="step">
+    <b>Step 1</b> Open Drywall Tally and go to the <strong>More</strong> tab.
+  </div>
+  <div class="step">
+    <b>Step 2</b> Tap <strong>Delete Account</strong> and confirm.
+  </div>
+  <div class="step">
+    <b>Step 3</b> Done. Your account and all cloud data are deleted immediately.
+  </div>
+
+  <h2>Option 2 — Request deletion by email</h2>
+  <p>If you no longer have the app installed, email
+  <a href="mailto:benny.pach99@gmail.com?subject=Drywall%20Tally%20account%20deletion">benny.pach99@gmail.com</a>
+  with the subject "Drywall Tally account deletion", <strong>sent from the Google account
+  email you used to sign in</strong> (so the request can be verified). Deletion is
+  completed within <strong>30 days</strong> and you'll receive a confirmation reply.</p>
+
+  <h2>What gets deleted</h2>
+  <table>
+    <tr><th>Data</th><th>Result</th></tr>
+    <tr><td>Your account (Google sign-in link, email, name)</td><td>Deleted</td></tr>
+    <tr><td>All cloud data — jobs, areas, tallies, prices, reports</td><td>Deleted</td></tr>
+    <tr><td>Data stored on your device</td><td>Removed when you uninstall the app</td></tr>
+    <tr><td>Purchase records held by Google Play</td><td>Retained by Google under
+      <a href="https://policies.google.com/privacy">Google's privacy policy</a> — not
+      controlled by the developer</td></tr>
+  </table>
+  <p>No data is retained by the developer after deletion.</p>
+
+  <div class="warn">
+    <strong>Subscribed to Pro?</strong> Deleting your account does <em>not</em> cancel a
+    Google Play subscription. Cancel first in the
+    <a href="https://play.google.com/store/account/subscriptions">Play Store → Subscriptions</a>
+    page, then delete your account.
+  </div>
+
+  <h2>Contact</h2>
+  <p>Benny Pacheco<br>
+  Peak Garage Solutions — Burlington, Ontario, Canada<br>
+  <a href="mailto:benny.pach99@gmail.com">benny.pach99@gmail.com</a></p>
+
+  <footer>Drywall Tally: Takeoff &amp; Quote · © 2026 Benny Pacheco ·
+  <a href="https://peakgaragesolutions.ca/drywalltally-privacy.html" style="color:var(--muted)">Privacy Policy</a></footer>
 </div>
-<p class="note">For security, recent sign-in is required to delete an account.
-If the app asks you to sign in again, do so and repeat the steps — the
-deletion will complete.</p>
-
-<h2>Option 2 — By Email Request</h2>
-<p>Email <strong>[YOUR CONTACT EMAIL]</strong> from the address associated
-with your account, with the subject line <em>"Delete my Drywall Tally
-account"</em>. We will verify the request and delete your account and all
-associated cloud data within <strong>30 days</strong>, and confirm by reply.</p>
-
-<h2>Data Retention</h2>
-<p>Once deleted, account and cloud data are not recoverable. We do not retain
-copies after deletion, except as required by law. For full details, see the
-<a href="https://peakgaragesolutions.ca/drywalltally-privacy.html">Drywall
-Tally Privacy Policy</a>.</p>
-
 </body>
 </html>
