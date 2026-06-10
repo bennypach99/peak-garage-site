@@ -4,7 +4,11 @@
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAgUklEQVR4nL2baZBlxXXnf5l5t3ffq1d7V1VXV1fvGzRLI2ig2UGIXSCQrcUeGckxY3+aiImxwzPjmM2hiXDEjD/4w0w47Al5LCEkQjIWEsLsIFqC3kRDL9Bb9Va9VVJVt79Vb7paZ8+G+id2X7+e++t99tnvgPHnOoMrqAS+pp1+Gj5OL3Pf3i5fr5fGmtRRySvP/Lpx9z0qf+e3F7Hsd+/0OF7+lF5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UOF7elH5oP+/jt9OPL8FZ3R4/jPj3Hsd//UA==" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="theme-color" content="#1a1a1a">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Peak Bin Finder">
 <style>
   /* Android status bar safe area */
   :root { --status-bar-height: env(safe-area-inset-top, 24px); }
@@ -266,23 +270,19 @@ body{font-family:var(--sans);background:var(--ch);color:var(--text);min-height:1
   <div class="hw-sub">Enter your household code to access your shared inventory — or create a new one.</div>
   <div class="hw-card">
     <div class="hw-section">
-      <div class="hw-section-label">Enter or Create a Code</div>
-      <div class="hw-input-row">
-        <input class="hw-input" id="hwCodeInput" type="text" placeholder="e.g. SMITH-HOME" maxlength="32" autocomplete="off" autocorrect="off" spellcheck="false">
-        <button class="btn btn-primary btn-sm" id="hwJoinBtn" style="white-space:nowrap;">Enter</button>
-      </div>
-      <div class="hw-hint">Share this code with everyone in your household. Anyone with the code sees the same inventory. Keep it private from other households.</div>
+      <div class="hw-section-label">Household Code</div>
+      <input class="hw-input" id="hwCodeInput" type="text" placeholder="e.g. SMITH-HOME" maxlength="32" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
-    <div class="hw-divider"><div class="hw-divider-line"></div><div class="hw-divider-text">or</div><div class="hw-divider-line"></div></div>
     <div class="hw-section">
-      <div class="hw-section-label">Generate a Random Code</div>
-      <div class="hw-input-row">
-        <input class="hw-input" id="hwGeneratedCode" type="text" readonly placeholder="Click Generate" style="cursor:default;opacity:.7;">
-        <button class="btn btn-secondary btn-sm" id="hwGenerateBtn" style="white-space:nowrap;">Generate</button>
-      </div>
-      <button class="btn btn-primary mt8" id="hwUseGeneratedBtn" style="display:none;">Use This Code</button>
+      <div class="hw-section-label">PIN</div>
+      <input class="hw-input" id="hwPinInput" type="password" inputmode="numeric" pattern="[0-9]*" placeholder="4–8 digit PIN" maxlength="8" autocomplete="off">
     </div>
+    <button class="btn btn-primary" id="hwJoinBtn">Enter Household</button>
+    <div class="hw-hint">Share the code <strong style="color:var(--gold);">and</strong> PIN with everyone in your household — both are needed to open your shared inventory. The first time a code is used, its PIN is set. Keep them private from other households.</div>
   </div>
+  <button class="btn btn-secondary mt16" id="installAppBtnHome" style="display:none;max-width:380px;width:100%;">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"><rect x="4" y="1.5" width="8" height="13" rx="1.5"/><line x1="6.6" y1="12.4" x2="9.4" y2="12.4"/></svg>Install App on This Device
+  </button>
 </div>
 
 <header class="site-header">
@@ -294,6 +294,11 @@ body{font-family:var(--sans);background:var(--ch);color:var(--text);min-height:1
     <div id="householdBadge" title="Click to switch household" style="margin-left:auto;display:none;"><div class="hw-badge-dot"></div><span class="hw-badge-code" id="householdBadgeCode"></span></div>
   </div>
   <div class="nav-bar">
+    <div class="nav-data-btns" id="installBtnWrap" style="display:none;">
+      <button class="nav-data-btn" id="installAppBtn">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="4" y="1.5" width="8" height="13" rx="1.5"/><line x1="6.6" y1="12.4" x2="9.4" y2="12.4"/></svg>Install App
+      </button>
+    </div>
     <div class="nav-data-btns" id="sideBtns" style="display:none;">
       <button class="nav-data-btn" id="qrScanBtn">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" style="width:13px;height:13px;"><rect x="2" y="2" width="4" height="4"/><rect x="10" y="2" width="4" height="4"/><rect x="2" y="10" width="4" height="4"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="10" y1="14" x2="14" y2="14"/></svg>QR Scan
@@ -508,18 +513,8 @@ let _ignoreNextSnapshot = false;
 let _openShelfIdx = null, _openBinCol = null, _openBinRow = null;
 let _unsubscribe = null;
 let currentHouseholdCode = null;
+let currentHouseholdPin = null;
 let _demoMode = false;
-
-// ── WORD LISTS FOR RANDOM CODE ──
-const ADJ  = ['RED','BLUE','GREEN','GOLD','GREY','TALL','SWIFT','BOLD','CALM','PROUD','DARK','BRIGHT'];
-const NOUN = ['TIGER','MAPLE','EAGLE','STONE','RIVER','CEDAR','WOLF','FIELD','BROOK','PEAK','RIDGE','BEAR'];
-
-function generateCode() {
-  const a = ADJ[Math.floor(Math.random()*ADJ.length)];
-  const n = NOUN[Math.floor(Math.random()*NOUN.length)];
-  const d = Math.floor(10+Math.random()*90);
-  return a+'-'+n+'-'+d;
-}
 
 // ── HOUSEHOLD WELCOME SCREEN ──
 function showHouseholdScreen() {
@@ -532,40 +527,53 @@ function hideHouseholdScreen(code) {
   document.getElementById('householdBadgeCode').textContent = code;
 }
 
-function joinHousehold(rawCode) {
+async function joinHousehold(rawCode, rawPin) {
   const code = rawCode.trim().toUpperCase().replace(/\s+/g,'-');
+  const pin = (rawPin || '').trim();
   if (!code) { showToast('Enter a household code'); return; }
-  localStorage.setItem('peakHouseholdCode', code);
-  currentHouseholdCode = code;
-  hideHouseholdScreen(code);
-  attachFirestoreListener(code);
+  if (!/^\d{4,8}$/.test(pin)) { showToast('Enter a 4–8 digit PIN'); return; }
+  const btn = document.getElementById('hwJoinBtn');
+  const oldTxt = btn.textContent; btn.disabled = true; btn.textContent = 'Checking…';
+  try {
+    const ref = getDocRef(code);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.pin && String(data.pin) !== pin) { showToast('Incorrect PIN for this household'); return; }
+      if (!data.pin) { await setDoc(ref, { ...data, pin }); }   // claim a pre-PIN household
+    } else {
+      await setDoc(ref, { shelves:[], shelfBins:{}, binFill:{}, pin }); // create & claim new household
+    }
+    localStorage.setItem('peakHouseholdCode', code);
+    localStorage.setItem('peakHouseholdPin', pin);
+    currentHouseholdCode = code; currentHouseholdPin = pin;
+    hideHouseholdScreen(code);
+    attachFirestoreListener(code);
+  } catch (e) {
+    showToast('Could not connect — check your network'); console.error(e);
+  } finally {
+    btn.disabled = false; btn.textContent = oldTxt;
+  }
 }
 
-document.getElementById('hwJoinBtn').onclick = () => {
-  joinHousehold(document.getElementById('hwCodeInput').value);
-};
-document.getElementById('hwCodeInput').onkeydown = e => {
-  if (e.key === 'Enter') joinHousehold(document.getElementById('hwCodeInput').value);
-};
-document.getElementById('hwGenerateBtn').onclick = () => {
-  const code = generateCode();
-  document.getElementById('hwGeneratedCode').value = code;
-  document.getElementById('hwUseGeneratedBtn').style.display = 'block';
-};
-document.getElementById('hwUseGeneratedBtn').onclick = () => {
-  joinHousehold(document.getElementById('hwGeneratedCode').value);
-};
+function attemptJoin() {
+  joinHousehold(document.getElementById('hwCodeInput').value, document.getElementById('hwPinInput').value);
+}
+document.getElementById('hwJoinBtn').onclick = attemptJoin;
+document.getElementById('hwCodeInput').onkeydown = e => { if (e.key === 'Enter') document.getElementById('hwPinInput').focus(); };
+document.getElementById('hwPinInput').onkeydown = e => { if (e.key === 'Enter') attemptJoin(); };
 
 // Badge click — switch household
 document.getElementById('householdBadge').onclick = () => {
-  if (!confirm('Switch household? You will need to re-enter or create a code.')) return;
+  if (!confirm('Switch household? You will need to re-enter your code and PIN.')) return;
   localStorage.removeItem('peakHouseholdCode');
+  localStorage.removeItem('peakHouseholdPin');
   if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
   state = { shelves:[], shelfBins:{}, binFill:{}, addShelfCols:3, addShelfRows:4 };
   _openShelfIdx = null; _openBinCol = null; _openBinRow = null;
+  currentHouseholdCode = null; currentHouseholdPin = null;
   document.getElementById('hwCodeInput').value = '';
-  document.getElementById('hwGeneratedCode').value = '';
-  document.getElementById('hwUseGeneratedBtn').style.display = 'none';
+  document.getElementById('hwPinInput').value = '';
   showHouseholdScreen();
   renderShelvesPage();
 };
@@ -588,6 +596,7 @@ function attachFirestoreListener(code) {
       state.shelves   = data.shelves   || [];
       state.shelfBins = data.shelfBins || {};
       state.binFill   = data.binFill   || {};
+      if (currentHouseholdPin == null && data.pin != null) currentHouseholdPin = String(data.pin);
     }
     renderShelvesPage();
     setSyncStatus('live');
@@ -621,6 +630,7 @@ function attachFirestoreListener(code) {
     state.shelves   = data.shelves   || [];
     state.shelfBins = data.shelfBins || {};
     state.binFill   = data.binFill   || {};
+    if (currentHouseholdPin == null && data.pin != null) currentHouseholdPin = String(data.pin);
     setSyncStatus('live');
     renderShelvesPage(_openShelfIdx !== null ? _openShelfIdx : undefined);
     if (_openBinCol !== null && _openBinRow !== null && _openShelfIdx !== null) {
@@ -1269,8 +1279,10 @@ if (_isDemo) {
   renderShelvesPage(0);
 } else {
   const savedCode = localStorage.getItem('peakHouseholdCode');
-  if (savedCode) {
+  const savedPin = localStorage.getItem('peakHouseholdPin');
+  if (savedCode && savedPin) {
     currentHouseholdCode = savedCode;
+    currentHouseholdPin = savedPin;
     hideHouseholdScreen(savedCode);
     attachFirestoreListener(savedCode);
   } else {
@@ -1278,6 +1290,112 @@ if (_isDemo) {
   }
 }
 
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     INSTALL TO PHONE (PWA) — runtime manifest + icons, single-file.
+     Adds an "Install App" button (native prompt on Android/Chrome/Edge,
+     Add-to-Home-Screen instructions on iOS). Does not touch app logic.
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  // — gold app-mark drawn to canvas → PNG data URL (matches the header logo) —
+  function drawIcon(size){
+    const c=document.createElement('canvas'); c.width=c.height=size;
+    const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,size); g.addColorStop(0,'#FFE74A'); g.addColorStop(1,'#C9B617');
+    x.fillStyle=g; x.fillRect(0,0,size,size);
+    const s=size/56; x.fillStyle='#0E0E0E';
+    const R=(px,py,w,h)=>x.fillRect(Math.round(px*s),Math.round(py*s),Math.round(w*s),Math.round(h*s));
+    R(20,11,6,4); R(30,11,6,4); R(13,15,30,9);
+    R(20,25,6,4); R(30,25,6,4); R(13,29,30,9);
+    return c.toDataURL('image/png');
+  }
+  let icon192, icon512;
+  try { icon192=drawIcon(192); icon512=drawIcon(512); } catch(e){ icon192=icon512=null; }
+
+  // — apple-touch-icon (iOS home-screen icon) —
+  if (icon192){ const at=document.createElement('link'); at.rel='apple-touch-icon'; at.href=icon192; document.head.appendChild(at); }
+
+  // — web app manifest (built at runtime so start_url matches wherever it's hosted) —
+  if (icon192 && icon512){
+    const dir = location.href.replace(/[^/]*$/,'');
+    const manifest = {
+      name:'Peak Bin Finder', short_name:'Bin Finder',
+      description:'Bin inventory for Peak Garage Solutions',
+      start_url: location.href.split('#')[0], scope: dir,
+      display:'standalone', orientation:'portrait',
+      background_color:'#0E0E0E', theme_color:'#0E0E0E',
+      icons:[
+        {src:icon192,sizes:'192x192',type:'image/png',purpose:'any'},
+        {src:icon512,sizes:'512x512',type:'image/png',purpose:'any'},
+        {src:icon512,sizes:'512x512',type:'image/png',purpose:'maskable'}
+      ]
+    };
+    const ml=document.createElement('link'); ml.rel='manifest';
+    ml.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest));
+    document.head.appendChild(ml);
+  }
+
+  // — optional service worker (improves Android install reliability; harmless if sw.js absent) —
+  if ('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+
+  // — install button wiring —
+  const headerWrap=document.getElementById('installBtnWrap');
+  const homeBtn=document.getElementById('installAppBtnHome');
+  const headerBtn=document.getElementById('installAppBtn');
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  let deferredPrompt=null;
+
+  function showInstall(show){
+    if (headerWrap) headerWrap.style.display = show ? 'flex' : 'none';
+    if (homeBtn)    homeBtn.style.display    = show ? '' : 'none';
+  }
+  showInstall(false);
+
+  function miniToast(msg){ const t=document.getElementById('toast'); if(!t)return; t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
+
+  function iosSheet(){
+    let m=document.getElementById('iosInstallSheet');
+    if(!m){
+      m=document.createElement('div'); m.id='iosInstallSheet'; m.className='modal-overlay';
+      m.innerHTML='<div class="modal-sheet"><div class="modal-handle"></div>'+
+        '<div class="modal-title">Install on iPhone</div>'+
+        '<div class="modal-sub">Add Peak Bin Finder to your home screen so it opens like an app.</div>'+
+        '<ol style="margin:4px 0 18px 20px;color:var(--text);font-size:.92rem;line-height:1.95;">'+
+          '<li>Tap the <strong style="color:var(--gold);">Share</strong> icon in Safari\u2019s toolbar.</li>'+
+          '<li>Choose <strong style="color:var(--gold);">Add to Home Screen</strong>.</li>'+
+          '<li>Tap <strong style="color:var(--gold);">Add</strong> \u2014 done.</li>'+
+        '</ol>'+
+        '<button class="btn btn-ghost" id="iosInstallClose">Got it</button></div>';
+      document.body.appendChild(m);
+      m.addEventListener('click',e=>{ if(e.target===m) m.classList.remove('open'); });
+      m.querySelector('#iosInstallClose').onclick=()=>m.classList.remove('open');
+    }
+    m.classList.add('open');
+  }
+
+  function doInstall(){
+    if (deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.finally(()=>{ deferredPrompt=null; showInstall(false); });
+    } else if (isIOS){
+      iosSheet();
+    } else {
+      miniToast('Open your browser menu, then \u201cInstall app\u201d');
+    }
+  }
+  if (headerBtn) headerBtn.onclick=doInstall;
+  if (homeBtn)   homeBtn.onclick=doInstall;
+
+  // Android / desktop Chrome / Edge
+  window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; if(!isStandalone) showInstall(true); });
+  window.addEventListener('appinstalled',()=>{ deferredPrompt=null; showInstall(false); miniToast('App installed'); });
+
+  // iOS Safari never fires beforeinstallprompt — offer the button with instructions
+  if (isIOS && !isStandalone) showInstall(true);
+})();
 </script>
 </body>
 </html>
