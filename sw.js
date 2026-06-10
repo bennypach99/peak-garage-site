@@ -1,66 +1,39 @@
-const CACHE_NAME = 'drywall-takeoff-v1';
-const URLS_TO_CACHE = [
-  '/takeoff.html',
-  '/manifest.json'
-];
+// Peak Bin Finder — minimal service worker.
+// Its only job is to make the app reliably "installable" on Android/Chrome
+// (an active SW with a fetch handler) and let it launch offline-friendly.
+// It does NOT cache Firebase/CDN responses, so live sync is never stale.
+const CACHE = 'peak-bin-finder-v1';
 
-// Install: Cache the app shell
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('Caching app shell');
-      return cache.addAll(URLS_TO_CACHE);
-    })
-  );
+self.addEventListener('install', (e) => {
   self.skipWaiting();
-});
-
-// Activate: Clean up old caches
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+  // Pre-cache the app shell (this file's host page) so a cold launch works.
+  e.waitUntil(
+    caches.open(CACHE).then((c) => c.addAll(['./', './bin-tracker.html']).catch(() => {}))
   );
-  self.clients.claim();
 });
 
-// Fetch: Network-first for HTML (to get latest JS logic), Cache-first for external assets (fonts/Firebase)
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  
-  // For the main HTML, try network first, fall back to cache
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => {
-        return caches.match('/takeoff.html');
-      })
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  // Only handle same-origin navigations/app-shell; let everything else
+  // (Firebase, Google Fonts, CDNs) go straight to the network untouched.
+  if (url.origin !== location.origin) return;
+  if (req.mode === 'navigate') {
+    e.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+        return res;
+      }).catch(() => caches.match(req).then((r) => r || caches.match('./bin-tracker.html')))
     );
-    return;
   }
-
-  // For everything else (Firebase, Fonts), try cache first, fall back to network
-  event.respondWith(
-    caches.match(request).then(cachedResponse => {
-      if (cachedResponse) return cachedResponse;
-      return fetch(request).then(networkResponse => {
-        // Cache successful external requests dynamically
-        if (networkResponse && networkResponse.status === 200 && request.url.startsWith('http')) {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Offline fallback for non-navigation requests if needed
-        return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
-      });
-    })
-  );
 });
