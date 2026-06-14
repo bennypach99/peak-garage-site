@@ -155,6 +155,24 @@
     }
   }
 
+  // ── single pegboard bay: 2x4 end studs + flat top rail, with an OPTIONAL pegboard
+  // panel. Used for the double-2high back wall so the open center bay can stay empty
+  // (no panel) while the left/right tote bays carry pegboard.
+  function pegBaySection(THREE, group, o) {
+    const { x0, x1, yBase, ph, D, wood, peg, panel } = o;
+    const SW = 1.5, SD = 3.5;
+    const studZ = -D / 2 + SD / 2;
+    const W = x1 - x0;
+    addBox(THREE, group, SW, ph, SD, x0, yBase + ph / 2, studZ, wood);
+    addBox(THREE, group, SW, ph, SD, x1, yBase + ph / 2, studZ, wood);
+    addBox(THREE, group, W + SW, 1.5, SD, (x0 + x1) / 2, yBase + ph - 0.75, studZ, wood);
+    if (panel) {
+      const pegZ = -D / 2 + 0.3;
+      const panelH = ph - 4;
+      addBox(THREE, group, W - 0.6, panelH, 0.4, (x0 + x1) / 2, yBase + panelH / 2, pegZ, peg(W, panelH));
+    }
+  }
+
   function addCasters(THREE, group, W, D, count, mat) {
     const per = Math.max(2, Math.round(count / 2));
     const zs = [-D / 2 + 3, D / 2 - 3];
@@ -256,8 +274,21 @@
     if (hasPeg) {
       if (props.pegMode === 'top') {
         const py0 = yb + hIn + topThick;
-        const pegCols = Math.max(3, Math.round(W / 24));
-        pegWall(THREE, u, { x0: -W / 2, x1: W / 2, yBase: py0, ph: 32, D, nCols: pegCols, wood: mats.wood, peg: mats.peg, led: mats.led, leds: cfg.leds });
+        const ph = 32;
+        const hasCenterPeg = a.includes('centerpeg');
+        // Left & right tote bays always get a pegboard back; the open center bay gets
+        // one only when the Center Pegboard add-on is selected (default = open, lit niche).
+        pegBaySection(THREE, u, { x0: xL0, x1: xL1, yBase: py0, ph, D, wood: mats.wood, peg: mats.peg, panel: true });
+        pegBaySection(THREE, u, { x0: xC0, x1: xC1, yBase: py0, ph, D, wood: mats.wood, peg: mats.peg, panel: hasCenterPeg });
+        pegBaySection(THREE, u, { x0: xR0, x1: xR1, yBase: py0, ph, D, wood: mats.wood, peg: mats.peg, panel: true });
+        // LED bars: 1 → center bay, 2 → outer bays, 3 → all three.
+        const ledN = Math.max(0, cfg.leds | 0);
+        const cxs = [(xL0 + xL1) / 2, (xC0 + xC1) / 2, (xR0 + xR1) / 2];
+        let ledXs = [];
+        if (ledN === 1) ledXs = [cxs[1]];
+        else if (ledN === 2) ledXs = [cxs[0], cxs[2]];
+        else if (ledN >= 3) ledXs = cxs;
+        ledXs.forEach((bx) => addBox(THREE, u, 36, 1.1, 1.8, bx, py0 + ph - 4, -D / 2 + 3.9, mats.led));
       } else {
         const comp = hIn / gaps;
         const cav = (cfg.dualKind === '4high' && cfg.centerShelves >= 3) ? 2 : 1;

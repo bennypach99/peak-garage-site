@@ -48,18 +48,29 @@ function ledMax(mode, cols, dualKind) {
   if (mode === 'double') return dualKind === '2high' ? 3 : 1;
   return Math.max(1, Math.floor(cols / 2));
 }
+// A 36″ LED bar needs roughly a 40″ bay (panel + 2x4 framing on each side) to sit in the
+// center. Below that, the center light is dropped: the 2-high keeps only its two side
+// lights (0 or 2), and the 3/4-high — whose only light is the center one — loses lights entirely.
+const MIN_CENTER_LED_WIDTH = 40;
+
 // Allowed LED counts per build. The 5-wide (two large panels + a narrow center)
 // can't center a lone light, so it allows only 0 or 2. All other widths allow the
 // full range; a 2-light layout sits in the outer panels, left + right.
-function ledOptions(mode, cols, dualKind) {
+function ledOptions(mode, cols, dualKind, centerWidth) {
   if (mode === 'workbench' && cols === 5) return [0, 2];
+  if (mode === 'double') {
+    const narrowCenter = (centerWidth || 45.5) < MIN_CENTER_LED_WIDTH;
+    if (dualKind === '2high') return narrowCenter ? [0, 2] : [0, 1, 2, 3];
+    // 3/4-high have a center light only — unavailable on a narrow center bay.
+    return narrowCenter ? [0] : [0, 1];
+  }
   const max = ledMax(mode, cols, dualKind);
   return Array.from({ length: max + 1 }, (_, i) => i);
 }
 
 // ── Double-unit constants (from live site) ──
 const DU_PROPS = {
-  '2high': { rows: 2, slots: 8,  base12: 386, plyBins: 8,  hIn: 36.75, stain: 75,  label: '2 HIGH', peg: 100, pegMode: 'top' },
+  '2high': { rows: 2, slots: 8,  base12: 386, plyBins: 8,  hIn: 36.75, stain: 75,  label: '2 HIGH', peg: 160, pegMode: 'top' },
   '3high': { rows: 3, slots: 12, base12: 444, plyBins: 10, hIn: 52.75, stain: 85,  label: '3 HIGH', peg: 80,  pegMode: 'center' },
   '4high': { rows: 4, slots: 16, base12: 532, plyBins: 10, hIn: 68.75, stain: 100, label: '4 HIGH', peg: 80,  pegMode: 'center' },
 };
@@ -67,6 +78,12 @@ const DU_WIDTH_IN = 133.5;
 const DU_CASTER_COST = 100;
 const DU_CASTER_COUNT = 8;
 const DU_PEG_COST = 100;   // pegboard back + frame on a double unit (flat)
+// Center-bay pegboard (2-high double only) — priced per bin-width of the open center bay.
+// Frame's already in the build, so it's just the panel: $30/bin (same rate as the center
+// shelf). A 24″ center is one bin wide ($30); anything wider counts as two bins ($60).
+const DU_CENTER_PEG_RATE = 30;   // $30 per bin-width
+function centerPegBins(centerWidth) { return (centerWidth || 45.5) <= 24 ? 1 : 2; }
+function centerPegCost(centerWidth) { return DU_CENTER_PEG_RATE * centerPegBins(centerWidth); }
 const DU_SHELF_COST_BASIC = 50;   // extra center shelf with ½″ plywood
 const DU_SHELF_COST_MAPLE = 80;   // extra center shelf with ¾″ plywood ($50 + $30 upgrade for 2 bin-spaces)
 const DU_PLY_RATE_BASIC = 15;     // ½″ plywood — $ per bin-space wide
@@ -133,7 +150,24 @@ function calcDouble(kind, addons, stainName, ledCount, centerShelves, centerWidt
   }
   if (addons.has('stain'))   { const p = doubleStainCost(kind, hasMaple, centerWidth, STD_CENTER_SHELVES[kind] + centerShelves); total += p; lines.push({ label: `Stain finish (${stainName})`, val: p }); }
   if (addons.has('casters')) { const p = casterPrice(DU_CASTER_COUNT); total += p;  lines.push({ label: `Casters (${DU_CASTER_COUNT} wheels · 2 sets)`, val: p }); }
-  if (addons.has('pegboard')){ total += props.peg;      lines.push({ label: `Pegboard back + frame`, val: props.peg }); }
+  if (addons.has('pegboard')) {
+    if (props.pegMode === 'center') {
+      // 3/4-high: framing's already there — just the panel on the open center bay, $30/bin space.
+      const b = centerPegBins(centerWidth);
+      const p = DU_CENTER_PEG_RATE * b;
+      total += p;
+      lines.push({ label: `Pegboard back (${b} bin${b > 1 ? 's' : ''} × $${DU_CENTER_PEG_RATE})`, val: p });
+    } else {
+      total += props.peg;
+      lines.push({ label: `Pegboard back + frame`, val: props.peg });
+    }
+  }
+  if (kind === '2high' && addons.has('pegboard') && addons.has('centerpeg')) {
+    const p = centerPegCost(centerWidth);
+    total += p;
+    const b = centerPegBins(centerWidth);
+    lines.push({ label: `Center pegboard (${b} bin${b > 1 ? 's' : ''} × $${DU_CENTER_PEG_RATE})`, val: p });
+  }
   if (centerShelves > 0)     { const ea = hasMaple ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC; const p = ea * centerShelves; total += p; lines.push({ label: `Extra center shelf${centerShelves > 1 ? 's' : ''} × ${centerShelves} ($${ea} ea)`, val: p }); }
   if (ledCount > 0)          { const p = WB_LED_COST * ledCount; total += p; lines.push({ label: `LED light bar × ${ledCount}`, val: p }); }
   if (addons.has('totes'))   { const p = props.slots * 20; total += p; lines.push({ label: `${props.slots} totes × $20`, val: p }); }
@@ -200,7 +234,7 @@ function Configurator() {
 
   // LED bars: clamp the count to the nearest valid option for this build.
   const maxLed = ledMax(mode, isWorkbench ? wbWidth : 0, dualKind);
-  const ledOpts = ledOptions(mode, isWorkbench ? wbWidth : 0, dualKind);
+  const ledOpts = ledOptions(mode, isWorkbench ? wbWidth : 0, dualKind, centerWidth);
   const effLed = isCustom ? 0 : ledOpts.filter((v) => v <= ledCount).pop() ?? 0;
   // Center shelves: doubles include a base count; the customer can add extras (charged).
   const baseShelves = isDouble ? CENTER_SHELF_BASE[dualKind] : 0;
@@ -370,9 +404,22 @@ function Configurator() {
                     <AddOnCard active={addons.has('top')} onClick={() => chooseTop(true)}
                       name='¾″ SANDED MAPLE TOP' price={`+$${DU_PROPS[dualKind].plyBins * 15}`} note={`upgrade · +$15 × ${DU_PROPS[dualKind].plyBins}`} />
                     <AddOnCard active={addons.has('pegboard')} onClick={() => toggleAddon('pegboard')}
-                      name='PEGBOARD BACK' price={`$${DU_PROPS[dualKind].peg}`} note={DU_PROPS[dualKind].pegMode === 'top' ? 'full-width · +32″ H' : 'center section'} />
+                      name='PEGBOARD BACK'
+                      price={DU_PROPS[dualKind].pegMode === 'center' ? `$${DU_CENTER_PEG_RATE * centerPegBins(centerWidth)}` : `$${DU_PROPS[dualKind].peg}`}
+                      note={DU_PROPS[dualKind].pegMode === 'center' ? `${centerPegBins(centerWidth)} bin${centerPegBins(centerWidth) > 1 ? 's' : ''} × $${DU_CENTER_PEG_RATE}` : 'side bays · +32″ H'} />
+                    {dualKind === '2high' && (
+                      <AddOnCard
+                        active={addons.has('centerpeg') && addons.has('pegboard')}
+                        disabled={!addons.has('pegboard')}
+                        onClick={() => { if (addons.has('pegboard')) toggleAddon('centerpeg'); }}
+                        name='CENTER PEGBOARD'
+                        price={addons.has('pegboard') ? `+$${centerPegCost(centerWidth)}` : '—'}
+                        note={addons.has('pegboard') ? `${centerPegBins(centerWidth)} bin${centerPegBins(centerWidth) > 1 ? 's' : ''} × $${DU_CENTER_PEG_RATE}` : 'needs pegboard back'} />
+                    )}
                     <ShelfStepper extra={effExtraShelves} maxExtra={maxExtraShelves} base={baseShelves} cost={addons.has('top') ? DU_SHELF_COST_MAPLE : DU_SHELF_COST_BASIC} onChange={setCenterShelves} />
-                    <LedStepper count={effLed} options={ledOptions(mode, 0, dualKind)} onChange={setLedCount} />
+                    {ledOptions(mode, 0, dualKind, centerWidth).length > 1 && (
+                      <LedStepper count={effLed} options={ledOptions(mode, 0, dualKind, centerWidth)} onChange={setLedCount} />
+                    )}
                     <AddOnCard active={addons.has('stain')} onClick={() => toggleAddon('stain')}
                       name='STAIN FINISH' price={`$${doubleStainCost(dualKind, addons.has('top'), centerWidth, STD_CENTER_SHELVES[dualKind] + effExtraShelves)}`} note={stainName} />
                     <AddOnCard active={addons.has('casters')} onClick={() => toggleAddon('casters')}
@@ -457,6 +504,7 @@ function Configurator() {
                     else if (addons.has('top')) addonNames.push('¾″ sanded maple top');
                     else if (addons.has('basictop')) addonNames.push('½″ basic top');
                     if (addons.has('pegboard')) addonNames.push('pegboard back');
+                    if (isDouble && dualKind === '2high' && addons.has('pegboard') && addons.has('centerpeg')) addonNames.push('center pegboard');
                     if (effExtraShelves > 0) addonNames.push(`${effExtraShelves} extra center shelf${effExtraShelves > 1 ? 'ves' : ''}`);
                     if (effLed > 0) addonNames.push(`${effLed} LED light bar${effLed > 1 ? 's' : ''}`);
                     if (addons.has('stain')) addonNames.push(`${stainName.toLowerCase()} stain`);
