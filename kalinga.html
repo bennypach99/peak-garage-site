@@ -163,6 +163,61 @@
   .email-ok .t{font-family:Georgia,serif;font-size:22px;color:var(--gold);margin-bottom:8px}
   .email-ok .d{font-size:14px;color:rgba(248,244,238,.85);line-height:1.5}
 
+  /* ===== cart drawer + checkout (added) ===== */
+  .cart-overlay{position:fixed;inset:0;background:rgba(20,32,49,.55);backdrop-filter:blur(3px);
+    opacity:0;visibility:hidden;transition:opacity .25s;z-index:90}
+  .cart-overlay.open{opacity:1;visibility:visible}
+  .cart-drawer{position:fixed;top:0;right:0;height:100%;width:420px;max-width:92vw;background:var(--cream);
+    z-index:95;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;box-shadow:-20px 0 60px -20px rgba(0,0,0,.4)}
+  .cart-drawer.open{transform:translateX(0)}
+  .cart-hd{display:flex;align-items:center;justify-content:space-between;padding:24px 26px;
+    border-bottom:1px solid rgba(212,168,83,.35);background:var(--navy);color:var(--cream)}
+  .cart-hd h3{font-family:Georgia,serif;font-weight:400;font-size:22px;margin:0}
+  .cart-hd .x{background:none;border:none;color:var(--cream);font-size:26px;cursor:pointer;line-height:1;padding:0}
+  .cart-body{flex:1;overflow-y:auto;padding:18px 26px}
+  .cart-empty{text-align:center;color:#9a8e6f;padding:60px 20px;font-family:Georgia,serif;font-style:italic;font-size:17px}
+  .citem{display:flex;gap:14px;align-items:center;padding:16px 0;border-bottom:1px solid rgba(212,168,83,.25)}
+  .citem .cthumb{width:54px;height:54px;border-radius:3px;flex:none;
+    background:var(--warm);background-image:repeating-linear-gradient(45deg,rgba(212,168,83,.18) 0,rgba(212,168,83,.18) 6px,transparent 6px,transparent 12px);
+    display:flex;align-items:center;justify-content:center;font-family:Georgia,serif;color:var(--gold);font-size:20px}
+  .citem .cinfo{flex:1;min-width:0}
+  .citem .cname{font-family:Georgia,serif;font-size:15px;color:var(--navy);line-height:1.25;margin-bottom:4px}
+  .citem .cprice{font-size:12px;color:#9a8e6f}
+  .qty{display:flex;align-items:center;gap:0;border:1px solid rgba(26,58,92,.25);border-radius:3px;overflow:hidden}
+  .qty button{background:var(--cream2);border:none;width:26px;height:26px;cursor:pointer;font-size:15px;
+    color:var(--navy);font-weight:700;line-height:1}
+  .qty button:hover{background:var(--gold);color:var(--navy)}
+  .qty span{min-width:30px;text-align:center;font-size:13px;font-weight:700;color:var(--navy)}
+  .cart-ft{border-top:1px solid rgba(212,168,83,.4);padding:22px 26px;background:var(--cream2)}
+  .cart-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px}
+  .cart-total .tl{font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:var(--navy)}
+  .cart-total .tv{font-family:Georgia,serif;font-size:30px;color:var(--gold);font-weight:700}
+  .checkout-btn{width:100%;background:var(--navy);color:var(--cream);border:none;cursor:pointer;
+    padding:17px;border-radius:2px;font-family:inherit;font-size:13px;letter-spacing:2px;
+    text-transform:uppercase;font-weight:900;transition:background .2s}
+  .checkout-btn:hover{background:var(--navy-d)}
+  .checkout-btn:disabled{opacity:.4;cursor:not-allowed}
+  .cart-note{font-size:11px;color:#9a8e6f;text-align:center;margin-top:12px;line-height:1.5}
+
+  /* checkout form view inside drawer */
+  .co-form{display:none;flex-direction:column;gap:12px}
+  .co-form.show{display:flex}
+  .cart-list.hide{display:none}
+  .co-form label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;
+    color:var(--navy);margin-bottom:-6px}
+  .co-form input,.co-form textarea{background:var(--cream);border:1px solid rgba(212,168,83,.5);
+    border-radius:3px;padding:13px 14px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;width:100%}
+  .co-form input:focus,.co-form textarea:focus{border-color:var(--gold)}
+  .co-back{background:none;border:none;color:var(--navy);cursor:pointer;font-size:12px;
+    letter-spacing:1.5px;text-transform:uppercase;font-weight:700;padding:0;margin-bottom:4px;text-align:left}
+  .co-ok{text-align:center;padding:30px 16px;display:none}
+  .co-ok.show{display:block}
+  .co-ok .big{font-family:Georgia,serif;font-size:26px;color:var(--teal);margin-bottom:10px}
+  .co-ok .num{font-family:Georgia,serif;font-size:15px;color:var(--navy);background:var(--cream2);
+    border:1px dashed var(--gold);border-radius:4px;padding:12px;margin:14px 0;letter-spacing:1px}
+  .co-ok p{font-size:14px;color:#5b5a52;line-height:1.6;margin:8px 0}
+
   /* footer */
   footer.site{background:var(--navy-d);color:var(--cream);padding:64px 0 30px}
   .fcols{display:flex;flex-wrap:wrap;gap:48px;justify-content:space-between;padding-bottom:44px;border-bottom:1px solid rgba(212,168,83,.25)}
@@ -402,16 +457,58 @@
 
   <div id="toast"><span class="c">✓</span><span id="toastMsg"></span></div>
 
+  <!-- CART DRAWER + CHECKOUT (added) -->
+  <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping cart">
+    <div class="cart-hd">
+      <h3 id="cartTitle">Your Cart</h3>
+      <button class="x" onclick="closeCart()" aria-label="Close cart">&times;</button>
+    </div>
+    <div class="cart-body">
+      <!-- list view -->
+      <div class="cart-list" id="cartList"></div>
+      <!-- checkout form view -->
+      <form class="co-form" id="coForm" onsubmit="return placeOrder(event)">
+        <button type="button" class="co-back" onclick="backToCart()">&larr; Back to cart</button>
+        <label>Full name</label>
+        <input id="coName" placeholder="Maria Santos" required>
+        <label>Email</label>
+        <input id="coEmail" type="email" placeholder="you@email.com" required>
+        <label>Shipping address</label>
+        <textarea id="coAddr" rows="3" placeholder="Street, City, Province, Postal code" required></textarea>
+        <label>Notes (optional)</label>
+        <input id="coNotes" placeholder="Anything we should know?">
+      </form>
+      <!-- confirmation view -->
+      <div class="co-ok" id="coOk">
+        <div class="big">Salamat! 🌿</div>
+        <p>Your order has been received. We'll be in touch about payment and shipping.</p>
+        <div class="num" id="coOkNum"></div>
+        <p style="font-size:12px;color:#9a8e6f">Made with care. Given with love.</p>
+      </div>
+    </div>
+    <div class="cart-ft" id="cartFooter">
+      <div class="cart-total">
+        <span class="tl">Total</span>
+        <span class="tv" id="cartTotal">$0</span>
+      </div>
+      <button class="checkout-btn" id="checkoutBtn" onclick="goCheckout()" disabled>Checkout</button>
+      <div class="cart-note" id="cartNote">No payment taken here yet — we'll confirm your order and arrange payment.</div>
+    </div>
+  </aside>
+
 <script>
-  // ---- Products ----
+  // ---- Products ----  (key links each product to the operations app)
   var PRODUCTS = [
-    { name:'Virgin Coconut & Lemongrass', tag:'Soap', detail:'Cold Process · 100g', scent:'Bright · Citrus · Herbaceous', price:'$13', img:'product-coconut-lemongrass.png', shot:'coconut · flat-lay' },
-    { name:'Calamansi Brightening Bar', tag:'Soap', detail:'Cold Process · 100g', scent:'Zesty · Citrus · Uplifting', price:'$15', img:'product-calamansi.png', shot:'calamansi · flat-lay' },
-    { name:'Moringa & Coconut Milk', tag:'Soap', detail:'Cold Process · 100g', scent:'Creamy · Green · Gentle', price:'$16', img:'product-moringa.png', shot:'moringa · flat-lay' },
-    { name:'Charcoal & Lemongrass Detox', tag:'Soap', detail:'Cold Process · 100g', scent:'Earthy · Smoky · Fresh', price:'$14', img:'product-charcoal-detox.png', shot:'charcoal · flat-lay' },
-    { name:'Ylang-Ylang Shampoo Bar', tag:'Shampoo', detail:'Cold Process · 80g', scent:'Floral · Sweet · Calming', price:'$18', img:'product-ylang-ylang.png', shot:'ylang-ylang · flat-lay' }
+    { key:'coconut',   name:'Virgin Coconut & Lemongrass', tag:'Soap', detail:'Cold Process · 100g', scent:'Bright · Citrus · Herbaceous', price:13, img:'product-coconut-lemongrass.png', shot:'coconut · flat-lay' },
+    { key:'calamansi', name:'Calamansi Brightening Bar', tag:'Soap', detail:'Cold Process · 100g', scent:'Zesty · Citrus · Uplifting', price:15, img:'product-calamansi.png', shot:'calamansi · flat-lay' },
+    { key:'moringa',   name:'Moringa & Coconut Milk', tag:'Soap', detail:'Cold Process · 100g', scent:'Creamy · Green · Gentle', price:16, img:'product-moringa.png', shot:'moringa · flat-lay' },
+    { key:'charcoal',  name:'Charcoal & Lemongrass Detox', tag:'Soap', detail:'Cold Process · 100g', scent:'Earthy · Smoky · Fresh', price:14, img:'product-charcoal-detox.png', shot:'charcoal · flat-lay' },
+    { key:'shampoo',   name:'Ylang-Ylang Shampoo Bar', tag:'Shampoo', detail:'Cold Process · 80g', scent:'Floral · Sweet · Calming', price:18, img:'product-ylang-ylang.png', shot:'ylang-ylang · flat-lay' }
   ];
+  var PMAP = {}; PRODUCTS.forEach(function(p){ PMAP[p.key]=p; });
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function money(n){ return '$'+n.toFixed(0); }
   (function renderProducts(){
     var html = PRODUCTS.map(function(p){
       return '<div class="pcard"><div class="frame">'
@@ -423,15 +520,16 @@
         + '<h3>'+esc(p.name)+'</h3>'
         + '<div class="pdetail">'+esc(p.detail)+'</div>'
         + '<div class="pscent">'+esc(p.scent)+'</div>'
-        + '<div class="prow"><span class="pprice">'+esc(p.price)+'</span>'
-        +   '<button class="addbtn" onclick="addToCart('+ '\'' + esc(p.name).replace(/'/g,"\\'") + '\'' +')">Add to cart</button></div>'
+        + '<div class="prow"><span class="pprice">'+money(p.price)+'</span>'
+        +   '<button class="addbtn" onclick="addToCart(\''+p.key+'\')">Add to cart</button></div>'
         + '</div></div>';
     }).join('');
     document.getElementById('pgrid').innerHTML = html;
   })();
 
-  // ---- Cart + toast ----
-  var cart = 0, toastTimer;
+  // ---- Cart state ----  {key: qty}
+  var CART = {};
+  var toastTimer;
   function showToast(msg){
     document.getElementById('toastMsg').textContent = msg;
     var t = document.getElementById('toast');
@@ -439,15 +537,158 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2400);
   }
-  function addToCart(name){
-    cart++; document.getElementById('cartCount').textContent = cart;
-    showToast('Added to cart · ' + name);
+  function cartCount(){ var n=0; for(var k in CART) n+=CART[k]; return n; }
+  function cartTotal(){ var t=0; for(var k in CART) t+=PMAP[k].price*CART[k]; return t; }
+  function updateCartBadge(){ document.getElementById('cartCount').textContent = cartCount(); }
+
+  function addToCart(key){
+    CART[key] = (CART[key]||0) + 1;
+    updateCartBadge();
+    renderCart();
+    showToast('Added · ' + PMAP[key].name);
+    openCart();
   }
-  function cartClick(){
-    showToast(cart > 0 ? (cart + ' bar' + (cart>1?'s':'') + ' in your cart') : 'Your cart is empty — add a bar 🌿');
+  function setQty(key, delta){
+    CART[key] = (CART[key]||0) + delta;
+    if(CART[key] <= 0) delete CART[key];
+    updateCartBadge(); renderCart();
   }
 
-  // ---- Email ----
+  function renderCart(){
+    var list = document.getElementById('cartList');
+    var keys = Object.keys(CART);
+    if(keys.length === 0){
+      list.innerHTML = '<div class="cart-empty">Your cart is empty.<br>Add a bar to begin. 🌿</div>';
+    } else {
+      list.innerHTML = keys.map(function(k){
+        var p = PMAP[k];
+        return '<div class="citem">'
+          + '<div class="cthumb">◆</div>'
+          + '<div class="cinfo"><div class="cname">'+esc(p.name)+'</div>'
+          +   '<div class="cprice">'+money(p.price)+' each</div></div>'
+          + '<div class="qty"><button onclick="setQty(\''+k+'\',-1)" aria-label="Decrease">−</button>'
+          +   '<span>'+CART[k]+'</span>'
+          +   '<button onclick="setQty(\''+k+'\',1)" aria-label="Increase">+</button></div>'
+          + '</div>';
+      }).join('');
+    }
+    document.getElementById('cartTotal').textContent = money(cartTotal());
+    document.getElementById('checkoutBtn').disabled = (keys.length === 0);
+  }
+
+  // ---- Drawer open/close ----
+  function openCart(){
+    document.getElementById('cartOverlay').classList.add('open');
+    document.getElementById('cartDrawer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeCart(){
+    document.getElementById('cartOverlay').classList.remove('open');
+    document.getElementById('cartDrawer').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function cartClick(){ renderCart(); openCart(); }
+
+  // ---- Checkout views ----
+  function goCheckout(){
+    if(cartCount()===0) return;
+    document.getElementById('cartList').classList.add('hide');
+    document.getElementById('coForm').classList.add('show');
+    document.getElementById('cartTitle').textContent = 'Checkout';
+    document.getElementById('checkoutBtn').style.display = 'none';
+    document.getElementById('cartNote').textContent = 'Step 2 of 2 — your details. No payment taken here.';
+    // turn footer button area into a submit trigger
+    document.getElementById('cartNote').insertAdjacentHTML('beforebegin',
+      '<button class="checkout-btn" id="placeBtn" onclick="document.getElementById(\'coForm\').requestSubmit()">Place order</button>');
+  }
+  function backToCart(){
+    document.getElementById('cartList').classList.remove('hide');
+    document.getElementById('coForm').classList.remove('show');
+    document.getElementById('cartTitle').textContent = 'Your Cart';
+    document.getElementById('checkoutBtn').style.display = '';
+    var pb=document.getElementById('placeBtn'); if(pb) pb.remove();
+    document.getElementById('cartNote').textContent = 'No payment taken here yet — we\u2019ll confirm your order and arrange payment.';
+  }
+
+  // ---- Place order → write to shared storage for the ops app ----
+  // ---- Backend config ----
+  // When BACKEND_URL is set, orders are POSTed to the real database (Cloudflare Worker + D1).
+  // Leave BACKEND_URL empty to keep the original browser-only behaviour (window.storage handoff).
+  // The write token is low-sensitivity by design (see brief section 5); the real security boundary
+  // is the Shopify HMAC path, not this token.
+  var BACKEND_URL   = 'https://kalinga-orders.kalinganaturals.workers.dev';
+  var BACKEND_TOKEN = '87c7a0254b8a806809c285f753171e74e90b95f267a54eb5';   // matches Worker WRITE_TOKEN
+
+  var OPS_KEY = 'kalinga:ops:v1';
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function orderId(){ return 'web-' + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+
+  async function placeOrder(e){
+    e.preventDefault();
+    var order = {
+      id: orderId(),
+      customer: document.getElementById('coName').value.trim(),
+      email: document.getElementById('coEmail').value.trim(),
+      address: document.getElementById('coAddr').value.trim()
+               + (document.getElementById('coNotes').value.trim() ? ' — '+document.getElementById('coNotes').value.trim() : ''),
+      items: Object.assign({}, CART),
+      status: 'new',
+      created: todayStr(),
+      shipped: null
+    };
+
+    // 1) Try shared storage (works when site + ops app share an origin)
+    var savedToOps = false;
+    try{
+      if(window.storage && window.storage.get){
+        var existing = await window.storage.get(OPS_KEY, true);
+        var state = existing && existing.value ? JSON.parse(existing.value)
+                    : {orders:[],batches:[],inventory:{},ingredientCosts:{},deliveries:[]};
+        if(!state.orders) state.orders = [];
+        state.orders.push(order);
+        await window.storage.set(OPS_KEY, JSON.stringify(state), true);
+        savedToOps = true;
+      }
+    }catch(err){ /* fall through to backup */ }
+
+    // 2) Always keep a local backup list (and an import code) as a fallback
+    try{
+      var backup = JSON.parse(localStorage.getItem('kalinga:web:orders')||'[]');
+      backup.push(order); localStorage.setItem('kalinga:web:orders', JSON.stringify(backup));
+    }catch(err){}
+
+    // 3) POST to the real backend (source of truth). Idempotent on order.id server-side,
+    //    so this is safe even if the order was also written to shared storage above.
+    if (BACKEND_URL){
+      try{
+        var resp = await fetch(BACKEND_URL.replace(/\/$/,'') + '/orders', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json', 'X-Kalinga-Token': BACKEND_TOKEN },
+          body: JSON.stringify(order),
+          keepalive: true
+        });
+        if (resp && resp.ok) savedToOps = true;
+      }catch(err){ /* offline - localStorage backup + import code still cover it */ }
+    }
+
+    // confirmation
+    var code = btoa(unescape(encodeURIComponent(JSON.stringify(order)))).replace(/=+$/,'');
+    document.getElementById('coForm').classList.remove('show');
+    document.getElementById('coForm').style.display = 'none';
+    document.getElementById('cartFooter').style.display = 'none';
+    var ok = document.getElementById('coOk');
+    ok.classList.add('show');
+    document.getElementById('coOkNum').innerHTML =
+      'Order ref<br><b>'+order.id+'</b>' +
+      (savedToOps ? '' : '<br><span style="font-size:10px">Import code saved — staff can add it to operations.</span>');
+    document.getElementById('cartTitle').textContent = 'Order received';
+    // store the import code where staff can copy it if needed
+    try{ localStorage.setItem('kalinga:web:lastcode', code); }catch(err){}
+    CART = {}; updateCartBadge();
+    return false;
+  }
+
+  // ---- Email signup ----
   function subscribe(e){
     e.preventDefault();
     document.getElementById('emailForm').style.display = 'none';
