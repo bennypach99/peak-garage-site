@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalinga Naturals — Handcrafted in the Philippines. Made for you.</title>
+<meta name="description" content="Premium handmade cold-process soap and shampoo bars, crafted by hand in the Philippines with 100% local botanicals. Fair wages, local sourcing, and one bar donated for every ten sold. Made with care. Given with love.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1A3A5C; --navy-d:#142e49; --gold:#D4A853; --gold-d:#c79a40;
+    --cream:#F8F4EE; --cream2:#F1E7D2; --teal:#4A9D8F; --warm:#F5ECD7; --ink:#1A1A2E;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:'Lato',Helvetica,Arial,sans-serif;color:var(--ink);background:var(--cream);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  ::selection{background:var(--gold);color:var(--navy)}
+  a{color:inherit}
+  img{display:block;max-width:100%}
+  .serif{font-family:Georgia,serif}
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px}
+  .eyebrow{font-size:12px;letter-spacing:3px;text-transform:uppercase;font-weight:700}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+
+  /* announcement + header */
+  .announce{background:var(--navy);color:var(--cream);text-align:center;font-size:12.5px;letter-spacing:2.5px;text-transform:uppercase;padding:9px 16px;font-weight:700}
+  .announce span{color:var(--gold)}
+  header.site{position:sticky;top:0;z-index:60;background:rgba(248,244,238,.92);backdrop-filter:blur(10px);border-bottom:1px solid rgba(212,168,83,.35)}
+  .hrow{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:10px 32px;max-width:1240px;margin:0 auto}
+  .hrow img{height:56px;width:auto}
+  nav.main{display:flex;align-items:center;gap:32px}
+  nav.main a{color:var(--navy);text-decoration:none;font-size:12.5px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;transition:color .2s}
+  nav.main a:hover{color:var(--teal)}
+  .cartbtn{display:flex;align-items:center;gap:8px;background:var(--navy);color:var(--cream);border:none;cursor:pointer;padding:11px 18px;border-radius:2px;font-family:inherit;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;transition:background .2s}
+  .cartbtn:hover{background:var(--navy-d)}
+  .cartbtn b{color:var(--gold);font-weight:900}
+
+  /* hero */
+  .hero{position:relative;background:var(--navy);color:var(--cream);overflow:hidden}
+  .hero .glow{position:absolute;inset:0;background:radial-gradient(1100px 520px at 78% 18%,rgba(212,168,83,.16),transparent 60%),radial-gradient(800px 500px at 12% 92%,rgba(74,157,143,.18),transparent 60%)}
+  .hero .inner{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:56px;padding:70px 32px 84px;max-width:1240px;margin:0 auto}
+  .hero-copy{flex:1 1 420px;min-width:320px}
+  .hero h1{font-weight:400;font-size:60px;line-height:1.06;margin:0 0 22px;color:var(--cream);letter-spacing:-.5px}
+  .hero h1 .accent{color:var(--gold)}
+  .hero p.lead{font-size:18.5px;line-height:1.65;color:rgba(248,244,238,.78);max-width:460px;margin:0 0 34px;font-weight:300}
+  .btn-gold{background:var(--gold);color:var(--navy);text-decoration:none;padding:17px 34px;border-radius:2px;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:900;display:inline-block;transition:background .2s}
+  .btn-gold:hover{background:var(--gold-d)}
+  .link-ul{color:var(--cream);text-decoration:none;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-bottom:1px solid rgba(212,168,83,.6);padding-bottom:4px;transition:color .2s}
+  .link-ul:hover{color:var(--gold)}
+  .hero-stats{display:flex;gap:34px;margin-top:46px;flex-wrap:wrap}
+  .hero-stats .n{font-family:Georgia,serif;font-size:30px;color:var(--gold)}
+  .hero-stats .l{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(248,244,238,.6);margin-top:3px}
+  .hero-logo{flex:1 1 380px;min-width:320px;display:flex;justify-content:center}
+  .hero-panel{position:relative;background:var(--cream);border-radius:6px;box-shadow:0 40px 80px -30px rgba(0,0,0,.55);padding:18px;animation:floaty 7s ease-in-out infinite;max-width:460px;width:100%}
+  .hero-panel .frame{border:1.5px solid rgba(212,168,83,.55);border-radius:3px;padding:30px 26px;display:flex;justify-content:center}
+  .hero-panel img{width:100%;max-width:340px;height:auto}
+  .rainbow{height:8px;background:linear-gradient(90deg,var(--teal),var(--gold) 50%,var(--teal))}
+
+  /* sections */
+  section{scroll-margin-top:90px}
+  .sec{padding:84px 0}
+  .sec-head{text-align:center;margin-bottom:48px}
+  .sec-head .eyebrow{color:var(--teal);margin-bottom:14px}
+  .sec-head h2{font-family:Georgia,serif;font-weight:400;font-size:42px;color:var(--navy);margin:0 0 12px}
+  .sec-head p{font-size:16px;color:#5b5a52;max-width:560px;margin:0 auto;line-height:1.6}
+
+  /* mission */
+  .mission{background:var(--cream);padding:64px 0}
+  .mission .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:30px}
+  .mcol{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:0 14px}
+  .mcol.mid{border-left:1px solid rgba(212,168,83,.3);border-right:1px solid rgba(212,168,83,.3)}
+  .micon{width:64px;height:64px;border-radius:50%;background:rgba(74,157,143,.12);display:flex;align-items:center;justify-content:center}
+  .mcol h3{font-family:Georgia,serif;font-weight:400;font-size:21px;color:var(--navy);margin:0}
+  .mcol p{font-size:14.5px;line-height:1.6;color:#5b5a52;margin:0;max-width:240px}
+
+  /* products */
+  .shop{background:var(--cream2)}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(216px,1fr));gap:22px}
+  .pcard{background:var(--cream);border-radius:5px;box-shadow:0 18px 40px -26px rgba(26,58,92,.55);padding:12px;display:flex;flex-direction:column;transition:box-shadow .25s,transform .25s}
+  .pcard:hover{box-shadow:0 26px 50px -22px rgba(26,58,92,.7);transform:translateY(-4px)}
+  .pcard .frame{border:1px solid rgba(212,168,83,.55);border-radius:3px;padding:14px;display:flex;flex-direction:column;flex:1}
+  .pimg{position:relative;aspect-ratio:1/1;border-radius:2px;overflow:hidden;background-color:var(--warm);background-image:repeating-linear-gradient(45deg,rgba(212,168,83,.16) 0,rgba(212,168,83,.16) 9px,transparent 9px,transparent 18px);margin-bottom:14px}
+  .pimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .pimg .ptag{position:absolute;top:10px;left:10px;z-index:2;background:var(--teal);color:var(--cream);font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;padding:4px 8px;border-radius:2px}
+  .pimg .phlabel{position:absolute;left:0;right:0;bottom:10px;z-index:2;text-align:center}
+  .pimg .phlabel span{font-family:'Lato',monospace;font-size:10px;letter-spacing:1px;color:#9a8e6f;background:rgba(248,244,238,.85);padding:4px 8px;border-radius:2px}
+  .pcard h3{font-family:Georgia,serif;font-weight:400;font-size:18.5px;line-height:1.2;color:var(--navy);margin:0 0 8px}
+  .pdetail{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:#9a8e6f;margin-bottom:10px}
+  .pscent{font-size:12px;color:var(--teal);font-style:italic;font-family:Georgia,serif;margin-bottom:16px;line-height:1.4}
+  .prow{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .pprice{font-family:Georgia,serif;font-size:22px;color:var(--gold);font-weight:700}
+  .addbtn{background:var(--navy);color:var(--cream);border:none;cursor:pointer;padding:11px 14px;border-radius:2px;font-family:inherit;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;transition:background .2s,color .2s}
+  .addbtn:hover{background:var(--gold);color:var(--navy)}
+  .btn-outline{display:inline-block;border:1.5px solid var(--navy);color:var(--navy);text-decoration:none;padding:15px 38px;border-radius:2px;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:700;transition:background .2s,color .2s}
+  .btn-outline:hover{background:var(--navy);color:var(--cream)}
+
+  /* story */
+  .story{background:var(--cream);padding:90px 0}
+  .story .inner{display:flex;flex-wrap:wrap;align-items:center;gap:60px;max-width:1160px;margin:0 auto}
+  .story-photo{flex:1 1 360px;min-width:300px;position:relative}
+  .story-frame{position:relative;aspect-ratio:4/5;border-radius:4px;overflow:hidden;background-color:var(--navy);background-image:repeating-linear-gradient(45deg,rgba(248,244,238,.06) 0,rgba(248,244,238,.06) 11px,transparent 11px,transparent 22px);box-shadow:0 30px 60px -30px rgba(26,58,92,.6);display:flex;align-items:flex-end;padding:22px}
+  .story-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .story-frame .phlabel{position:relative;z-index:2;font-family:'Lato',monospace;font-size:11px;letter-spacing:1px;color:rgba(248,244,238,.85);background:rgba(26,58,92,.6);border:1px solid rgba(212,168,83,.4);padding:6px 12px;border-radius:2px}
+  .story-badge{position:absolute;bottom:-26px;right:-14px;background:var(--gold);color:var(--navy);padding:18px 22px;border-radius:4px;box-shadow:0 16px 30px -14px rgba(0,0,0,.4);max-width:170px}
+  .story-badge div{font-family:Georgia,serif;font-size:14px;font-style:italic;line-height:1.4}
+  .story-copy{flex:1 1 380px;min-width:300px}
+  .story-copy .eyebrow{color:var(--teal);margin-bottom:16px}
+  .story-copy h2{font-family:Georgia,serif;font-weight:400;font-size:38px;line-height:1.15;color:var(--navy);margin:0 0 22px}
+  .story-copy p{font-size:16.5px;line-height:1.75;color:#4a4940;margin:0 0 18px}
+  .link-gold{color:var(--navy);text-decoration:none;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-bottom:2px solid var(--gold);padding-bottom:4px;transition:color .2s}
+  .link-gold:hover{color:var(--teal)}
+
+  /* give-back */
+  .give{position:relative;background:var(--navy);color:var(--cream);padding:88px 0;text-align:center;overflow:hidden}
+  .give .glow{position:absolute;inset:0;background-image:radial-gradient(circle at 50% 0%,rgba(212,168,83,.14),transparent 55%)}
+  .give .inner{position:relative;max-width:860px;margin:0 auto;padding:0 32px}
+  .give .eyebrow{color:var(--gold);margin-bottom:20px}
+  .counter{font-family:Georgia,serif;font-weight:700;font-size:108px;line-height:1;color:var(--gold);letter-spacing:-2px}
+  .give .sub{font-family:Georgia,serif;font-style:italic;font-size:26px;color:var(--cream);margin-top:12px}
+  .give p{font-size:15px;color:rgba(248,244,238,.65);max-width:520px;margin:22px auto 0;line-height:1.6}
+  .give-stats{display:flex;justify-content:center;gap:50px;margin-top:44px;flex-wrap:wrap}
+  .give-stats .n{font-family:Georgia,serif;font-size:30px;color:var(--teal)}
+  .give-stats .l{font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(248,244,238,.6);margin-top:4px}
+  .give-stats .div{border-left:1px solid rgba(212,168,83,.3)}
+
+  /* testimonials */
+  .testi{background:var(--cream2)}
+  .tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:26px}
+  .tcard{background:var(--cream);border:1px solid rgba(212,168,83,.4);border-radius:5px;padding:32px 28px;display:flex;flex-direction:column;gap:16px}
+  .tcard .stars{color:var(--gold);font-size:17px;letter-spacing:3px}
+  .tcard p{font-family:Georgia,serif;font-style:italic;font-size:18px;line-height:1.6;color:var(--navy);margin:0}
+  .tcard .who{margin-top:auto;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#9a8e6f;font-weight:700}
+
+  /* video */
+  .video{background:var(--navy);color:var(--cream);padding:84px 0}
+  .video .inner{max-width:1000px;margin:0 auto;padding:0 32px;text-align:center}
+  .video .eyebrow{color:var(--gold);margin-bottom:14px}
+  .video h2{font-family:Georgia,serif;font-weight:400;font-size:38px;color:var(--cream);margin:0 0 40px}
+  .vbox{position:relative;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background-color:var(--navy-d);background-image:repeating-linear-gradient(45deg,rgba(248,244,238,.05) 0,rgba(248,244,238,.05) 13px,transparent 13px,transparent 26px);border:1px solid rgba(212,168,83,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;cursor:pointer;transition:border-color .2s}
+  .vbox:hover{border-color:rgba(212,168,83,.7)}
+  .vbox img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .play{position:relative;z-index:2;width:84px;height:84px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:0 14px 40px -10px rgba(212,168,83,.6)}
+  .vbox .phlabel{position:relative;z-index:2;font-family:'Lato',monospace;font-size:12px;letter-spacing:1px;color:rgba(248,244,238,.7)}
+
+  /* email */
+  .email{background:var(--cream);padding:80px 0}
+  .email .inner{max-width:960px;margin:0 auto;padding:0 32px}
+  .email-card{position:relative;overflow:hidden;background:var(--navy);border-radius:8px;padding:54px 48px;box-shadow:0 40px 80px -40px rgba(26,58,92,.6)}
+  .email-card .glow{position:absolute;inset:0;background-image:radial-gradient(600px 300px at 90% 10%,rgba(212,168,83,.16),transparent 60%)}
+  .email-row{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:40px}
+  .email-copy{flex:1 1 280px;min-width:260px}
+  .email-copy h2{font-family:Georgia,serif;font-weight:400;font-size:34px;color:var(--cream);margin:0 0 12px;line-height:1.15}
+  .email-copy p{font-size:15.5px;line-height:1.6;color:rgba(248,244,238,.78);margin:0}
+  .email-copy p b{color:var(--gold)}
+  .email-form{flex:1 1 300px;min-width:280px;display:flex;flex-direction:column;gap:12px}
+  .email-form input{background:var(--cream);border:1px solid rgba(212,168,83,.5);border-radius:3px;padding:14px 16px;font-family:inherit;font-size:14px;color:var(--ink);outline:none}
+  .email-form input:focus{border-color:var(--gold)}
+  .email-form button{background:var(--gold);color:var(--navy);border:none;cursor:pointer;padding:15px;border-radius:3px;font-family:inherit;font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:900;transition:background .2s}
+  .email-form button:hover{background:var(--gold-d)}
+  .email-ok{flex:1 1 300px;min-width:280px;background:rgba(74,157,143,.18);border:1px solid var(--teal);border-radius:4px;padding:24px;text-align:center;display:none}
+  .email-ok .t{font-family:Georgia,serif;font-size:22px;color:var(--gold);margin-bottom:8px}
+  .email-ok .d{font-size:14px;color:rgba(248,244,238,.85);line-height:1.5}
+
+  /* footer */
+  footer.site{background:var(--navy-d);color:var(--cream);padding:64px 0 30px}
+  .fcols{display:flex;flex-wrap:wrap;gap:48px;justify-content:space-between;padding-bottom:44px;border-bottom:1px solid rgba(212,168,83,.25)}
+  .fbrand{flex:1 1 280px;min-width:240px}
+  .fbrand .k{font-family:Georgia,serif;font-size:30px;letter-spacing:4px;color:var(--cream)}
+  .fbrand .rule{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+  .fbrand .rule .line{flex:1;height:1px;background:rgba(212,168,83,.5);max-width:60px}
+  .fbrand .rule .d{color:var(--gold)}
+  .fbrand .rule .n{font-family:Georgia,serif;font-size:16px;letter-spacing:6px;color:var(--teal)}
+  .fbrand .tag{font-family:Georgia,serif;font-style:italic;font-size:15px;color:rgba(248,244,238,.7);margin:0 0 18px}
+  .social{display:flex;gap:10px}
+  .social a{width:38px;height:38px;border-radius:50%;border:1px solid rgba(212,168,83,.5);display:flex;align-items:center;justify-content:center;color:var(--gold);text-decoration:none;font-size:11px;letter-spacing:1px;font-weight:700;transition:background .2s,color .2s}
+  .social a:hover{background:var(--gold);color:var(--navy)}
+  .fnav{display:flex;gap:56px;flex-wrap:wrap}
+  .fnav .h{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px}
+  .fnav .col{display:flex;flex-direction:column;gap:11px}
+  .fnav a{color:rgba(248,244,238,.78);text-decoration:none;font-size:14px;transition:color .2s}
+  .fnav a:hover{color:var(--gold)}
+  .fbottom{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;padding-top:24px;font-size:12px;color:rgba(248,244,238,.5);line-height:1.6}
+  .fbottom .r{text-align:right}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:100;background:var(--navy);color:var(--cream);border:1px solid var(--gold);border-radius:4px;padding:14px 22px;font-size:13.5px;letter-spacing:.5px;box-shadow:0 16px 40px -12px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast .c{color:var(--teal);font-size:16px}
+
+  @media(max-width:720px){
+    .hero h1{font-size:44px}
+    .counter{font-size:74px}
+    nav.main{display:none}
+    .sec-head h2,.story-copy h2,.video h2{font-size:30px}
+  }
+</style>
+</head>
+<body>
+
+  <div class="announce">Free Canada-wide shipping over $60&nbsp;&nbsp;·&nbsp;&nbsp;<span>For every 10 bars sold, 1 is donated</span></div>
+
+  <!-- HEADER -->
+  <header class="site">
+    <div class="hrow">
+      <a href="#top" aria-label="Kalinga Naturals home"><img src="images/logo-horizontal.png" alt="Kalinga Naturals"></a>
+      <nav class="main">
+        <a href="#shop">Shop</a>
+        <a href="#story">Our Story</a>
+        <a href="#give">Mission</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <button class="cartbtn" onclick="cartClick()">Cart <b id="cartCount">0</b></button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="glow"></div>
+    <div class="inner">
+      <div class="hero-copy">
+        <div class="eyebrow" style="display:inline-flex;align-items:center;gap:12px;color:var(--gold);margin-bottom:26px"><span style="width:26px;height:1px;background:var(--gold);display:inline-block"></span>Est. 2026 · Philippines → Canada</div>
+        <h1 class="serif">Handcrafted in the<br>Philippines.<br><span class="accent">Made for you.</span></h1>
+        <p class="lead">Premium botanical soap bars — pressed by hand, scented with Philippine calamansi, moringa and ylang-ylang. Made with care. Given with love.</p>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:18px">
+          <a href="#shop" class="btn-gold">Shop the collection</a>
+          <a href="#story" class="link-ul">Read our story →</a>
+        </div>
+        <div class="hero-stats">
+          <div><div class="n serif">100%</div><div class="l">Philippine botanicals</div></div>
+          <div><div class="n serif">1 in 10</div><div class="l">Bars donated</div></div>
+          <div><div class="n serif">Fair</div><div class="l">Above-market wages</div></div>
+        </div>
+      </div>
+      <div class="hero-logo">
+        <div class="hero-panel">
+          <div class="frame"><img src="images/logo-stacked.png" alt="Kalinga Naturals logo"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rainbow"></div>
+  </section>
+
+  <!-- MISSION -->
+  <section class="mission">
+    <div class="wrap">
+      <div class="grid">
+        <div class="mcol">
+          <div class="micon"><svg width="34" height="34" viewBox="0 0 40 40" fill="none" stroke="#4A9D8F" stroke-width="1.7"><circle cx="20" cy="20" r="13"/><circle cx="20" cy="20" r="5.5"/><path d="M20 7v3M20 30v3M7 20h3M30 20h3"/></svg></div>
+          <h3>Fair wages</h3>
+          <p>Above-market pay for every worker who shapes a bar — dignified work, by hand.</p>
+        </div>
+        <div class="mcol mid">
+          <div class="micon"><svg width="34" height="34" viewBox="0 0 40 40" fill="none" stroke="#4A9D8F" stroke-width="1.7"><path d="M20 33V15"/><path d="M20 22c-6 0-9-4-9-9 5 0 9 3 9 9Z" fill="rgba(74,157,143,0.18)"/><path d="M20 19c5 0 8-3.5 8-8-4.5 0-8 3-8 8Z" fill="rgba(74,157,143,0.18)"/></svg></div>
+          <h3>Local sourcing</h3>
+          <p>Botanicals bought directly from Philippine farmers, at origin — never a middleman.</p>
+        </div>
+        <div class="mcol">
+          <div class="micon"><svg width="34" height="34" viewBox="0 0 40 40" fill="none" stroke="#4A9D8F" stroke-width="1.7"><path d="M20 32C9 24.5 9 14.5 14.5 13c3-0.8 5.5 2 5.5 2s2.5-2.8 5.5-2C31 14.5 31 24.5 20 32Z" fill="rgba(74,157,143,0.18)"/></svg></div>
+          <h3>Give back</h3>
+          <p>For every 10 bars sold in Canada, 1 is donated to a Filipino family in need.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="sec shop" id="shop">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">The Collection</div>
+        <h2>Five bars. One story.</h2>
+        <p>Cold-process bars cured for four weeks, wrapped by the same hands that made them.</p>
+      </div>
+      <div class="pgrid" id="pgrid"></div>
+      <div style="text-align:center;margin-top:44px"><a href="#shop" class="btn-outline">View all products</a></div>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section class="story" id="story">
+    <div class="inner">
+      <div class="story-photo">
+        <div class="story-frame">
+          <img src="images/story-philippines.jpg" alt="Hands making soap in the Philippines" onerror="this.remove()" onload="this.parentNode.querySelector('.phlabel').style.display='none'">
+          <span class="phlabel">photo: hands making soap · Philippines</span>
+        </div>
+        <div class="story-badge"><div>"Kalinga" — to care for, to nurture, with tenderness.</div></div>
+      </div>
+      <div class="story-copy">
+        <div class="eyebrow">Our Story</div>
+        <h2>Every bar begins in the Philippines.</h2>
+        <p>It starts with a partner managing a small workshop, farmers who grow calamansi and moringa down the road, and a promise: pay people what their work is worth. Each bar is mixed, poured, cut and cured by hand — then carried across the ocean to Canada.</p>
+        <p>We're a family-run social enterprise rooted in <em>bayanihan</em> — community, lifting one another. When you buy a bar, a family back home is part of the reason it exists.</p>
+        <a href="#story" class="link-gold">Read the full story →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- GIVE-BACK -->
+  <section class="give" id="give">
+    <div class="glow"></div>
+    <div class="inner">
+      <div class="eyebrow">The Give-Back Counter</div>
+      <div class="counter" id="counter" data-target="312">0</div>
+      <div class="sub">bars donated to families in the Philippines</div>
+      <p>A real number, updated monthly through our barangay partner. Every tenth bar you buy adds to it.</p>
+      <div class="give-stats">
+        <div><div class="n">9</div><div class="l">Farmers sourced from</div></div>
+        <div class="div"></div>
+        <div><div class="n">+38%</div><div class="l">Wages above market</div></div>
+        <div class="div"></div>
+        <div><div class="n">100%</div><div class="l">Made by hand</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="sec testi">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="eyebrow">Kind Words</div>
+        <h2>From our first families</h2>
+      </div>
+      <div class="tgrid">
+        <div class="tcard"><div class="stars">★★★★★</div><p>The Calamansi bar smells like my lola's kitchen back home. It stopped me in my tracks.</p><div class="who">Maria S. · Scarborough, ON</div></div>
+        <div class="tcard"><div class="stars">★★★★★</div><p>Knowing my purchase pays fair wages and gives back makes it the easiest thing I buy.</p><div class="who">James &amp; Aileen · Mississauga, ON</div></div>
+        <div class="tcard"><div class="stars">★★★★★</div><p>Gentle on my kids' skin, and the story behind every bar is everything to our family.</p><div class="who">Rowena T. · Burlington, ON</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEO -->
+  <section class="video">
+    <div class="inner">
+      <div class="eyebrow">From the Philippines</div>
+      <h2>Watch how Kalinga is made</h2>
+      <div class="vbox">
+        <img src="images/origin-video-poster.jpg" alt="Origin film poster" onerror="this.remove()" onload="this.parentNode.querySelector('.phlabel').style.display='none'">
+        <div class="play"><svg width="30" height="34" viewBox="0 0 30 34" fill="#1A3A5C"><path d="M2 2L28 17L2 32Z"/></svg></div>
+        <span class="phlabel">origin film · 60–90s · drops here</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- EMAIL -->
+  <section class="email" id="contact">
+    <div class="inner">
+      <div class="email-card">
+        <div class="glow"></div>
+        <div class="email-row">
+          <div class="email-copy">
+            <h2>Be the first to know.</h2>
+            <p>Join our community and get <b>10% off</b> your first order when we launch.</p>
+          </div>
+          <form class="email-form" id="emailForm" onsubmit="return subscribe(event)">
+            <input type="text" placeholder="First name" aria-label="First name">
+            <input type="email" placeholder="Email address" aria-label="Email address" required>
+            <button type="submit">Join &amp; get 10% off</button>
+          </form>
+          <div class="email-ok" id="emailOk">
+            <div class="t">Salamat! 🌿</div>
+            <div class="d">You're on the list — your 10% code is on its way.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site">
+    <div class="wrap">
+      <div class="fcols">
+        <div class="fbrand">
+          <div class="k">KALINGA</div>
+          <div class="rule"><span class="line"></span><span class="d">◆</span><span class="n">NATURALS</span></div>
+          <p class="tag">Made with care. Given with love.</p>
+          <div class="social"><a href="#" aria-label="Instagram">IG</a><a href="#" aria-label="Facebook">FB</a><a href="#" aria-label="TikTok">TT</a></div>
+        </div>
+        <div class="fnav">
+          <div>
+            <div class="h">Shop</div>
+            <div class="col"><a href="#shop">All soap bars</a><a href="#shop">Shampoo bars</a><a href="#shop">Gift sets</a></div>
+          </div>
+          <div>
+            <div class="h">Company</div>
+            <div class="col"><a href="#story">Our story</a><a href="#give">The mission</a><a href="#contact">Wholesale</a></div>
+          </div>
+          <div>
+            <div class="h">Connect</div>
+            <div class="col"><a href="#contact">Contact</a><a href="#contact">Farmers markets</a><a href="#contact">FAQ</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="fbottom">
+        <div>Handcrafted in the Philippines · Burlington, Ontario, Canada</div>
+        <div class="r">All products comply with Health Canada cosmetic regulations · Bilingual EN/FR labelling · © 2026 Kalinga Naturals</div>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast"><span class="c">✓</span><span id="toastMsg"></span></div>
+
+<script>
+  // ---- Products ----
+  var PRODUCTS = [
+    { name:'Virgin Coconut & Lemongrass', tag:'Soap', detail:'Cold Process · 100g', scent:'Bright · Citrus · Herbaceous', price:'$13', img:'product-coconut-lemongrass.jpg', shot:'coconut · flat-lay' },
+    { name:'Calamansi Brightening Bar', tag:'Soap', detail:'Cold Process · 100g', scent:'Zesty · Citrus · Uplifting', price:'$15', img:'product-calamansi.jpg', shot:'calamansi · flat-lay' },
+    { name:'Moringa & Coconut Milk', tag:'Soap', detail:'Cold Process · 100g', scent:'Creamy · Green · Gentle', price:'$16', img:'product-moringa.jpg', shot:'moringa · flat-lay' },
+    { name:'Charcoal & Lemongrass Detox', tag:'Soap', detail:'Cold Process · 100g', scent:'Earthy · Smoky · Fresh', price:'$14', img:'product-charcoal-detox.jpg', shot:'charcoal · flat-lay' },
+    { name:'Ylang-Ylang Shampoo Bar', tag:'Shampoo', detail:'Cold Process · 80g', scent:'Floral · Sweet · Calming', price:'$18', img:'product-ylang-ylang.jpg', shot:'ylang-ylang · flat-lay' }
+  ];
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  (function renderProducts(){
+    var html = PRODUCTS.map(function(p){
+      return '<div class="pcard"><div class="frame">'
+        + '<div class="pimg">'
+        +   '<span class="ptag">'+esc(p.tag)+'</span>'
+        +   '<img src="images/'+p.img+'" alt="'+esc(p.name)+'" onerror="this.remove()" onload="var l=this.parentNode.querySelector(\'.phlabel\');if(l)l.style.display=\'none\'">'
+        +   '<span class="phlabel"><span>'+esc(p.shot)+'</span></span>'
+        + '</div>'
+        + '<h3>'+esc(p.name)+'</h3>'
+        + '<div class="pdetail">'+esc(p.detail)+'</div>'
+        + '<div class="pscent">'+esc(p.scent)+'</div>'
+        + '<div class="prow"><span class="pprice">'+esc(p.price)+'</span>'
+        +   '<button class="addbtn" onclick="addToCart('+ '\'' + esc(p.name).replace(/'/g,"\\'") + '\'' +')">Add to cart</button></div>'
+        + '</div></div>';
+    }).join('');
+    document.getElementById('pgrid').innerHTML = html;
+  })();
+
+  // ---- Cart + toast ----
+  var cart = 0, toastTimer;
+  function showToast(msg){
+    document.getElementById('toastMsg').textContent = msg;
+    var t = document.getElementById('toast');
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+  }
+  function addToCart(name){
+    cart++; document.getElementById('cartCount').textContent = cart;
+    showToast('Added to cart · ' + name);
+  }
+  function cartClick(){
+    showToast(cart > 0 ? (cart + ' bar' + (cart>1?'s':'') + ' in your cart') : 'Your cart is empty — add a bar 🌿');
+  }
+
+  // ---- Email ----
+  function subscribe(e){
+    e.preventDefault();
+    document.getElementById('emailForm').style.display = 'none';
+    document.getElementById('emailOk').style.display = 'block';
+    return false;
+  }
+
+  // ---- Give-back counter ----
+  (function(){
+    var el = document.getElementById('counter');
+    var target = parseInt(el.getAttribute('data-target'), 10) || 0;
+    var done = false;
+    function run(){
+      if (done) return; done = true;
+      var dur = 1700, t0 = performance.now();
+      function tick(t){
+        var k = Math.min(1, (t - t0) / dur);
+        var eased = 1 - Math.pow(1 - k, 3);
+        el.textContent = Math.round(eased * target).toLocaleString();
+        if (k < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+    if ('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(es){
+        es.forEach(function(en){ if (en.isIntersecting){ run(); io.disconnect(); } });
+      }, { threshold: 0.3 });
+      io.observe(el);
+    }
+    function onScroll(){
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight * 0.85 && r.bottom > 0){ run(); window.removeEventListener('scroll', onScroll); }
+    }
+    window.addEventListener('scroll', onScroll, { passive:true });
+    onScroll();
+    setTimeout(run, 2500);
+  })();
+</script>
+</body>
+</html>
