@@ -393,10 +393,23 @@ function renderOrders(){
     </div></div>
     <div class="card no-print"><h3>New order</h3>
       <div class="row">
-        <label class="fld"><span>Customer name</span><input id="ord_customer" placeholder="e.g. Maria Santos"></label>
-        <label class="fld"><span>Email (optional)</span><input id="ord_email" placeholder="name@email.com"></label>
+        <label class="fld"><span>First name</span><input id="ord_first" placeholder="Maria"></label>
+        <label class="fld"><span>Last name</span><input id="ord_last" placeholder="Santos"></label>
       </div>
-      <label class="fld"><span>Shipping address (optional)</span><input id="ord_address" placeholder="Street, City, Province, Postal"></label>
+      <div class="row">
+        <label class="fld"><span>Email (optional)</span><input id="ord_email" placeholder="name@email.com"></label>
+        <label class="fld"><span>Phone (optional)</span><input id="ord_phone" placeholder="(555) 123-4567"></label>
+      </div>
+      <label class="fld"><span>Street address</span><input id="ord_street" placeholder="123 Main St"></label>
+      <div class="row">
+        <label class="fld"><span>Apt / unit</span><input id="ord_line2" placeholder="optional"></label>
+        <label class="fld"><span>City</span><input id="ord_city" placeholder="Burlington"></label>
+      </div>
+      <div class="row">
+        <label class="fld"><span>Province / State</span><input id="ord_prov" placeholder="ON"></label>
+        <label class="fld"><span>Postal / ZIP</span><input id="ord_postal" placeholder="L7M 0P5"></label>
+        <label class="fld"><span>Country</span><input id="ord_country" placeholder="Canada"></label>
+      </div>
       <div class="divider"></div>
       <p class="muted" style="margin-bottom:8px">Quantities</p>
       <div class="row">${itemInputs}</div>
@@ -409,13 +422,16 @@ function renderOrders(){
     </div>`;
 }
 function addOrder(){
-  const customer=$('#ord_customer').value.trim();
+  const gv=id=>{const e=$('#'+id);return e?e.value.trim():'';};
+  const customer=(gv('ord_first')+' '+gv('ord_last')).trim();
   if(!customer){toast('Enter a customer name');return;}
   const items={};let any=false;
   PROD_KEYS.forEach(pk=>{const q=parseInt($('#ord_'+pk).value)||0;if(q>0){items[pk]=q;any=true;}});
   if(!any){toast('Add at least one product');return;}
-  const order={id:'web-'+uid(),customer,email:$('#ord_email').value.trim(),
-    address:$('#ord_address').value.trim(),items,status:'new',created:today(),shipped:null};
+  const lines=[gv('ord_street'),gv('ord_line2'),gv('ord_city'),(gv('ord_prov')+' '+gv('ord_postal')).trim(),gv('ord_country')].filter(Boolean);
+  if(gv('ord_phone')) lines.push('Tel: '+gv('ord_phone'));
+  const order={id:'web-'+uid(),customer,email:gv('ord_email'),phone:gv('ord_phone'),
+    address:lines.join(', '),items,status:'new',created:today(),shipped:null};
   STATE.orders.push(order);
   pushOrderToBackend(order);   // manual/phone/market orders persist to the DB too
   saveState();toast('Order added');renderOrders();renderTabs();

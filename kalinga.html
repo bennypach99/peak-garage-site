@@ -470,12 +470,26 @@
       <!-- checkout form view -->
       <form class="co-form" id="coForm" onsubmit="return placeOrder(event)">
         <button type="button" class="co-back" onclick="backToCart()">&larr; Back to cart</button>
-        <label>Full name</label>
-        <input id="coName" placeholder="Maria Santos" required>
+        <label>First name</label>
+        <input id="coFirst" placeholder="Maria" required>
+        <label>Last name</label>
+        <input id="coLast" placeholder="Santos" required>
         <label>Email</label>
         <input id="coEmail" type="email" placeholder="you@email.com" required>
-        <label>Shipping address</label>
-        <textarea id="coAddr" rows="3" placeholder="Street, City, Province, Postal code" required></textarea>
+        <label>Phone</label>
+        <input id="coPhone" type="tel" placeholder="(555) 123-4567">
+        <label>Street address</label>
+        <input id="coStreet" placeholder="123 Main St" required>
+        <label>Apartment / unit (optional)</label>
+        <input id="coLine2" placeholder="Apt 4B">
+        <label>City</label>
+        <input id="coCity" placeholder="Burlington" required>
+        <label>Province / State</label>
+        <input id="coProv" placeholder="ON" required>
+        <label>Postal / ZIP code</label>
+        <input id="coPostal" placeholder="L7M 0P5" required>
+        <label>Country</label>
+        <input id="coCountry" placeholder="Canada" required>
         <label>Notes (optional)</label>
         <input id="coNotes" placeholder="Anything we should know?">
       </form>
@@ -612,10 +626,6 @@
 
   // ---- Place order → write to shared storage for the ops app ----
   // ---- Backend config ----
-  // When BACKEND_URL is set, orders are POSTed to the real database (Cloudflare Worker + D1).
-  // Leave BACKEND_URL empty to keep the original browser-only behaviour (window.storage handoff).
-  // The write token is low-sensitivity by design (see brief section 5); the real security boundary
-  // is the Shopify HMAC path, not this token.
   var BACKEND_URL   = 'https://kalinga-orders.kalinganaturals.workers.dev';
   var BACKEND_TOKEN = '87c7a0254b8a806809c285f753171e74e90b95f267a54eb5';   // matches Worker WRITE_TOKEN
 
@@ -625,12 +635,17 @@
 
   async function placeOrder(e){
     e.preventDefault();
+    var cv = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+    var addrLines = [ cv('coStreet'), cv('coLine2'), cv('coCity'),
+                      (cv('coProv')+' '+cv('coPostal')).trim(), cv('coCountry') ].filter(Boolean);
+    if(cv('coPhone')) addrLines.push('Tel: '+cv('coPhone'));
+    if(cv('coNotes')) addrLines.push('Note: '+cv('coNotes'));
     var order = {
       id: orderId(),
-      customer: document.getElementById('coName').value.trim(),
-      email: document.getElementById('coEmail').value.trim(),
-      address: document.getElementById('coAddr').value.trim()
-               + (document.getElementById('coNotes').value.trim() ? ' — '+document.getElementById('coNotes').value.trim() : ''),
+      customer: (cv('coFirst')+' '+cv('coLast')).trim(),
+      email: cv('coEmail'),
+      phone: cv('coPhone'),
+      address: addrLines.join(', '),
       items: Object.assign({}, CART),
       status: 'new',
       created: todayStr(),
@@ -657,8 +672,7 @@
       backup.push(order); localStorage.setItem('kalinga:web:orders', JSON.stringify(backup));
     }catch(err){}
 
-    // 3) POST to the real backend (source of truth). Idempotent on order.id server-side,
-    //    so this is safe even if the order was also written to shared storage above.
+    // 3) POST to the real backend (source of truth). Idempotent on order.id server-side.
     if (BACKEND_URL){
       try{
         var resp = await fetch(BACKEND_URL.replace(/\/$/,'') + '/orders', {
@@ -668,7 +682,7 @@
           keepalive: true
         });
         if (resp && resp.ok) savedToOps = true;
-      }catch(err){ /* offline - localStorage backup + import code still cover it */ }
+      }catch(err){ /* offline - localStorage backup still covers it */ }
     }
 
     // confirmation
