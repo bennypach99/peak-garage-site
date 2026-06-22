@@ -129,17 +129,14 @@
   }
 </style>
 </head>
-<body data-role="owner">
+<body data-role="prod">
 
 <div class="topbar">
   <div class="brand"><span class="dot"></span>
     <div>Kalinga Naturals<small>OPERATIONS</small></div>
   </div>
-  <div class="fx no-print">₱<input id="fxRate" type="number" value="42" step="0.5" title="PHP per CAD"> = $1</div>
-  <div class="role-switch no-print">
-    <button id="roleOwner" class="active" onclick="setRole('owner')">Owner</button>
-    <button id="roleProd" onclick="setRole('prod')">Production</button>
-  </div>
+  <input id="fxRate" type="hidden" value="42">
+  <div class="role-switch no-print"><span class="muted" style="font-size:13px">Production view</span></div>
 </div>
 
 <div class="tabs no-print" id="tabs"></div>
@@ -157,8 +154,6 @@
   <div class="view" id="view-inv"></div>
   <!-- SHIPMENTS -->
   <div class="view" id="view-ship"></div>
-  <!-- WORK IN PROGRESS (owner) -->
-  <div class="view owner-only" id="view-work"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -176,15 +171,15 @@ let FX = FX_DEFAULT;
 // ingredients: {name, grams, phpCost} per single bar.
 const PRODUCTS = {
   calamansi:{
-    name:"Calamansi Brightening Bar", priceCAD:15, weight:100, cure:35,
+    name:"Calamansi Brightening Bar", priceCAD:0, weight:100, cure:35,
     ingredients:[
-      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:60, php:8},
-      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:3},
-      {key:"calamansi", name:"Calamansi Extract", grams:8, php:6},
-      {key:"coconut_milk", name:"Coconut Milk", grams:10, php:3},
-      {key:"olive_oil", name:"Olive Oil", grams:15, php:5},
-      {key:"castor_oil", name:"Castor Oil", grams:8, php:4},
-      {key:"lemongrass_eo", name:"Lemongrass Essential Oil", grams:2, php:7},
+      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:60, php:0},
+      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:0},
+      {key:"calamansi", name:"Calamansi Extract", grams:8, php:0},
+      {key:"coconut_milk", name:"Coconut Milk", grams:10, php:0},
+      {key:"olive_oil", name:"Olive Oil", grams:15, php:0},
+      {key:"castor_oil", name:"Castor Oil", grams:8, php:0},
+      {key:"lemongrass_eo", name:"Lemongrass Essential Oil", grams:2, php:0},
     ],
     steps:[
       {t:"Suit up — gloves, goggles, apron. Ventilate the area.", timer:0},
@@ -198,12 +193,12 @@ const PRODUCTS = {
     ]
   },
   coconut:{
-    name:"Virgin Coconut & Lemongrass", priceCAD:13, weight:100, cure:35,
+    name:"Virgin Coconut & Lemongrass", priceCAD:0, weight:100, cure:35,
     ingredients:[
-      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:70, php:9},
-      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:3},
-      {key:"castor_oil", name:"Castor Oil", grams:10, php:5},
-      {key:"lemongrass_eo", name:"Lemongrass Essential Oil", grams:3, php:10},
+      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:70, php:0},
+      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:0},
+      {key:"castor_oil", name:"Castor Oil", grams:10, php:0},
+      {key:"lemongrass_eo", name:"Lemongrass Essential Oil", grams:3, php:0},
     ],
     steps:[
       {t:"Suit up — gloves, goggles, apron. Ventilate the area.", timer:0},
@@ -217,14 +212,14 @@ const PRODUCTS = {
     ]
   },
   moringa:{
-    name:"Moringa & Coconut Milk", priceCAD:16, weight:100, cure:35,
+    name:"Moringa & Coconut Milk", priceCAD:0, weight:100, cure:35,
     ingredients:[
-      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:55, php:7},
-      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:3},
-      {key:"coconut_milk", name:"Coconut Milk", grams:12, php:4},
-      {key:"pili_oil", name:"Pili Seed Oil", grams:10, php:9},
-      {key:"moringa", name:"Moringa Leaf Powder", grams:4, php:5},
-      {key:"olive_oil", name:"Olive Oil", grams:15, php:5},
+      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:55, php:0},
+      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:0},
+      {key:"coconut_milk", name:"Coconut Milk", grams:12, php:0},
+      {key:"pili_oil", name:"Pili Seed Oil", grams:10, php:0},
+      {key:"moringa", name:"Moringa Leaf Powder", grams:4, php:0},
+      {key:"olive_oil", name:"Olive Oil", grams:15, php:0},
     ],
     steps:[
       {t:"Suit up — gloves, goggles, apron.", timer:0},
@@ -238,13 +233,13 @@ const PRODUCTS = {
     ]
   },
   charcoal:{
-    name:"Charcoal & Lemongrass Detox", priceCAD:14, weight:100, cure:35,
+    name:"Charcoal & Lemongrass Detox", priceCAD:0, weight:100, cure:35,
     ingredients:[
-      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:65, php:8},
-      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:3},
-      {key:"charcoal", name:"Activated Charcoal Powder", grams:3, php:4},
-      {key:"lemongrass_eo", name:"Lemongrass Essential Oil", grams:2, php:7},
-      {key:"peppermint_eo", name:"Peppermint Essential Oil", grams:1, php:5},
+      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:65, php:0},
+      {key:"lye", name:"Sodium Hydroxide (Lye)", grams:14, php:0},
+      {key:"charcoal", name:"Activated Charcoal Powder", grams:3, php:0},
+      {key:"lemongrass_eo", name:"Lemongrass Essential Oil", grams:2, php:0},
+      {key:"peppermint_eo", name:"Peppermint Essential Oil", grams:1, php:0},
     ],
     steps:[
       {t:"Suit up — gloves, goggles, apron.", timer:0},
@@ -258,13 +253,13 @@ const PRODUCTS = {
     ]
   },
   shampoo:{
-    name:"Ylang-Ylang Shampoo Bar", priceCAD:18, weight:90, cure:49,
+    name:"Ylang-Ylang Shampoo Bar", priceCAD:0, weight:90, cure:49,
     ingredients:[
-      {key:"sci", name:"Sodium Cocoyl Isethionate", grams:45, php:18},
-      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:20, php:3},
-      {key:"ylang_eo", name:"Ylang-Ylang Essential Oil", grams:3, php:14},
-      {key:"argan_oil", name:"Argan Oil", grams:8, php:12},
-      {key:"shea", name:"Shea Butter", grams:12, php:6},
+      {key:"sci", name:"Sodium Cocoyl Isethionate", grams:45, php:0},
+      {key:"coconut_oil", name:"Virgin Coconut Oil", grams:20, php:0},
+      {key:"ylang_eo", name:"Ylang-Ylang Essential Oil", grams:3, php:0},
+      {key:"argan_oil", name:"Argan Oil", grams:8, php:0},
+      {key:"shea", name:"Shea Butter", grams:12, php:0},
     ],
     steps:[
       {t:"Suit up — gloves, mask (SCI dust), goggles.", timer:0},
@@ -279,9 +274,9 @@ const PRODUCTS = {
 const PROD_KEYS = Object.keys(PRODUCTS);
 
 /* ---------- LABOUR + PACKAGING (per bar, PHP) ---------- */
-const LABOUR_PHP_PER_BAR = 71;   // ~$1.70 CAD
-const PACKAGING_PHP_PER_BAR = 13; // ~$0.30 CAD
-const SHIPPING_PHP_PER_BAR = 29;  // ~$0.69 CAD ocean LCL
+const LABOUR_PHP_PER_BAR = 0;   // ~$1.70 CAD
+const PACKAGING_PHP_PER_BAR = 0; // ~$0.30 CAD
+const SHIPPING_PHP_PER_BAR = 0;  // ~$0.69 CAD ocean LCL
 
 /* ---------- STATE ---------- */
 let STATE = {
@@ -293,7 +288,7 @@ let STATE = {
 };
 
 let CURRENT_TAB = 'dash';
-let ROLE = 'owner';
+let ROLE = 'prod';
 
 /* ---------- top-level helpers (must load before any view code) ---------- */
 const $ = s=>document.querySelector(s);
@@ -308,58 +303,7 @@ const daysSince = d=>Math.floor((Date.now()-new Date(d).getTime())/86400000);
 /* ============================================================
    DASHBOARD (owner)
    ============================================================ */
-function renderDash(){
-  const orders=STATE.orders;
-  const shipped=orders.filter(o=>o.status==='shipped');
-  const open=orders.filter(o=>o.status!=='shipped');
-  const revenue=shipped.reduce((s,o)=>s+orderRevenueCAD(o),0);
-  const cost=shipped.reduce((s,o)=>s+orderCostCAD(o),0);
-  const profit=revenue-cost;
-  const margin=revenue>0?(profit/revenue*100):0;
-  const pipelineRev=open.reduce((s,o)=>s+orderRevenueCAD(o),0);
-  const barsShipped=shipped.reduce((s,o)=>s+orderBars(o),0);
-  const donated=Math.floor(barsShipped/10);
-
-  // per-product breakdown
-  const byProd=PROD_KEYS.map(pk=>{
-    let sold=0; shipped.forEach(o=>sold+=(o.items[pk]||0));
-    return {pk,name:PRODUCTS[pk].name,sold,
-      rev:sold*PRODUCTS[pk].priceCAD, profit:sold*barProfitCAD(pk)};
-  }).sort((a,b)=>b.rev-a.rev);
-
-  $('#view-dash').innerHTML=`
-    <div class="page-head"><div>
-      <h2>Dashboard</h2><p>Live view of revenue, profit, and what's in the pipeline.</p>
-    </div></div>
-    <div class="grid g4" style="margin-bottom:16px">
-      <div class="stat gold"><div class="lbl">Revenue (shipped)</div>
-        <div class="val">${cad(revenue)}</div><div class="sub">${shipped.length} orders shipped</div></div>
-      <div class="stat ok"><div class="lbl">Gross Profit</div>
-        <div class="val">${cad(profit)}</div><div class="sub">${margin.toFixed(1)}% margin</div></div>
-      <div class="stat teal"><div class="lbl">Pipeline (open)</div>
-        <div class="val">${cad(pipelineRev)}</div><div class="sub">${open.length} orders to fulfill</div></div>
-      <div class="stat navy"><div class="lbl">Bars Donated</div>
-        <div class="val">${donated}</div><div class="sub">1 per 10 sold · ${barsShipped} shipped</div></div>
-    </div>
-    <div class="grid g2">
-      <div class="card"><h3>Profit by product</h3>
-        ${byProd.every(p=>p.sold===0)?emptyMini('No shipped sales yet'):`
-        <table><thead><tr><th>Product</th><th class="right">Sold</th><th class="right">Revenue</th><th class="right">Profit</th></tr></thead>
-        <tbody>${byProd.map(p=>`<tr><td>${p.name}</td><td class="right">${p.sold}</td>
-          <td class="right">${cad(p.rev)}</td><td class="right" style="color:var(--ok);font-weight:700">${cad(p.profit)}</td></tr>`).join('')}
-        </tbody></table>`}
-      </div>
-      <div class="card"><h3>Unit economics (per bar)</h3>
-        <table><thead><tr><th>Product</th><th class="right">Cost</th><th class="right">Price</th><th class="right">Margin</th></tr></thead>
-        <tbody>${PROD_KEYS.map(pk=>{
-          const c=barCostCAD(pk),p=PRODUCTS[pk].priceCAD,m=(p-c)/p*100;
-          return `<tr><td>${PRODUCTS[pk].name}</td><td class="right">${cad(c)}</td>
-            <td class="right">${cad(p)}</td><td class="right" style="font-weight:700;color:${m>50?'var(--ok)':'var(--warn)'}">${m.toFixed(0)}%</td></tr>`;
-        }).join('')}</tbody></table>
-        <p class="muted" style="margin-top:10px">Cost = ingredients + labour (${php(LABOUR_PHP_PER_BAR)}) + packaging (${php(PACKAGING_PHP_PER_BAR)}) + shipping (${php(SHIPPING_PHP_PER_BAR)}), converted at ₱${FX}/$1.</p>
-      </div>
-    </div>`;
-}
+function renderDash(){ /* owner-only; removed from workers page */ }
 function emptyMini(t){return `<div class="empty"><div class="big">◇</div>${t}</div>`;}
 
 /* ============================================================
@@ -379,7 +323,6 @@ function renderOrders(){
     return `<tr>
       <td><strong>${o.customer}</strong><div class="muted">${o.created}</div></td>
       <td>${items}<div class="muted">${orderBars(o)} bars</div></td>
-      <td class="right">${cad(orderRevenueCAD(o))}</td>
       <td><span class="pill ${o.status}">${o.status}</span></td>
       <td class="right no-print">
         ${o.status==='new'?`<button class="btn sm teal" onclick="queueOrder('${o.id}')">Queue to make</button>`:''}
@@ -404,7 +347,7 @@ function renderOrders(){
     </div>
     <div class="card">
       <h3>All orders <span class="muted">(${open.length} open)</span></h3>
-      ${STATE.orders.length?`<table><thead><tr><th>Customer</th><th>Items</th><th class="right">Revenue</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+      ${STATE.orders.length?`<table><thead><tr><th>Customer</th><th>Items</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
         :`<div class="empty"><div class="big">◇</div>No orders yet. Add your first one above.</div>`}
     </div>`;
 }
@@ -623,7 +566,6 @@ function renderInv(){
       <div class="row">
         <label class="fld"><span>Ingredient</span><select id="inv_ing">${ingInputs}</select></label>
         <label class="fld"><span>Grams received</span><input id="inv_g" type="number" min="0" placeholder="e.g. 5000"></label>
-        <label class="fld"><span>Cost paid (₱)</span><input id="inv_php" type="number" min="0" placeholder="optional"></label>
       </div>
       <button class="btn gold" onclick="addDelivery()">+ Add to stock</button>
     </div>
@@ -660,7 +602,7 @@ function renderShip(){
   const readyRows=open.map(o=>{
     const items=Object.entries(o.items).map(([k,q])=>`${q}× ${PRODUCTS[k].name.split(' ')[0]}`).join(', ');
     return `<tr><td><strong>${o.customer}</strong><div class="muted">${o.address||'no address'}</div></td>
-      <td>${items}</td><td class="right">${cad(orderRevenueCAD(o))}</td>
+      <td>${items}</td>
       <td class="no-print right">
         <button class="btn sm ghost" onclick="printSlip('${o.id}')">Packing slip</button>
         <button class="btn sm gold" onclick="shipOrder('${o.id}')">Mark shipped</button></td></tr>`;
@@ -671,13 +613,12 @@ function renderShip(){
       <h2>Shipments</h2><p>Orders in production or ready to go out. Print a packing slip, then mark shipped.</p>
     </div></div>
     <div class="card"><h3>To ship (${open.length})</h3>
-      ${open.length?`<table><thead><tr><th>Customer</th><th>Items</th><th class="right">Value</th><th class="no-print"></th></tr></thead><tbody>${readyRows}</tbody></table>`
+      ${open.length?`<table><thead><tr><th>Customer</th><th>Items</th><th class="no-print"></th></tr></thead><tbody>${readyRows}</tbody></table>`
         :`<div class="empty"><div class="big">◇</div>Nothing waiting to ship.</div>`}
     </div>
     <div class="card"><h3>Shipped (${shipped.length})</h3>
-      ${shipped.length?`<table><thead><tr><th>Customer</th><th class="right">Bars</th><th class="right">Revenue</th><th>Shipped</th></tr></thead>
-      <tbody>${shipped.slice().reverse().map(o=>`<tr><td>${o.customer}</td><td class="right">${orderBars(o)}</td>
-        <td class="right">${cad(orderRevenueCAD(o))}</td><td>${o.shipped}</td></tr>`).join('')}</tbody></table>`
+      ${shipped.length?`<table><thead><tr><th>Customer</th><th class="right">Bars</th><th>Shipped</th></tr></thead>
+      <tbody>${shipped.slice().reverse().map(o=>`<tr><td>${o.customer}</td><td class="right">${orderBars(o)}</td><td>${o.shipped}</td></tr>`).join('')}</tbody></table>`
         :`<div class="muted">No shipments yet.</div>`}
     </div>
     <div class="view" id="slip"></div>`;
@@ -731,7 +672,7 @@ const BACKEND_READ_TOKEN = '8888e2cfb32bedae3a134567d0a332b596dfa8120d076436';
 const BACKEND_WRITE_TOKEN= '87c7a0254b8a806809c285f753171e74e90b95f267a54eb5';
 const POLL_MS = 10000;
 const SYNC_KEY = 'kalinga:ops:sync';
-let START_TAB = 'dash';
+let START_TAB = 'orders';
 
 function backendBase(){ return BACKEND_URL.replace(/\/$/,''); }
 function loadSync(){ try{ return JSON.parse(localStorage.getItem(SYNC_KEY)) || {cursor:'',deleted:[],stateVersion:0}; }catch(e){ return {cursor:'',deleted:[],stateVersion:0}; } }
@@ -859,52 +800,10 @@ function orderRevenueCAD(o){return Object.entries(o.items).reduce((s,[k,q])=>s+(
 function orderCostCAD(o){return Object.entries(o.items).reduce((s,[k,q])=>s+(barCostCAD(k)*q),0);}
 function orderBars(o){return Object.values(o.items).reduce((s,q)=>s+q,0);}
 
-function _stageLabel(s){return {make:'To make',cure:'Curing',ready:'Ready'}[s]||s;}
-function _orderCust(b){ const o=STATE.orders.find(x=>x.id===b.orderId); return o?o.customer:'\u2014'; }
-function renderWork(){
-  const active = STATE.batches.filter(b=>b.status==='make'||b.status==='cure'||b.status==='ready');
-  const making = active.filter(b=>b.status==='make');
-  const curing = active.filter(b=>b.status==='cure');
-  const ready  = active.filter(b=>b.status==='ready');
-  const row = b=>{
-    const cureTotal = PRODUCTS[b.product].cure;
-    const cure = b.status==='cure' ? (daysSince(b.curedAt||b.started||b.created)+'/'+cureTotal+' days')
-               : (b.status==='ready' ? 'cured' : '\u2014');
-    return `<tr>
-      <td><strong>${PRODUCTS[b.product].name.replace(' Bar','')}</strong><div class="muted">${_orderCust(b)}</div></td>
-      <td class="right">${b.qty}</td>
-      <td><span class="pill ${b.status}">${_stageLabel(b.status)}</span></td>
-      <td>${b.madeBy?b.madeBy:'<span class="muted">unassigned</span>'}</td>
-      <td class="right">${b.minutes?b.minutes+' min':'\u2014'}</td>
-      <td>${cure}</td>
-      <td class="muted">${b.curedAt||b.started||b.created||'\u2014'}</td></tr>`;
-  };
-  const recent = STATE.batches.filter(b=>b.status==='shipped').slice(-8).reverse();
-  $('#view-work').innerHTML=`
-    <div class="page-head"><div>
-      <h2>Work in progress</h2><p>Live view of what the team is making right now \u2014 who's on each batch, time spent, and cure clocks. Refreshes automatically.</p>
-    </div></div>
-    <div class="grid g3" style="margin-bottom:16px">
-      <div class="stat teal"><div class="lbl">In production</div><div class="val">${making.length}</div><div class="sub">batches to make</div></div>
-      <div class="stat gold"><div class="lbl">Curing</div><div class="val">${curing.length}</div><div class="sub">batches curing</div></div>
-      <div class="stat ok"><div class="lbl">Ready</div><div class="val">${ready.length}</div><div class="sub">batches ready to ship</div></div>
-    </div>
-    <div class="card">
-      <h3>Active batches <span class="muted">(${active.length})</span></h3>
-      ${active.length?`<table><thead><tr><th>Product</th><th class="right">Qty</th><th>Stage</th><th>Made by</th><th class="right">Time</th><th>Cure</th><th>Updated</th></tr></thead><tbody>${active.map(row).join('')}</tbody></table>`
-        :`<div class="empty"><div class="big">\u25c7</div>No active production right now.</div>`}
-    </div>
-    ${recent.length?`<div class="card"><h3>Recently completed</h3>
-      <table><thead><tr><th>Product</th><th class="right">Qty</th><th>Made by</th><th class="right">Time</th><th>Customer</th></tr></thead>
-      <tbody>${recent.map(b=>`<tr><td>${PRODUCTS[b.product].name.replace(' Bar','')}</td><td class="right">${b.qty}</td><td>${b.madeBy||'\u2014'}</td><td class="right">${b.minutes?b.minutes+' min':'\u2014'}</td><td>${_orderCust(b)}</td></tr>`).join('')}</tbody></table></div>`:''}`;
-}
-
 /* ============================================================
    ROLE + TABS
    ============================================================ */
 const TABS = [
-  {id:'dash', label:'Dashboard', owner:true},
-  {id:'work', label:'Work in progress', owner:true},
   {id:'orders', label:'Orders'},
   {id:'make', label:'Make List'},
   {id:'prod', label:'Production'},
