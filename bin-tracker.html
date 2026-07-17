@@ -524,6 +524,12 @@ function hideHouseholdScreen(code) {
   document.getElementById('householdBadgeCode').textContent = code;
 }
 
+// SHA-256 hex digest — PINs are stored hashed, never in plain text
+async function sha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
 async function joinHousehold(rawCode, rawPin) {
   const code = rawCode.trim().toUpperCase().replace(/\s+/g,'-');
   const pin = (rawPin || '').trim();
@@ -532,18 +538,28 @@ async function joinHousehold(rawCode, rawPin) {
   const btn = document.getElementById('hwJoinBtn');
   const oldTxt = btn.textContent; btn.disabled = true; btn.textContent = 'Checking…';
   try {
+    const pinHash = await sha256Hex(pin);
     const ref = getDocRef(code);
     const snap = await getDoc(ref);
     if (snap.exists()) {
       const data = snap.data();
-      if (data.pin && String(data.pin) !== pin) { showToast('Incorrect PIN for this household'); return; }
-      if (!data.pin) { await setDoc(ref, { ...data, pin }); }   // claim a pre-PIN household
+      if (data.pinHash) {
+        if (data.pinHash !== pinHash) { showToast('Incorrect PIN for this household'); return; }
+      } else if (data.pin) {
+        // Legacy plaintext PIN — verify, then upgrade this household to hashed storage
+        if (String(data.pin) !== pin) { showToast('Incorrect PIN for this household'); return; }
+        const { pin: _legacy, ...rest } = data;
+        await setDoc(ref, { ...rest, pinHash });
+      } else {
+        await setDoc(ref, { ...data, pinHash });   // claim a pre-PIN household
+      }
     } else {
-      await setDoc(ref, { shelves:[], shelfBins:{}, binFill:{}, pin }); // create & claim new household
+      await setDoc(ref, { shelves:[], shelfBins:{}, binFill:{}, pinHash }); // create & claim new household
     }
     localStorage.setItem('peakHouseholdCode', code);
-    localStorage.setItem('peakHouseholdPin', pin);
-    currentHouseholdCode = code; currentHouseholdPin = pin;
+    localStorage.setItem('peakHouseholdPinHash', pinHash);
+    localStorage.removeItem('peakHouseholdPin');
+    currentHouseholdCode = code; currentHouseholdPin = pinHash; // holds the HASH, never the raw PIN
     hideHouseholdScreen(code);
     attachFirestoreListener(code);
   } catch (e) {
@@ -565,6 +581,7 @@ document.getElementById('householdBadge').onclick = () => {
   if (!confirm('Switch household? You will need to re-enter your code and PIN.')) return;
   localStorage.removeItem('peakHouseholdCode');
   localStorage.removeItem('peakHouseholdPin');
+  localStorage.removeItem('peakHouseholdPinHash');
   if (_unsubscribe) { _unsubscribe(); _unsubscribe = null; }
   state = { shelves:[], shelfBins:{}, binFill:{}, addShelfCols:3, addShelfRows:4 };
   _openShelfIdx = null; _openBinCol = null; _openBinRow = null;
@@ -593,7 +610,10 @@ function attachFirestoreListener(code) {
       state.shelves   = data.shelves   || [];
       state.shelfBins = data.shelfBins || {};
       state.binFill   = data.binFill   || {};
-      if (currentHouseholdPin == null && data.pin != null) currentHouseholdPin = String(data.pin);
+      if (currentHouseholdPin == null) {
+        if (data.pinHash) currentHouseholdPin = data.pinHash;
+        else if (data.pin != null) sha256Hex(String(data.pin)).then(h => { if (currentHouseholdPin == null) currentHouseholdPin = h; });
+      }
     }
     renderShelvesPage();
     setSyncStatus('live');
@@ -627,7 +647,10 @@ function attachFirestoreListener(code) {
     state.shelves   = data.shelves   || [];
     state.shelfBins = data.shelfBins || {};
     state.binFill   = data.binFill   || {};
-    if (currentHouseholdPin == null && data.pin != null) currentHouseholdPin = String(data.pin);
+    if (currentHouseholdPin == null) {
+      if (data.pinHash) currentHouseholdPin = data.pinHash;
+      else if (data.pin != null) sha256Hex(String(data.pin)).then(h => { if (currentHouseholdPin == null) currentHouseholdPin = h; });
+    }
     setSyncStatus('live');
     renderShelvesPage(_openShelfIdx !== null ? _openShelfIdx : undefined);
     if (_openBinCol !== null && _openBinRow !== null && _openShelfIdx !== null) {
@@ -647,7 +670,16 @@ async function saveState() {
   setSyncStatus('saving');
   _ignoreNextSnapshot = true;
   try {
-    await setDoc(getDocRef(currentHouseholdCode), { shelves: state.shelves, shelfBins: state.shelfBins, binFill: state.binFill });
+    const payload = { shelves: state.shelves, shelfBins: state.shelfBins, binFill: state.binFill };
+    if (currentHouseholdPin) payload.pinHash = currentHouseholdPin;
+    else {
+      // Legacy session without a cached hash — keep whatever PIN field the doc already has
+      try {
+        const cur = await getDoc(getDocRef(currentHouseholdCode));
+        if (cur.exists()) { const d = cur.data(); if (d.pinHash) payload.pinHash = d.pinHash; else if (d.pin != null) payload.pin = d.pin; }
+      } catch(_) {}
+    }
+    await setDoc(getDocRef(currentHouseholdCode), payload);
     setSyncStatus('live');
   } catch(e) { setSyncStatus('error'); showToast('Save failed — check connection'); console.error(e); }
 }
@@ -1276,10 +1308,20 @@ if (_isDemo) {
   renderShelvesPage(0);
 } else {
   const savedCode = localStorage.getItem('peakHouseholdCode');
-  const savedPin = localStorage.getItem('peakHouseholdPin');
-  if (savedCode && savedPin) {
+  const savedPinHash = localStorage.getItem('peakHouseholdPinHash');
+  const savedLegacyPin = localStorage.getItem('peakHouseholdPin');
+  if (savedCode && (savedPinHash || savedLegacyPin)) {
     currentHouseholdCode = savedCode;
-    currentHouseholdPin = savedPin;
+    if (savedPinHash) {
+      currentHouseholdPin = savedPinHash;
+    } else {
+      // Migrate legacy plaintext PIN in localStorage to a hash
+      sha256Hex(savedLegacyPin).then(h => {
+        currentHouseholdPin = h;
+        localStorage.setItem('peakHouseholdPinHash', h);
+        localStorage.removeItem('peakHouseholdPin');
+      });
+    }
     hideHouseholdScreen(savedCode);
     attachFirestoreListener(savedCode);
   } else {
