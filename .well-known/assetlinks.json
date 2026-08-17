@@ -11,5 +11,17 @@
         "E3:00:8D:33:06:EA:20:5F:AB:5F:90:A4:60:A3:CE:7A:DC:0E:87:BE:1F:7E:3F:16:60:E4:27:6F:6D:7B:3A:ED"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bintracker",
+      "sha256_cert_fingerprints": [
+        "63:BC:40:1C:13:E5:1D:20:4E:CD:54:ED:5B:50:BF:9E:FF:89:F2:28:BB:E1:65:94:72:8E:DA:EF:50:EB:99:A0"
+      ]
+    }
   }
 ]
